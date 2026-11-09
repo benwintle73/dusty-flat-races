@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dusty Flat Races</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@400;600;700&family=Pixelify+Sans:wght@500;700&family=VT323&display=swap" rel="stylesheet">
+<style>
+/* Layout idea: a country track's tote board (amber on black) bolted above a printed form guide (newsprint). */
+:root{
+  --tote:#16120c; --tote2:#2a2317; --amber:#ffb52e; --amber-dim:#a87a2a;
+  --paper:#efe4c8; --paper2:#e2d3ae; --ink:#241c10; --ink2:#675740;
+  --red:#c8321f; --good:#2f8a4a;
+  --display:"Pixelify Sans","Courier New",monospace;
+  --led:"VT323","Courier New",monospace;
+  --body:"IBM Plex Sans Condensed","Arial Narrow",Arial,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:#0e2b1a;color:var(--paper);font-family:var(--body)}
+button,input{font:inherit}
+button{cursor:pointer}
+button:focus-visible,input:focus-visible{outline:3px solid var(--amber);outline-offset:1px}
+.wrap{max-width:1180px;margin:0 auto;padding:12px 16px 28px;display:grid;gap:12px}
+.mast{display:flex;flex-wrap:wrap;gap:6px 22px;align-items:center;background:var(--tote);border:3px solid var(--tote2);padding:8px 14px}
+.mast h1{margin:0;font:700 clamp(24px,4vw,34px)/1 var(--display);color:var(--amber);letter-spacing:.5px}
+.mast .meet{font:22px/1 var(--led);color:var(--amber-dim);flex:1 1 200px}
+.led{display:flex;flex-direction:column;align-items:flex-end}
+.led small{font:18px/1 var(--led);color:var(--amber-dim)}
+.led b{font:400 36px/1 var(--led);color:var(--amber);font-variant-numeric:tabular-nums}
+.led b.up{color:#7dff9b}.led b.down{color:#ff7a66}
+.grid{display:grid;gap:12px;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);grid-template-areas:"stage card" "slip card";align-items:start}
+.stage{grid-area:stage;background:var(--tote);border:3px solid var(--tote2)}
+.canvas-wrap{position:relative;line-height:0}
+canvas{width:100%;height:auto;display:block;image-rendering:pixelated;image-rendering:crisp-edges;image-rendering:pixelated}
+#photo{position:absolute;left:50%;top:10px;transform:translateX(-50%);background:var(--red);color:#fff;font:700 24px/1.2 var(--display);padding:4px 16px;display:none}
+.call{font:24px/1.1 var(--led);color:var(--amber);padding:8px 12px;min-height:60px}
+.call b{font-weight:400;color:#fff}
+.slip{grid-area:slip;background:var(--tote);border:3px solid var(--tote2);padding:12px;display:grid;gap:10px}
+.seg{display:grid;grid-template-columns:repeat(6,1fr);gap:4px}
+.seg button{background:var(--tote2);color:var(--paper);border:0;min-height:44px;padding:2px;font-weight:600;font-size:15px}
+.seg button[aria-pressed=true]{background:var(--amber);color:var(--tote)}
+.hint{font-size:16px;color:var(--paper2);min-height:22px}
+.hint b{color:var(--amber);font:22px/1 var(--led)}
+.stake{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.stake label{font-weight:600}
+#stake{width:92px;min-height:44px;background:#000;color:var(--amber);border:2px solid var(--tote2);font:28px/1 var(--led);padding:2px 8px}
+.chip{min-height:44px;min-width:50px;background:var(--tote2);color:var(--paper);border:0;font-weight:600;padding:0 8px}
+.go{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.big{min-height:52px;border:0;font:700 19px/1 var(--display);padding:4px 8px}
+.big.place{background:var(--paper);color:var(--ink)}
+.big.jump{background:var(--red);color:#fff}
+.big:disabled{opacity:.45;cursor:not-allowed}
+.bets{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+.bets li{display:flex;gap:8px;align-items:center;background:var(--tote2);padding:4px 4px 4px 10px;font-size:16px}
+.bets li span{flex:1;min-width:0}
+.bets li button{background:none;border:0;color:var(--paper2);min-width:44px;min-height:36px;text-decoration:underline}
+.nan{background:none;border:2px solid var(--amber);color:var(--amber);min-height:48px;font-weight:700}
+.card{grid-area:card;background:var(--paper);color:var(--ink);border:3px solid var(--paper2);padding:12px;display:grid;gap:8px}
+.card h2{margin:0;font:700 25px/1.05 var(--display);text-wrap:balance}
+.conds{display:flex;flex-wrap:wrap;gap:4px 14px;font-weight:600;color:var(--ink2);font-size:16px}
+.conds .wet{color:#1e5a9c}
+.tip{font-size:16px;border-left:4px solid var(--red);padding:2px 8px;background:var(--paper2)}
+.runners{display:grid;gap:0}
+.runner{display:grid;grid-template-columns:36px minmax(0,1fr) 72px 72px;gap:8px;align-items:center;width:100%;text-align:left;background:none;border:0;border-top:1px solid #bda97f;color:inherit;padding:7px 4px;min-height:60px}
+.runner:hover{background:var(--paper2)}
+.runner.on{background:#f8c65f}
+.silk{width:34px;height:34px;display:grid;place-items:center;font:700 21px/1 var(--display);border:2px solid var(--ink);position:relative}
+.silk i{position:absolute;right:-7px;top:-8px;background:var(--red);color:#fff;font:700 13px/18px var(--body);width:18px;height:18px;text-align:center}
+.rname{font-weight:700;font-size:18px;line-height:1.1;overflow-wrap:anywhere}
+.rmeta{font-size:14px;color:var(--ink2);line-height:1.2}
+.rmeta b{color:var(--ink);letter-spacing:1px}
+.odds{text-align:right;font:400 25px/1 var(--led);white-space:nowrap;font-variant-numeric:tabular-nums}
+.odds small{display:block;font:600 11px/1.3 var(--body);color:var(--ink2);text-transform:uppercase}
+.tbl{width:100%;border-collapse:collapse;font-size:17px}
+.tbl td,.tbl th{padding:5px 4px;border-top:1px solid #bda97f;text-align:left;vertical-align:top}
+.tbl .n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.won{color:var(--good);font-weight:700}.lost{color:var(--red)}
+.net{font:700 28px/1.1 var(--display)}
+.card .big.next{background:var(--ink);color:var(--paper);width:100%}
+.reset{background:none;border:0;color:var(--ink2);text-decoration:underline;min-height:40px;justify-self:start;padding:0}
+.foot{font-size:14px;color:#a9c0a6;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center}
+.foot button{background:none;border:1px solid #6d8a6c;color:#d8e4d4;min-height:40px;padding:0 12px}
+@media (max-width:820px){
+  .grid{grid-template-columns:minmax(0,1fr);grid-template-areas:"stage" "card" "slip"}
+  .seg{grid-template-columns:repeat(3,1fr)}
+  .led b{font-size:30px}
+  .runner{grid-template-columns:36px minmax(0,1fr) 56px 56px;gap:6px}
+  .odds{font-size:21px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="mast">
+    <h1>Dusty Flat Races</h1>
+    <div class="meet" id="meet"></div>
+    <div class="led"><small>RACE</small><b id="raceNo"></b></div>
+    <div class="led"><small>BANK</small><b id="bank"></b></div>
+  </header>
+  <div class="grid">
+    <section class="stage" aria-label="Track">
+      <div class="canvas-wrap"><canvas id="c" width="480" height="236"></canvas><div id="photo">PHOTO</div></div>
+      <div class="call" id="call" aria-live="polite"></div>
+    </section>
+    <section class="card" id="card"></section>
+    <section class="slip" id="slip">
+      <div class="seg" id="seg"></div>
+      <div class="hint" id="hint"></div>
+      <div class="stake">
+        <label for="stake">Stake $</label>
+        <input id="stake" type="number" inputmode="numeric" min="1" step="1" value="25">
+        <button class="chip" data-add="5">+5</button>
+        <button class="chip" data-add="25">+25</button>
+        <button class="chip" data-add="100">+100</button>
+        <button class="chip" data-all="1">All in</button>
+        <button class="chip" data-clear="1">Clear</button>
+      </div>
+      <div class="go">
+        <button class="big place" id="place">Place bet</button>
+        <button class="big jump" id="jump">Jump</button>
+      </div>
+      <ul class="bets" id="bets"></ul>
+      <button class="nan" id="nan" hidden>Ring Nan for $200</button>
+    </section>
+  </div>
+  <footer class="foot">
+    <span>Play money only. No real bets, deposits or prizes.</span>
+    <button id="mute">Sound on</button>
+  </footer>
+</div>
+
+<script>
+"use strict";
+/* ---------- helpers ---------- */
+const $=id=>document.getElementById(id);
+const rand=(a=1,b)=>b===undefined?Math.random()*a:a+Math.random()*(b-a);
+const irand=(a,b)=>Math.floor(rand(a,b+1));
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const gauss=()=>{let u=0,v=0;while(!u)u=Math.random();while(!v)v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(6.2832*v)};
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=irand(0,i);[a[i],a[j]]=[a[j],a[i]]}return a};
+const pick=a=>a[irand(0,a.length-1)];
+const money=v=>{const r=Math.round(v*100)/100;return (r<0?"-$":"$")+Math.abs(r).toLocaleString("en-AU",{minimumFractionDigits:r%1?2:0,maximumFractionDigits:2})};
+const div=v=>"$"+v.toFixed(2);
+const oddsTxt=v=>"$"+(v<10?v.toFixed(2):String(+v.toFixed(1)));
+const hash=n=>{const s=Math.sin(n*127.1+3.3)*43758.5453;return s-Math.floor(s)};
+
+/* ---------- data ---------- */
+const NAMES=["Pie Floater","Dusty Ute","Nan's Bingo Money","Servo Sausage","Thongs At The Wedding","She'll Be Right","Sunday Arvo","Two Up Tony","Cold Stubby","Galah Dinner","Bogan Villea","Drop Bear Alert","Fair Suck","Yeah Nah","Nah Yeah","Bin Chicken","Snag In Bread","Ute Muster","Smoko","Tradies Lunch","Mozzie Coil","Stubby Holder","Esky Lid","Wheelie Bin Night","Back Of Bourke","Beyond Ballarat","Goldfields Gal","Maryborough Mick","Pyrenees Lass","Hot Chip Minimum","Dim Sim Dave","Whipper Snipper","Roundabout Rita","Hills Hoist","Cattle Grid","Chook Raffle","Meat Tray","Second Prize Meat Tray","Rissole","Lamington Drive","Flat White Lie","Sausage Sizzle","Footy Trip","Grey Nomad","Caravan Park","Rusty Gate","Blowfly Betty","Tuckshop Lady"];
+const JOCKS=["T. Bilby","A. Currawong","S. Wombat","R. Quoll","K. Dunnart","M. Echidna","J. Kookaburra","P. Numbat","L. Potoroo","D. Bandicoot","C. Magpie","N. Wallaroo"];
+const COATS=[["#6b3a1e","#1f130c"],["#8a4a22","#4b2412"],["#3a2316","#120b08"],["#9b9690","#4a4744"],["#a35a24","#d9b078"],["#2a2526","#0c0a0a"]];
+const SILKS=[["#d8342a","#fff"],["#f4f1e6","#111"],["#2a62c9","#fff"],["#f2c92b","#111"],["#2a9a55","#fff"],["#1b1b22","#f2c92b"],["#ef7d22","#111"],["#ec7fb0","#111"],["#25b5c4","#111"]];
+const TRACKS=["Dusty Flat","Goat Creek","Mount Misery","Wattle Gully","Lake Nowhere","Bullock Bend"];
+const RACES=[["Servo Pie Maiden",1000],["Hot Chips Handicap",1200],["CWA Scone Plate",1400],["Shire Council Sprint",1200],["Ute Muster Mile",1600],["Tuckshop Stakes",1800],["Publican's Purse",2000],["The Goldfields Cup",2400]];
+const NAN=["Says it winked at her.","She liked the socks on the jockey.","Her hairdresser's cousin knows the farrier.","Picked it with a hatpin.","It's the same name as her first budgie."];
+const RANK=[[0,"Mug punter"],[1,"Hanging on"],[1.25,"Handy on the punt"],[2,"Sharp at the rails"],[4,"Bookies know your face"]];
+const ratingName=r=>(r<=4?"Good ":r<=7?"Soft ":"Heavy ")+r;
+const STYLE={front:"Leader",mid:"Midfield",back:"Closer"};
+
+/* ---------- race simulation ---------- */
+function simulate(field,race,rec){
+  const D=race.dist,n=field.length,dt=.25,w=clamp((race.rating-5)/5,0,1);
+  const pos=new Float64Array(n),fin=new Float64Array(n),nz=new Float64Array(n),vv=new Float64Array(n);
+  const day=[],slow=[],luck=[];
+  for(let k=0;k<n;k++){const h=field[k];
+    day.push(gauss()*.22*(1.3-h.cons*.6));
+    slow.push(Math.random()<.05?.55:rand(0,.14));
+    luck.push(Math.random()<.06?{p:rand(.35,.75),left:2.2,fired:false}:null);
+  }
+  const trace=rec?[Array.from(pos)]:null,events=[];
+  let done=0,t=0,extra=0;
+  while(rec?extra<28:done<n){
+    for(let k=0;k<n;k++){
+      const h=field[k],p=Math.min(1,pos[k]/D);
+      let v=16.6+h.q*.58+day[k]-(h.weight-56)*.022-w*1.2+w*(h.wet-.5)*.9;
+      if(h.style==="front")v+=p<.6?.34:.34-1.0*(p-.6)/.4;
+      else if(h.style==="back")v+=p<.6?-.42:-.42+1.35*(p-.6)/.4;
+      const need=(D-1000)/2200,short=Math.max(0,need-h.sta+.1);
+      v-=short*1.7*Math.max(0,p-.55)/.45;
+      if(p<.2)v-=Math.max(0,h.barrier-5)*.012*(D<1400?1.5:1);
+      nz[k]=.9*nz[k]+.1*gauss()*.55;v+=nz[k];
+      const l=luck[k];
+      if(l&&p>=l.p&&l.left>0){v-=1.1;l.left-=dt;if(!l.fired){l.fired=true;if(rec)events.push({t,k})}}
+      if(fin[k])v=Math.max(7,(16.6+h.q*.58)*(1-Math.min(.6,(t-fin[k])*.06)));
+      const a=clamp((t-slow[k])/2.6,0,1);v*=a*a*(3-2*a);
+      const before=pos[k];pos[k]+=v*dt;vv[k]=v;
+      if(!fin[k]&&pos[k]>=D){fin[k]=t+dt*(D-before)/(pos[k]-before);done++}
+    }
+    t+=dt;
+    if(rec){trace.push(Array.from(pos));if(done===n)extra++}
+    if(t>500)break;
+  }
+  const order=[...Array(n).keys()].sort((a,b)=>fin[a]-fin[b]);
+  return {order,fin:Array.from(fin),trace,events,dt};
+}
+
+/* ---------- odds ---------- */
+function ladder(o){
+  const st=o<2?.05:o<5?.1:o<10?.5:o<20?1:o<50?5:10;
+  return Math.round(clamp(Math.round(o/st)*st,1.1,201)*100)/100;
+}
+function priceRace(race){
+  const f=race.field,n=f.length,N=600,win=new Array(n).fill(0),pl=new Array(n).fill(0);
+  for(let s=0;s<N;s++){const r=simulate(f,race,false);win[r.order[0]]++;for(let i=0;i<race.placeN;i++)pl[r.order[i]]++}
+  let mkt=win.map(c=>(c+.7)/(N+.7*n)*Math.exp(gauss()*.16));
+  const sum=mkt.reduce((a,b)=>a+b,0);
+  race.fair=mkt.map(m=>m/sum);
+  f.forEach((h,i)=>{
+    h.win=ladder(1/(race.fair[i]*1.16));
+    const pp=clamp((pl[i]+.7)/(N+1.4)*Math.exp(gauss()*.1),.02,.97);
+    h.place=Math.max(1.05,Math.round(ladder(1/(pp*1.12))*100)/100);
+  });
+}
+function oddsFor(type,sel){
+  const r=S.race,p=sel.map(i=>r.fair[i]);
+  let prob;
+  if(type==="win")return r.field[sel[0]].win;
+  if(type==="place")return r.field[sel[0]].place;
+  if(type==="exacta")prob=p[0]*p[1]/(1-p[0]);
+  if(type==="quin")prob=p[0]*p[1]/(1-p[0])+p[1]*p[0]/(1-p[1]);
+  if(type==="tri")prob=p[0]*p[1]/(1-p[0])*p[2]/(1-p[0]-p[1]);
+  return Math.round(clamp(1/(prob*1.22),1.2,2500)*10)/10;
+}
+
+/* ---------- game state ---------- */
+const TYPES={win:["Win",1],place:["Place",1],ew:["E/W",1],quin:["Quinella",2],exacta:["Exacta",2],tri:["Trifecta",3]};
+let S=null;
+function makeHorse(name){
+  const q=clamp(.5+gauss()*.24,.05,.97),sta=rand(.05,1);
+  const form=Array.from({length:5},()=>{if(Math.random()<.08)return "x";const v=Math.round(1+(1-q)*7+gauss()*2.1);return v>=10?"0":String(clamp(v,1,9))}).join("");
+  return {name,q,sta,style:pick(["front","mid","mid","back"]),wet:rand(0,1),cons:rand(.1,1),form,jock:pick(JOCKS),coat:irand(0,COATS.length-1)};
+}
+function newMeeting(){
+  S.pool=shuffle(NAMES).map(makeHorse);
+  S.track=pick(TRACKS);
+  S.weather=irand(3,9);
+  S.idx=0;S.startBank=S.bank;S.ledger=[];
+  buildRace();
+}
+function wetRecord(h){
+  const st=irand(3,9),w=Math.round(st*h.q*h.wet*.75);
+  return `${st}:${w}`;
+}
+function buildRace(){
+  const [title,dist]=RACES[S.idx];
+  const last=S.lastNames||[];
+  let pool=S.pool.filter(h=>!last.includes(h.name));
+  const n=S.idx===7?9:irand(6,9);
+  let chosen=S.idx===7?pool.slice().sort((a,b)=>b.q-a.q).slice(0,n):shuffle(pool).slice(0,n);
+  chosen=shuffle(chosen);
+  const rating=clamp(S.weather+irand(-1,1),3,10);
+  const barriers=shuffle([...Array(n).keys()].map(i=>i+1));
+  const field=chosen.map((h,i)=>({...h,no:i+1,barrier:barriers[i],
+    weight:Math.round(clamp(53.5+h.q*6+rand(-1,1),51,61)*2)/2,
+    trip:Math.round((1000+h.sta*2200)/200)*200,wetRec:wetRecord(h)}));
+  const race={title,dist,rating,field,placeN:n>=8?3:2,no:S.idx+1};
+  priceRace(race);
+  const nanPick=field.slice().sort((a,b)=>b.q+gauss()*.25-a.q)[0];
+  race.tip={name:nanPick.name,no:nanPick.no,why:pick(NAN)};
+  S.race=race;S.bets=[];S.sel=[];S.phase="bet";S.result=null;
+  save();
+}
+function fresh(){
+  S={bank:1000,meeting:1,best:1000,bigCollect:0,loans:0,type:"win",sel:[],bets:[],phase:"bet",ledger:[]};
+  newMeeting();
+}
+function save(){try{localStorage.setItem("dustyflat1",JSON.stringify(S))}catch(e){}}
+function load(data){
+  if(data&&data.race){S=data;return}
+  try{const d=JSON.parse(localStorage.getItem("dustyflat1"));if(d&&d.race){S=d;return}}catch(e){}
+  fresh();
+}
+
+/* ---------- sound ---------- */
+let AC=null,muted=false;
+function audio(){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();if(AC.state==="suspended")AC.resume()}catch(e){}}
+function tone(f,d,when=0,type="square",vol=.05){
+  if(!AC||muted)return;
+  const o=AC.createOscillator(),g=AC.createGain(),t=AC.currentTime+when;
+  o.type=type;o.frequency.value=f;g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.001,t+d);
+  o.connect(g).connect(AC.destination);o.start(t);o.stop(t+d);
+}
+const bugle=()=>[[392,.12],[523,.12],[659,.12],[784,.26],[659,.12],[784,.4]].reduce((w,[f,d])=>{tone(f,d,w,"square",.04);return w+d*.95},0);
+const jingle=()=>[523,659,784,1047,1319].forEach((f,i)=>tone(f,.14,i*.09));
+const sad=()=>[220,196,165].forEach((f,i)=>tone(f,.22,i*.17,"triangle",.08));
+
+/* ---------- sprites ---------- */
+function polyFill(c,pts,col){
+  c.fillStyle=col;
+  const ys=pts.map(p=>p[1]),y0=Math.floor(Math.min(...ys)),y1=Math.ceil(Math.max(...ys));
+  for(let y=y0;y<=y1;y++){
+    const xs=[],sy=y+.5;
+    for(let i=0;i<pts.length;i++){const a=pts[i],b=pts[(i+1)%pts.length];
+      if((a[1]<=sy&&b[1]>sy)||(b[1]<=sy&&a[1]>sy))xs.push(a[0]+(sy-a[1])/(b[1]-a[1])*(b[0]-a[0]))}
+    xs.sort((a,b)=>a-b);
+    for(let i=0;i+1<xs.length;i+=2)c.fillRect(Math.round(xs[i]),y,Math.max(1,Math.round(xs[i+1])-Math.round(xs[i])),1);
+  }
+}
+function line(c,x0,y0,x1,y1,w,col){
+  c.fillStyle=col;
+  const s=Math.max(Math.abs(x1-x0),Math.abs(y1-y0),1);
+  for(let i=0;i<=s;i++)c.fillRect(Math.round(x0+(x1-x0)*i/s),Math.round(y0+(y1-y0)*i/s),w,w);
+}
+const DIG={0:"111101101101111",1:"010110010010111",2:"111001111100111",3:"111001111001111",4:"101101111001001",5:"111100111001111",6:"111100111101111",7:"111001010010010",8:"111101111101111",9:"111101111001111",m:"000000101111101"};
+function digits(c,str,x,y,col){c.fillStyle=col;for(const ch of String(str)){const g=DIG[ch];if(g)for(let i=0;i<15;i++)if(g[i]==="1")c.fillRect(x+i%3,y+Math.floor(i/3),1,1);x+=4}}
+const shade=(hex,a)=>{const n=parseInt(hex.slice(1),16),f=v=>clamp(Math.round(v*a),0,255);return `rgb(${f(n>>16)},${f(n>>8&255)},${f(n&255)})`};
+const SW=46,SH=38,FR=6;
+function leg(c,hx,hy,ph,col){
+  const th=.82*Math.sin(ph),fl=.25+1.05*Math.max(0,Math.cos(ph));
+  const kx=hx+Math.sin(th)*6,ky=hy+Math.cos(th)*6;
+  const sh=th-fl,fx=kx+Math.sin(sh)*6,fy=ky+Math.cos(sh)*6;
+  line(c,hx,hy,kx,ky,2,col);line(c,kx,ky,fx,fy,1,col);c.fillStyle="#17110b";c.fillRect(Math.round(fx)-1,Math.round(fy),3,2);
+}
+function buildSheet(h,idx){
+  const sheet=document.createElement("canvas");sheet.width=SW*FR;sheet.height=SH;
+  const out=sheet.getContext("2d",{willReadFrequently:true});
+  const [coat,mane]=COATS[h.coat],[silk,alt]=SILKS[idx%SILKS.length];
+  for(let f=0;f<FR;f++){
+    const tmp=document.createElement("canvas");tmp.width=SW;tmp.height=SH;
+    const c=tmp.getContext("2d",{willReadFrequently:true}),ph=f/FR*6.2832;
+    const b=Math.round(Math.sin(ph*2)*.8)+2,far=shade(coat,.62),low=shade(coat,.78),hi=shade(coat,1.25);
+    // far legs
+    leg(c,30,21+b,ph+.7,far);leg(c,13,21+b,ph+3.14+.7,far);
+    // tail
+    const tw=Math.sin(ph)*2;
+    polyFill(c,[[9,12+b],[10,15+b],[3,21+b+tw],[0,20+b+tw],[3,16+b]],mane);
+    // neck + head
+    polyFill(c,[[28,13+b],[34,4+b],[39,6+b],[33,20+b]],coat);
+    polyFill(c,[[35,2+b],[40,3+b],[45,7+b],[44,10+b],[40,10+b],[36,8+b]],coat);
+    polyFill(c,[[35,0+b],[37,0+b],[38,4+b],[35,4+b]],low);
+    c.fillStyle="#120c08";c.fillRect(39,5+b,1,1);c.fillRect(44,8+b,1,1);
+    polyFill(c,[[27,12+b],[32,3+b],[35,3+b],[29,14+b]],mane);
+    // body
+    for(let y=-6;y<=6;y++){const w=Math.round(12.6*Math.sqrt(1-(y/6.6)*(y/6.6)));c.fillStyle=y>=3?low:y<=-4?hi:coat;c.fillRect(21-w,17+b+y,w*2+1,1)}
+    // near legs
+    leg(c,31,21+b,ph,coat);leg(c,12,21+b,ph+3.14,coat);
+    // saddle cloth + number
+    c.fillStyle="#f4f1e6";c.fillRect(13,12+b,9,8);c.fillStyle=silk;c.fillRect(13,12+b,9,1);
+    digits(c,idx+1,16,14+b,"#111");
+    // jockey
+    polyFill(c,[[17,11+b],[23,11+b],[25,14+b],[20,15+b]],"#f2efe3");
+    c.fillStyle="#1a1410";c.fillRect(21,14+b,3,4);
+    polyFill(c,[[18,6+b],[23,1+b],[28,3+b],[25,10+b],[19,11+b]],silk);
+    c.fillStyle=alt;c.fillRect(22,3+b,2,5);
+    line(c,26,5+b,33,8+b,1,silk);
+    c.fillStyle="#e6b48e";c.fillRect(27,1+b,3,3);
+    c.fillStyle=alt;c.fillRect(26,-1+b,4,2);c.fillRect(29,0+b,2,1);
+    // outline pass
+    const img=c.getImageData(0,0,SW,SH),d=img.data,copy=new Uint8ClampedArray(d);
+    const op=(x,y)=>x>=0&&y>=0&&x<SW&&y<SH&&copy[(y*SW+x)*4+3]>0;
+    for(let y=0;y<SH;y++)for(let x=0;x<SW;x++){const i=(y*SW+x)*4;
+      if(!copy[i+3]&&(op(x-1,y)||op(x+1,y)||op(x,y-1)||op(x,y+1))){d[i]=20;d[i+1]=14;d[i+2]=10;d[i+3]=255}}
+    c.putImageData(img,0,0);
+    out.drawImage(tmp,f*SW,0);
+  }
+  return sheet;
+}
+
+/* ---------- renderer ---------- */
+const cv=$("c"),g=cv.getContext("2d"),W=480,H=236,PX=6;
+g.imageSmoothingEnabled=false;
+const reduced=matchMedia("(prefers-reduced-motion: reduce)").matches;
+let sheets=[],sheetKey="",R=null,particles=[];
+function ensureSheets(){
+  const key=S.race.field.map(h=>h.name).join()+S.meeting+S.idx;
+  if(key!==sheetKey){sheetKey=key;sheets=S.race.field.map((h,i)=>buildSheet(h,i))}
+}
+const laneY=l=>{const n=S.race.field.length;return 124+l*(90/(n-1))};
+const mix=(a,b,t)=>a.map((v,i)=>Math.round(v+(b[i]-v)*t));
+const css=a=>`rgb(${a[0]},${a[1]},${a[2]})`;
+function palette(){
+  const t=S.idx/7,wet=clamp((S.race.rating-4)/5,0,1);
+  let top=mix([72,152,214],[176,92,110],t),bot=mix([186,222,232],[250,190,110],t);
+  const grey=[120,128,136];top=mix(top,grey,wet*.75);bot=mix(bot,[176,180,180],wet*.75);
+  const turfA=mix([78,142,64],[52,106,56],wet),turfB=mix([70,130,58],[46,96,50],wet);
+  return {top,bot,turfA,turfB,hill:mix([86,110,92],[80,70,90],t),far:mix([128,150,150],[150,110,120],t)};
+}
+function drawScene(camX,now){
+  const P=palette(),fx=S.race.dist*PX;
+  for(let i=0;i<9;i++){g.fillStyle=css(mix(P.top,P.bot,i/8));g.fillRect(0,i*9,W,9)}
+  if(S.race.rating<=6){g.fillStyle="#fff2c0";g.fillRect(392,14,16,16);g.fillRect(388,18,24,8);g.fillRect(396,10,8,24)}
+  // far hills
+  g.fillStyle=css(P.far);
+  for(let x=0;x<W;x+=2){const w=x+camX*.12,h=Math.sin(w*.014)*10+Math.sin(w*.037)*5;g.fillRect(x,62+h,2,40)}
+  g.fillStyle=css(P.hill);
+  for(let x=0;x<W;x+=2){const w=x+camX*.25,h=Math.sin(w*.022+1)*5+Math.sin(w*.061)*2;g.fillRect(x,76+h,2,30)}
+  // gum trees
+  const par=.5,start=Math.floor((camX*par-60)/46);
+  for(let i=start;i<start+15;i++){
+    const x=i*46+hash(i)*30-camX*par,s=8+hash(i+9)*8;
+    g.fillStyle="#d9d3c1";g.fillRect(x,86-s,3,s+8);
+    g.fillStyle="#3f6a4e";
+    for(let j=0;j<7;j++){const a=hash(i*3+j),b=hash(i*5+j);g.fillRect(x-10+a*20,70-s+b*12,10,5)}
+    g.fillStyle="#5d8a62";for(let j=0;j<4;j++)g.fillRect(x-7+hash(i+j*7)*13,67-s+hash(i+j)*8,6,3);
+  }
+  // grandstand
+  const sx=fx-250-camX;
+  if(sx>-280&&sx<W){
+    g.fillStyle="#7a2f24";g.fillRect(sx,44,250,4);
+    g.fillStyle="#efe4c8";g.fillRect(sx+6,48,3,46);g.fillRect(sx+122,48,3,46);g.fillRect(sx+241,48,3,46);
+    g.fillStyle="#50483b";g.fillRect(sx,56,250,38);
+    for(let r=0;r<5;r++)for(let c=0;c<61;c++){
+      const seed=hash(r*91+c),fl=!reduced&&R&&R.running&&hash(r+c+Math.floor(now/180))>.72?-1:0;
+      g.fillStyle=["#e8c8a8","#c8342a","#2d5fb8","#f0e8d0","#e6b420","#3a7c4b"][Math.floor(seed*6)];
+      g.fillRect(sx+3+c*4,58+r*7+fl,3,5);
+    }
+    g.fillStyle="#1f4a30";g.fillRect(sx+75,34,100,12);digits(g,S.race.no,sx+80,37,"#ffd889");
+  }
+  // outer rail + turf
+  g.fillStyle=css(P.turfB);g.fillRect(0,96,W,140);
+  const off=((-camX)%128+128)%128;
+  g.fillStyle=css(P.turfA);
+  for(let x=off-128;x<W;x+=128)g.fillRect(x,102,64,116);
+  g.fillStyle="#b7a06c";g.fillRect(0,100,W,2);
+  g.fillStyle="#f6f2e8";g.fillRect(0,92,W,3);
+  const po=((-camX)%32+32)%32;for(let x=po-32;x<W;x+=32)g.fillRect(x,92,2,9);
+  // distance markers
+  for(let m=200;m<S.race.dist;m+=200){
+    const mx=(S.race.dist-m)*PX-camX;
+    if(mx>-20&&mx<W+20){g.fillStyle="#f6f2e8";g.fillRect(mx,74,2,22);g.fillStyle="#1b1b22";g.fillRect(mx-9,66,21,9);digits(g,m,mx-7+(m<1000?2:0),68,"#ffd889")}
+  }
+  // finish
+  const fxs=fx-camX;
+  if(fxs>-10&&fxs<W+10){
+    for(let y=102;y<218;y+=4){g.fillStyle=(y/4)%2?"#f4f1e6":"#1d1d1d";g.fillRect(fxs,y,2,4);g.fillStyle=(y/4)%2?"#1d1d1d":"#f4f1e6";g.fillRect(fxs+2,y,2,4)}
+    g.fillStyle="#f4f1e6";g.fillRect(fxs,54,3,42);
+    g.fillStyle="#c8321f";g.fillRect(fxs-6,46,15,12);g.fillStyle="#f4f1e6";g.fillRect(fxs-2,49,7,6);
+  }
+  // inner rail
+  g.fillStyle="#f6f2e8";g.fillRect(0,221,W,3);
+  for(let x=po-32;x<W;x+=32)g.fillRect(x,221,2,9);
+  g.fillStyle=css(mix(P.turfA,[30,60,40],.5));g.fillRect(0,230,W,6);
+}
+function drawGates(camX,back){
+  const n=S.race.field.length;
+  for(let l=0;l<n;l++){
+    const y=laneY(l),x=-camX;
+    g.fillStyle=back?"#2c6e4a":"#3f9b67";
+    if(back){g.fillRect(x-34,y-26,2,26);g.fillRect(x-34,y-26,38,2)}
+    else{g.fillRect(x+6,y-26,3,28)}
+  }
+}
+function horsePositions(t){
+  const tr=R.sim.trace,fl=t/R.sim.dt,i=clamp(Math.floor(fl),0,tr.length-2),u=clamp(fl-i,0,1);
+  return tr[i].map((v,k)=>v+(tr[i+1][k]-v)*u);
+}
+function drawHorses(camX,pos,now){
+  const f=S.race.field,idx=[...f.keys()].sort((a,b)=>f[a].barrier-f[b].barrier);
+  for(const k of idx){
+    const h=f[k],y=laneY(h.barrier-1),moving=pos&&R.running&&!R.photoOn;
+    const x=Math.round((pos?pos[k]:0)*PX-camX-43);
+    const ff=(pos&&(R.running||R.photoOn))?(R.photoOn?2:(Math.floor(now/70)+k*2)%FR):0;
+    const sw=moving?Math.round(Math.sin(now/260+k)*1):0;
+    if(x>-50&&x<W+4){
+      g.fillStyle="rgba(10,30,15,.3)";g.fillRect(x+8,y-1+sw,30,3);
+      g.drawImage(sheets[k],ff*SW,0,SW,SH,x,y-35+sw,SW,SH);
+      if(moving&&!reduced&&Math.random()<.5)particles.push({x:x+camX+6,y:y+sw,vx:-rand(.3,1.2),vy:-rand(.1,.6),life:rand(10,22)});
+    }
+  }
+}
+function drawParticles(camX){
+  g.fillStyle="#b89d6c";
+  particles=particles.filter(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.03;p.life--;g.fillRect(p.x-camX,p.y,2,2);return p.life>0});
+}
+function drawRain(now){
+  if(S.race.rating<6||reduced)return;
+  g.fillStyle="rgba(210,225,240,.7)";
+  const c=20+(S.race.rating-5)*16;
+  for(let i=0;i<c;i++){const x=(hash(i)*W*1.2-(now*.28+i*7)%W+W)%W,y=(hash(i+3)*H+now*.5)%H;g.fillRect(x,y,1,5)}
+}
+function drawMap(pos){
+  g.fillStyle="rgba(15,12,8,.75)";g.fillRect(8,6,W-16,11);
+  g.fillStyle="#6b5a34";g.fillRect(12,11,W-24,1);
+  const f=S.race.field;
+  f.forEach((h,k)=>{const x=12+clamp((pos?pos[k]:0)/S.race.dist,0,1)*(W-28);g.fillStyle=SILKS[k%SILKS.length][0];g.fillRect(x,8,4,7);
+    if(S.bets.some(b=>b.sel.includes(k))){g.fillStyle="#ffe07a";g.fillRect(x,6,4,1);g.fillRect(x,15,4,1)}});
+}
+let cam=-340;
+function frame(now){
+  requestAnimationFrame(frame);
+  if(!S||!S.race)return;
+  ensureSheets();
+  let pos=null;
+  if(R){
+    if(R.photoOn){ if(now>R.photoUntil){R.photoOn=false;cv.style.filter="";$("photo").style.display="none";R.last=now;fireWinnerCall();} }
+    else if(R.running){
+      const dt=Math.min(.1,(now-R.last)/1000);R.last=now;
+      R.t+=dt*R.rate;
+      tick(now);
+    }
+    pos=horsePositions(R.t);
+    if(R.t>=R.sim.dt*(R.sim.trace.length-2))R.running=false;
+    const lead=Math.max(...pos),fx=S.race.dist*PX,target=Math.min(lead*PX-345,fx-300);
+    cam+=(target-cam)*.12;
+  }else cam=-340;
+  let camX=cam;
+  g.setTransform(1,0,0,1,0,0);
+  if(R&&R.photoOn){
+    camX=S.race.dist*PX-240;
+    const s=R.sim,a=S.race.field[s.order[0]],b=S.race.field[s.order[1]];
+    const cy=clamp((laneY(a.barrier-1)+laneY(b.barrier-1))/2-12,70,168);
+    g.setTransform(2,0,0,2,-240,-(cy*2)+H/2);
+  }
+  drawScene(camX,now);
+  if(!pos||R.t<4)drawGates(camX,true);
+  drawHorses(camX,pos,now);
+  if(!pos||R.t<4)drawGates(camX,false);
+  drawParticles(camX);
+  g.setTransform(1,0,0,1,0,0);
+  drawRain(now);
+  drawMap(pos);
+}
+
+/* ---------- race playback ---------- */
+function say(html){$("call").innerHTML=html}
+const nm=k=>`<b>${S.race.field[k].name}</b>`;
+const orderAt=pos=>[...pos.keys()].sort((a,b)=>pos[b]-pos[a]);
+const myK=()=>{const c={};S.bets.forEach(b=>b.sel.forEach(k=>c[k]=(c[k]||0)+b.stake));const e=Object.entries(c).sort((a,b)=>b[1]-a[1])[0];return e?+e[0]:null};
+function startRace(){
+  audio();
+  const sim=simulate(S.race.field,S.race,true);
+  const fin=sim.order.map(k=>sim.fin[k]);
+  R={sim,t:0,rate:(S.race.dist/17)/(12+S.race.dist/100),running:true,last:performance.now(),called:0,photoDone:false,settled:false,lastHoof:0,evI:0,
+     isPhoto:fin[1]-fin[0]<.11,startPos:null,p70:null,winCalled:false};
+  S.phase="race";cam=-340;particles=[];
+  renderAll();
+  bugle();
+  say(`And they're away in the <b>${S.race.title}</b>.`);
+  if(innerWidth<821)document.querySelector(".stage").scrollIntoView({behavior:reduced?"auto":"smooth",block:"start"});
+}
+function posStr(o,k){const i=o.indexOf(k)+1;return i===1?"in front":i===2?"second":i===3?"third":i+"th"}
+function tick(now){
+  const pos=horsePositions(R.t),lead=Math.max(...pos),p=lead/S.race.dist,o=orderAt(pos),D=S.race.dist,me=myK();
+  if(now-R.lastHoof>115&&p<1.02){R.lastHoof=now;tone(110+rand(30),.03,0,"square",.012)}
+  const ev=R.sim.events[R.evI];
+  if(ev&&R.t>=ev.t&&p<1){R.evI++;say(`${nm(ev.k)} has been held up and loses ground!`)}
+  const stages=[
+    [.1,()=>`${nm(o[0])} shows out early from ${nm(o[1])}.`],
+    [.3,()=>`Settling down, ${nm(o[0])} leads ${nm(o[1])}, then ${nm(o[2])}. Last is ${nm(o[o.length-1])}.`],
+    [.55,()=>`${Math.round((D-lead)/100)*100}m to run. ${nm(o[0])} still there, ${nm(o[1])} tracking.`],
+    [.72,()=>{R.p70=o;return `Into the straight! ${nm(o[0])} from ${nm(o[1])} and ${nm(o[2])}.`+(me!==null?` Your runner is ${posStr(o,me)}.`:"")}],
+    [.88,()=>{const g=R.p70?o.slice(0,5).sort((a,b)=>(o.indexOf(a)-R.p70.indexOf(a))-(o.indexOf(b)-R.p70.indexOf(b)))[0]:o[1];return g===o[0]?`${nm(o[0])} is kicking clear!`:`${nm(g)} is flying home! ${nm(o[0])} tries to hold on.`}],
+    [.97,()=>pos[o[0]]-pos[o[1]]<3?`${nm(o[0])} and ${nm(o[1])} locked together!`:`${nm(o[0])} has it won.`]
+  ];
+  while(R.called<stages.length&&p>=stages[R.called][0]){say(stages[R.called][1]());R.called++}
+  const s=R.sim,f2=s.fin[s.order[1]],f1=s.fin[s.order[0]],f3=s.fin[s.order[Math.min(S.race.placeN,s.order.length)-1]];
+  if(R.isPhoto&&!R.photoDone&&R.t>=f2){
+    R.photoDone=true;R.t=f2;R.photoOn=true;R.photoUntil=now+2100;
+    cv.style.filter="grayscale(1) contrast(1.25)";$("photo").style.display="block";
+    say("Too close to call. Photo finish!");
+    tone(880,.18,0);tone(880,.18,.3);
+    return;
+  }
+  if(!R.winCalled&&R.t>=f1&&!R.isPhoto)fireWinnerCall();
+  if(!R.settled&&R.t>=f3+.8)settle();
+}
+function fireWinnerCall(){if(R.winCalled)return;R.winCalled=true;say(`${nm(R.sim.order[0])} wins the <b>${S.race.title}</b>!`)}
+function skipRace(){
+  if(!R||R.settled)return;
+  const s=R.sim,f3=s.fin[s.order[Math.min(S.race.placeN,s.order.length)-1]];
+  R.t=f3+.8;R.photoOn=false;R.photoDone=true;cv.style.filter="";$("photo").style.display="none";
+  fireWinnerCall();settle();
+}
+function betWins(b,o,placeN){
+  const s=b.sel;
+  if(b.type==="win")return o[0]===s[0];
+  if(b.type==="place")return o.indexOf(s[0])<placeN;
+  if(b.type==="quin")return s.includes(o[0])&&s.includes(o[1]);
+  if(b.type==="exacta")return o[0]===s[0]&&o[1]===s[1];
+  if(b.type==="tri")return o[0]===s[0]&&o[1]===s[1]&&o[2]===s[2];
+}
+function settle(){
+  R.settled=true;
+  const o=R.sim.order,race=S.race,res={order:o.slice(0,4),bets:[],staked:0,ret:0};
+  for(const b of S.bets){const w=betWins(b,o,race.placeN),pay=w?Math.round(b.stake*b.odds*100)/100:0;res.bets.push({...b,w,pay});res.staked+=b.stake;res.ret+=pay}
+  res.quin=oddsFor("quin",[o[0],o[1]]);res.exacta=oddsFor("exacta",[o[0],o[1]]);res.tri=oddsFor("tri",[o[0],o[1],o[2]]);
+  res.margin=(R.sim.fin[o[1]]-R.sim.fin[o[0]])*17/2.4;
+  S.bank=Math.round((S.bank+res.ret)*100)/100;
+  S.best=Math.max(S.best,S.bank);
+  S.bigCollect=Math.max(S.bigCollect||0,res.ret);
+  o.forEach((k,i)=>{const h=S.pool.find(p=>p.name===race.field[k].name);if(h)h.form=(h.form+(i+1>9?"0":i+1)).slice(-6)});
+  S.lastNames=race.field.map(h=>h.name);
+  S.ledger.push({no:race.no,staked:res.staked,ret:res.ret});
+  S.result=res;S.phase="result";
+  save();
+  if(res.ret>res.staked)jingle();else if(res.staked>0)sad();
+  renderAll();
+  flashBank(res.ret>res.staked?"up":res.staked>0?"down":"");
+}
+function flashBank(c){const b=$("bank");b.className=c;setTimeout(()=>b.className="",1400)}
+function nextRace(){
+  R=null;cv.style.filter="";
+  if(S.idx>=7){S.phase="end";save();renderAll();return}
+  S.idx++;buildRace();renderAll();
+  say(`Betting open on the <b>${S.race.title}</b>.`);
+}
+function nextMeeting(){S.meeting++;S.lastNames=[];newMeeting();R=null;renderAll();say(`New meeting at <b>${S.track}</b>. Betting open.`)}
+
+/* ---------- UI ---------- */
+function stake(){return Math.max(0,Math.floor(+$("stake").value||0))}
+function silk(h,k,tag){const [a,b]=SILKS[k%SILKS.length];return `<span class="silk" style="background:${a};color:${b}">${h.no}${tag?`<i>${tag}</i>`:""}</span>`}
+function renderHeader(){
+  $("meet").textContent=`${S.track} Picnic Meeting ${S.meeting}`;
+  $("raceNo").textContent=`${S.race.no}/8`;
+  $("bank").textContent=money(S.bank);
+}
+function renderCard(){
+  const r=S.race,c=$("card");
+  if(S.phase==="result")return renderResult();
+  if(S.phase==="end")return renderEnd();
+  const wet=r.rating>=6?" wet":"";
+  c.innerHTML=`<h2>${r.title}</h2>
+  <div class="conds"><span>${r.dist}m</span><span class="${wet}">${ratingName(r.rating)}</span><span>${r.field.length} runners</span><span>Pays ${r.placeN} places</span></div>
+  <div class="tip">Nan's tip: <b>${r.tip.no}. ${r.tip.name}</b>. ${r.tip.why}</div>
+  <div class="runners">${r.field.map((h,k)=>{
+    const i=S.sel.indexOf(k),on=i>=0;
+    const tag=on&&TYPES[S.type][1]>1?(S.type==="quin"?"•":i+1):"";
+    return `<button class="runner${on?" on":""}" data-k="${k}" aria-pressed="${on}" ${S.phase!=="bet"?"disabled":""}>
+      ${silk(h,k,tag)}
+      <span><span class="rname">${h.name}</span><br><span class="rmeta"><b>${h.form}</b> · B${h.barrier} · ${h.weight}kg · ${h.jock}<br>${STYLE[h.style]} · Best ${h.trip}m · Wet ${h.wetRec}</span></span>
+      <span class="odds"><small>Win</small>${oddsTxt(h.win)}</span>
+      <span class="odds"><small>Place</small>${oddsTxt(h.place)}</span>
+    </button>`}).join("")}</div>`;
+}
+function renderResult(){
+  const r=S.race,x=S.result,c=$("card"),net=x.ret-x.staked;
+  const lbl=x.margin<.1?"Short head":x.margin<.5?"Half a length or less":x.margin.toFixed(1)+" lengths";
+  c.innerHTML=`<h2>Result: ${r.title}</h2>
+  <table class="tbl">${x.order.slice(0,3).map((k,i)=>{const h=r.field[k];return `<tr><td>${silk(h,k)}</td><td><b>${["1st","2nd","3rd"][i]}</b> ${h.name}</td><td class="n">${i===0?"W "+div(h.win):""}<br>${i<r.placeN?"P "+div(h.place):""}</td></tr>`}).join("")}</table>
+  <div class="conds"><span>Margin: ${lbl}</span><span>Quinella ${div(x.quin)}</span><span>Exacta ${div(x.exacta)}</span><span>Trifecta ${div(x.tri)}</span></div>
+  ${x.bets.length?`<table class="tbl">${x.bets.map(b=>`<tr><td>${b.label}<br><small>${money(b.stake)} at ${div(b.odds)}</small></td><td class="n ${b.w?"won":"lost"}">${b.w?money(b.pay):"Lost"}</td></tr>`).join("")}</table>
+  <div class="net ${net>0?"won":net<0?"lost":""}">${net>0?"Collect "+money(x.ret):net<0?"Down "+money(-net):"Square"}</div>`:`<div>No bets on this one.</div>`}
+  <button class="big next" id="next">${S.idx>=7?"See the meeting result":"Next race"}</button>`;
+  $("next").onclick=nextRace;
+}
+function renderEnd(){
+  const net=S.bank-S.startBank,ratio=S.bank/Math.max(1,S.startBank+0);
+  let title=RANK[0][1];for(const [m,t] of RANK)if(ratio>=m)title=t;
+  $("card").innerHTML=`<h2>${S.track} is done for the day</h2>
+  <div class="net ${net>=0?"won":"lost"}">${net>=0?"Up":"Down"} ${money(Math.abs(net))}</div>
+  <div class="tip">Verdict: <b>${title}</b></div>
+  <table class="tbl">${S.ledger.map(l=>`<tr><td>Race ${l.no}</td><td class="n">Bet ${money(l.staked)}</td><td class="n ${l.ret>l.staked?"won":l.ret<l.staked?"lost":""}">${money(l.ret-l.staked)}</td></tr>`).join("")}</table>
+  <div class="conds"><span>Best bank ${money(S.best)}</span><span>Biggest collect ${money(S.bigCollect||0)}</span><span>Calls to Nan ${S.loans}</span></div>
+  <button class="big next" id="nm">Next meeting</button>
+  <button class="reset" id="rs">Start over with $1,000</button>`;
+  $("nm").onclick=nextMeeting;
+  $("rs").onclick=()=>{fresh();R=null;renderAll();say("Fresh start. Betting open.")};
+}
+function renderSlip(){
+  const bet=S.phase==="bet";
+  $("seg").innerHTML=Object.entries(TYPES).map(([k,v])=>`<button data-t="${k}" aria-pressed="${S.type===k}" ${bet?"":"disabled"}>${v[0]}</button>`).join("");
+  document.querySelectorAll(".stake button,#stake").forEach(e=>e.disabled=!bet);
+  $("bets").innerHTML=S.bets.map((b,i)=>`<li><span>${b.label} · ${money(b.stake)} at ${div(b.odds)}</span>${bet?`<button data-rm="${i}">Remove</button>`:""}</li>`).join("");
+  $("jump").textContent=S.phase==="race"?"Skip to result":bet?(S.bets.length?"Jump":"Jump with no bet"):"Racing done";
+  $("jump").disabled=S.phase!=="bet"&&S.phase!=="race";
+  $("nan").hidden=!(bet&&S.bank<5&&!S.bets.length);
+  updateHint();
+}
+function updateHint(){
+  const bet=S.phase==="bet",need=TYPES[S.type][1],btn=$("place");
+  if(!bet){$("hint").textContent=S.phase==="race"?"Bets are locked. Good luck.":"";btn.disabled=true;return}
+  const st=stake(),cost=S.type==="ew"?st*2:st;
+  const ready=S.sel.length===need,afford=cost>=1&&cost<=S.bank;
+  btn.disabled=!(ready&&afford);
+  if(!ready){
+    const left=need-S.sel.length;
+    $("hint").textContent=S.type==="exacta"||S.type==="tri"?`Tap runners in finishing order. ${left} to go.`:`Tap ${left} ${left>1?"runners":"runner"} in the form guide.`;
+  }else if(cost>S.bank)$("hint").textContent=`That costs ${money(cost)} and you have ${money(S.bank)}. Lower the stake.`;
+  else if(cost<1)$("hint").textContent="Enter a stake of at least $1.";
+  else if(S.type==="ew"){const h=S.race.field[S.sel[0]];$("hint").innerHTML=`Costs ${money(cost)}. Win returns <b>${money(st*h.win)}</b> plus place <b>${money(st*h.place)}</b>`}
+  else{const o=oddsFor(S.type,S.sel);$("hint").innerHTML=`${div(o)} returns <b>${money(st*o)}</b> on a ${money(st)} stake`}
+}
+function renderAll(){renderHeader();renderCard();renderSlip()}
+function labelFor(type,sel){
+  const f=S.race.field;
+  if(TYPES[type][1]===1)return `${TYPES[type][0]} ${f[sel[0]].no}. ${f[sel[0]].name}`;
+  return `${TYPES[type][0]} ${sel.map(k=>f[k].no).join(type==="quin"?" & ":"-")}`;
+}
+function addBet(type,sel,st){S.bets.push({type,sel:sel.slice(),stake:st,odds:oddsFor(type,sel),label:labelFor(type,sel)})}
+$("place").onclick=()=>{
+  const st=stake(),t=S.type,cost=t==="ew"?st*2:st;
+  if(cost>S.bank||S.sel.length!==TYPES[t][1]||st<1)return;
+  audio();tone(660,.05);
+  if(t==="ew"){addBet("win",S.sel,st);addBet("place",S.sel,st)}else addBet(t,S.sel,st);
+  S.bank=Math.round((S.bank-cost)*100)/100;S.sel=[];save();renderAll();
+};
+$("jump").onclick=()=>{S.phase==="race"?skipRace():S.phase==="bet"&&startRace()};
+$("nan").onclick=()=>{S.bank+=200;S.loans++;save();renderAll();say("Nan sighs and transfers $200. She says it's the last time. It isn't.")};
+$("card").addEventListener("click",e=>{
+  const b=e.target.closest("[data-k]");if(!b||S.phase!=="bet")return;
+  const k=+b.dataset.k,need=TYPES[S.type][1],i=S.sel.indexOf(k);
+  if(i>=0)S.sel.splice(i,1);else if(need===1)S.sel=[k];else if(S.sel.length<need)S.sel.push(k);
+  renderCard();updateHint();
+});
+$("seg").addEventListener("click",e=>{const t=e.target.dataset.t;if(!t)return;S.type=t;S.sel=S.sel.slice(0,TYPES[t][1]);renderCard();renderSlip()});
+$("bets").addEventListener("click",e=>{const i=e.target.dataset.rm;if(i===undefined)return;const b=S.bets.splice(+i,1)[0];S.bank=Math.round((S.bank+b.stake)*100)/100;save();renderAll()});
+document.querySelector(".stake").addEventListener("click",e=>{
+  const d=e.target.dataset,el=$("stake");if(e.target.disabled)return;
+  if(d.add)el.value=stake()+(+d.add);
+  if(d.all)el.value=Math.floor(S.type==="ew"?S.bank/2:S.bank);
+  if(d.clear)el.value="";
+  updateHint();
+});
+$("stake").addEventListener("input",updateHint);
+$("mute").onclick=()=>{muted=!muted;$("mute").textContent=muted?"Sound off":"Sound on"};
+
+/* ---------- boot ---------- */
+function start(data){
+  load(data);
+  if(S.phase==="race")S.phase="bet"; // a reload mid-race re-opens the same market with bets intact
+  renderAll();
+  say(S.phase==="bet"?`Betting open on the <b>${S.race.title}</b>. Read the form, pick a runner, then jump.`:"");
+  requestAnimationFrame(frame);
+}
+window.claude?.hot?.snapshot?.(()=>S);
+window.claude?.hot?.ready?window.claude.hot.ready(start):start(window.claude?.hot?.data??{});
+</script>
+</body>
+</html>
