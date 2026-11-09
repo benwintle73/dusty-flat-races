@@ -959,7 +959,7 @@ function renderResult(){
   const lbl=x.margin<.1?"Short head":x.margin<.5?"Half a length or less":x.margin.toFixed(1)+" lengths";
   c.innerHTML=`<h2>Result: ${r.title}</h2>
   <table class="tbl">${x.order.slice(0,3).map((k,i)=>{const h=r.field[k];return `<tr><td>${silk(h,k)}</td><td><b>${["1st","2nd","3rd"][i]}</b> ${h.name}</td><td class="n">${i===0?"W "+div(h.win):""}<br>${i<r.placeN?"P "+div(h.place):""}</td></tr>`}).join("")}</table>
-  <div class="conds"><span>Margin: ${lbl}</span><span>Quinella ${div(x.quin)}</span><span>Exacta ${div(x.exacta)}</span><span>Trifecta ${div(x.tri)}</span><span>First 4 ${div(x.first4)}</span></div>
+  <div class="conds"><span>Margin: ${lbl}</span><span>Quinella ${div(x.quin)}</span><span>Exacta ${div(x.exacta)}</span><span>Trifecta ${div(x.tri)}</span>${x.first4?`<span>First 4 ${div(x.first4)}</span>`:""}</div>
   ${x.bets.length?`<table class="tbl">${x.bets.map(b=>`<tr><td>${b.label}<br><small>${money(b.stake)} at ${div(b.odds)}</small></td><td class="n ${b.w?"won":"lost"}">${b.w?money(b.pay):"Lost"}</td></tr>`).join("")}</table>
   <div class="net ${net>0?"won":net<0?"lost":""}">${net>0?"Collect "+money(x.ret):net<0?"Down "+money(-net):"Square"}</div>`:`<div>No bets on this one.</div>`}
   <div class="go"><button class="big place" id="replay">Watch replay</button><button class="big next" id="next">${S.idx>=lastIdx()?"Meeting result":"Next race"}</button></div>`;
@@ -1067,7 +1067,11 @@ $("mute").onclick=()=>{muted=!muted;if(muted)stopCrowd();$("mute").textContent=m
 /* ---------- boot ---------- */
 function start(data){
   load(data);
-  picker=null;if(S.phase==="race")S.phase="bet"; // a reload mid-race re-opens the same market with bets intact
+  picker=null;if(S.phase==="race")S.phase="bet";
+  // saves from earlier builds lack newer fields
+  if(S.mode==="real"&&!S.realList){S.realList=[S.real];S.realIdx=0}
+  if(S.result&&S.result.first4===undefined)S.result.first4=0;
+  try{renderAll()}catch(e){console.error(e);try{localStorage.removeItem("dustyflat2")}catch(_){ }S=null;fresh();picker=null} // a reload mid-race re-opens the same market with bets intact
   renderAll();
   say(S.phase==="bet"?`Betting open on the <b>${S.race.title}</b>. Read the form, pick a runner, then jump.`:"");
   requestAnimationFrame(frame);
