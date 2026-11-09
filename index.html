@@ -1444,10 +1444,10 @@ $("acctForm").addEventListener("submit",async e=>{
       $("acctPass").value="";
       if(j.access_token){setSession(j);await afterLogin();dlg.close()}
       else if(j.identities&&!j.identities.length){acctMode="login";renderAccount();acctNote("That email already has an account. Log in instead.",true)}
-      else{acctMode="login";renderAccount();acctNote("Check your email and tap the confirmation link to finish creating your account.")}
+      else{acctMode="login";renderAccount();acctNote("Check your email, including your junk or spam folder, and tap the confirmation link to finish creating your account.")}
     }else if(acctMode==="forgot"){
       await sbAuth("recover?"+redirect,{email});
-      acctMode="login";renderAccount();acctNote("If that email has an account, a reset link is on its way.");
+      acctMode="login";renderAccount();acctNote("If that email has an account, a reset link is on its way. Check your junk or spam folder too.");
     }else if(acctMode==="newpass"){
       const t=await token();await sbAuth("user",{password},"PUT",t);
       $("acctPass").value="";acctMode="in";renderAccount();acctNote("Password updated.");
