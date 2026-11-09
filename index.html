@@ -48,10 +48,32 @@ canvas{width:100%;height:auto;display:block}
 .stake label{font-weight:600}
 #stake{width:92px;min-height:44px;background:#000;color:var(--amber);border:2px solid var(--tote2);font:700 28px/1 var(--led);padding:2px 8px}
 .chip{min-height:44px;min-width:50px;background:var(--tote2);color:var(--paper);border:0;font-weight:600;padding:0 8px}
-.go{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.go{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:8px}
 .big{min-height:52px;border:0;font:400 20px/1 var(--display);letter-spacing:.6px;text-transform:uppercase;padding:4px 8px}
 .big.place{background:var(--paper);color:var(--ink)}
 .big.jump{background:var(--red);color:#fff}
+.big.ticket{background:var(--amber);color:var(--tote)}
+.pick{display:flex;gap:8px;align-items:center;font:700 17px/1 var(--led);color:var(--amber)}
+.pick span{white-space:nowrap}
+#racesel{flex:1;min-width:0;min-height:44px;background:var(--paper);color:var(--ink);border:0;font:600 18px/1.1 var(--led);padding:0 8px}
+.book-sum{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.book-sum div{background:var(--tote);color:var(--paper);padding:8px 10px}
+.book-sum small{display:block;font:600 13px/1 var(--led);letter-spacing:.8px;text-transform:uppercase;color:var(--amber-dim);margin-bottom:4px}
+.book-sum b{font:700 24px/1 var(--led)}
+.book-day{display:grid;gap:7px}
+.book-day h3{margin:6px 0 0;font:400 20px/1 var(--display);letter-spacing:.4px;text-transform:uppercase}
+.ticket{display:grid;grid-template-columns:minmax(0,1fr) 82px;background:#fff8e6;border:1px dashed #a48b5c}
+.tk-main{padding:9px 11px;display:grid;gap:2px;justify-items:start}
+.tk-race{font:700 16px/1.1 var(--led);color:var(--ink2)}
+.tk-bet{font:600 21px/1.1 var(--led)}
+.tk-bet b{font-weight:700}
+.tk-meta{font-size:15px;color:var(--ink2)}
+.tk-stamp{display:grid;place-items:center;font:400 17px/1 var(--display);letter-spacing:.6px;text-transform:uppercase;border-left:1px dashed #a48b5c;background:var(--paper2);color:var(--ink2);transform-origin:center}
+.s-won .tk-stamp{background:var(--good);color:#fff}
+.s-lost .tk-stamp{background:var(--red);color:#fff}
+.s-void .tk-stamp{background:#6e6a60;color:#fff}
+.tk-act{background:none;border:1px solid currentColor;color:inherit;min-height:32px;padding:0 8px;font:600 14px/1 var(--body);margin:4px 5px 0 0}
+.detail-h{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:4px}
 .big:disabled{opacity:.45;cursor:not-allowed}
 .bets{list-style:none;margin:0;padding:0;display:grid;gap:4px}
 .bets li{display:flex;gap:8px;align-items:center;background:var(--tote2);padding:4px 4px 4px 10px;font-size:16px}
@@ -154,6 +176,7 @@ canvas{width:100%;height:auto;display:block}
       </div>
       <div class="go">
         <button class="big place" id="place">Place bet</button>
+        <button class="big ticket" id="ticket" hidden>Add to My Book</button>
         <button class="big jump" id="jump">Jump</button>
       </div>
       <ul class="bets" id="bets"></ul>
@@ -779,7 +802,7 @@ function calibrate(race){
   f.forEach((h,i)=>{if(!h.place)h.place=Math.max(1.05,ladder(1/(clamp((pl[i]+.6)/(N+1.2),.02,.97)*1.12)))});
 }
 function buildReal(){
-  const src=S.real.races[S.idx],n=src.runners.length;
+  const src0=S.real.races[S.idx],k0=raceKey(S.real,src0.number),sc0=scrOf(k0),src={...src0,runners:src0.runners.filter(r=>!sc0.includes(r.no))},n=src.runners.length;
   const field=src.runners.map((r,k)=>({name:r.name,no:r.no,barrier:0,_b:r.barrier,q:.5,sta:.8,style:realStyle(r.speed),wet:.5,cons:.6,form:r.form||"",runs:[],fd:r.fd||null,jock:r.jockey||"Jockey TBC",trainer:r.trainer,speed:r.speed,coat:strHash(r.name)%COATS.length,weight:r.weight||56,win:r.win,place:r.place,silk:parseSilks(r.silks,k),real:true}));
   field.slice().sort((a,b)=>a._b-b._b).forEach((h,i)=>h.barrier=i+1);
   field.forEach((h,i)=>h.realBarrier=src.runners[i].barrier);
@@ -806,7 +829,6 @@ function renderPicker(){
   $("pb").onclick=()=>{picker=null;renderCard()};
 }
 function refundBets(){if(S.phase==="bet"||S.phase==="race")for(const b of S.bets)S.bank=Math.round((S.bank+b.stake)*100)/100;S.bets=[]}
-let MEETS=[];
 function abortRace(){if(S.phase==="race"){refundBets();S.phase="bet"}R=null;stopCrowd();particles=[];cv.style.filter="";$("photo").style.display="none";$("hud").style.display="none";picker=null}
 function leaveDaily(){const c=S.career;c.dailyDone=c.dailyDone||{};c.dailyDone[S.day]=S.bank;S=c}
 function goCareer(){abortRace();if(S.mode==="daily")leaveDaily();else if(S.mode==="real"){const c=S.career;const keep={...S};delete keep.career;c.realSaved=keep;S=c}save();renderAll();say(`Back at <b>${S.track}</b>.`)}
@@ -817,23 +839,14 @@ function enterReal(i){
   S.phase="bet";goMeeting(i);
 }
 function restartMeet(){abortRace();refundBets();S.idx=0;S.ledger=[];S.bank=S.mode==="real"?1000:(S.startBank??S.bank);S.phase="bet";S.promoted=false;buildRace();renderAll();say(`Meeting restarted. Betting open on the <b>${S.race.title}</b>.`)}
-function renderNav(){
-  const L=S.mode==="real"?S.realList:MEETS,dd=(S.dailyDone||(S.career&&S.career.dailyDone)||{})[dayKey()];
-  const top=`<div><button data-nav="career" aria-pressed="${S.mode==="career"}">Career</button><button data-nav="daily" aria-pressed="${S.mode==="daily"}" ${S.mode!=="daily"&&dd!==undefined?"disabled":""}>${dd!==undefined&&S.mode!=="daily"?"Daily "+money(dd):"Daily"}</button>${(L||[]).map((m,i)=>`<button data-gm="${i}" aria-pressed="${S.mode==="real"&&i===S.realIdx}">${m.venue}</button>`).join("")}${S.mode!=="daily"?'<button class="alt" data-nav="restart">Restart meet</button>':""}</div>`;
-  const races=S.mode==="real"?`<div>${S.real.races.map((r,i)=>`<button data-gr="${i}" aria-pressed="${i===S.idx&&S.phase!=="end"}">R${r.number}${r.feature?" ★":""}</button>`).join("")}</div>`:"";
-  $("nav").innerHTML=top+races;
-}
-$("nav").addEventListener("click",e=>{
-  const b=e.target.closest("button");if(!b||b.disabled)return;audio();
-  if(b.dataset.nav==="career")return goCareer();
-  if(b.dataset.nav==="daily"){if(S.mode==="daily")return;abortRace();if(S.mode==="real"){const c=S.career;const k={...S};delete k.career;c.realSaved=k;S=c}return startDaily()}
-  if(b.dataset.nav==="restart")return restartMeet();
-  if(b.dataset.gm!==undefined){const i=+b.dataset.gm;if(S.mode==="real"){abortRace();goMeeting(i)}else enterReal(i);return}
-  if(b.dataset.gr!==undefined){abortRace();goRace(+b.dataset.gr)}
-});
-function loadMeets(){fetch(REAL_URL).then(r=>r.json()).then(j=>{MEETS=j.meetings||[];if(S)renderNav()}).catch(()=>{})}
+
 function goMeeting(i){refundBets();S.phase="bet";S.realIdx=i;S.real=S.realList[i];S.track=S.real.venue;S.tier=S.real.metro?2:0;S.idx=0;R=null;buildReal();renderAll();say(`Switched to <b>${S.track}</b>.`)}
 function goRace(i){if(S.phase==="bet"&&i===S.idx)return;refundBets();S.phase="bet";S.idx=i;R=null;buildReal();renderAll();say(`Betting open on the <b>${S.race.title}</b>.`)}
+function realBanner(){
+  if(S.mode!=="real")return "";
+  const src=S.real.races[S.idx],k=raceKey(S.real,src.number),man=BOOK.scr[k]||[],rl=resultLine(k);
+  return `<div class="conds"><span>${dayName(S.real.date)} · ${S.track} · ${timeOf(src.jump)}</span>${closed(src.jump)?'<span class="feat">Betting closed</span>':""}</div>${rl?`<div class="tip">Official result: <b>${rl}</b></div>`:""}${man.length?`<div class="tip">You scratched: ${man.map(n=>`<b>${n}</b> <button class="tk-act" data-unscr="${n}">Undo</button>`).join(" ")}</div>`:""}`;
+}
 function tabsHtml(){return "";
   if(S.mode!=="real"||S.phase!=="bet")return "";
   const meets=S.realList.length>1?`<div class="tabs" aria-label="Meetings">${S.realList.map((m,i)=>`<button data-gm="${i}" aria-pressed="${i===S.realIdx}">${m.venue}</button>`).join("")}</div>`:"";
@@ -845,13 +858,129 @@ function startReal(m){
   S={bank:1000,meeting:1,best:1000,bigCollect:0,loans:0,type:"win",sel:[],bets:[],phase:"bet",ledger:[],tier:m.metro?2:0,mode:"real",real:m,realList:list,realIdx:list.indexOf(m),idx:0,track:m.venue,pool:[],startBank:1000,career};
   R=null;buildReal();renderAll();say(`Real Races at <b>${m.venue}</b>. Betting open on the <b>${S.race.title}</b>.`);
 }
+/* ---------- real-race selector and ticket book ---------- */
+let MEETS=[],RS={},REAL_TODAY=null,bookOpen=false,bookMsg="",bookBusy=false;
+let BOOK=(()=>{try{const b=JSON.parse(localStorage.getItem("otrbook1"));if(b&&b.tickets)return {scr:{},...b}}catch(e){}return {bank:1000,tickets:[],scr:{}}})();
+function saveBook(){try{localStorage.setItem("otrbook1",JSON.stringify(BOOK))}catch(e){}}
+const raceKey=(m,n)=>`${m.key}_T_${n}`;
+function scrOf(k){return [...new Set([...((RS[k]&&RS[k].scr)||[]),...(BOOK.scr[k]||[])])]}
+const timeOf=j=>{const d=new Date(j);return isNaN(d)?"":d.toLocaleTimeString("en-AU",{hour:"numeric",minute:"2-digit"})};
+const dayName=d=>new Date(d+"T02:00:00Z").toLocaleDateString("en-AU",{weekday:"short",day:"numeric",month:"short",timeZone:"Australia/Sydney"});
+const closed=j=>{const t=Date.parse(j);return Number.isFinite(t)&&Date.now()>=t};
+function applyMeets(j){
+  MEETS=(j.days||[]).flatMap(d=>d.meetings);RS=j.results||{};REAL_TODAY=j.today||null;
+  if(S&&S.mode==="real"){
+    const k=S.real.key,i=MEETS.findIndex(m=>m.key===k);
+    if(i>=0){S.realList=MEETS;S.realIdx=i;S.real=MEETS[i];
+      if(S.phase==="bet"&&!S.bets.length&&S.real.races[S.idx]){const sc=scrOf(raceKey(S.real,S.real.races[S.idx].number));if(S.race.field.some(h=>sc.includes(h.no))){buildReal();renderAll()}}}
+  }
+  settleBook();if(S){renderNav();if(bookOpen)renderCard()}
+}
+function loadMeets(){return fetch(REAL_URL).then(r=>r.json()).then(applyMeets).catch(()=>{})}
+function setReal(mi,ri){
+  abortRace();bookOpen=false;
+  if(S.mode==="daily")leaveDaily();
+  if(S.mode!=="real"){
+    const career=S,rs=career.realSaved;career.realSaved=null;
+    S=rs?{...rs,career}:{bank:1000,meeting:1,best:1000,bigCollect:0,loans:0,type:"win",sel:[],bets:[],phase:"bet",ledger:[],tier:0,mode:"real",pool:[],startBank:1000,career};
+  }
+  refundBets();S.realList=MEETS;S.realIdx=mi;S.real=MEETS[mi];S.track=S.real.venue;S.tier=S.real.metro?2:0;S.idx=ri;S.phase="bet";S.sel=[];
+  buildReal();renderAll();say(`Betting open on <b>${S.track} R${S.real.races[ri].number}</b>.`);
+  document.querySelector(".stage").scrollIntoView({block:"start"});
+}
+function pendingCount(){return BOOK.tickets.filter(t=>t.status==="pending").length}
+function renderNav(){
+  const dd=(S.dailyDone||(S.career&&S.career.dailyDone)||{})[dayKey()];
+  let groups="",cur=S.mode==="real"?`${S.realIdx},${S.idx}`:"";
+  MEETS.forEach((m,mi)=>{groups+=`<optgroup label="${dayName(m.date)} · ${m.venue}">`+m.races.map((r,ri)=>{const k=raceKey(m,r.number),done=RS[k]&&RS[k].done;return `<option value="${mi},${ri}" ${cur===mi+","+ri?"selected":""}>R${r.number} ${timeOf(r.jump)} ${r.name}${r.feature?" ★":""}${done?" (result in)":closed(r.jump)?" (closed)":""}</option>`}).join("")+`</optgroup>`});
+  const pend=pendingCount();
+  $("nav").innerHTML=`<div><button data-nav="career" aria-pressed="${S.mode==="career"&&!bookOpen}">Career</button><button data-nav="daily" aria-pressed="${S.mode==="daily"&&!bookOpen}" ${S.mode!=="daily"&&dd!==undefined?"disabled":""}>${dd!==undefined&&S.mode!=="daily"?"Daily "+money(dd):"Daily"}</button><button data-nav="book" aria-pressed="${bookOpen}">My Book${pend?` (${pend})`:""}</button>${S.mode!=="daily"?'<button class="alt" data-nav="restart">Restart meet</button>':""}</div>
+  <label class="pick"><span>Real races</span><select id="racesel" ${MEETS.length?"":"disabled"}>${cur?"":`<option value="" selected>${MEETS.length?"Pick a race":"Loading races"}</option>`}${groups}</select></label>`;
+}
+$("nav").addEventListener("change",e=>{if(e.target.id!=="racesel"||!e.target.value)return;const [m,r]=e.target.value.split(",").map(Number);audio();setReal(m,r)});
+$("nav").addEventListener("click",e=>{
+  const b=e.target.closest("button");if(!b||b.disabled)return;audio();
+  if(b.dataset.nav==="career"){bookOpen=false;return goCareer()}
+  if(b.dataset.nav==="book"){bookOpen=!bookOpen;bookMsg="";settleBook();renderNav();renderCard();if(bookOpen)$("card").scrollIntoView({block:"start"});return}
+  if(b.dataset.nav==="daily"){bookOpen=false;if(S.mode==="daily")return renderAll();abortRace();if(S.mode==="real"){const c=S.career;const k={...S};delete k.career;c.realSaved=k;S=c}return startDaily()}
+  if(b.dataset.nav==="restart"){bookOpen=false;return restartMeet()}
+});
+function addTicket(type,sel,st){
+  const r=S.race,src=S.real.races[S.idx];
+  BOOK.tickets.push({id:Date.now()+"-"+Math.floor(Math.random()*1e6),key:raceKey(S.real,src.number),date:S.real.date,venue:S.track,raceNo:src.number,raceName:r.title,jump:src.jump,type,nos:sel.map(k=>r.field[k].no),names:sel.map(k=>r.field[k].name),stake:st,odds:oddsFor(type,sel),placeN:r.placeN,status:"pending",pay:0});
+}
+function ticketOutcome(t,res){
+  const p=res.pos,n=t.nos,need={win:2,place:2,quin:2,exacta:2,tri:3,first4:4}[t.type];
+  if(Object.keys(p).length<need)return null;
+  const at=x=>p[x]||99;
+  if(t.type==="win")return at(n[0])===1;
+  if(t.type==="place")return at(n[0])<=t.placeN;
+  if(t.type==="quin")return at(n[0])<=2&&at(n[1])<=2;
+  return n.every((x,i)=>at(x)===i+1);
+}
+function settleBook(){
+  let changed=false;
+  for(const t of BOOK.tickets){
+    if(t.status!=="pending")continue;
+    const sc=scrOf(t.key);
+    if(t.nos.some(x=>sc.includes(x))){t.status="void";t.pay=t.stake;BOOK.bank=Math.round((BOOK.bank+t.stake)*100)/100;changed=true;continue}
+    const res=RS[t.key];if(!res||!res.done)continue;
+    const w=ticketOutcome(t,res);if(w===null)continue;
+    const key={quin:"quinella",exacta:"exacta",tri:"trifecta",first4:"first4"}[t.type],official=key&&res.div&&res.div[key];
+    if(w&&official)t.official=official;
+    t.status=w?"won":"lost";t.pay=w?Math.round(t.stake*(official||t.odds)*100)/100:0;
+    BOOK.bank=Math.round((BOOK.bank+t.pay)*100)/100;changed=true;
+  }
+  if(changed)saveBook();
+  return changed;
+}
+function resultLine(k){const r=RS[k];if(!r||!r.pos||!Object.keys(r.pos).length)return "";return Object.entries(r.pos).sort((a,b)=>a[1]-b[1]).slice(0,4).map(([no,p])=>`${["1st","2nd","3rd","4th"][p-1]||p+"th"} #${no}`).join(" · ")}
+function ticketHtml(t){
+  const label=TYPES[t.type][0],sels=TYPES[t.type][1]>1?t.nos.join(t.type==="quin"?" & ":" - "):`${t.nos[0]}. ${t.names[0]}`,rl=resultLine(t.key);
+  const pay=t.status==="pending"?`Returns ${money(t.stake*t.odds)}`:t.status==="won"?`Paid ${money(t.pay)}${t.official?" (official dividend)":""}`:t.status==="void"?`Refunded ${money(t.pay)}`:"No return";
+  const can=t.status==="pending"&&!closed(t.jump),mark=t.status==="pending"&&closed(t.jump);
+  return `<article class="ticket s-${t.status}"><div class="tk-main"><div class="tk-race">${t.venue} R${t.raceNo} · ${timeOf(t.jump)}</div><div class="tk-bet"><b>${label}</b> ${sels}</div><div class="tk-meta">${money(t.stake)} at ${div(t.odds)} · ${pay}</div>${rl?`<div class="tk-meta">Result: ${rl}</div>`:""}${can?`<button class="tk-act" data-tk="cancel" data-id="${t.id}">Cancel</button>`:""}${mark?`<button class="tk-act" data-tk="won" data-id="${t.id}">Mark won</button><button class="tk-act" data-tk="lost" data-id="${t.id}">Mark lost</button>`:""}</div><div class="tk-stamp">${t.status==="pending"?"Pending":t.status==="void"?"Void":t.status==="won"?"Won":"Lost"}</div></article>`;
+}
+function bookNote(){
+  const lines=["OFF TO THE RACES - MY BOOK"];
+  const days=[...new Set(BOOK.tickets.map(t=>t.date))].sort().reverse();
+  for(const d of days){lines.push("",dayName(d));for(const t of BOOK.tickets.filter(x=>x.date===d))lines.push(`${t.venue} R${t.raceNo} | ${TYPES[t.type][0]} ${t.nos.join("-")} | ${money(t.stake)} at ${div(t.odds)} | ${t.status.toUpperCase()}${t.status==="won"?" "+money(t.pay):""}`)}
+  return lines.join("\n");
+}
+function renderBook(){
+  const c=$("card"),T=BOOK.tickets,days=[...new Set(T.map(t=>t.date))].sort().reverse();
+  const closedT=T.filter(t=>t.status==="won"||t.status==="lost"),st=closedT.reduce((a,t)=>a+t.stake,0),ret=closedT.reduce((a,t)=>a+t.pay,0),net=ret-st,pendSt=T.filter(t=>t.status==="pending").reduce((a,t)=>a+t.stake,0);
+  const pend=pendingCount();
+  c.innerHTML=`<h2>My Book</h2>
+  <div class="book-sum"><div><small>Balance</small><b>${money(BOOK.bank)}</b></div><div><small>Pending</small><b>${pend} · ${money(pendSt)}</b></div><div><small>Profit</small><b class="${net>0?"won":net<0?"lost":""}">${money(net)}</b></div></div>
+  ${bookMsg?`<div class="tip">${bookMsg}</div>`:""}
+  <div class="go book-go"><button class="big next" data-book="check" ${bookBusy?"disabled":""}>${bookBusy?"Checking":"Check results"}</button><button class="big place" data-book="copy">Copy note</button></div>
+  ${BOOK.bank<5?'<button class="reset" data-book="topup">Add $1,000 to my book</button>':""}
+  ${days.length?days.map(d=>{const tt=T.filter(t=>t.date===d);return `<section class="book-day"><h3>${dayName(d)}</h3>${tt.map(ticketHtml).join("")}</section>`}).join(""):'<div>No tickets yet. Pick a real race, choose your bet and press Add to My Book.</div>'}
+  <div class="tip">Data provided by Krok Odds. Play money only.</div>
+  <button class="reset" data-book="close">Back to the race</button>`;
+}
+async function checkResults(){
+  if(bookBusy)return;
+  const pending=[...new Set(BOOK.tickets.filter(t=>t.status==="pending").map(t=>t.date))].sort();
+  const date=pending[0]||REAL_TODAY;
+  bookBusy=true;bookMsg="";renderCard();
+  try{
+    const j=await fetch(`${REAL_URL}?refresh=1&date=${date}`).then(r=>r.json());
+    if(j.error)throw new Error(j.error);
+    applyMeets(j);
+    const when=j.next?new Date(j.next).toLocaleTimeString("en-AU",{hour:"numeric",minute:"2-digit"}):"";
+    bookMsg={updated:"Results updated.",final:"All results are in for that day.",cooldown:`Checked recently. Try again after ${when}.`,waiting:`Racing is still going. Results load after ${when}. Scratchings are up to date.`,scratchings:`Scratchings updated. Results load after ${when}.`,budget:"Out of data credits for this month. Use Mark won or Mark lost on your tickets."}[j.status]||"Checked.";
+  }catch(e){bookMsg="Couldn't reach the results feed. Try again soon."}
+  bookBusy=false;renderNav();renderCard();
+}
 /* ---------- race playback ---------- */
 function say(html){$("call").innerHTML=html}
 const nm=k=>`<b>${S.race.field[k].name}</b>`;
 const orderAt=pos=>[...pos.keys()].sort((a,b)=>pos[b]-pos[a]);
 const myK=()=>{const c={};S.bets.forEach(b=>b.sel.forEach(k=>c[k]=(c[k]||0)+b.stake));const e=Object.entries(c).sort((a,b)=>b[1]-a[1])[0];return e?+e[0]:null};
 function startRace(){
-  audio();
+  audio();bookOpen=false;renderNav();
   const sim=S.mode==="daily"?withSeed(S.seed+S.idx*131,()=>simulate(S.race.field,S.race,true)):simulate(S.race.field,S.race,true);
   const fin=sim.order.map(k=>sim.fin[k]);
   R={preUntil:performance.now()+2300,jumpAt:0,sim,t:0,rate:(S.race.dist/17)/(20+(S.race.dist-1000)*.03),running:true,last:performance.now(),called:0,photoDone:false,settled:false,lastHoof:0,evI:0,
@@ -960,13 +1089,14 @@ function renderHeader(){
   $("bank").textContent=money(S.bank);
 }
 function renderCard(){
+  if(bookOpen)return renderBook();
   if(picker)return renderPicker();
   const r=S.race,c=$("card");
   if(S.phase==="result")return renderResult();
   if(S.phase==="end")return renderEnd();
   const wet=r.rating>=6?" wet":"";
   c.innerHTML=`${tabsHtml()}<h2>${r.realNo?"R"+r.realNo+" ":""}${r.title}</h2>
-  <div class="conds">${r.feature?'<span class="feat">Form guide race</span>':""}<span>${r.dist}m</span><span class="${wet}">${r.trackLabel||ratingName(r.rating)}</span><span>${r.field.length} runners</span><span>Pays ${r.placeN} places</span></div>
+  ${realBanner()}<div class="conds">${r.feature?'<span class="feat">Form guide race</span>':""}<span>${r.dist}m</span><span class="${wet}">${r.trackLabel||ratingName(r.rating)}</span><span>${r.field.length} runners</span><span>Pays ${r.placeN} places</span></div>
   <div class="tip">Nan's tip: <b>${r.tip.no}. ${r.tip.name}</b>. ${r.tip.why}</div>
   ${tipsHtml()}<div class="runners">${r.field.map((h,k)=>{
     const i=S.sel.indexOf(k),on=i>=0;
@@ -1020,7 +1150,7 @@ function renderDetail(){
       const rec=(fd.recent||[]).filter(r=>r.t).map(r=>`<tr><td>${r.d||""}</td><td>${r.t}</td><td>${r.m?r.m+"m":""}</td><td>${r.pos?r.pos+(r.of?"/"+r.of:""):"-"}</td></tr>`).join("");
       extra=`<table><tr>${rows[0]}</tr><tr>${rows[1]}</tr></table>${rec?`<table><tr><th>Date</th><th>Track</th><th>Dist</th><th>Finish</th></tr>${rec}</table>`:""}`}
     else if(!S.race.feature)extra=`<div>Full form is only loaded for the race marked ★.</div>`;
-    el.innerHTML=`<b>${h.name}</b> · ${h.jock}${h.trainer?" · "+h.trainer:""}${h.form?`<br>Recent form: ${h.form}`:""}${extra}`;return}
+    el.innerHTML=`<div class="detail-h"><span><b>${h.name}</b> · ${h.jock}${h.trainer?" · "+h.trainer:""}</span><button class="tk-act" data-scr="${h.no}">Mark scratched</button></div>${h.form?`Recent form: ${h.form}`:""}${extra}`;return}
   el.innerHTML=`<b>${h.name}</b> last starts<table><tr><th>Track</th><th>Dist</th><th>Going</th><th>Finish</th></tr>${[...pool.runs].reverse().map(r=>`<tr><td>${r.t}</td><td>${r.d}m</td><td>${ratingName(r.r)}</td><td>${r.p==="x"?"Spell":r.p==="0"?"10th+":r.p+"/"+r.n}</td></tr>`).join("")}</table>`;
 }
 function renderSlip(){
@@ -1030,10 +1160,16 @@ function renderSlip(){
   $("bets").innerHTML=S.bets.map((b,i)=>`<li><span>${b.label} · ${money(b.stake)} at ${div(b.odds)}</span>${bet?`<button data-rm="${i}">Remove</button>`:""}</li>`).join("");
   $("jump").textContent=S.phase==="race"?"Skip to result":bet?(S.bets.length?"Jump":"Jump with no bet"):"Racing done";
   $("jump").disabled=S.phase!=="bet"&&S.phase!=="race";
-  $("nan").hidden=!(bet&&S.mode==="career"&&S.bank<5&&!S.bets.length);
+  const rl=S.mode==="real";$("ticket").hidden=!rl;$("place").textContent=rl?"Sim bet":"Place bet";$("nan").hidden=!(bet&&S.mode==="career"&&S.bank<5&&!S.bets.length);
   renderDetail();updateHint();
 }
+function updateTicketBtn(){
+  const b=$("ticket");if(!S||S.mode!=="real"){return}
+  const st=stake(),cost=S.type==="ew"?st*2:st,src=S.real.races[S.idx],isClosed=closed(src.jump),ready=S.phase==="bet"&&S.sel.length===TYPES[S.type][1]&&cost>=1&&cost<=BOOK.bank;
+  b.disabled=isClosed||!ready;b.textContent=isClosed?"Betting closed":"Add to My Book";
+}
 function updateHint(){
+  updateTicketBtn();
   const bet=S.phase==="bet",need=TYPES[S.type][1],btn=$("place");
   if(!bet){$("hint").textContent=S.phase==="race"?"Bets are locked. Good luck.":"";btn.disabled=true;return}
   const st=stake(),cost=S.type==="ew"?st*2:st;
@@ -1055,6 +1191,36 @@ function labelFor(type,sel){
   return `${TYPES[type][0]} ${sel.map(k=>f[k].no).join(type==="quin"?" & ":"-")}`;
 }
 function addBet(type,sel,st){S.bets.push({type,sel:sel.slice(),stake:st,odds:oddsFor(type,sel),label:labelFor(type,sel)})}
+$("ticket").onclick=()=>{
+  const st=stake(),t=S.type,cost=t==="ew"?st*2:st;
+  if(cost>BOOK.bank||st<1||S.sel.length!==TYPES[t][1]||closed(S.real.races[S.idx].jump))return;
+  audio();tone(880,.06);
+  if(t==="ew"){addTicket("win",S.sel,st);addTicket("place",S.sel,st)}else addTicket(t,S.sel,st);
+  BOOK.bank=Math.round((BOOK.bank-cost)*100)/100;saveBook();S.sel=[];save();renderNav();renderCard();renderSlip();
+  say(`Ticket added to My Book. Balance ${money(BOOK.bank)}.`);
+};
+$("slip").addEventListener("click",e=>{
+  const b=e.target.closest("[data-scr]");if(!b)return;
+  const src=S.real.races[S.idx],k=raceKey(S.real,src.number),n=+b.dataset.scr;
+  if(S.race.field.length<=4){say("A race needs at least four runners.");return}
+  (BOOK.scr[k]=BOOK.scr[k]||[]).push(n);settleBook();saveBook();refundBets();buildReal();renderAll();say(`Number ${n} marked scratched. Any tickets on it are refunded.`);
+});
+$("card").addEventListener("click",e=>{
+  const un=e.target.closest("[data-unscr]");
+  if(un){const src=S.real.races[S.idx],k=raceKey(S.real,src.number);BOOK.scr[k]=(BOOK.scr[k]||[]).filter(x=>x!==+un.dataset.unscr);saveBook();refundBets();buildReal();renderAll();return}
+  const bk=e.target.closest("[data-book]");
+  if(bk){const a=bk.dataset.book;
+    if(a==="check")checkResults();
+    if(a==="close"){bookOpen=false;renderNav();renderCard()}
+    if(a==="topup"){BOOK.bank=Math.round((BOOK.bank+1000)*100)/100;saveBook();renderCard()}
+    if(a==="copy"){const n=bookNote();(navigator.clipboard?navigator.clipboard.writeText(n):Promise.reject()).then(()=>{bookMsg="Note copied.";renderCard()}).catch(()=>{bookMsg="Couldn't copy here.";renderCard()})}
+    return}
+  const tk=e.target.closest("[data-tk]");
+  if(tk){const t=BOOK.tickets.find(x=>x.id===tk.dataset.id);if(!t||t.status!=="pending")return;const a=tk.dataset.tk;
+    if(a==="cancel"){BOOK.bank=Math.round((BOOK.bank+t.stake)*100)/100;BOOK.tickets=BOOK.tickets.filter(x=>x!==t)}
+    else{t.status=a;t.manual=true;t.pay=a==="won"?Math.round(t.stake*t.odds*100)/100:0;BOOK.bank=Math.round((BOOK.bank+t.pay)*100)/100}
+    saveBook();renderNav();renderCard();}
+});
 $("place").onclick=()=>{
   const st=stake(),t=S.type,cost=t==="ew"?st*2:st;
   if(cost>S.bank||cost>maxBet()||S.sel.length!==TYPES[t][1]||st<1)return;
@@ -1094,6 +1260,7 @@ function start(data){
   picker=null;if(S.phase==="race")S.phase="bet";
   // saves from earlier builds lack newer fields
   if(S.mode==="real"&&!S.realList){S.realList=[S.real];S.realIdx=0}
+  if(S.mode==="real"&&!S.real.key){S=S.career||S}
   if(S.result&&S.result.first4===undefined)S.result.first4=0;
   try{renderAll()}catch(e){console.error(e);try{localStorage.removeItem("dustyflat2")}catch(_){ }S=null;fresh();picker=null} // a reload mid-race re-opens the same market with bets intact
   renderAll();
