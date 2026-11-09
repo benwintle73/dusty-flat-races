@@ -53,6 +53,8 @@ canvas{width:100%;height:auto;display:block}
 .big.place{background:var(--paper);color:var(--ink)}
 .big.jump{background:var(--red);color:#fff}
 .big.ticket{background:var(--amber);color:var(--tote)}
+.meets{align-items:center}
+.meets span{font:700 17px/1 var(--led);color:var(--amber);min-width:78px}
 .pick{display:flex;gap:8px;align-items:center;font:700 17px/1 var(--led);color:var(--amber)}
 .pick span{white-space:nowrap}
 #racesel{flex:1;min-width:0;min-height:44px;background:var(--paper);color:var(--ink);border:0;font:600 18px/1.1 var(--led);padding:0 8px}
@@ -866,6 +868,7 @@ const raceKey=(m,n)=>`${m.key}_T_${n}`;
 function scrOf(k){return [...new Set([...((RS[k]&&RS[k].scr)||[]),...(BOOK.scr[k]||[])])]}
 const timeOf=j=>{const d=new Date(j);return isNaN(d)?"":d.toLocaleTimeString("en-AU",{hour:"numeric",minute:"2-digit"})};
 const dayName=d=>new Date(d+"T02:00:00Z").toLocaleDateString("en-AU",{weekday:"short",day:"numeric",month:"short",timeZone:"Australia/Sydney"});
+const dayRel=d=>{if(!REAL_TODAY)return "";const n=Math.round((Date.parse(d+"T02:00:00Z")-Date.parse(REAL_TODAY+"T02:00:00Z"))/864e5);return n===1?"Tomorrow":""};
 const closed=j=>{const t=Date.parse(j);return Number.isFinite(t)&&Date.now()>=t};
 function applyMeets(j){
   MEETS=(j.days||[]).flatMap(d=>d.meetings);RS=j.results||{};REAL_TODAY=j.today||null;
@@ -876,7 +879,8 @@ function applyMeets(j){
   }
   settleBook();if(S){renderNav();if(bookOpen)renderCard()}
 }
-function loadMeets(){return fetch(REAL_URL).then(r=>r.json()).then(applyMeets).catch(()=>{})}
+let meetsFailed=false;
+function loadMeets(){return fetch(REAL_URL).then(r=>r.json()).then(j=>{meetsFailed=false;applyMeets(j)}).catch(()=>{meetsFailed=true;if(S)renderNav()})}
 function setReal(mi,ri){
   abortRace();bookOpen=false;
   if(S.mode==="daily")leaveDaily();
@@ -895,11 +899,12 @@ function renderNav(){
   MEETS.forEach((m,mi)=>{groups+=`<optgroup label="${dayName(m.date)} · ${m.venue}">`+m.races.map((r,ri)=>{const k=raceKey(m,r.number),done=RS[k]&&RS[k].done;return `<option value="${mi},${ri}" ${cur===mi+","+ri?"selected":""}>R${r.number} ${timeOf(r.jump)} ${r.name}${r.feature?" ★":""}${done?" (result in)":closed(r.jump)?" (closed)":""}</option>`}).join("")+`</optgroup>`});
   const pend=pendingCount();
   $("nav").innerHTML=`<div><button data-nav="career" aria-pressed="${S.mode==="career"&&!bookOpen}">Career</button><button data-nav="daily" aria-pressed="${S.mode==="daily"&&!bookOpen}" ${S.mode!=="daily"&&dd!==undefined?"disabled":""}>${dd!==undefined&&S.mode!=="daily"?"Daily "+money(dd):"Daily"}</button><button data-nav="book" aria-pressed="${bookOpen}">My Book${pend?` (${pend})`:""}</button>${S.mode!=="daily"?'<button class="alt" data-nav="restart">Restart meet</button>':""}</div>
-  <label class="pick"><span>Real races</span><select id="racesel" ${MEETS.length?"":"disabled"}>${cur?"":`<option value="" selected>${MEETS.length?"Pick a race":"Loading races"}</option>`}${groups}</select></label>`;
+  ${[...new Set(MEETS.map(m=>m.date))].map(d=>`<div class="meets"><span>${d===REAL_TODAY?"Today":"Tomorrow"===dayRel(d)?"Tomorrow":dayName(d)}</span>${MEETS.map((m,mi)=>m.date!==d?"":`<button data-meet="${mi}" aria-pressed="${S.mode==="real"&&mi===S.realIdx&&!bookOpen}">${m.venue}</button>`).join("")}</div>`).join("")}<label class="pick"><span>All races</span><select id="racesel" ${MEETS.length?"":"disabled"}>${cur?"":`<option value="" selected>${MEETS.length?"Pick a race":meetsFailed?"Real races only load on the public game site":"Loading races"}</option>`}${groups}</select></label>`;
 }
 $("nav").addEventListener("change",e=>{if(e.target.id!=="racesel"||!e.target.value)return;const [m,r]=e.target.value.split(",").map(Number);audio();setReal(m,r)});
 $("nav").addEventListener("click",e=>{
   const b=e.target.closest("button");if(!b||b.disabled)return;audio();
+  if(b.dataset.meet!==undefined){const mi=+b.dataset.meet,rs=MEETS[mi].races,open=rs.findIndex(r=>!closed(r.jump));return setReal(mi,open>=0?open:0)}
   if(b.dataset.nav==="career"){bookOpen=false;return goCareer()}
   if(b.dataset.nav==="book"){bookOpen=!bookOpen;bookMsg="";settleBook();renderNav();renderCard();if(bookOpen)$("card").scrollIntoView({block:"start"});return}
   if(b.dataset.nav==="daily"){bookOpen=false;if(S.mode==="daily")return renderAll();abortRace();if(S.mode==="real"){const c=S.career;const k={...S};delete k.career;c.realSaved=k;S=c}return startDaily()}
