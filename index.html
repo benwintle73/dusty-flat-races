@@ -6,15 +6,15 @@
 <title>Off To The Races</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@400;600;700&family=Pixelify+Sans:wght@500;700&family=VT323&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans+Condensed:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
 /* Layout idea: a country track's tote board (amber on black) bolted above a printed form guide (newsprint). */
 :root{
   --tote:#16120c; --tote2:#2a2317; --amber:#ffb52e; --amber-dim:#a87a2a;
   --paper:#efe4c8; --paper2:#e2d3ae; --ink:#241c10; --ink2:#675740;
   --red:#c8321f; --good:#2f8a4a;
-  --display:"Pixelify Sans","Courier New",monospace;
-  --led:"VT323","Courier New",monospace;
+  --display:"Anton",Impact,"Arial Narrow",sans-serif;
+  --led:"Barlow Condensed","Arial Narrow",sans-serif;
   --body:"IBM Plex Sans Condensed","Arial Narrow",Arial,sans-serif;
   color-scheme:dark;
 }
@@ -25,31 +25,31 @@ button{cursor:pointer}
 button:focus-visible,input:focus-visible{outline:3px solid var(--amber);outline-offset:1px}
 .wrap{max-width:1180px;margin:0 auto;padding:12px 16px 28px;display:grid;gap:12px}
 .mast{display:flex;flex-wrap:wrap;gap:6px 22px;align-items:center;background:var(--tote);border:3px solid var(--tote2);padding:8px 14px}
-.mast h1{margin:0;font:700 clamp(24px,4vw,34px)/1 var(--display);color:var(--amber);letter-spacing:.5px}
-.mast .meet{font:22px/1 var(--led);color:var(--amber-dim);flex:1 1 200px}
+.mast h1{margin:0;font:400 clamp(26px,4vw,38px)/1 var(--display);color:var(--amber);letter-spacing:.8px;text-transform:uppercase}
+.mast .meet{font:600 20px/1.1 var(--led);color:var(--amber-dim);flex:1 1 200px}
 .led{display:flex;flex-direction:column;align-items:flex-end}
-.led small{font:18px/1 var(--led);color:var(--amber-dim)}
-.led b{font:400 36px/1 var(--led);color:var(--amber);font-variant-numeric:tabular-nums}
+.led small{font:600 14px/1 var(--led);letter-spacing:1px;color:var(--amber-dim)}
+.led b{font:700 36px/1 var(--led);color:var(--amber);font-variant-numeric:tabular-nums}
 .led b.up{color:#7dff9b}.led b.down{color:#ff7a66}
-.grid{display:grid;gap:12px;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);grid-template-areas:"stage card" "slip card";align-items:start}
+.grid{display:grid;gap:12px;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);grid-template-areas:"stage card" "slip card";grid-template-rows:auto 1fr;align-items:start}
 .stage{grid-area:stage;background:var(--tote);border:3px solid var(--tote2)}
 .canvas-wrap{position:relative;line-height:0}
 canvas{width:100%;height:auto;display:block;image-rendering:pixelated;image-rendering:crisp-edges;image-rendering:pixelated}
-#photo{position:absolute;left:50%;top:10px;transform:translateX(-50%);background:var(--red);color:#fff;font:700 24px/1.2 var(--display);padding:4px 16px;display:none}
-.call{font:24px/1.1 var(--led);color:var(--amber);padding:8px 12px;min-height:60px}
-.call b{font-weight:400;color:#fff}
+#photo{position:absolute;left:50%;top:10px;transform:translateX(-50%);background:var(--red);color:#fff;font:400 26px/1.2 var(--display);letter-spacing:1px;padding:4px 16px;display:none}
+.call{font:600 25px/1.15 var(--led);color:#f0d9a8;padding:9px 14px;min-height:64px}
+.call b{font-weight:700;color:#fff}
 .slip{grid-area:slip;background:var(--tote);border:3px solid var(--tote2);padding:12px;display:grid;gap:10px}
-.seg{display:grid;grid-template-columns:repeat(6,1fr);gap:4px}
+.seg{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
 .seg button{background:var(--tote2);color:var(--paper);border:0;min-height:44px;padding:2px;font-weight:600;font-size:15px}
 .seg button[aria-pressed=true]{background:var(--amber);color:var(--tote)}
 .hint{font-size:16px;color:var(--paper2);min-height:22px}
-.hint b{color:var(--amber);font:22px/1 var(--led)}
+.hint b{color:var(--amber);font:700 22px/1 var(--led)}
 .stake{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .stake label{font-weight:600}
-#stake{width:92px;min-height:44px;background:#000;color:var(--amber);border:2px solid var(--tote2);font:28px/1 var(--led);padding:2px 8px}
+#stake{width:92px;min-height:44px;background:#000;color:var(--amber);border:2px solid var(--tote2);font:700 28px/1 var(--led);padding:2px 8px}
 .chip{min-height:44px;min-width:50px;background:var(--tote2);color:var(--paper);border:0;font-weight:600;padding:0 8px}
 .go{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.big{min-height:52px;border:0;font:700 19px/1 var(--display);padding:4px 8px}
+.big{min-height:52px;border:0;font:400 20px/1 var(--display);letter-spacing:.6px;text-transform:uppercase;padding:4px 8px}
 .big.place{background:var(--paper);color:var(--ink)}
 .big.jump{background:var(--red);color:#fff}
 .big:disabled{opacity:.45;cursor:not-allowed}
@@ -59,7 +59,7 @@ canvas{width:100%;height:auto;display:block;image-rendering:pixelated;image-rend
 .bets li button{background:none;border:0;color:var(--paper2);min-width:44px;min-height:36px;text-decoration:underline}
 .nan{background:none;border:2px solid var(--amber);color:var(--amber);min-height:48px;font-weight:700}
 .card{grid-area:card;background:var(--paper);color:var(--ink);border:3px solid var(--paper2);padding:12px;display:grid;gap:8px}
-.card h2{margin:0;font:700 25px/1.05 var(--display);text-wrap:balance}
+.card h2{margin:0;font:400 28px/1.08 var(--display);letter-spacing:.4px;text-transform:uppercase;text-wrap:balance}
 .conds{display:flex;flex-wrap:wrap;gap:4px 14px;font-weight:600;color:var(--ink2);font-size:16px}
 .conds .wet{color:#1e5a9c}
 .tip{font-size:16px;border-left:4px solid var(--red);padding:2px 8px;background:var(--paper2)}
@@ -72,13 +72,13 @@ canvas{width:100%;height:auto;display:block;image-rendering:pixelated;image-rend
 .rname{font-weight:700;font-size:18px;line-height:1.1;overflow-wrap:anywhere}
 .rmeta{font-size:14px;color:var(--ink2);line-height:1.2}
 .rmeta b{color:var(--ink);letter-spacing:1px}
-.odds{text-align:right;font:400 25px/1 var(--led);white-space:nowrap;font-variant-numeric:tabular-nums}
+.odds{text-align:right;font:700 26px/1 var(--led);white-space:nowrap;font-variant-numeric:tabular-nums}
 .odds small{display:block;font:600 11px/1.3 var(--body);color:var(--ink2);text-transform:uppercase}
 .tbl{width:100%;border-collapse:collapse;font-size:17px}
 .tbl td,.tbl th{padding:5px 4px;border-top:1px solid #bda97f;text-align:left;vertical-align:top}
 .tbl .n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 .won{color:var(--good);font-weight:700}.lost{color:var(--red)}
-.net{font:700 28px/1.1 var(--display)}
+.net{font:400 30px/1.1 var(--display);letter-spacing:.5px}
 .card .big.next{background:var(--ink);color:var(--paper);width:100%}
 .card .big.place{background:var(--paper2);color:var(--ink);border:2px solid var(--ink)}
 #detail{font-size:15px}
@@ -87,11 +87,30 @@ canvas{width:100%;height:auto;display:block;image-rendering:pixelated;image-rend
 #detail th{color:var(--amber-dim);font-weight:600}
 #detail b{color:var(--amber)}
 .reset{background:none;border:0;color:var(--ink2);text-decoration:underline;min-height:40px;justify-self:start;padding:0}
+#hud{position:absolute;inset:8px 8px auto 8px;display:none;justify-content:space-between;align-items:flex-start;pointer-events:none;line-height:1}
+#hudrem{font:700 clamp(26px,5vw,44px)/1 var(--led);color:#fff;text-shadow:0 2px 0 #000;margin-left:clamp(92px,21%,150px)}
+#hudtop{background:rgba(15,12,8,.82);padding:5px 8px;display:grid;gap:3px;font:600 clamp(13px,2vw,18px)/1.1 var(--led);color:#fff;max-width:45%}
+#hudtop div{display:flex;gap:5px;align-items:center;white-space:nowrap;overflow:hidden}
+#hudtop i{font-style:normal;font-weight:700;min-width:1.5em;text-align:center;padding:1px 2px}
+#hudtop span{overflow:hidden;text-overflow:ellipsis}
+.tips{background:var(--tote);color:var(--paper);padding:8px 10px;display:grid;gap:3px}
+.tips-h{display:flex;justify-content:space-between;gap:8px;align-items:baseline;font-size:14px;color:var(--paper2)}
+.tips-h b{font:400 20px/1 var(--display);letter-spacing:.5px;color:var(--amber);text-transform:uppercase}
+.tip-row{display:grid;grid-template-columns:76px minmax(0,1fr) auto;gap:8px;align-items:center;background:var(--tote2);border:0;color:var(--paper);text-align:left;padding:7px 8px;min-height:40px;font:600 18px/1.1 var(--led)}
+.tip-row:hover{background:#3b3120}
+.tip-row b{color:var(--amber)}
+.tip-row em{font-style:normal;font-weight:700;color:#fff}
+.tip-row span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tip-value{font-size:15px;padding:5px 2px 0;color:#9fe3b2}
+.tabs{display:flex;flex-wrap:wrap;gap:4px}
+.tabs button{background:var(--paper2);border:1px solid #bda97f;color:var(--ink);min-height:40px;min-width:40px;padding:0 9px;font:700 17px/1 var(--led)}
+.tabs button[aria-pressed=true]{background:var(--ink);color:var(--paper)}
+.feat{background:var(--red);color:#fff;font:700 15px/1 var(--led);letter-spacing:.5px;padding:4px 7px;align-self:center;text-transform:uppercase}
 .foot{font-size:14px;color:#a9c0a6;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center}
 .foot button{background:none;border:1px solid #6d8a6c;color:#d8e4d4;min-height:40px;padding:0 12px}
 @media (max-width:820px){
   .grid{grid-template-columns:minmax(0,1fr);grid-template-areas:"stage" "card" "slip"}
-  .seg{grid-template-columns:repeat(3,1fr)}
+  .seg{grid-template-columns:repeat(4,1fr)}
   .led b{font-size:30px}
   .runner{grid-template-columns:36px minmax(0,1fr) 56px 56px;gap:6px}
   .odds{font-size:21px}
@@ -108,7 +127,7 @@ canvas{width:100%;height:auto;display:block;image-rendering:pixelated;image-rend
   </header>
   <div class="grid">
     <section class="stage" aria-label="Track">
-      <div class="canvas-wrap"><canvas id="c" width="720" height="354"></canvas><div id="photo">PHOTO</div></div>
+      <div class="canvas-wrap"><canvas id="c" width="960" height="472"></canvas><div id="photo">PHOTO</div><div id="hud"><div id="hudrem"></div><div id="hudtop"></div></div></div>
       <div class="call" id="call" aria-live="polite"></div>
     </section>
     <section class="card" id="card"></section>
@@ -237,11 +256,12 @@ function oddsFor(type,sel){
   if(type==="exacta")prob=p[0]*p[1]/(1-p[0]);
   if(type==="quin")prob=p[0]*p[1]/(1-p[0])+p[1]*p[0]/(1-p[1]);
   if(type==="tri")prob=p[0]*p[1]/(1-p[0])*p[2]/(1-p[0]-p[1]);
-  return Math.round(clamp(1/(prob*1.22),1.2,2500)*10)/10;
+  if(type==="first4")prob=p[0]*p[1]/(1-p[0])*p[2]/(1-p[0]-p[1])*p[3]/(1-p[0]-p[1]-p[2]);
+  return Math.round(clamp(1/(prob*1.22),1.2,5000)*10)/10;
 }
 
 /* ---------- game state ---------- */
-const TYPES={win:["Win",1],place:["Place",1],ew:["E/W",1],quin:["Quinella",2],exacta:["Exacta",2],tri:["Trifecta",3]};
+const TYPES={win:["Win",1],place:["Place",1],ew:["E/W",1],quin:["Quinella",2],exacta:["Exacta",2],tri:["Trifecta",3],first4:["First 4",4]};
 let S=null;
 function makeHorse(name){
   const q=clamp(.5+gauss()*.24,.05,.97),sta=rand(.05,1);
@@ -329,7 +349,7 @@ function line(c,x0,y0,x1,y1,w,col){
 const DIG={0:"111101101101111",1:"010110010010111",2:"111001111100111",3:"111001111001111",4:"101101111001001",5:"111100111001111",6:"111100111101111",7:"111001010010010",8:"111101111101111",9:"111101111001111",m:"000000101111101"};
 function digits(c,str,x,y,col,s=1){c.fillStyle=col;for(const ch of String(str)){const g=DIG[ch];if(g)for(let i=0;i<15;i++)if(g[i]==="1")c.fillRect(x+(i%3)*s,y+Math.floor(i/3)*s,s,s);x+=4*s}}
 const shade=(hex,a)=>{const n=parseInt(hex.slice(1),16),f=v=>clamp(Math.round(v*a),0,255);return `rgb(${f(n>>16)},${f(n>>8&255)},${f(n&255)})`};
-const K=1.8,BW=46,BH=38,SW=Math.round(BW*K),SH=Math.round(BH*K),FR=8,LOG=1.2;
+const K=2.4,BW=47,BH=40,SW=Math.round(BW*K),SH=Math.round(BH*K),FR=10,LOG=1.2;
 const strHash=s=>{let h=7;for(const ch of s)h=(h*31+ch.charCodeAt(0))>>>0;return h};
 function buildSheet(h,idx){
   const sheet=document.createElement("canvas");sheet.width=SW*FR;sheet.height=SH;
@@ -337,70 +357,78 @@ function buildSheet(h,idx){
   const [coat,mane]=COATS[h.coat],[silk,alt]=h.silk?[h.silk.c,h.silk.a]:SILKS[idx%SILKS.length];
   const hs=strHash(h.name),pattern=h.silk?h.silk.p:hs%6,blaze=hs%3===0,sock=(hs>>3)%2===0;
   const P=a=>a.map(([x,y])=>[x*K,y*K]);
-  const low=shade(coat,.74),far=shade(coat,.56),hi=shade(coat,1.3),hi2=shade(coat,1.5);
+  const low=shade(coat,.72),far=shade(coat,.5),hi=shade(coat,1.28),hi2=shade(coat,1.55);
   for(let f=0;f<FR;f++){
     const tmp=document.createElement("canvas");tmp.width=SW;tmp.height=SH;
     const c=tmp.getContext("2d",{willReadFrequently:true}),ph=f/FR*6.2832;
-    const b=Math.sin(ph*2)*.7+2;
-    const leg=(hx,hy,p,col,whiteSock)=>{
-      const th=.85*Math.sin(p),fl=.25+1.1*Math.max(0,Math.cos(p));
-      const kx=hx+Math.sin(th)*6,ky=hy+Math.cos(th)*6,sh=th-fl,fx=kx+Math.sin(sh)*6,fy=ky+Math.cos(sh)*6;
-      line(c,hx*K,hy*K,kx*K,ky*K,4,col);line(c,kx*K,ky*K,fx*K,fy*K,2,col);
-      if(whiteSock)line(c,(kx+(fx-kx)*.55)*K,(ky+(fy-ky)*.55)*K,fx*K,fy*K,2,"#eee8da");
-      c.fillStyle="#17110b";c.fillRect(Math.round(fx*K)-2,Math.round(fy*K),5,3);
+    const b=Math.sin(ph*2)*.6+2,fr=b+Math.sin(ph)*.8,rr=b-Math.sin(ph)*.8; // the body rocks fore and aft
+    const joint=(x,y,r,col)=>{c.fillStyle=col;c.fillRect(Math.round(x*K-r),Math.round(y*K-r),r*2,r*2)};
+    const leg=(hx,hy,p,col,white,front)=>{
+      const th=(front?.95:.8)*Math.sin(p)+(front?.1:-.05),fl=(front?.3:.5)+1.15*Math.max(0,Math.cos(p));
+      const L1=front?6:6.4,kx=hx+Math.sin(th)*L1,ky=hy+Math.cos(th)*L1,sh=th-fl,fx=kx+Math.sin(sh)*6.2,fy=ky+Math.cos(sh)*6.2;
+      line(c,hx*K,hy*K,kx*K,ky*K,front?5:6,col);joint(kx,ky,3,col);
+      line(c,kx*K,ky*K,fx*K,fy*K,3,white?"#eee8da":col);joint(fx,fy,2,white?"#eee8da":col);
+      c.fillStyle="#120d09";c.fillRect(Math.round(fx*K)-3,Math.round(fy*K)+1,7,4);
     };
     // far legs
-    leg(30,21+b,ph+.7,far,false);leg(13,21+b,ph+3.84,far,false);
-    // tail, three streaming strands
+    leg(30,21+fr,ph+.7,far,false,true);leg(13,21+rr,ph+3.84,far,false,false);
+    // tail
     const tw=Math.sin(ph)*2;
-    polyFill(c,P([[9,12+b],[10.5,15+b],[4,20+b+tw],[0,22+b+tw*1.3],[2,17+b+tw*.4]]),mane);
-    line(c,8*K,(14+b)*K,1*K,(19+b+tw*1.5)*K,1,shade(mane,1.7));
-    // neck
-    polyFill(c,P([[28,13+b],[34,4+b],[39,6+b],[33,20+b]]),coat);
-    polyFill(c,P([[33,19+b],[38,7+b],[39,6+b],[34,20+b]]),low);
+    polyFill(c,P([[9,12+rr],[10.5,14.5+rr],[6,18+rr+tw*.6],[1.5,23+rr+tw*1.3],[-.5,21+rr+tw],[2,16+rr+tw*.4]]),mane);
+    for(const o of [0,1.2])line(c,(8-o)*K,(14+rr+o)*K,(1.5+o)*K,(20+rr+tw*1.4+o)*K,1,shade(mane,1.8));
+    // neck, arched
+    polyFill(c,P([[27,13+fr],[29.5,8.5+fr],[33.5,3.8+fr],[38,5+fr],[37,10+fr],[34,19.5+fr],[29,19+fr]]),coat);
+    polyFill(c,P([[34,19.5+fr],[37,10+fr],[38,6.5+fr],[35.5,12+fr],[32.5,20+fr]]),low);
     // head
-    polyFill(c,P([[35,2+b],[40,3+b],[45,7+b],[44.5,10+b],[40,10.5+b],[36,8+b]]),coat);
-    polyFill(c,P([[35,0+b],[37,-.5+b],[38,4+b],[35,4+b]]),low);
-    if(blaze)polyFill(c,P([[40,3.5+b],[41.5,4+b],[45,7.5+b],[44,8+b]]),"#eee8da");
-    c.fillStyle="#120c08";c.fillRect(Math.round(39*K),Math.round((5+b)*K),3,3);c.fillRect(Math.round(44*K),Math.round((8.5+b)*K),2,2);
-    c.fillStyle="#fff";c.fillRect(Math.round(39*K),Math.round((5+b)*K),1,1);
+    polyFill(c,P([[35,2+fr],[38.5,1.8+fr],[41.5,3.5+fr],[45.2,6.6+fr],[45.4,9.2+fr],[43.5,10.6+fr],[40.5,10+fr],[37.5,9+fr],[35.5,6.5+fr]]),coat);
+    polyFill(c,P([[37.5,8+fr],[43,9.8+fr],[43.5,10.6+fr],[40.5,10+fr]]),low);
+    polyFill(c,P([[35,.2+fr],[36.2,-1.3+fr],[37.8,1+fr],[37.8,3.6+fr],[35.2,3.6+fr]]),low);
+    polyFill(c,P([[36.5,1.8+fr],[39,1.5+fr],[39.5,3.4+fr],[37.5,4+fr]]),mane);
+    if(blaze)polyFill(c,P([[39.8,3+fr],[41.2,3.5+fr],[45,7+fr],[44,7.8+fr],[40.5,5.5+fr]]),"#eee8da");
+    c.fillStyle="#0e0906";c.fillRect(Math.round(39*K),Math.round((4.6+fr)*K),4,4);c.fillRect(Math.round(44.2*K),Math.round((8.2+fr)*K),3,3);
+    c.fillStyle="#fff";c.fillRect(Math.round(39*K)+1,Math.round((4.6+fr)*K),1,1);
     // bridle
-    line(c,37*K,(3+b)*K,43*K,(9.5+b)*K,1,"#20150e");line(c,37*K,(7+b)*K,42*K,(9.5+b)*K,1,"#20150e");
+    line(c,37*K,(2.8+fr)*K,43*K,(9.8+fr)*K,1,"#20150e");line(c,37.2*K,(7.2+fr)*K,42.5*K,(9.4+fr)*K,1,"#20150e");
     // mane
-    polyFill(c,P([[27,12+b],[32,3+b],[35,2.5+b],[29,14+b]]),mane);
-    for(let i=0;i<5;i++)line(c,(28+i*1.4)*K,(11-i*1.8+b)*K,(26+i*1.4)*K,(13-i*1.8+b+Math.sin(ph+i)*.8)*K,1,mane);
-    // body
-    for(let y=-6*K;y<=6*K;y++){const yy=y/K,w=12.6*K*Math.sqrt(Math.max(0,1-(yy/6.6)*(yy/6.6)));c.fillStyle=yy>=3.4?low:yy<=-4?hi:coat;c.fillRect(Math.round(21*K-w),Math.round((17+b)*K+y),Math.round(w*2)+1,1)}
-    // muscle highlights
-    polyFill(c,P([[10,12+b],[15,12+b],[16,17+b],[11,18+b]]),hi);polyFill(c,P([[26,12+b],[30,13+b],[30,18+b],[27,18+b]]),hi);
-    polyFill(c,P([[11,13+b],[13.5,13+b],[13.5,15+b],[11.5,15.5+b]]),hi2);
+    polyFill(c,P([[26.5,12.5+fr],[32,3.3+fr],[35,2.5+fr],[30,10+fr],[28.5,14.5+fr]]),mane);
+    for(let i=0;i<7;i++)line(c,(27.8+i*1.1)*K,(11.4-i*1.3+fr)*K,(25.4+i*1.1)*K,(13.4-i*1.3+fr+Math.sin(ph+i)*1)*K,2,mane);
+    // barrel: rump, back, withers, chest, belly
+    polyFill(c,P([[8.4,14+rr],[10,11.3+rr],[14.5,10.6+b],[20,11.6+b],[26,11+fr],[30.2,12.5+fr],[32.4,16+fr],[31.8,20.5+fr],[27,23.2+fr],[20,23.6+b],[14,22.2+rr],[10,20.5+rr]]),coat);
+    polyFill(c,P([[10.4,20.5+rr],[14,22.2+rr],[20,23.6+b],[27,23.2+fr],[31.8,20.5+fr],[31,19+fr],[26,21.4+fr],[20,21.6+b],[14,20.3+rr]]),low);
+    polyFill(c,P([[10,11.6+rr],[14.5,11+b],[20,12+b],[26,11.4+fr],[26,12.4+fr],[20,13+b],[14.5,12+b],[10,12.8+rr]]),hi);
+    // muscle: quarter, shoulder, flank line
+    polyFill(c,P([[9.8,13+rr],[15,12.8+rr],[16.6,17+rr],[13.5,20+rr],[10.4,18.6+rr]]),hi);polyFill(c,P([[10.6,13.8+rr],[13.6,13.6+rr],[14.2,16+rr],[11.4,16.6+rr]]),hi2);
+    polyFill(c,P([[26.4,13+fr],[30.5,14+fr],[31.2,18.6+fr],[27.6,20+fr]]),hi);polyFill(c,P([[27.4,14+fr],[29.6,14.6+fr],[29.8,16.4+fr],[27.8,16.4+fr]]),hi2);
+    line(c,17*K,(13.5+b)*K,16.2*K,(21.5+b)*K,1,low);
     // near legs
-    leg(31,21+b,ph,coat,sock);leg(12,21+b,ph+3.14,coat,sock);
-    // saddle cloth + number
-    polyFill(c,P([[8.5,11.5+b],[19.5,11.5+b],[19.5,21.5+b],[8.5,21.5+b]]),"#fbf8ee");
-    // jockey legs, boot, stirrup
-    polyFill(c,P([[17,11+b],[23,11+b],[25.5,14+b],[20,15+b]]),"#f2efe3");
-    polyFill(c,P([[21,14+b],[24.5,14+b],[24.5,18+b],[21,18+b]]),"#1a1410");
-    c.fillStyle="#c9c2b0";c.fillRect(Math.round(21*K),Math.round((18+b)*K),Math.round(4*K),2);
-    {const no=h.no||idx+1,sz=no>9?2:3;digits(c,no,Math.round(14*K-(no>9?7:4.5)),Math.round((16.5+b)*K-(no>9?5:7.5)),"#000",sz)}
-    // torso + silks pattern
-    const A=[18,6+b],B=[23,1+b],C=[28,4+b],D=[24,11+b];
+    leg(31,21+fr,ph,coat,sock,true);leg(12,21+rr,ph+3.14,coat,sock,false);
+    // girth + saddle cloth + number
+    polyFill(c,P([[8.5,11.3+b],[19.5,11.3+b],[19.5,21.7+b],[8.5,21.7+b]]),"#fbf8ee");
+    polyFill(c,P([[8.5,11.3+b],[19.5,11.3+b],[19.5,12.4+b],[8.5,12.4+b]]),silk);
+    {const no=h.no||idx+1,sz=no>9?3:4;digits(c,no,Math.round(14*K-(no>9?10.5:6)),Math.round((17+b)*K-(no>9?7.5:10)),"#000",sz)}
+    // jockey: knee, boot, stirrup
+    polyFill(c,P([[17,10.6+b],[23,10.6+b],[26,13.6+b],[20.6,15+b]]),"#f2efe3");
+    polyFill(c,P([[20.6,14+b],[25,14+b],[25,18.6+b],[23.8,19+b],[20.6,18.4+b]]),"#16100c");
+    c.fillStyle="#c9c2b0";c.fillRect(Math.round(20.8*K),Math.round((19+b)*K),Math.round(4.6*K),2);
+    // torso, low crouch, and silks pattern
+    const A=[17.6,6.5+b],B=[23,1+b],C=[28.4,3.6+b],D=[24,11+b];
     const q=(u,v)=>{const tx=A[0]+(B[0]-A[0])*u,ty=A[1]+(B[1]-A[1])*u,bx=D[0]+(C[0]-D[0])*u,by=D[1]+(C[1]-D[1])*u;return [tx+(bx-tx)*v,ty+(by-ty)*v]};
     const cell=(u0,u1,v0,v1)=>polyFill(c,P([q(u0,v0),q(u1,v0),q(u1,v1),q(u0,v1)]),alt);
     polyFill(c,P([A,B,C,D]),silk);
-    if(pattern===1)for(const u of [.15,.55])cell(u,u+.2,0,1);
-    if(pattern===2)for(const v of [.15,.55])cell(0,1,v,v+.2);
+    if(pattern===1)for(const u of [.12,.42,.72])cell(u,u+.14,0,1);
+    if(pattern===2)for(const v of [.12,.42,.72])cell(0,1,v,v+.14);
     if(pattern===3)polyFill(c,P([q(0,.1),q(0,.4),q(1,.9),q(1,.6)]),alt);
     if(pattern===4){cell(0,.5,0,.5);cell(.5,1,.5,1)}
-    if(pattern===5)for(const [u,v] of [[.2,.2],[.6,.25],[.3,.65],[.7,.7]])cell(u,u+.16,v,v+.16);
-    // arm, rein, whip hand
-    line(c,26*K,(5+b)*K,33*K,(8+b)*K,3,silk);
-    line(c,33*K,(8+b)*K,42*K,(9.5+b)*K,1,"#20150e");
-    // head + cap + goggles
-    polyFill(c,P([[27,1+b],[30.5,1+b],[30.5,4.5+b],[27,4.5+b]]),"#e6b48e");
-    polyFill(c,P([[26,-1+b],[30,-1.4+b],[30.5,1.3+b],[26,1.3+b]]),alt);
-    polyFill(c,P([[30,0+b],[32.5,.6+b],[32.5,1.3+b],[30,1.3+b]]),alt);
-    c.fillStyle="#1b1b22";c.fillRect(Math.round(28.5*K),Math.round((2+b)*K),Math.round(2*K),2);
+    if(pattern===5)for(const [u,v] of [[.15,.15],[.55,.2],[.25,.6],[.65,.68]])cell(u,u+.18,v,v+.18);
+    // arm and reins, whip hand pumps
+    const arm=Math.sin(ph)*.8;
+    line(c,26*K,(5+b)*K,32.5*K,(8.2+b+arm)*K,5,silk);c.fillStyle="#e6b48e";c.fillRect(Math.round(32.5*K),Math.round((8.2+b+arm)*K),5,5);
+    line(c,33*K,(8.6+b+arm)*K,42.4*K,(9.6+fr)*K,1,"#20150e");
+    // helmet, face, goggles
+    polyFill(c,P([[27,1+b],[30.6,1+b],[30.6,4.6+b],[27,4.6+b]]),"#e6b48e");
+    polyFill(c,P([[25.8,-1+b],[28,-2.4+b],[30.2,-1.8+b],[30.8,1.3+b],[25.8,1.3+b]]),alt);
+    polyFill(c,P([[30,-.2+b],[33,.6+b],[33,1.3+b],[30,1.3+b]]),alt);
+    c.fillStyle="#1b1b22";c.fillRect(Math.round(28.4*K),Math.round((2+b)*K),Math.round(2.4*K),3);
     // outline
     const img=c.getImageData(0,0,SW,SH),d=img.data,copy=new Uint8ClampedArray(d);
     const op=(x,y)=>x>=0&&y>=0&&x<SW&&y<SH&&copy[(y*SW+x)*4+3]>0;
@@ -413,7 +441,7 @@ function buildSheet(h,idx){
 }
 
 /* ---------- renderer ---------- */
-const cv=$("c"),RES=1.5,W=480,H=236,PX=6,OS=60,VW=W+OS*2,LW=Math.round(BW*LOG),LH=Math.round(BH*LOG);
+const cv=$("c"),RES=2,W=480,H=236,PX=6,OS=60,VW=W+OS*2,LW=Math.round(BW*LOG),LH=Math.round(BH*LOG);
 const out=cv.getContext("2d");out.imageSmoothingEnabled=false;
 const offC=document.createElement("canvas");offC.width=Math.round(VW*RES);offC.height=Math.round(H*RES);
 const g=offC.getContext("2d");g.imageSmoothingEnabled=false;
@@ -498,13 +526,61 @@ function drawScene(camX,now){
   g.fillStyle="#f6f2e8";g.fillRect(0,221,VW,3);for(let x=po-32;x<VW;x+=32)g.fillRect(x,221,2,9);
   g.fillStyle=css(mix(P.turfA,[30,60,40],.5));g.fillRect(0,230,VW,6);
 }
-function drawGates(camX,back){
+function drawGates(camX,now){
+  // rear frame only; the front doors are drawn over the horses by drawDoors
   const n=S.race.field.length;
+  for(let l=0;l<n;l++){const y=laneY(l),x=-camX;
+    g.fillStyle="#1f5c3d";g.fillRect(x-58,y-37,2,39);g.fillRect(x-58,y-37,68,3);
+    g.fillStyle="#2c7a52";g.fillRect(x-58,y-3,68,2);}
+  const top=laneY(0)-46,bot=laneY(n-1)+3,x=-camX;
+  g.fillStyle="#1f5c3d";g.fillRect(x-60,top,4,bot-top);
+}
+function drawDoors(camX,open){
+  const n=S.race.field.length,x=-camX;
   for(let l=0;l<n;l++){
-    const y=laneY(l),x=-camX;
-    g.fillStyle=back?"#2c6e4a":"#3f9b67";
-    if(back){g.fillRect(x-48,y-32,2,32);g.fillRect(x-48,y-32,52,2)}else g.fillRect(x+6,y-32,3,34);
+    const y=laneY(l),h=30,sw=12*(1-open);
+    g.fillStyle="#d9a321";g.fillRect(x+7,y-h-6,4,h+8);
+    if(open<1){
+      g.fillStyle="#c8321f";g.fillRect(x+11,y-h,sw,h);
+      g.fillStyle="#f4f1e6";g.fillRect(x+12,y-h+3,Math.max(0,sw-2),3);g.fillRect(x+12,y-9,Math.max(0,sw-2),3);
+    }else{g.fillStyle="rgba(200,50,31,.75)";g.fillRect(x+11,y-h,2,h)}
+    g.fillStyle="#17120c";g.fillRect(x-6,y-h-14,14,9);digits(g,l+1,x-4+(l+1<10?3:0),y-h-12,"#ffd889");
   }
+}
+function drawAerial(pos,now){
+  const lap=clamp(S.race.dist/2900,.3,.97),rx=430,ry=190,tw=58;
+  const point=(p,lane)=>{const a=Math.PI/2+(1-p)*lap*6.2832,r=lane*tw*.86-tw*.43;return {x:Math.cos(a)*(rx+r),y:Math.sin(a)*(ry+r*.75),a}};
+  const lead=Math.max(...pos)/S.race.dist,c=point(lead,.5);
+  const P=palette();
+  out.fillStyle=css(mix(P.turfB,[40,92,48],.5));out.fillRect(0,0,W,H);
+  out.save();out.translate(W/2-c.x,H/2-c.y);
+  // infield: grass, lake, trees
+  out.fillStyle=css(mix(P.turfA,[66,120,60],.35));out.beginPath();out.ellipse(0,0,rx-tw/2,ry-tw*.4,0,0,7);out.fill();
+  out.fillStyle="#3a86b8";out.beginPath();out.ellipse(-40,10,150,52,0,0,7);out.fill();out.fillStyle="#5aa6d2";out.beginPath();out.ellipse(-52,2,110,30,0,0,7);out.fill();
+  out.fillStyle="#2f5740";for(let i=0;i<46;i++){const a=hash(i)*6.28,r=.55+hash(i+4)*.32;const px=Math.cos(a)*rx*r,py=Math.sin(a)*ry*r;if(Math.abs(px+40)<170&&Math.abs(py-10)<70)continue;out.beginPath();out.arc(px,py,7+hash(i+8)*6,0,7);out.fill()}
+  // racing surface with mown bands and rails
+  out.lineWidth=tw;out.strokeStyle=css(P.turfA);out.beginPath();out.ellipse(0,0,rx,ry,0,0,7);out.stroke();
+  out.strokeStyle=css(P.turfB);out.lineWidth=tw;out.setLineDash([60,60]);out.lineDashOffset=0;out.beginPath();out.ellipse(0,0,rx,ry,0,0,7);out.stroke();out.setLineDash([]);
+  out.strokeStyle="#f6f2e8";out.lineWidth=2.5;out.beginPath();out.ellipse(0,0,rx-tw/2,ry-tw*.4,0,0,7);out.stroke();out.beginPath();out.ellipse(0,0,rx+tw/2,ry+tw*.4,0,0,7);out.stroke();
+  // stands on the home straight, finish line
+  out.fillStyle="#50483b";out.fillRect(-200,ry+tw*.4+6,300,30);out.fillStyle="#e8e4d8";out.fillRect(-206,ry+tw*.4+4,312,6);
+  for(let i=0;i<70;i++){out.fillStyle=CROWD[i%CROWD.length];out.fillRect(-196+i*4.2,ry+tw*.4+13+(i%3)*5,3,3)}
+  out.fillStyle="#fff";out.fillRect(-1,ry-tw*.4,3,tw*.8);
+  // the field, widest first
+  const f=S.race.field,idx=[...f.keys()].sort((a,b)=>pos[a]-pos[b]);
+  for(const k of idx){
+    const h=f[k],p=clamp(pos[k]/S.race.dist,0,1),pt=point(p,(h.barrier-.5)/f.length),tang=pt.a-Math.PI/2+Math.PI;
+    out.save();out.translate(pt.x,pt.y);out.rotate(tang+Math.PI);out.scale(1.45,1.45);
+    const stride=Math.floor(now/70+k)%2?1.6:-1.6;
+    out.fillStyle="rgba(0,0,0,.28)";out.fillRect(-8,-2,20,7);
+    out.fillStyle=COATS[h.coat][0];out.fillRect(-9,-3,18,6);out.fillRect(9,-2,6,4);
+    out.fillStyle=COATS[h.coat][0];out.fillRect(-7+stride,-5,3,2);out.fillRect(-7-stride,3,3,2);out.fillRect(5+stride,-5,3,2);out.fillRect(5-stride,3,3,2);
+    out.fillStyle=COATS[h.coat][1];out.fillRect(-13,-1,4,2);
+    out.fillStyle=silkOf(h,k)[0];out.fillRect(-2,-3.5,7,7);out.fillStyle=silkOf(h,k)[1];out.fillRect(1,-1.5,3,3);
+    if(S.bets.some(b=>b.sel.includes(k))){out.strokeStyle="#ffe07a";out.lineWidth=1.5;out.strokeRect(-11,-6,24,12)}
+    out.restore();
+  }
+  out.restore();
 }
 function horsePositions(t){
   const tr=R.sim.trace,fl=t/R.sim.dt,i=clamp(Math.floor(fl),0,tr.length-2),u=clamp(fl-i,0,1);
@@ -515,7 +591,7 @@ function drawHorses(camX,pos,now){
   for(const k of idx){
     const h=f[k],y=laneY(h.barrier-1),moving=pos&&R.running&&!R.photoOn;
     const x=Math.round((pos?pos[k]:0)*PX-camX-LW+2);
-    const ff=(pos&&(R.running||R.photoOn))?(R.photoOn?3:(Math.floor(now/58)+k*3)%FR):0;
+    const ff=(pos&&(R.running||R.photoOn))?(R.photoOn?3:(Math.floor(now/48)+k*3)%FR):0;
     const sw=moving?Math.round(Math.sin(now/260+k)):0;
     if(x>-70&&x<VW+4){
       g.fillStyle="rgba(10,30,15,.32)";g.fillRect(x+8,y-1+sw,LW-12,3);
@@ -535,75 +611,143 @@ function drawRain(now){
   for(let i=0;i<c;i++){const x=(hash(i)*W*1.2-(now*.28+i*7)%W+W)%W,y=(hash(i+3)*H+now*.5)%H;out.fillRect(x,y,1,6)}
 }
 function drawOval(pos){
-  const X=10,Y=8,MW=112,MH=52,cx=X+MW/2,cy=Y+MH/2+3,rx=44,ry=16;
-  out.fillStyle="rgba(15,12,8,.78)";out.fillRect(X,Y,MW,MH);
+  const X=10,Y=8,MW=96,MH=44,cx=X+MW/2,cy=Y+MH/2,rx=38,ry=14;
+  out.fillStyle="rgba(15,12,8,.72)";out.fillRect(X,Y,MW,MH);
   out.strokeStyle="#c9b283";out.lineWidth=1.5;out.beginPath();out.ellipse(cx,cy,rx,ry,0,0,7);out.stroke();
-  out.fillStyle="#fff";out.fillRect(cx+1,cy+ry-3,1.5,6);
+  out.fillStyle="#fff";out.fillRect(cx-.5,cy+ry-3,1.5,6);
   const lap=clamp(S.race.dist/2900,.3,.97);
-  S.race.field.forEach((h,k)=>{const p=clamp((pos?pos[k]:0)/S.race.dist,0,1),a=Math.PI/2-(1-p)*lap*6.2832+.03;
+  S.race.field.forEach((h,k)=>{const p=clamp((pos?pos[k]:0)/S.race.dist,0,1),a=Math.PI/2+(1-p)*lap*6.2832;
     const x=cx+Math.cos(a)*rx,y=cy+Math.sin(a)*ry;
     if(S.bets.some(b=>b.sel.includes(k))){out.fillStyle="#ffe07a";out.fillRect(x-3,y-3,6,6)}
     out.fillStyle=silkOf(h,k)[0];out.fillRect(x-2,y-2,4,4)});
-  const lead=pos?Math.max(...pos):0,rem=Math.max(0,Math.round((S.race.dist-lead)/50)*50);
-  digits(out,rem,X+4,Y+4,"#ffd889");digits(out,"m",X+6+String(rem).length*4,Y+4,"#ffd889");
 }
 function drawCircle(now){
   const k=R.sim.order[0],h=S.race.field[k];
   out.fillStyle="rgba(12,16,10,.72)";out.fillRect(0,0,W,H);
   const g2=out.createRadialGradient(240,130,20,240,130,190);g2.addColorStop(0,"rgba(255,226,150,.55)");g2.addColorStop(1,"rgba(255,226,150,0)");out.fillStyle=g2;out.fillRect(0,0,W,H);
   out.drawImage(sheets[k],0,0,SW,SH,130,44,LW*3.4,LH*3.4);
-  out.textAlign="center";out.fillStyle="#ffb52e";out.font='700 26px "Pixelify Sans",monospace';out.fillText(h.name,240,34,450);
-  out.fillStyle="#efe4c8";out.font='20px "VT323",monospace';out.fillText(`${h.jock} · ${S.race.title}`,240,216,450);out.textAlign="left";
+  out.textAlign="center";out.fillStyle="#ffb52e";out.font='400 30px "Anton",Impact,sans-serif';out.fillText(h.name,240,34,450);
+  out.fillStyle="#efe4c8";out.font='600 18px "Barlow Condensed","Arial Narrow",sans-serif';out.fillText(`${h.jock} · ${S.race.title}`,240,216,450);out.textAlign="left";
   if(!confetti.length)for(let i=0;i<70;i++)confetti.push({x:Math.random()*W,y:-Math.random()*H,v:.4+Math.random()*1.1,c:CROWD[i%CROWD.length]});
   for(const p of confetti){p.y+=reduced?0:p.v;if(p.y>H)p.y=-5;out.fillStyle=p.c;out.fillRect(p.x+Math.sin(p.y*.05)*7,p.y,3,3)}
 }
-let cam=-340;
+let cam=-340,hudAt=0;
+function updateHud(now,pos,show){
+  const el=$("hud");
+  if(!show||!pos){if(el.dataset.on!=="0"){el.dataset.on="0";el.style.display="none"}return}
+  if(now-hudAt<170)return;hudAt=now;
+  el.dataset.on="1";el.style.display="flex";
+  const o=orderAt(pos),lead=pos[o[0]],rem=Math.max(0,Math.round((S.race.dist-lead)/10)*10);
+  $("hudrem").textContent=rem>0?rem+"m":"Finish";
+  $("hudtop").innerHTML=o.slice(0,4).map((k,i)=>{const h=S.race.field[k],c=silkOf(h,k)[0];return `<div><i style="background:${c};color:${inkOn(c)}">${h.no}</i><span>${h.name}</span></div>`}).join("");
+}
 function frame(now){
   requestAnimationFrame(frame);
   if(!S||!S.race)return;
   ensureSheets();
-  let pos=null,bend=0,zoom=1,fy=.65,progress=0;
+  let pos=null,bend=0,zoom=1,fy=.65,fxF=.62,progress=0,aerial=false,doors=0;
   if(R){
     if(R.photoOn){if(now>R.photoUntil){R.photoOn=false;cv.style.filter="";$("photo").style.display="none";R.last=now;fireWinnerCall()}}
-    else if(R.running){const dt=Math.min(.1,(now-R.last)/1000);R.last=now;R.t+=dt*R.rate;tick(now)}
+    else if(R.preUntil){
+      if(now>=R.preUntil){R.preUntil=0;R.jumpAt=now;R.last=now;tone(1250,.6,0,"square",.07);say(`And they're away in the <b>${S.race.title}</b>!`)}
+    }else if(R.running){const dt=Math.min(.1,(now-R.last)/1000);R.last=now;R.t+=dt*R.rate;tick(now)}
     pos=horsePositions(R.t);
     if(R.running&&R.t>=R.sim.dt*(R.sim.trace.length-2)){R.running=false;if(R.replay){R.replay=false;R.circleAt=now+700}}
     const lead=Math.max(...pos),fx=S.race.dist*PX,target=Math.min(lead*PX-345,fx-300);
     cam+=(target-cam)*.12;
     progress=lead/S.race.dist;
+    doors=R.preUntil?0:clamp((now-(R.jumpAt||0))/180,0,1);
     if(!reduced){
-      if(progress>.5&&progress<.8)bend=Math.sin((progress-.5)/.3*Math.PI);
-      if(progress>.82&&progress<1.02)zoom=1+.28*clamp((progress-.82)/.1,0,1);
+      const hasTurn=S.race.dist>=1100&&!R.photoOn;
+      if(hasTurn&&progress>.46&&progress<.74&&!R.settled)aerial=true;
+      else if(hasTurn&&progress>.36&&progress<=.46)bend=(progress-.36)/.1;
+      else if(hasTurn&&progress>=.74&&progress<.84)bend=1-(progress-.74)/.1;
+      if(R.preUntil){zoom=1.55;fxF=.97;fy=.92}
+      else if(R.jumpAt&&now-R.jumpAt<1400){const u=(now-R.jumpAt)/1400;zoom=1+.55*(1-u);fxF=.97-.35*u;fy=.92-.27*u}
+      else if(progress>.84&&progress<1.02)zoom=1+.28*clamp((progress-.84)/.08,0,1);
       else if(progress>=1.02&&!R.settled)zoom=1.28;
     }
-    if(zoom>1){const f=S.race.field,o=orderAt(pos);fy=clamp((laneY(f[o[0]].barrier-1)-20-40)/120,.2,1)}
-  }else cam=-340;
+    if(zoom>1&&!R.preUntil&&progress>.5){const f=S.race.field,o=orderAt(pos);fy=clamp((laneY(f[o[0]].barrier-1)-20-40)/120,.2,1)}
+  }else{cam=-340;zoom=reduced?1:1.55;fxF=.97;fy=.92}
   let camX=cam-OS;
   if(R&&R.photoOn)camX=S.race.dist*PX-240-OS;
-  drawScene(camX,now);
-  if(!pos||R.t<6)drawGates(camX,true);
-  drawHorses(camX,pos,now);
-  if(!pos||R.t<6)drawGates(camX,false);
-  drawParticles(camX);
-  // compose: camera zoom, bend through the turn, photo crop
   const VPX=W*RES,HPX=H*RES,OSP=OS*RES;
-  out.setTransform(1,0,0,1,0,0);
-  if(R&&R.photoOn){
-    const s=R.sim,a=S.race.field[s.order[0]],b=S.race.field[s.order[1]];
-    const cy=clamp((laneY(a.barrier-1)+laneY(b.barrier-1))/2-14,60,176);
-    out.drawImage(offC,(OS+120)*RES,(cy-59)*RES,240*RES,118*RES,0,0,VPX,HPX);
-  }else if(bend>.02){
-    const step=2;
-    for(let y=0;y<HPX;y+=step){const ly=y/RES,f=ly<72?0:Math.pow((ly-72)/164,2)*44*bend*RES;out.drawImage(offC,OSP-f,y,VPX,step,0,y,VPX,step)}
-  }else{
-    const w=VPX/zoom,h=HPX/zoom;
-    out.drawImage(offC,OSP+(VPX-w)*.62,(HPX-h)*fy,w,h,0,0,VPX,HPX);
+  const showGates=!pos||R.t<8;
+  out.setTransform(RES,0,0,RES,0,0);
+  if(aerial){drawAerial(pos,now);}
+  else{
+    drawScene(camX,now);
+    if(showGates)drawGates(camX,now);
+    drawHorses(camX,pos,now);
+    if(showGates)drawDoors(camX,doors);
+    drawParticles(camX);
+    out.setTransform(1,0,0,1,0,0);
+    if(R&&R.photoOn){
+      const s=R.sim,a=S.race.field[s.order[0]],b=S.race.field[s.order[1]];
+      const cy=clamp((laneY(a.barrier-1)+laneY(b.barrier-1))/2-14,60,176);
+      out.drawImage(offC,(OS+120)*RES,(cy-59)*RES,240*RES,118*RES,0,0,VPX,HPX);
+    }else if(bend>.02){
+      for(let y=0;y<HPX;y+=2){const ly=y/RES,f=ly<72?0:Math.pow((ly-72)/164,2)*48*bend*RES;out.drawImage(offC,OSP-f,y,VPX,2,0,y,VPX,2)}
+    }else{
+      const w=VPX/zoom,h=HPX/zoom;
+      out.drawImage(offC,OSP+(VPX-w)*fxF,(HPX-h)*fy,w,h,0,0,VPX,HPX);
+    }
   }
   out.setTransform(RES,0,0,RES,0,0);
   drawRain(now);
-  if(R&&R.circleAt&&now>R.circleAt)drawCircle(now);else drawOval(pos);
+  const circle=R&&R.circleAt&&now>R.circleAt;
+  if(circle)drawCircle(now);else if(!aerial)drawOval(pos);
+  updateHud(now,pos,R&&!R.preUntil&&!circle&&!R.photoOn);
 }
 
+/* ---------- tips ---------- */
+function harvilleSeq(P,seq){let left=1,p=1;for(const k of seq){p*=P[k]/left;left-=P[k]}return p}
+function placeProb(P,k,n){ // probability of finishing in the top n, by sequential elimination
+  const m=P.length;let tot=P[k];
+  if(n>=2)for(let a=0;a<m;a++)if(a!==k)tot+=P[a]*P[k]/(1-P[a]);
+  if(n>=3)for(let a=0;a<m;a++)if(a!==k)for(let b=0;b<m;b++)if(b!==k&&b!==a)tot+=P[a]*P[b]/(1-P[a])*P[k]/(1-P[a]-P[b]);
+  return tot;
+}
+function formScore(fd){
+  if(!fd)return null;
+  const rate=(s,wt)=>s&&s.s?{v:(s.p+s.w*.5+1.2)/(s.s+4),wt:wt*Math.min(1,s.s/6)}:null;
+  const parts=[rate(fd.overall,.5),rate(fd.dist,.25),rate(fd.track,.1)].filter(Boolean);
+  const rec=(fd.recent||[]).filter(r=>r.pos&&r.of);
+  if(rec.length){const v=rec.slice(0,4).reduce((a,r)=>a+(1-(r.pos-1)/r.of),0)/Math.min(4,rec.length);parts.push({v:v*.75,wt:.3})}
+  if(!parts.length)return null;
+  const w=parts.reduce((a,x)=>a+x.wt,0);return parts.reduce((a,x)=>a+x.v*x.wt,0)/w;
+}
+function applyForm(race,tp){
+  const sc=race.field.map(h=>formScore(h.fd)),ok=sc.filter(x=>x!==null);
+  if(ok.length<3)return tp;
+  const m=ok.reduce((a,x)=>a+x,0)/ok.length,sd=Math.sqrt(ok.reduce((a,x)=>a+(x-m)*(x-m),0)/ok.length)||1;
+  race.field.forEach((h,i)=>{h.fz=sc[i]===null?0:clamp((sc[i]-m)/sd,-2,2)});
+  const adj=tp.map((p,i)=>p*Math.exp(.28*race.field[i].fz)),sum=adj.reduce((a,x)=>a+x,0);
+  race.formed=true;
+  return adj.map(x=>x/sum);
+}
+function computeTips(race){
+  const P=race.tipP||race.fair,n=P.length,rank=[...P.keys()].sort((a,b)=>P[b]-P[a]);
+  const nameOf=k=>race.field[k].name,noOf=k=>race.field[k].no;
+  const placeBest=[...P.keys()].map(k=>[k,placeProb(P,k,race.placeN)]).sort((a,b)=>b[1]-a[1])[0];
+  const mk=(type,sel,prob,label)=>({type,sel,prob,label});
+  const tips=[mk("win",[rank[0]],P[rank[0]],nameOf(rank[0])),mk("place",[placeBest[0]],placeBest[1],nameOf(placeBest[0]))];
+  const q=rank.slice(0,2);tips.push(mk("quin",q,harvilleSeq(P,q)+harvilleSeq(P,[q[1],q[0]]),q.map(noOf).join(" & ")));
+  tips.push(mk("exacta",q,harvilleSeq(P,q),q.map(noOf).join("-")));
+  const t=rank.slice(0,3);tips.push(mk("tri",t,harvilleSeq(P,t),t.map(noOf).join("-")));
+  const f=rank.slice(0,4);tips.push(mk("first4",f,harvilleSeq(P,f),f.map(noOf).join("-")));
+  let value=null;
+  if(race.formed){const v=[...P.keys()].map(k=>[k,P[k]*race.field[k].win]).sort((a,b)=>b[1]-a[1])[0];if(v[1]>1.05)value={k:v[0],edge:v[1]}}
+  return {tips,value,basis:race.formed?"Form guide and odds":"Market odds"};
+}
+function tipsHtml(){
+  const r=S.race;
+  if(S.phase!=="bet")return "";
+  const T=computeTips(r),pct=p=>p>=.1?Math.round(p*100)+"%":p>=.01?(p*100).toFixed(1)+"%":"<1%";
+  const row=(t,i)=>`<button class="tip-row" data-tip="${i}"><b>${TYPES[t.type][0]}</b><span>${t.label}</span><em>${pct(t.prob)}</em></button>`;
+  const v=T.value?`<div class="tip-value">Value: <b>${r.field[T.value.k].no}. ${r.field[T.value.k].name}</b> at ${oddsTxt(r.field[T.value.k].win)}. Form rates it above its price.</div>`:"";
+  return `<div class="tips"><div class="tips-h"><b>Tips</b><span>${T.basis}. Tap to load a bet.</span></div>${T.tips.map(row).join("")}${v}</div>`;
+}
 /* ---------- real races (Krok Odds via Supabase) ---------- */
 const REAL_URL="https://nkkhbtrrytctpfwjenrz.supabase.co/functions/v1/otr-races";
 let picker=null;
@@ -625,7 +769,7 @@ const inkOn=hex=>{const n=parseInt(hex.slice(1),16);return ((n>>16)*.3+(n>>8&255
 const realStyle=l=>/lead/i.test(l||"")?"front":/^on pace|^pace/i.test(l||"")?"front":/back|off pace/i.test(l||"")?"back":"mid";
 function trackRating(t){const m=String(t||"").match(/(\d+)/);if(m)return clamp(+m[1],1,10);if(/heavy/i.test(t||""))return 8;if(/soft/i.test(t||""))return 6;return 4}
 function calibrate(race){
-  const f=race.field,n=f.length,sum=f.reduce((a,h)=>a+1/h.win,0),tp=f.map(h=>(1/h.win)/sum);
+  const f=race.field,n=f.length,sum=f.reduce((a,h)=>a+1/h.win,0),market=f.map(h=>(1/h.win)/sum),tp=applyForm(race,market);
   f.forEach((h,i)=>h.q=.5+.17*Math.log(tp[i]*n));
   const N=200,ITS=12;let pl=new Array(n).fill(0);
   for(let it=0;it<ITS;it++){
@@ -633,15 +777,15 @@ function calibrate(race){
     for(let s=0;s<N;s++){const o=simulate(f,race,false).order;w[o[0]]++;for(let i=0;i<race.placeN;i++)pl[o[i]]++}
     const gain=.16*(1-it/(ITS+4));f.forEach((h,i)=>h.q+=gain*clamp(Math.log(tp[i]/((w[i]/N)*.85+tp[i]*.15)),-1.2,1.2));
   }
-  race.fair=tp;
+  race.fair=market;race.tipP=tp;
   f.forEach((h,i)=>{if(!h.place)h.place=Math.max(1.05,ladder(1/(clamp((pl[i]+.6)/(N+1.2),.02,.97)*1.12)))});
 }
 function buildReal(){
   const src=S.real.races[S.idx],n=src.runners.length;
-  const field=src.runners.map((r,k)=>({name:r.name,no:r.no,barrier:0,_b:r.barrier,q:.5,sta:.8,style:realStyle(r.speed),wet:.5,cons:.6,form:r.form||"",runs:[],jock:r.jockey||"Jockey TBC",trainer:r.trainer,speed:r.speed,coat:strHash(r.name)%COATS.length,weight:r.weight||56,win:r.win,place:r.place,silk:parseSilks(r.silks,k),real:true}));
+  const field=src.runners.map((r,k)=>({name:r.name,no:r.no,barrier:0,_b:r.barrier,q:.5,sta:.8,style:realStyle(r.speed),wet:.5,cons:.6,form:r.form||"",runs:[],fd:r.fd||null,jock:r.jockey||"Jockey TBC",trainer:r.trainer,speed:r.speed,coat:strHash(r.name)%COATS.length,weight:r.weight||56,win:r.win,place:r.place,silk:parseSilks(r.silks,k),real:true}));
   field.slice().sort((a,b)=>a._b-b._b).forEach((h,i)=>h.barrier=i+1);
   field.forEach((h,i)=>h.realBarrier=src.runners[i].barrier);
-  const race={title:src.name,realNo:src.number,dist:src.distance||1400,rating:trackRating(src.track),trackLabel:src.track?ratingLabel(src.track):"Track TBC",field,placeN:n>=8?3:2,no:S.idx+1,cls:src.cls};
+  const race={title:src.name,realNo:src.number,dist:src.distance||1400,rating:trackRating(src.track),trackLabel:src.track?ratingLabel(src.track):"Track TBC",field,placeN:n>=8?3:2,no:S.idx+1,cls:src.cls,feature:!!src.feature};
   calibrate(race);
   const best=field.slice().sort((a,b)=>a.win-b.win)[0];
   race.tip={name:best.name,no:best.no,why:"Market favourite. Nan says the money knows."};
@@ -655,17 +799,26 @@ function openReal(){
 }
 function renderPicker(){
   const c=$("card");
-  const list=(picker.meetings||[]).map((m,i)=>`<button class="runner" data-m="${i}" style="grid-template-columns:minmax(0,1fr) auto"><span><span class="rname">${m.venue}</span><br><span class="rmeta">${m.state} · ${m.date} · ${m.races.length} races${m.metro?" · Metro":""}</span></span><span class="odds" style="font-size:22px">Play</span></button>`).join("");
+  const list=(picker.meetings||[]).map((m,i)=>`<button class="runner" data-m="${i}" style="grid-template-columns:minmax(0,1fr) auto"><span><span class="rname">${m.venue}</span><br><span class="rmeta">${m.state} · ${m.date} · ${m.races.length} races${m.metro?" · Metro":""}${m.races.some(r=>r.feature)?" · ★ Form guide":""}</span></span><span class="odds" style="font-size:22px">Play</span></button>`).join("");
   c.innerHTML=`<h2>Real Races</h2><div class="conds"><span>Real horses, jockeys and prices</span></div>
   ${picker.loading?"<div>Loading the card...</div>":picker.err?`<div>${picker.err}</div>`:list?`<div class="runners">${list}</div>`:"<div>No meetings are loaded yet. Try again soon.</div>"}
-  <div class="tip">Races are simulated from real market prices, barriers, weights and running style. Results are not the actual race result.</div>
+  <div class="tip">Races are simulated from real market prices, barriers, weights and running style, plus full form on the race marked ★. Results are not the actual race result.</div>
   <div class="tip">Data provided by Krok Odds</div>
   <button class="big next" id="pb">Back</button>`;
   $("pb").onclick=()=>{picker=null;renderCard()};
 }
+function refundBets(){for(const b of S.bets)S.bank=Math.round((S.bank+b.stake)*100)/100;S.bets=[]}
+function goMeeting(i){if(S.phase!=="bet")return;refundBets();S.realIdx=i;S.real=S.realList[i];S.track=S.real.venue;S.tier=S.real.metro?2:0;S.idx=0;R=null;buildReal();renderAll();say(`Switched to <b>${S.track}</b>.`)}
+function goRace(i){if(S.phase!=="bet"||i===S.idx)return;refundBets();S.idx=i;R=null;buildReal();renderAll();say(`Betting open on the <b>${S.race.title}</b>.`)}
+function tabsHtml(){
+  if(S.mode!=="real"||S.phase!=="bet")return "";
+  const meets=S.realList.length>1?`<div class="tabs" aria-label="Meetings">${S.realList.map((m,i)=>`<button data-gm="${i}" aria-pressed="${i===S.realIdx}">${m.venue}</button>`).join("")}</div>`:"";
+  const races=`<div class="tabs" aria-label="Races">${S.real.races.map((r,i)=>`<button data-gr="${i}" aria-pressed="${i===S.idx}">R${r.number}${r.feature?" ★":""}</button>`).join("")}</div>`;
+  return meets+races;
+}
 function startReal(m){
-  picker=null;const career=S;
-  S={bank:1000,meeting:1,best:1000,bigCollect:0,loans:0,type:"win",sel:[],bets:[],phase:"bet",ledger:[],tier:m.metro?2:0,mode:"real",real:m,idx:0,track:m.venue,pool:[],startBank:1000,career};
+  const list=picker.meetings;picker=null;const career=S;
+  S={bank:1000,meeting:1,best:1000,bigCollect:0,loans:0,type:"win",sel:[],bets:[],phase:"bet",ledger:[],tier:m.metro?2:0,mode:"real",real:m,realList:list,realIdx:list.indexOf(m),idx:0,track:m.venue,pool:[],startBank:1000,career};
   R=null;buildReal();renderAll();say(`Real Races at <b>${m.venue}</b>. Betting open on the <b>${S.race.title}</b>.`);
 }
 /* ---------- race playback ---------- */
@@ -677,12 +830,12 @@ function startRace(){
   audio();
   const sim=S.mode==="daily"?withSeed(S.seed+S.idx*131,()=>simulate(S.race.field,S.race,true)):simulate(S.race.field,S.race,true);
   const fin=sim.order.map(k=>sim.fin[k]);
-  R={sim,t:0,rate:(S.race.dist/17)/(12+S.race.dist/100),running:true,last:performance.now(),called:0,photoDone:false,settled:false,lastHoof:0,evI:0,
+  R={preUntil:performance.now()+2300,jumpAt:0,sim,t:0,rate:(S.race.dist/17)/(20+(S.race.dist-1000)*.03),running:true,last:performance.now(),called:0,photoDone:false,settled:false,lastHoof:0,evI:0,
      isPhoto:fin[1]-fin[0]<.11,startPos:null,p70:null,winCalled:false};
   S.phase="race";cam=-340;particles=[];
   renderAll();
   bugle();startCrowd();
-  say(`And they're away in the <b>${S.race.title}</b>.`);
+  say(`They're loading for the <b>${S.race.title}</b>...`);
   document.querySelector(".stage").scrollIntoView({behavior:reduced?"auto":"smooth",block:"start"});
 }
 function posStr(o,k){const i=o.indexOf(k)+1;return i===1?"in front":i===2?"second":i===3?"third":i+"th"}
@@ -717,7 +870,7 @@ function fireWinnerCall(){if(R.winCalled)return;R.winCalled=true;say(`${nm(R.sim
 function skipRace(){
   if(!R||R.settled)return;
   const s=R.sim,f3=s.fin[s.order[Math.min(S.race.placeN,s.order.length)-1]];
-  R.t=f3+.8;R.photoOn=false;R.photoDone=true;cv.style.filter="";$("photo").style.display="none";
+  R.preUntil=0;R.jumpAt=1;R.t=f3+.8;R.photoOn=false;R.photoDone=true;cv.style.filter="";$("photo").style.display="none";
   fireWinnerCall();settle();
 }
 function betWins(b,o,placeN){
@@ -727,12 +880,13 @@ function betWins(b,o,placeN){
   if(b.type==="quin")return s.includes(o[0])&&s.includes(o[1]);
   if(b.type==="exacta")return o[0]===s[0]&&o[1]===s[1];
   if(b.type==="tri")return o[0]===s[0]&&o[1]===s[1]&&o[2]===s[2];
+  if(b.type==="first4")return s.every((k,i)=>o[i]===k);
 }
 function settle(){
   R.settled=true;R.circleAt=performance.now()+2200;confetti=[];stopCrowd();
   const o=R.sim.order,race=S.race,res={order:o.slice(0,4),bets:[],staked:0,ret:0};
   for(const b of S.bets){const w=betWins(b,o,race.placeN),pay=w?Math.round(b.stake*b.odds*100)/100:0;res.bets.push({...b,w,pay});res.staked+=b.stake;res.ret+=pay}
-  res.quin=oddsFor("quin",[o[0],o[1]]);res.exacta=oddsFor("exacta",[o[0],o[1]]);res.tri=oddsFor("tri",[o[0],o[1],o[2]]);
+  res.quin=oddsFor("quin",[o[0],o[1]]);res.exacta=oddsFor("exacta",[o[0],o[1]]);res.tri=oddsFor("tri",[o[0],o[1],o[2]]);res.first4=oddsFor("first4",[o[0],o[1],o[2],o[3]]);
   res.margin=(R.sim.fin[o[1]]-R.sim.fin[o[0]])*17/2.4;
   S.bank=Math.round((S.bank+res.ret)*100)/100;
   S.best=Math.max(S.best,S.bank);
@@ -769,7 +923,7 @@ function startDaily(){
   withSeed(S.seed,newMeeting);S.track="Daily Meeting";R=null;renderAll();save();say("Daily Meeting: same runners and results for everyone today. One go only.");
 }
 function finishDaily(){const c=S.career;if(S.mode==="daily"){c.dailyDone=c.dailyDone||{};c.dailyDone[S.day]=S.bank}S=c;R=null;save();renderAll();say(`Back at <b>${S.track}</b>.`)}
-function replay(){if(!R)return;audio();startCrowd();R.t=0;R.running=true;R.replay=true;R.circleAt=0;R.called=0;R.evI=0;R.last=performance.now();R.winCalled=false;R.photoDone=true;cam=-340;particles=[];say("Replay.")}
+function replay(){if(!R)return;audio();startCrowd();R.preUntil=performance.now()+900;R.jumpAt=0;R.t=0;R.running=true;R.replay=true;R.circleAt=0;R.called=0;R.evI=0;R.last=performance.now();R.winCalled=false;R.photoDone=true;cam=-340;particles=[];say("Replay.")}
 function nextMeeting(){S.meeting++;S.lastNames=[];newMeeting();R=null;renderAll();say(`New meeting at <b>${S.track}</b>. Betting open.`)}
 
 /* ---------- UI ---------- */
@@ -787,10 +941,10 @@ function renderCard(){
   if(S.phase==="result")return renderResult();
   if(S.phase==="end")return renderEnd();
   const wet=r.rating>=6?" wet":"";
-  c.innerHTML=`<h2>${r.realNo?"R"+r.realNo+" ":""}${r.title}</h2>
-  <div class="conds"><span>${r.dist}m</span><span class="${wet}">${r.trackLabel||ratingName(r.rating)}</span><span>${r.field.length} runners</span><span>Pays ${r.placeN} places</span></div>
+  c.innerHTML=`${tabsHtml()}<h2>${r.realNo?"R"+r.realNo+" ":""}${r.title}</h2>
+  <div class="conds">${r.feature?'<span class="feat">Form guide race</span>':""}<span>${r.dist}m</span><span class="${wet}">${r.trackLabel||ratingName(r.rating)}</span><span>${r.field.length} runners</span><span>Pays ${r.placeN} places</span></div>
   <div class="tip">Nan's tip: <b>${r.tip.no}. ${r.tip.name}</b>. ${r.tip.why}</div>
-  <div class="runners">${r.field.map((h,k)=>{
+  ${tipsHtml()}<div class="runners">${r.field.map((h,k)=>{
     const i=S.sel.indexOf(k),on=i>=0;
     const tag=on&&TYPES[S.type][1]>1?(S.type==="quin"?"•":i+1):"";
     return `<button class="runner${on?" on":""}" data-k="${k}" aria-pressed="${on}" ${S.phase!=="bet"?"disabled":""}>
@@ -805,7 +959,7 @@ function renderResult(){
   const lbl=x.margin<.1?"Short head":x.margin<.5?"Half a length or less":x.margin.toFixed(1)+" lengths";
   c.innerHTML=`<h2>Result: ${r.title}</h2>
   <table class="tbl">${x.order.slice(0,3).map((k,i)=>{const h=r.field[k];return `<tr><td>${silk(h,k)}</td><td><b>${["1st","2nd","3rd"][i]}</b> ${h.name}</td><td class="n">${i===0?"W "+div(h.win):""}<br>${i<r.placeN?"P "+div(h.place):""}</td></tr>`}).join("")}</table>
-  <div class="conds"><span>Margin: ${lbl}</span><span>Quinella ${div(x.quin)}</span><span>Exacta ${div(x.exacta)}</span><span>Trifecta ${div(x.tri)}</span></div>
+  <div class="conds"><span>Margin: ${lbl}</span><span>Quinella ${div(x.quin)}</span><span>Exacta ${div(x.exacta)}</span><span>Trifecta ${div(x.tri)}</span><span>First 4 ${div(x.first4)}</span></div>
   ${x.bets.length?`<table class="tbl">${x.bets.map(b=>`<tr><td>${b.label}<br><small>${money(b.stake)} at ${div(b.odds)}</small></td><td class="n ${b.w?"won":"lost"}">${b.w?money(b.pay):"Lost"}</td></tr>`).join("")}</table>
   <div class="net ${net>0?"won":net<0?"lost":""}">${net>0?"Collect "+money(x.ret):net<0?"Down "+money(-net):"Square"}</div>`:`<div>No bets on this one.</div>`}
   <div class="go"><button class="big place" id="replay">Watch replay</button><button class="big next" id="next">${S.idx>=lastIdx()?"Meeting result":"Next race"}</button></div>`;
@@ -835,7 +989,14 @@ function renderDetail(){
   const el=$("detail"),k=S.sel[S.sel.length-1];
   if(S.phase!=="bet"||k===undefined){el.innerHTML="";return}
   const h=S.race.field[k],pool=(S.pool||[]).find(p=>p.name===h.name)||h;
-  if(h.real){el.innerHTML=`<b>${h.name}</b> · ${h.jock}${h.trainer?" · "+h.trainer:""}${h.form?`<br>Recent form: ${h.form}`:""}`;return}
+  if(h.real){
+    const st=(l,s)=>s&&s.s?`<td>${l}</td><td>${s.s}: ${s.w}-${s.p}</td>`:"";
+    let extra="";
+    if(h.fd){const fd=h.fd,rows=[st("Career",fd.overall)+st("Distance",fd.dist),st("Track",fd.track)+(fd.wet?`<td>Wet</td><td>${fd.wet}</td>`:"")];
+      const rec=(fd.recent||[]).filter(r=>r.t).map(r=>`<tr><td>${r.d||""}</td><td>${r.t}</td><td>${r.m?r.m+"m":""}</td><td>${r.pos?r.pos+(r.of?"/"+r.of:""):"-"}</td></tr>`).join("");
+      extra=`<table><tr>${rows[0]}</tr><tr>${rows[1]}</tr></table>${rec?`<table><tr><th>Date</th><th>Track</th><th>Dist</th><th>Finish</th></tr>${rec}</table>`:""}`}
+    else if(!S.race.feature)extra=`<div>Full form is only loaded for the race marked ★.</div>`;
+    el.innerHTML=`<b>${h.name}</b> · ${h.jock}${h.trainer?" · "+h.trainer:""}${h.form?`<br>Recent form: ${h.form}`:""}${extra}`;return}
   el.innerHTML=`<b>${h.name}</b> last starts<table><tr><th>Track</th><th>Dist</th><th>Going</th><th>Finish</th></tr>${[...pool.runs].reverse().map(r=>`<tr><td>${r.t}</td><td>${r.d}m</td><td>${ratingName(r.r)}</td><td>${r.p==="x"?"Spell":r.p==="0"?"10th+":r.p+"/"+r.n}</td></tr>`).join("")}</table>`;
 }
 function renderSlip(){
@@ -856,7 +1017,7 @@ function updateHint(){
   btn.disabled=!(ready&&afford);
   if(!ready){
     const left=need-S.sel.length;
-    $("hint").textContent=S.type==="exacta"||S.type==="tri"?`Tap runners in finishing order. ${left} to go.`:`Tap ${left} ${left>1?"runners":"runner"} in the form guide.`;
+    $("hint").textContent=S.type==="exacta"||S.type==="tri"||S.type==="first4"?`Tap runners in finishing order. ${left} to go.`:`Tap ${left} ${left>1?"runners":"runner"} in the form guide.`;
   }else if(cost>S.bank)$("hint").textContent=`That costs ${money(cost)} and you have ${money(S.bank)}. Lower the stake.`;
   else if(cost>limit)$("hint").textContent=`${TIERS[S.tier].name} limit is ${money(limit)} a bet. Lower the stake.`;
   else if(cost<1)$("hint").textContent="Enter a stake of at least $1.";
@@ -881,6 +1042,9 @@ $("jump").onclick=()=>{S.phase==="race"?skipRace():S.phase==="bet"&&startRace()}
 $("nan").onclick=()=>{S.bank+=200;S.loans++;save();renderAll();say("Nan sighs and transfers $200. She says it's the last time. It isn't.")};
 $("card").addEventListener("click",e=>{
   const mb=e.target.closest("[data-m]");if(mb){startReal(picker.meetings[+mb.dataset.m]);return}
+  const gm=e.target.closest("[data-gm]");if(gm){goMeeting(+gm.dataset.gm);return}
+  const gr=e.target.closest("[data-gr]");if(gr){goRace(+gr.dataset.gr);return}
+  const tb=e.target.closest("[data-tip]");if(tb){const t=computeTips(S.race).tips[+tb.dataset.tip];S.type=t.type;S.sel=t.sel.slice();renderCard();renderSlip();return}
   const b=e.target.closest("[data-k]");if(!b||S.phase!=="bet")return;
   const k=+b.dataset.k,need=TYPES[S.type][1],i=S.sel.indexOf(k);
   if(i>=0)S.sel.splice(i,1);else if(need===1)S.sel=[k];else if(S.sel.length<need)S.sel.push(k);
