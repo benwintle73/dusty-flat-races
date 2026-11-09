@@ -34,7 +34,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--amber);outline-
 .grid{display:grid;gap:12px;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);grid-template-areas:"stage card" "slip card";grid-template-rows:auto 1fr;align-items:start}
 .stage{grid-area:stage;background:var(--tote);border:3px solid var(--tote2)}
 .canvas-wrap{position:relative;line-height:0}
-canvas{width:100%;height:auto;display:block;image-rendering:pixelated;image-rendering:crisp-edges;image-rendering:pixelated}
+canvas{width:100%;height:auto;display:block}
 #photo{position:absolute;left:50%;top:10px;transform:translateX(-50%);background:var(--red);color:#fff;font:400 26px/1.2 var(--display);letter-spacing:1px;padding:4px 16px;display:none}
 .call{font:600 25px/1.15 var(--led);color:#f0d9a8;padding:9px 14px;min-height:64px}
 .call b{font-weight:700;color:#fff}
@@ -106,6 +106,13 @@ canvas{width:100%;height:auto;display:block;image-rendering:pixelated;image-rend
 .tabs button{background:var(--paper2);border:1px solid #bda97f;color:var(--ink);min-height:40px;min-width:40px;padding:0 9px;font:700 17px/1 var(--led)}
 .tabs button[aria-pressed=true]{background:var(--ink);color:var(--paper)}
 .feat{background:var(--red);color:#fff;font:700 15px/1 var(--led);letter-spacing:.5px;padding:4px 7px;align-self:center;text-transform:uppercase}
+.nav{display:grid;gap:5px;background:var(--tote);border:3px solid var(--tote2);padding:7px}
+.nav div{display:flex;flex-wrap:wrap;gap:4px}
+.nav button{background:var(--tote2);border:0;color:var(--paper);min-height:42px;padding:0 12px;font:700 18px/1 var(--led)}
+.nav button[aria-pressed=true]{background:var(--amber);color:var(--tote)}
+.nav button:disabled{opacity:.5;cursor:not-allowed}
+.nav button.alt{background:none;border:2px solid var(--amber-dim);color:var(--amber);margin-left:auto}
+#realbtn,#daily{display:none}
 .foot{font-size:14px;color:#a9c0a6;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center}
 .foot button{background:none;border:1px solid #6d8a6c;color:#d8e4d4;min-height:40px;padding:0 12px}
 @media (max-width:820px){
@@ -125,6 +132,7 @@ canvas{width:100%;height:auto;display:block;image-rendering:pixelated;image-rend
     <div class="led"><small>RACE</small><b id="raceNo"></b></div>
     <div class="led"><small>BANK</small><b id="bank"></b></div>
   </header>
+  <nav class="nav" id="nav" aria-label="Race meets"></nav>
   <div class="grid">
     <section class="stage" aria-label="Track">
       <div class="canvas-wrap"><canvas id="c" width="960" height="472"></canvas><div id="photo">PHOTO</div><div id="hud"><div id="hudrem"></div><div id="hudtop"></div></div></div>
@@ -330,24 +338,16 @@ const jingle=()=>[523,659,784,1047,1319].forEach((f,i)=>tone(f,.14,i*.09));
 const sad=()=>[220,196,165].forEach((f,i)=>tone(f,.22,i*.17,"triangle",.08));
 
 /* ---------- sprites ---------- */
-function polyFill(c,pts,col){
-  c.fillStyle=col;
-  const ys=pts.map(p=>p[1]),y0=Math.floor(Math.min(...ys)),y1=Math.ceil(Math.max(...ys));
-  for(let y=y0;y<=y1;y++){
-    const xs=[],sy=y+.5;
-    for(let i=0;i<pts.length;i++){const a=pts[i],b=pts[(i+1)%pts.length];
-      if((a[1]<=sy&&b[1]>sy)||(b[1]<=sy&&a[1]>sy))xs.push(a[0]+(sy-a[1])/(b[1]-a[1])*(b[0]-a[0]))}
-    xs.sort((a,b)=>a-b);
-    for(let i=0;i+1<xs.length;i+=2)c.fillRect(Math.round(xs[i]),y,Math.max(1,Math.round(xs[i+1])-Math.round(xs[i])),1);
-  }
+function polyFill(c,pts,col,sharp){
+  c.fillStyle=col;c.beginPath();
+  if(sharp||pts.length<4){pts.forEach((p,i)=>i?c.lineTo(p[0],p[1]):c.moveTo(p[0],p[1]))}
+  else{const m=(a,b)=>[(a[0]+b[0])/2,(a[1]+b[1])/2],n=pts.length,st=m(pts[n-1],pts[0]);c.moveTo(st[0],st[1]);
+    for(let i=0;i<n;i++){const e=m(pts[i],pts[(i+1)%n]);c.quadraticCurveTo(pts[i][0],pts[i][1],e[0],e[1])}}
+  c.closePath();c.fill();
 }
-function line(c,x0,y0,x1,y1,w,col){
-  c.fillStyle=col;
-  const s=Math.max(Math.abs(x1-x0),Math.abs(y1-y0),1);
-  for(let i=0;i<=s;i++)c.fillRect(Math.round(x0+(x1-x0)*i/s),Math.round(y0+(y1-y0)*i/s),w,w);
-}
+function line(c,x0,y0,x1,y1,w,col){c.strokeStyle=col;c.lineWidth=w;c.lineCap="round";c.beginPath();c.moveTo(x0+w/2,y0+w/2);c.lineTo(x1+w/2,y1+w/2);c.stroke()}
 const DIG={0:"111101101101111",1:"010110010010111",2:"111001111100111",3:"111001111001111",4:"101101111001001",5:"111100111001111",6:"111100111101111",7:"111001010010010",8:"111101111101111",9:"111101111001111",m:"000000101111101"};
-function digits(c,str,x,y,col,s=1){c.fillStyle=col;for(const ch of String(str)){const g=DIG[ch];if(g)for(let i=0;i<15;i++)if(g[i]==="1")c.fillRect(x+(i%3)*s,y+Math.floor(i/3)*s,s,s);x+=4*s}}
+function digits(c,str,x,y,col,s=1){c.fillStyle=col;c.font=`700 ${Math.round(6.4*s)}px "Barlow Condensed",Arial,sans-serif`;c.textBaseline="top";c.textAlign="left";c.fillText(String(str),x,y-s*.4)}
 const shade=(hex,a)=>{const n=parseInt(hex.slice(1),16),f=v=>clamp(Math.round(v*a),0,255);return `rgb(${f(n>>16)},${f(n>>8&255)},${f(n&255)})`};
 const K=2.4,BW=47,BH=40,SW=Math.round(BW*K),SH=Math.round(BH*K),FR=10,LOG=1.2;
 const strHash=s=>{let h=7;for(const ch of s)h=(h*31+ch.charCodeAt(0))>>>0;return h};
@@ -403,9 +403,9 @@ function buildSheet(h,idx){
     // near legs
     leg(31,21+fr,ph,coat,sock,true);leg(12,21+rr,ph+3.14,coat,sock,false);
     // girth + saddle cloth + number
-    polyFill(c,P([[8.5,11.3+b],[19.5,11.3+b],[19.5,21.7+b],[8.5,21.7+b]]),"#fbf8ee");
-    polyFill(c,P([[8.5,11.3+b],[19.5,11.3+b],[19.5,12.4+b],[8.5,12.4+b]]),silk);
-    {const no=h.no||idx+1,sz=no>9?3:4;digits(c,no,Math.round(14*K-(no>9?10.5:6)),Math.round((17+b)*K-(no>9?7.5:10)),"#000",sz)}
+    polyFill(c,P([[8.5,11.3+b],[19.5,11.3+b],[19.5,21.7+b],[8.5,21.7+b]]),"#fbf8ee",true);
+    polyFill(c,P([[8.5,11.3+b],[19.5,11.3+b],[19.5,12.4+b],[8.5,12.4+b]]),silk,true);
+    {const no=h.no||idx+1,sz=3.1;c.fillStyle="#000";c.font=`700 ${no>9?17:20}px "Barlow Condensed",Arial,sans-serif`;c.textAlign="center";c.textBaseline="middle";c.fillText(String(no),14*K,(17+b)*K);c.textAlign="left"}
     // jockey: knee, boot, stirrup
     polyFill(c,P([[17,10.6+b],[23,10.6+b],[26,13.6+b],[20.6,15+b]]),"#f2efe3");
     polyFill(c,P([[20.6,14+b],[25,14+b],[25,18.6+b],[23.8,19+b],[20.6,18.4+b]]),"#16100c");
@@ -413,7 +413,7 @@ function buildSheet(h,idx){
     // torso, low crouch, and silks pattern
     const A=[17.6,6.5+b],B=[23,1+b],C=[28.4,3.6+b],D=[24,11+b];
     const q=(u,v)=>{const tx=A[0]+(B[0]-A[0])*u,ty=A[1]+(B[1]-A[1])*u,bx=D[0]+(C[0]-D[0])*u,by=D[1]+(C[1]-D[1])*u;return [tx+(bx-tx)*v,ty+(by-ty)*v]};
-    const cell=(u0,u1,v0,v1)=>polyFill(c,P([q(u0,v0),q(u1,v0),q(u1,v1),q(u0,v1)]),alt);
+    const cell=(u0,u1,v0,v1)=>polyFill(c,P([q(u0,v0),q(u1,v0),q(u1,v1),q(u0,v1)]),alt,true);
     polyFill(c,P([A,B,C,D]),silk);
     if(pattern===1)for(const u of [.12,.42,.72])cell(u,u+.14,0,1);
     if(pattern===2)for(const v of [.12,.42,.72])cell(0,1,v,v+.14);
@@ -429,12 +429,9 @@ function buildSheet(h,idx){
     polyFill(c,P([[25.8,-1+b],[28,-2.4+b],[30.2,-1.8+b],[30.8,1.3+b],[25.8,1.3+b]]),alt);
     polyFill(c,P([[30,-.2+b],[33,.6+b],[33,1.3+b],[30,1.3+b]]),alt);
     c.fillStyle="#1b1b22";c.fillRect(Math.round(28.4*K),Math.round((2+b)*K),Math.round(2.4*K),3);
-    // outline
-    const img=c.getImageData(0,0,SW,SH),d=img.data,copy=new Uint8ClampedArray(d);
-    const op=(x,y)=>x>=0&&y>=0&&x<SW&&y<SH&&copy[(y*SW+x)*4+3]>0;
-    for(let y=0;y<SH;y++)for(let x=0;x<SW;x++){const i=(y*SW+x)*4;
-      if(!copy[i+3]&&(op(x-1,y)||op(x+1,y)||op(x,y-1)||op(x,y+1))){d[i]=20;d[i+1]=14;d[i+2]=10;d[i+3]=255}}
-    c.putImageData(img,0,0);
+    c.globalCompositeOperation="source-atop";
+    const gr=c.createLinearGradient(0,0,0,SH);gr.addColorStop(0,"rgba(255,255,255,.2)");gr.addColorStop(.5,"rgba(255,255,255,0)");gr.addColorStop(1,"rgba(0,0,0,.34)");c.fillStyle=gr;c.fillRect(0,0,SW,SH);
+    c.globalCompositeOperation="source-over";
     out.drawImage(tmp,f*SW,0);
   }
   return sheet;
@@ -442,9 +439,9 @@ function buildSheet(h,idx){
 
 /* ---------- renderer ---------- */
 const cv=$("c"),RES=2,W=480,H=236,PX=6,OS=60,VW=W+OS*2,LW=Math.round(BW*LOG),LH=Math.round(BH*LOG);
-const out=cv.getContext("2d");out.imageSmoothingEnabled=false;
+const out=cv.getContext("2d");out.imageSmoothingEnabled=true;out.imageSmoothingQuality="high";
 const offC=document.createElement("canvas");offC.width=Math.round(VW*RES);offC.height=Math.round(H*RES);
-const g=offC.getContext("2d");g.imageSmoothingEnabled=false;
+const g=offC.getContext("2d");g.imageSmoothingEnabled=true;g.imageSmoothingQuality="high";
 const reduced=matchMedia("(prefers-reduced-motion: reduce)").matches;
 let sheets=[],sheetKey="",R=null,particles=[],confetti=[];
 function ensureSheets(){
@@ -475,16 +472,17 @@ function stand(sx,w,roofY,rows,roof,now){
     g.fillRect(sx+2+c*4,roofY+6+r*rh+fl,3,Math.max(3,rh-2));
   }
 }
+const blob=(x,y,rx,ry)=>{g.beginPath();g.ellipse(x,y,rx,ry,0,0,7);g.fill()};
 function drawScene(camX,now){
   const P=palette(),fx=S.race.dist*PX,tier=TIERS[S.tier||0];
   g.setTransform(RES,0,0,RES,0,0);
-  for(let i=0;i<20;i++){g.fillStyle=css(mix(P.top,P.bot,i/19));g.fillRect(0,i*5,VW,5.5)}
+  {const sk=g.createLinearGradient(0,0,0,100);sk.addColorStop(0,css(P.top));sk.addColorStop(1,css(P.bot));g.fillStyle=sk;g.fillRect(0,0,VW,100)}
   if(S.race.rating<=6){const sy=14+P.t*44;
     g.fillStyle="rgba(255,240,180,.35)";g.beginPath();g.arc(452,sy+8,20,0,7);g.fill();
     g.fillStyle="#fff2c0";g.beginPath();g.arc(452,sy+8,11,0,7);g.fill()}
   // clouds
   g.fillStyle="rgba(255,255,255,.7)";
-  for(let i=0;i<7;i++){const x=((i*140+hash(i)*90-camX*.05-now*.002)%(VW+120)+VW+120)%(VW+120)-60,y=8+hash(i+2)*28;g.fillRect(x,y,44,5);g.fillRect(x+9,y-4,24,4);g.fillRect(x-7,y+3,18,3)}
+  for(let i=0;i<7;i++){const x=((i*140+hash(i)*90-camX*.05-now*.002)%(VW+120)+VW+120)%(VW+120)-60,y=8+hash(i+2)*28;blob(x+22,y+2,26,5);blob(x+20,y-2,14,5);blob(x+2,y+4,12,3)}
   if(tier.theme>=2){for(let i=-2;i<34;i++){const px=i*22-((camX*.08)%22),h=16+hash(i+Math.floor(camX*.08/22))*32;g.fillStyle=css(mix(P.far,[70,80,105],.5));g.fillRect(px,84-h,19,h);g.fillStyle="#ffdf96";for(let w=0;w<3;w++)g.fillRect(px+4+w*5,84-h+5,2,2)}}
   g.fillStyle=css(P.far);
   for(let x=0;x<VW;x+=2){const w=x+camX*.12,h=Math.sin(w*.014)*10+Math.sin(w*.037)*5;g.fillRect(x,64+h,2,40)}
@@ -495,9 +493,9 @@ function drawScene(camX,now){
   for(let i=start;i<start+19;i++){
     const x=i*46+hash(i)*30-camX*par,s=8+hash(i+9)*8;
     g.fillStyle="#d9d3c1";g.fillRect(x,86-s,3,s+8);g.fillStyle="#a89f8c";g.fillRect(x+2,86-s,1,s+8);
-    g.fillStyle="#2f5740";for(let j=0;j<8;j++){const a=hash(i*3+j),b=hash(i*5+j);g.fillRect(x-12+a*22,71-s+b*13,11,6)}
-    g.fillStyle="#3f6a4e";for(let j=0;j<7;j++){const a=hash(i*7+j),b=hash(i*2+j);g.fillRect(x-10+a*20,69-s+b*12,9,5)}
-    g.fillStyle="#6c9a70";for(let j=0;j<5;j++)g.fillRect(x-7+hash(i+j*7)*13,67-s+hash(i+j)*8,5,2);
+    g.fillStyle="#2f5740";for(let j=0;j<9;j++){const a=hash(i*3+j),b=hash(i*5+j);blob(x-10+a*23,73-s+b*13,8,5.5)}
+    g.fillStyle="#44775a";for(let j=0;j<7;j++){const a=hash(i*7+j),b=hash(i*2+j);blob(x-8+a*20,71-s+b*11,6.5,4)}
+    g.fillStyle="#7ba87f";for(let j=0;j<5;j++)blob(x-5+hash(i+j*7)*13,68-s+hash(i+j)*8,3.5,1.8);
   }
   // grandstands by class of track
   const sx=fx-camX;
@@ -509,12 +507,12 @@ function drawScene(camX,now){
   if(tier.theme>=3)for(let i=-3;i<6;i++){const px=sx+i*80;g.fillStyle="#efe4c8";g.fillRect(px,8,1,20);polyFill(g,[[px+1,8],[px+1+11+Math.sin(now/200+i)*2,12],[px+1,16]],["#c8321f","#f2c92b","#2a62c9"][(i+3)%3])}
   if(tier.theme>=3)for(let i=-6;i<3;i++){const px=sx-300-i*60;g.fillStyle="#f6f2e8";polyFill(g,[[px,84],[px+24,70],[px+48,84]],"#f6f2e8");g.fillStyle="#d8342a";g.fillRect(px,84,48,8)}
   // turf
-  g.fillStyle=css(P.turfB);g.fillRect(0,96,VW,140);
+  {const tg=g.createLinearGradient(0,96,0,236);tg.addColorStop(0,css(mix(P.turfB,[30,70,40],.25)));tg.addColorStop(1,css(mix(P.turfB,[150,190,110],.18)));g.fillStyle=tg;g.fillRect(0,96,VW,140)}
   const off=((-camX)%128+128)%128;
-  g.fillStyle=css(P.turfA);for(let x=off-128;x<VW;x+=128)g.fillRect(x,102,64,116);
+  g.globalAlpha=.32;g.fillStyle=css(mix(P.turfA,[170,210,120],.3));for(let x=off-128;x<VW;x+=128)g.fillRect(x,102,64,116);g.globalAlpha=1;
   g.fillStyle=css(mix(P.turfA,[30,70,40],.35));
   for(let i=0;i<70;i++){const px=((i*83.3+hash(i)*300-camX)%VW+VW)%VW,py=104+hash(i*3)*112;g.fillRect(px,py,3,1)}
-  g.fillStyle="#b7a06c";g.fillRect(0,100,VW,2);
+  g.fillStyle="rgba(20,40,20,.28)";g.fillRect(0,100,VW,5);
   if(tier.theme>=2){const ro=((-camX)%9+9)%9;for(let x=ro-9;x<VW;x+=9){g.fillStyle=hash(Math.floor(x+camX))>.5?"#d8342a":"#ef7fa8";g.fillRect(x,95,5,4);g.fillStyle="#2f6b3a";g.fillRect(x+1,99,3,1)}}
   g.fillStyle="#f6f2e8";g.fillRect(0,92,VW,3);g.fillStyle="#bdb7a8";g.fillRect(0,94,VW,1);
   const po=((-camX)%32+32)%32;g.fillStyle="#f6f2e8";for(let x=po-32;x<VW;x+=32)g.fillRect(x,92,2,9);
@@ -548,38 +546,38 @@ function drawDoors(camX,open){
   }
 }
 function drawAerial(pos,now){
-  const lap=clamp(S.race.dist/2900,.3,.97),rx=430,ry=190,tw=58;
-  const point=(p,lane)=>{const a=Math.PI/2+(1-p)*lap*6.2832,r=lane*tw*.86-tw*.43;return {x:Math.cos(a)*(rx+r),y:Math.sin(a)*(ry+r*.75),a}};
-  const lead=Math.max(...pos)/S.race.dist,c=point(lead,.5);
-  const P=palette();
+  const lap=clamp(S.race.dist/2900,.3,.97),rx=640,ry=280,tw=96,LANE=tw*.86;
+  const point=(p,lane)=>{const a=Math.PI/2+(1-p)*lap*6.2832,r=lane*LANE-LANE/2;return {x:Math.cos(a)*(rx+r),y:Math.sin(a)*(ry+r*.8),a}};
+  const lead=Math.max(...pos)/S.race.dist,c=point(lead-.012,.5),P=palette();
   out.fillStyle=css(mix(P.turfB,[40,92,48],.5));out.fillRect(0,0,W,H);
   out.save();out.translate(W/2-c.x,H/2-c.y);
-  // infield: grass, lake, trees
   out.fillStyle=css(mix(P.turfA,[66,120,60],.35));out.beginPath();out.ellipse(0,0,rx-tw/2,ry-tw*.4,0,0,7);out.fill();
-  out.fillStyle="#3a86b8";out.beginPath();out.ellipse(-40,10,150,52,0,0,7);out.fill();out.fillStyle="#5aa6d2";out.beginPath();out.ellipse(-52,2,110,30,0,0,7);out.fill();
-  out.fillStyle="#2f5740";for(let i=0;i<46;i++){const a=hash(i)*6.28,r=.55+hash(i+4)*.32;const px=Math.cos(a)*rx*r,py=Math.sin(a)*ry*r;if(Math.abs(px+40)<170&&Math.abs(py-10)<70)continue;out.beginPath();out.arc(px,py,7+hash(i+8)*6,0,7);out.fill()}
-  // racing surface with mown bands and rails
+  out.fillStyle="#3a86b8";out.beginPath();out.ellipse(-60,10,260,100,0,0,7);out.fill();out.fillStyle="rgba(150,210,240,.45)";out.beginPath();out.ellipse(-90,-10,170,48,0,0,7);out.fill();
+  out.fillStyle="#2f5740";for(let i=0;i<70;i++){const a=hash(i)*6.28,r=.58+hash(i+4)*.3,px=Math.cos(a)*rx*r,py=Math.sin(a)*ry*r;if(Math.abs(px+60)<290&&Math.abs(py-10)<120)continue;out.beginPath();out.arc(px,py,8+hash(i+8)*8,0,7);out.fill()}
   out.lineWidth=tw;out.strokeStyle=css(P.turfA);out.beginPath();out.ellipse(0,0,rx,ry,0,0,7);out.stroke();
-  out.strokeStyle=css(P.turfB);out.lineWidth=tw;out.setLineDash([60,60]);out.lineDashOffset=0;out.beginPath();out.ellipse(0,0,rx,ry,0,0,7);out.stroke();out.setLineDash([]);
+  out.globalAlpha=.35;out.strokeStyle=css(P.turfB);out.setLineDash([70,70]);out.beginPath();out.ellipse(0,0,rx,ry,0,0,7);out.stroke();out.setLineDash([]);out.globalAlpha=1;
   out.strokeStyle="#f6f2e8";out.lineWidth=2.5;out.beginPath();out.ellipse(0,0,rx-tw/2,ry-tw*.4,0,0,7);out.stroke();out.beginPath();out.ellipse(0,0,rx+tw/2,ry+tw*.4,0,0,7);out.stroke();
-  // stands on the home straight, finish line
-  out.fillStyle="#50483b";out.fillRect(-200,ry+tw*.4+6,300,30);out.fillStyle="#e8e4d8";out.fillRect(-206,ry+tw*.4+4,312,6);
-  for(let i=0;i<70;i++){out.fillStyle=CROWD[i%CROWD.length];out.fillRect(-196+i*4.2,ry+tw*.4+13+(i%3)*5,3,3)}
+  out.fillStyle="#50483b";out.fillRect(-260,ry+tw*.4+6,380,34);out.fillStyle="#e8e4d8";out.fillRect(-266,ry+tw*.4+4,392,6);
+  for(let i=0;i<90;i++){out.fillStyle=CROWD[i%CROWD.length];out.fillRect(-256+i*4.1,ry+tw*.4+13+(i%3)*6,3,3)}
   out.fillStyle="#fff";out.fillRect(-1,ry-tw*.4,3,tw*.8);
-  // the field, widest first
-  const f=S.race.field,idx=[...f.keys()].sort((a,b)=>pos[a]-pos[b]);
+  const f=S.race.field,idx=[...f.keys()].sort((a,b)=>pos[a]-pos[b]),tags=[];
   for(const k of idx){
     const h=f[k],p=clamp(pos[k]/S.race.dist,0,1),pt=point(p,(h.barrier-.5)/f.length),tang=pt.a-Math.PI/2+Math.PI;
-    out.save();out.translate(pt.x,pt.y);out.rotate(tang+Math.PI);out.scale(1.45,1.45);
-    const stride=Math.floor(now/70+k)%2?1.6:-1.6;
-    out.fillStyle="rgba(0,0,0,.28)";out.fillRect(-8,-2,20,7);
-    out.fillStyle=COATS[h.coat][0];out.fillRect(-9,-3,18,6);out.fillRect(9,-2,6,4);
-    out.fillStyle=COATS[h.coat][0];out.fillRect(-7+stride,-5,3,2);out.fillRect(-7-stride,3,3,2);out.fillRect(5+stride,-5,3,2);out.fillRect(5-stride,3,3,2);
-    out.fillStyle=COATS[h.coat][1];out.fillRect(-13,-1,4,2);
-    out.fillStyle=silkOf(h,k)[0];out.fillRect(-2,-3.5,7,7);out.fillStyle=silkOf(h,k)[1];out.fillRect(1,-1.5,3,3);
-    if(S.bets.some(b=>b.sel.includes(k))){out.strokeStyle="#ffe07a";out.lineWidth=1.5;out.strokeRect(-11,-6,24,12)}
+    out.save();out.translate(pt.x,pt.y);out.rotate(tang+Math.PI);out.scale(.62,.62);
+    const st=Math.floor(now/70+k)%2?1.6:-1.6;
+    out.fillStyle="rgba(0,0,0,.25)";out.beginPath();out.ellipse(1,2,13,5,0,0,7);out.fill();
+    out.fillStyle=COATS[h.coat][0];out.beginPath();out.ellipse(0,0,10,4,0,0,7);out.fill();out.beginPath();out.ellipse(11,0,4.5,2.2,0,0,7);out.fill();
+    out.fillRect(-7+st,-5.5,2.5,2);out.fillRect(-7-st,3.5,2.5,2);out.fillRect(5+st,-5.5,2.5,2);out.fillRect(5-st,3.5,2.5,2);
+    out.fillStyle=COATS[h.coat][1];out.fillRect(-14,-1,5,2);
+    out.fillStyle=silkOf(h,k)[0];out.beginPath();out.arc(1,0,4,0,7);out.fill();out.fillStyle=silkOf(h,k)[1];out.beginPath();out.arc(3,0,1.8,0,7);out.fill();
     out.restore();
+    tags.push([pt.x,pt.y,h.no,silkOf(h,k)[0],S.bets.some(b=>b.sel.includes(k))]);
   }
+  out.textAlign="center";out.textBaseline="middle";out.font='700 9px "Barlow Condensed",Arial,sans-serif';
+  for(const [x,y,no,col,mine] of tags){
+    const yy=y-11;out.fillStyle=mine?"#ffe07a":"rgba(10,10,10,.72)";out.fillRect(x-5.5,yy-5,11,10);out.fillStyle=mine?"#111":"#fff";out.fillText(String(no),x,yy+.5);
+  }
+  out.textAlign="left";out.textBaseline="alphabetic";
   out.restore();
 }
 function horsePositions(t){
@@ -594,7 +592,7 @@ function drawHorses(camX,pos,now){
     const ff=(pos&&(R.running||R.photoOn))?(R.photoOn?3:(Math.floor(now/48)+k*3)%FR):0;
     const sw=moving?Math.round(Math.sin(now/260+k)):0;
     if(x>-70&&x<VW+4){
-      g.fillStyle="rgba(10,30,15,.32)";g.fillRect(x+8,y-1+sw,LW-12,3);
+      g.fillStyle="rgba(10,30,15,.3)";g.beginPath();g.ellipse(x+LW/2,y+sw,LW/2-5,2.6,0,0,7);g.fill();
       g.drawImage(sheets[k],ff*SW,0,SW,SH,x,y-LH+3+sw,LW,LH);
       if(moving&&!reduced&&Math.random()<.65)particles.push({x:x+camX+8+Math.random()*10,y:y+sw,vx:-Math.random()*1.3-.3,vy:-Math.random()*.7-.1,life:10+Math.random()*14,s:1+Math.floor(Math.random()*3)});
     }
@@ -602,7 +600,7 @@ function drawHorses(camX,pos,now){
 }
 function drawParticles(camX){
   g.fillStyle=S.race.rating>=6?"#5a4a33":"#b89d6c";
-  particles=particles.filter(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.03;p.life--;g.fillRect(p.x-camX,p.y,p.s,p.s);return p.life>0});
+  g.globalAlpha=.55;particles=particles.filter(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.03;p.life--;g.beginPath();g.arc(p.x-camX,p.y,p.s*.8,0,7);g.fill();return p.life>0});g.globalAlpha=1;
 }
 function drawRain(now){
   if(S.race.rating<6||reduced)return;
@@ -807,10 +805,36 @@ function renderPicker(){
   <button class="big next" id="pb">Back</button>`;
   $("pb").onclick=()=>{picker=null;renderCard()};
 }
-function refundBets(){for(const b of S.bets)S.bank=Math.round((S.bank+b.stake)*100)/100;S.bets=[]}
-function goMeeting(i){if(S.phase!=="bet")return;refundBets();S.realIdx=i;S.real=S.realList[i];S.track=S.real.venue;S.tier=S.real.metro?2:0;S.idx=0;R=null;buildReal();renderAll();say(`Switched to <b>${S.track}</b>.`)}
-function goRace(i){if(S.phase!=="bet"||i===S.idx)return;refundBets();S.idx=i;R=null;buildReal();renderAll();say(`Betting open on the <b>${S.race.title}</b>.`)}
-function tabsHtml(){
+function refundBets(){if(S.phase==="bet"||S.phase==="race")for(const b of S.bets)S.bank=Math.round((S.bank+b.stake)*100)/100;S.bets=[]}
+let MEETS=[];
+function abortRace(){if(S.phase==="race"){refundBets();S.phase="bet"}R=null;stopCrowd();particles=[];cv.style.filter="";$("photo").style.display="none";$("hud").style.display="none";picker=null}
+function leaveDaily(){const c=S.career;c.dailyDone=c.dailyDone||{};c.dailyDone[S.day]=S.bank;S=c}
+function goCareer(){abortRace();if(S.mode==="daily")leaveDaily();else if(S.mode==="real"){const c=S.career;const keep={...S};delete keep.career;c.realSaved=keep;S=c}save();renderAll();say(`Back at <b>${S.track}</b>.`)}
+function enterReal(i){
+  abortRace();if(S.mode==="daily")leaveDaily();
+  const career=S,rs=career.realSaved;career.realSaved=null;
+  S=rs?{...rs,career,realList:MEETS}:{bank:1000,meeting:1,best:1000,bigCollect:0,loans:0,type:"win",sel:[],bets:[],phase:"bet",ledger:[],tier:0,mode:"real",realList:MEETS,pool:[],startBank:1000,career};
+  S.phase="bet";goMeeting(i);
+}
+function restartMeet(){abortRace();refundBets();S.idx=0;S.ledger=[];S.bank=S.mode==="real"?1000:(S.startBank??S.bank);S.phase="bet";S.promoted=false;buildRace();renderAll();say(`Meeting restarted. Betting open on the <b>${S.race.title}</b>.`)}
+function renderNav(){
+  const L=S.mode==="real"?S.realList:MEETS,dd=(S.dailyDone||(S.career&&S.career.dailyDone)||{})[dayKey()];
+  const top=`<div><button data-nav="career" aria-pressed="${S.mode==="career"}">Career</button><button data-nav="daily" aria-pressed="${S.mode==="daily"}" ${S.mode!=="daily"&&dd!==undefined?"disabled":""}>${dd!==undefined&&S.mode!=="daily"?"Daily "+money(dd):"Daily"}</button>${(L||[]).map((m,i)=>`<button data-gm="${i}" aria-pressed="${S.mode==="real"&&i===S.realIdx}">${m.venue}</button>`).join("")}${S.mode!=="daily"?'<button class="alt" data-nav="restart">Restart meet</button>':""}</div>`;
+  const races=S.mode==="real"?`<div>${S.real.races.map((r,i)=>`<button data-gr="${i}" aria-pressed="${i===S.idx&&S.phase!=="end"}">R${r.number}${r.feature?" ★":""}</button>`).join("")}</div>`:"";
+  $("nav").innerHTML=top+races;
+}
+$("nav").addEventListener("click",e=>{
+  const b=e.target.closest("button");if(!b||b.disabled)return;audio();
+  if(b.dataset.nav==="career")return goCareer();
+  if(b.dataset.nav==="daily"){if(S.mode==="daily")return;abortRace();if(S.mode==="real"){const c=S.career;const k={...S};delete k.career;c.realSaved=k;S=c}return startDaily()}
+  if(b.dataset.nav==="restart")return restartMeet();
+  if(b.dataset.gm!==undefined){const i=+b.dataset.gm;if(S.mode==="real"){abortRace();goMeeting(i)}else enterReal(i);return}
+  if(b.dataset.gr!==undefined){abortRace();goRace(+b.dataset.gr)}
+});
+function loadMeets(){fetch(REAL_URL).then(r=>r.json()).then(j=>{MEETS=j.meetings||[];if(S)renderNav()}).catch(()=>{})}
+function goMeeting(i){refundBets();S.phase="bet";S.realIdx=i;S.real=S.realList[i];S.track=S.real.venue;S.tier=S.real.metro?2:0;S.idx=0;R=null;buildReal();renderAll();say(`Switched to <b>${S.track}</b>.`)}
+function goRace(i){if(S.phase==="bet"&&i===S.idx)return;refundBets();S.phase="bet";S.idx=i;R=null;buildReal();renderAll();say(`Betting open on the <b>${S.race.title}</b>.`)}
+function tabsHtml(){return "";
   if(S.mode!=="real"||S.phase!=="bet")return "";
   const meets=S.realList.length>1?`<div class="tabs" aria-label="Meetings">${S.realList.map((m,i)=>`<button data-gm="${i}" aria-pressed="${i===S.realIdx}">${m.venue}</button>`).join("")}</div>`:"";
   const races=`<div class="tabs" aria-label="Races">${S.real.races.map((r,i)=>`<button data-gr="${i}" aria-pressed="${i===S.idx}">R${r.number}${r.feature?" ★":""}</button>`).join("")}</div>`;
@@ -1024,7 +1048,7 @@ function updateHint(){
   else if(S.type==="ew"){const h=S.race.field[S.sel[0]];$("hint").innerHTML=`Costs ${money(cost)}. Win returns <b>${money(st*h.win)}</b> plus place <b>${money(st*h.place)}</b>`}
   else{const o=oddsFor(S.type,S.sel);$("hint").innerHTML=`${div(o)} returns <b>${money(st*o)}</b> on a ${money(st)} stake`}
 }
-function renderAll(){renderHeader();renderCard();renderSlip()}
+function renderAll(){renderHeader();renderNav();renderCard();renderSlip()}
 function labelFor(type,sel){
   const f=S.race.field;
   if(TYPES[type][1]===1)return `${TYPES[type][0]} ${f[sel[0]].no}. ${f[sel[0]].name}`;
@@ -1075,6 +1099,7 @@ function start(data){
   renderAll();
   say(S.phase==="bet"?`Betting open on the <b>${S.race.title}</b>. Read the form, pick a runner, then jump.`:"");
   requestAnimationFrame(frame);
+  loadMeets();
 }
 window.claude?.hot?.snapshot?.(()=>S);
 window.claude?.hot?.ready?window.claude.hot.ready(start):start(window.claude?.hot?.data??{});
