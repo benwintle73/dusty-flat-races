@@ -146,6 +146,23 @@ canvas{width:100%;height:auto;display:block}
   .runner{grid-template-columns:36px minmax(0,1fr) 56px 56px;gap:6px}
   .odds{font-size:21px}
 }
+.acctbtn{background:none;border:2px solid var(--amber-dim);color:var(--amber);min-height:44px;max-width:150px;padding:0 12px;font:700 18px/1 var(--led);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#acct{width:min(420px,calc(100vw - 24px));background:var(--paper);color:var(--ink);border:3px solid var(--tote2);padding:16px}
+#acct::backdrop{background:rgba(0,0,0,.65)}
+#acct [hidden]{display:none}
+.acct-h{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.acct-h h2{margin:0;font:400 26px/1 var(--display);letter-spacing:.5px;text-transform:uppercase}
+.acct-h button,.acct-links button{background:none;border:0;color:var(--ink);text-decoration:underline;min-height:44px;padding:0 4px;font:600 17px/1 var(--led)}
+#acct p{margin:10px 0;font-size:16px;line-height:1.3}
+.acct-who{font-weight:700}
+.acct-note{padding:8px 10px;background:var(--paper2)}
+.acct-note.bad{background:var(--red);color:#fff}
+#acctForm{display:grid;gap:10px;margin-top:10px}
+#acctForm label{display:grid;gap:3px;font:700 17px/1 var(--led)}
+#acctForm input{min-height:46px;padding:0 10px;border:1px solid var(--ink2);background:#fff8e6;color:var(--ink);font-size:16px}
+#acct .big{width:100%;background:var(--tote);color:var(--amber);margin-top:4px}
+#acct .big:disabled{opacity:.55}
+.acct-links{display:flex;justify-content:space-between;gap:8px;margin-top:6px}
 </style>
 </head>
 <body>
@@ -155,6 +172,7 @@ canvas{width:100%;height:auto;display:block}
     <div class="meet" id="meet"></div>
     <div class="led"><small>RACE</small><b id="raceNo"></b></div>
     <div class="led"><small>BANK</small><b id="bank"></b></div>
+    <button id="acctbtn" class="acctbtn">Log in</button>
   </header>
   <nav class="nav" id="nav" aria-label="Race meets"></nav>
   <div class="grid">
@@ -190,6 +208,20 @@ canvas{width:100%;height:auto;display:block}
     <span style="display:flex;gap:8px"><button id="realbtn">Real Races</button><button id="daily">Play Daily Meeting</button><button id="mute">Sound on</button></span>
   </footer>
 </div>
+<dialog id="acct" aria-labelledby="acctTitle">
+  <div class="acct-h"><h2 id="acctTitle">Log in</h2><button id="acctClose" aria-label="Close">Close</button></div>
+  <p id="acctBlurb" hidden>Your career, bank, bets and My Book follow you to any phone or computer. Play money only.</p>
+  <p id="acctWho" class="acct-who" hidden></p>
+  <p id="acctStatus" hidden></p>
+  <p id="acctNote" class="acct-note" role="status" hidden></p>
+  <form id="acctForm">
+    <label id="acctEmailRow">Email<input id="acctEmail" type="email" autocomplete="email" required></label>
+    <label id="acctPassRow"><span id="acctPassLabel">Password</span><input id="acctPass" type="password" autocomplete="current-password" required></label>
+    <button id="acctGo" class="big" type="submit">Log in</button>
+  </form>
+  <button id="acctOut" class="big" hidden>Log out</button>
+  <div class="acct-links"><button id="acctToSignup">Create account</button><button id="acctToLogin" hidden>Back to log in</button><button id="acctToForgot">Forgot password</button></div>
+</dialog>
 
 <script>
 "use strict";
@@ -337,7 +369,7 @@ function fresh(){
   S={bank:1000,meeting:1,best:1000,bigCollect:0,loans:0,type:"win",sel:[],bets:[],phase:"bet",ledger:[],tier:0,mode:"career",dailyDone:{}};
   newMeeting();
 }
-function save(){try{localStorage.setItem("dustyflat2",JSON.stringify(S))}catch(e){}}
+function save(){try{localStorage.setItem("dustyflat2",JSON.stringify(S))}catch(e){}cloudMark()}
 function load(data){
   if(data&&data.race){S=data;return}
   try{const d=JSON.parse(localStorage.getItem("dustyflat2"));if(d&&d.race){S=d;return}}catch(e){}
@@ -863,7 +895,7 @@ function startReal(m){
 /* ---------- real-race selector and ticket book ---------- */
 let MEETS=[],RS={},REAL_TODAY=null,bookOpen=false,bookMsg="",bookBusy=false;
 let BOOK=(()=>{try{const b=JSON.parse(localStorage.getItem("otrbook1"));if(b&&b.tickets)return {scr:{},...b}}catch(e){}return {bank:1000,tickets:[],scr:{}}})();
-function saveBook(){try{localStorage.setItem("otrbook1",JSON.stringify(BOOK))}catch(e){}}
+function saveBook(){try{localStorage.setItem("otrbook1",JSON.stringify(BOOK))}catch(e){}cloudMark()}
 const raceKey=(m,n)=>`${m.key}_T_${n}`;
 function scrOf(k){return [...new Set([...((RS[k]&&RS[k].scr)||[]),...(BOOK.scr[k]||[])])]}
 const timeOf=j=>{const d=new Date(j);return isNaN(d)?"":d.toLocaleTimeString("en-AU",{hour:"numeric",minute:"2-digit"})};
@@ -1259,6 +1291,200 @@ $("daily").onclick=startDaily;
 $("realbtn").onclick=openReal;
 $("mute").onclick=()=>{muted=!muted;if(muted)stopCrowd();$("mute").textContent=muted?"Sound off":"Sound on"};
 
+/* ---------- player accounts and cloud saves (Supabase) ---------- */
+const SB_URL="https://nkkhbtrrytctpfwjenrz.supabase.co",SB_KEY="sb_publishable_1bZLkfdxFTM4w3SWqPklDw_l3leLxxl";
+const K_AUTH="otrauth1",K_SYNC="otrsync1",K_GUEST="otrguest1";
+const lsGet=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}};
+const lsSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+const lsDel=k=>{try{localStorage.removeItem(k)}catch(e){}};
+let AUTH=lsGet(K_AUTH),SYNC=lsGet(K_SYNC)||{},cloudQuiet=false,cloudTimer=0,cloudBusy=false,cloudAgain=false,cloudStatus="",refreshing=null;
+const SITE=()=>location.origin+location.pathname;
+async function sbAuth(path,body,method="POST",token){
+  const h={apikey:SB_KEY,"Content-Type":"application/json"};if(token)h.Authorization="Bearer "+token;
+  const r=await fetch(SB_URL+"/auth/v1/"+path,{method,headers:h,body:body?JSON.stringify(body):undefined});
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok){const e=new Error(j.msg||j.error_description||j.message||"Something went wrong. Try again.");e.status=r.status;e.code=j.error_code||j.code;throw e}
+  return j;
+}
+function setSession(j){
+  AUTH={access:j.access_token,refresh:j.refresh_token,exp:Date.now()+(j.expires_in||3600)*1000,uid:j.user.id,email:j.user.email};
+  lsSet(K_AUTH,AUTH);
+}
+function token(){
+  if(!AUTH)return Promise.resolve(null);
+  if(Date.now()<AUTH.exp-60000)return Promise.resolve(AUTH.access);
+  return refreshing=refreshing||sbAuth("token?grant_type=refresh_token",{refresh_token:AUTH.refresh}).then(j=>{setSession(j);return AUTH.access}).catch(e=>{if(e.status>=400&&e.status<500){sessionLost()}return null}).finally(()=>{refreshing=null});
+}
+function sessionLost(){AUTH=null;lsDel(K_AUTH);setCloudStatus("Logged out. Log in again to keep saving.")}
+async function sbRows(query,init={}){
+  const t=await token();if(!t)throw new Error("signed out");
+  const r=await fetch(SB_URL+"/rest/v1/otr_accounts"+query,{...init,headers:{apikey:SB_KEY,Authorization:"Bearer "+t,"Content-Type":"application/json",...(init.headers||{})}});
+  if(!r.ok)throw new Error("save failed "+r.status);
+  return r.json();
+}
+// A real or daily meeting sits on top of the career save, and its race data is rebuilt from the feed.
+function cloudState(){
+  const c=(S.mode==="real"||S.mode==="daily")&&S.career?S.career:S;
+  const out={...c};delete out.realSaved;
+  return out;
+}
+function saveSync(){lsSet(K_SYNC,SYNC)}
+function cloudMark(){
+  if(cloudQuiet||!AUTH)return;
+  SYNC.uid=AUTH.uid;SYNC.dirty=true;saveSync();
+  clearTimeout(cloudTimer);cloudTimer=setTimeout(cloudPush,1200);
+}
+async function cloudPush(opts={}){
+  if(!AUTH||!S)return;
+  if(cloudBusy){cloudAgain=true;return}
+  cloudBusy=true;clearTimeout(cloudTimer);
+  try{
+    const body=JSON.stringify({user_id:AUTH.uid,state:cloudState(),book:BOOK,updated_at:new Date().toISOString()});
+    const rows=await sbRows("?on_conflict=user_id",{method:"POST",body,keepalive:!!opts.keepalive&&body.length<60000,headers:{Prefer:"resolution=merge-duplicates,return=representation"}});
+    SYNC={uid:AUTH.uid,at:rows[0].updated_at,dirty:false};saveSync();
+    setCloudStatus("Saved to your account.");
+  }catch(e){if(AUTH)setCloudStatus("Couldn't reach the server. Saved on this device for now.")}
+  cloudBusy=false;
+  if(cloudAgain){cloudAgain=false;cloudPush()}
+}
+function adopt(row){
+  cloudQuiet=true;
+  abortRace();bookOpen=false;bookMsg="";
+  S=row.state;picker=null;if(S.phase==="race")S.phase="bet";
+  if(S.result&&S.result.first4===undefined)S.result.first4=0;
+  BOOK=row.book&&row.book.tickets?{scr:{},...row.book}:{bank:1000,tickets:[],scr:{}};
+  save();saveBook();
+  settleBook();
+  renderAll();say(`Welcome back. Your game is loaded at <b>${S.track}</b>.`);
+  cloudQuiet=false;
+}
+// Newer save on the server wins; otherwise this device's unsent changes go up.
+async function cloudPull(){
+  if(!AUTH||!S)return false;
+  const uid=AUTH.uid;
+  let rows;
+  try{rows=await sbRows(`?user_id=eq.${uid}&select=state,book,updated_at`)}catch(e){if(AUTH)setCloudStatus("Couldn't reach the server. Saved on this device for now.");return false}
+  if(!AUTH||AUTH.uid!==uid)return false;
+  const row=rows[0],same=SYNC.uid===uid;
+  if(!row||!row.state||!row.state.race){await cloudPush();return false}
+  if(same&&SYNC.at===row.updated_at){if(SYNC.dirty)await cloudPush();else setCloudStatus("Saved to your account.");return false}
+  if(!same&&!lsGet(K_GUEST))lsSet(K_GUEST,{state:lsGet("dustyflat2"),book:lsGet("otrbook1")});
+  adopt(row);
+  SYNC={uid,at:row.updated_at,dirty:false};saveSync();setCloudStatus("Saved to your account.");
+  return true;
+}
+async function afterLogin(){await cloudPull();renderAccount()}
+async function logOut(){
+  clearTimeout(cloudTimer);
+  if(AUTH&&SYNC.dirty)await cloudPush();
+  const t=AUTH&&AUTH.access;
+  if(t)fetch(SB_URL+"/auth/v1/logout",{method:"POST",headers:{apikey:SB_KEY,Authorization:"Bearer "+t}}).catch(()=>{});
+  AUTH=null;lsDel(K_AUTH);SYNC={};lsDel(K_SYNC);cloudStatus="";
+  // Leave nothing of this player's on a shared phone or computer.
+  const g=lsGet(K_GUEST);lsDel(K_GUEST);
+  cloudQuiet=true;
+  abortRace();bookOpen=false;picker=null;
+  if(g&&g.state&&g.state.race){S=g.state;if(S.phase==="race")S.phase="bet"}else{S=null;fresh()}
+  BOOK=g&&g.book&&g.book.tickets?{scr:{},...g.book}:{bank:1000,tickets:[],scr:{}};
+  save();saveBook();settleBook();renderAll();say(`Logged out. Betting open on the <b>${S.race.title}</b>.`);
+  cloudQuiet=false;
+  renderAccount();
+}
+
+/* account dialog */
+let acctMode="login";
+const dlg=$("acct");
+function setCloudStatus(t){cloudStatus=t;renderAccount()}
+function renderAccount(){
+  const b=$("acctbtn");
+  b.textContent=AUTH?AUTH.email.split("@")[0]:"Log in";
+  b.title=AUTH?AUTH.email:"Log in or create an account to save your game";
+  const m=AUTH?(acctMode==="newpass"?"newpass":"in"):(acctMode==="in"||acctMode==="newpass"?"login":acctMode);
+  acctMode=m;
+  const titles={login:"Log in",signup:"Create account",forgot:"Reset password",newpass:"Set a new password",in:"Your account"};
+  $("acctTitle").textContent=titles[m];
+  $("acctWho").textContent=m==="in"?AUTH.email:"";
+  $("acctWho").hidden=m!=="in";
+  $("acctStatus").textContent=m==="in"?cloudStatus:"";
+  $("acctStatus").hidden=m!=="in"||!cloudStatus;
+  $("acctForm").hidden=m==="in";
+  $("acctOut").hidden=m!=="in";
+  $("acctEmailRow").hidden=m==="newpass";
+  $("acctEmail").required=m!=="newpass";
+  $("acctPassRow").hidden=m==="forgot";
+  $("acctPass").required=m!=="forgot";
+  $("acctPass").autocomplete=m==="login"?"current-password":"new-password";
+  $("acctPassLabel").textContent=m==="login"?"Password":"Password (8 or more characters)";
+  $("acctGo").textContent={login:"Log in",signup:"Create account",forgot:"Send reset email",newpass:"Save password"}[m]||"";
+  $("acctToSignup").hidden=m!=="login"&&m!=="forgot";
+  $("acctToLogin").hidden=m!=="signup"&&m!=="forgot";
+  $("acctToForgot").hidden=m!=="login";
+  $("acctBlurb").hidden=m!=="signup";
+}
+function acctNote(t,bad){const n=$("acctNote");n.textContent=t||"";n.hidden=!t;n.classList.toggle("bad",!!bad)}
+function openAcct(mode){acctMode=mode||(AUTH?"in":"login");acctNote("");renderAccount();if(!dlg.open)dlg.showModal();if(!AUTH&&acctMode!=="in")$("acctEmail").focus();if(AUTH){cloudPull()}}
+$("acctbtn").onclick=()=>openAcct();
+$("acctClose").onclick=()=>dlg.close();
+$("acctToSignup").onclick=()=>{acctMode="signup";acctNote("");renderAccount()};
+$("acctToLogin").onclick=()=>{acctMode="login";acctNote("");renderAccount()};
+$("acctToForgot").onclick=()=>{acctMode="forgot";acctNote("");renderAccount()};
+$("acctOut").onclick=async()=>{await logOut();dlg.close()};
+$("acctForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const email=$("acctEmail").value.trim(),password=$("acctPass").value,go=$("acctGo");
+  if(acctMode!=="login"&&acctMode!=="forgot"&&password.length<8)return acctNote("Password needs at least 8 characters.",true);
+  go.disabled=true;acctNote("");
+  try{
+    const redirect="redirect_to="+encodeURIComponent(SITE());
+    if(acctMode==="login"){
+      setSession(await sbAuth("token?grant_type=password",{email,password}));
+      $("acctPass").value="";await afterLogin();dlg.close();
+    }else if(acctMode==="signup"){
+      const j=await sbAuth("signup?"+redirect,{email,password,data:{app:"off-to-the-races"}});
+      $("acctPass").value="";
+      if(j.access_token){setSession(j);await afterLogin();dlg.close()}
+      else if(j.identities&&!j.identities.length){acctMode="login";renderAccount();acctNote("That email already has an account. Log in instead.",true)}
+      else{acctMode="login";renderAccount();acctNote("Check your email and tap the confirmation link to finish creating your account.")}
+    }else if(acctMode==="forgot"){
+      await sbAuth("recover?"+redirect,{email});
+      acctMode="login";renderAccount();acctNote("If that email has an account, a reset link is on its way.");
+    }else if(acctMode==="newpass"){
+      const t=await token();await sbAuth("user",{password},"PUT",t);
+      $("acctPass").value="";acctMode="in";renderAccount();acctNote("Password updated.");
+    }
+  }catch(err){
+    const msg=err.code==="email_not_confirmed"?"Confirm your email first. The link is in your inbox.":err.code==="invalid_credentials"?"Email or password is wrong.":err.code==="same_password"?"Choose a different password from your old one.":err.status?err.message:"Couldn't reach the server. Check your connection.";
+    acctNote(msg,true);
+  }
+  go.disabled=false;
+});
+// Links from confirmation and reset emails come back with the session in the address.
+async function readAuthLink(){
+  const h=new URLSearchParams(location.hash.slice(1));
+  if(!h.get("access_token")&&!h.get("error_description"))return null;
+  history.replaceState(null,"",location.pathname+location.search);
+  if(h.get("error_description")){openAcct("login");acctNote("That email link has expired or was already used. Log in, or request a new one.",true);return null}
+  const type=h.get("type"),access_token=h.get("access_token");
+  try{
+    const user=await sbAuth("user",null,"GET",access_token);
+    setSession({access_token,refresh_token:h.get("refresh_token"),expires_in:+h.get("expires_in")||3600,user});
+    return type;
+  }catch(e){openAcct("login");acctNote("That email link didn't work. Try logging in.",true);return null}
+}
+async function bootAccount(){
+  renderAccount();
+  const type=await readAuthLink();
+  if(AUTH)await cloudPull();
+  renderAccount();
+  if(type==="recovery")openAcct("newpass");
+}
+document.addEventListener("visibilitychange",()=>{
+  if(!AUTH||!S)return;
+  if(document.visibilityState==="hidden"){if(SYNC.dirty)cloudPush({keepalive:true})}
+  else if(S.phase!=="race")cloudPull();
+});
+window.addEventListener("online",()=>{if(AUTH&&SYNC.dirty)cloudPush()});
+
 /* ---------- boot ---------- */
 function start(data){
   load(data);
@@ -1272,6 +1498,7 @@ function start(data){
   say(S.phase==="bet"?`Betting open on the <b>${S.race.title}</b>. Read the form, pick a runner, then jump.`:"");
   requestAnimationFrame(frame);
   loadMeets();
+  bootAccount();
 }
 window.claude?.hot?.snapshot?.(()=>S);
 window.claude?.hot?.ready?window.claude.hot.ready(start):start(window.claude?.hot?.data??{});
