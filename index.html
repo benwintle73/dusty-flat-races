@@ -465,32 +465,9 @@ const COAT_LOOKS=[
   {n:"Iron grey",b:"#7d7b78",m:"#2e2c2b",l:"#3b3937",d:"#9a9895"},{n:"Golden chestnut",b:"#c26f2c",m:"#e2b07a",l:"#c26f2c"}];
 const LOOK_OF=[[0,7,1],[0,2,7],[1,6,3],[4,8,4],[2,9,3],[5,6,1]];
 function coatOf(h){const opts=LOOK_OF[h.coat%LOOK_OF.length]||[0];return COAT_LOOKS[opts[strHash(h.name)%opts.length]]}
-const K=2.4,BW=47,BH=40,SW=Math.round(BW*K),SH=Math.round(BH*K),FR=16,STAND=FR,LOG=1.45,SS=1.5,FW=Math.round(SW*SS),FH=Math.round(SH*SS),GS=LOG/1.2;
-// Rotary gallop: each leg plants for STANCE of the stride, in the order trailing hind, leading hind, trailing fore, leading fore.
-const STANCE=.3,REACH=4.6,BACK=5.4,GROUND=33.6;
-const LEGS=[{o:0,fore:false,near:false},{o:.1,fore:false,near:true},{o:.3,fore:true,near:false},{o:.42,fore:true,near:true}];
-// Metres travelled per stride, set so a planted hoof moves back exactly as fast as the turf scrolls.
-const STRIDE=(REACH+BACK)*(LOG)/6/STANCE;
-function ik(hx,hy,tx,ty,L1,L2,fwd){
-  let dx=tx-hx,dy=ty-hy,d=Math.hypot(dx,dy);const max=L1+L2-.01;
-  if(d>max){dx*=max/d;dy*=max/d;d=max}
-  const a=Math.atan2(dy,dx),cosA=clamp((L1*L1+d*d-L2*L2)/(2*L1*d),-1,1),off=Math.acos(cosA)*(fwd?-1:1);
-  const kx=hx+Math.cos(a+off)*L1,ky=hy+Math.sin(a+off)*L1;
-  return {kx,ky,fx:hx+dx,fy:hy+dy};
-}
-function legPose(u,leg,hx,hy){
-  let l=((u-leg.o)%1+1)%1,tx,ty;
-  if(l<STANCE){tx=REACH-(REACH+BACK)*l/STANCE;ty=GROUND}
-  else{const s=(l-STANCE)/(1-STANCE),e=s*s*(3-2*s);
-    tx=-BACK+(REACH+BACK)*Math.pow(e,leg.fore?1.6:1.2)+(leg.fore?-2.6:1.4)*Math.sin(Math.PI*s);
-    ty=GROUND-(leg.fore?8.5:6.5)*Math.pow(Math.sin(Math.PI*s),.9)}
-  return ik(hx,hy,hx+tx,ty,leg.fore?6.2:6.6,leg.fore?6.6:6.4,leg.fore);
-}
-function pose(f){
-  if(f===STAND)return {u:.3,b:2,fr:2,rr:2,nod:0,arm:0,stand:true};
-  const u=f/FR,b=2+1.1*Math.cos(6.2832*(u-.36)),pitch=Math.cos(6.2832*(u-.5));
-  return {u,b,fr:b+pitch*.9,rr:b-pitch*.9,nod:Math.cos(6.2832*(u-.55)),arm:Math.cos(6.2832*(u-.6)),stand:false};
-}
+const K=2.4,BW=47,BH=40,SW=Math.round(BW*K),SH=Math.round(BH*K),FR=10,STAND=FR,LOG=1.45,SS=1.5,FW=Math.round(SW*SS),FH=Math.round(SH*SS),GS=LOG/1.2;
+// Original motion from main: every joint follows one sine wave per stride, 10 frames, a frame every 48ms.
+const GAIT_MS=48;
 function buildSheet(h,idx){
   const sheet=document.createElement("canvas");sheet.width=FW*(FR+1);sheet.height=FH;
   const out=sheet.getContext("2d");
@@ -500,26 +477,28 @@ function buildSheet(h,idx){
   const low=shade(coat,.72),far=shade(coat,.55),hi=shade(coat,1.25),hi2=shade(coat,1.5),white="#efe9dc";
   for(let f=0;f<=FR;f++){
     const tmp=document.createElement("canvas");tmp.width=FW;tmp.height=FH;
-    const c=tmp.getContext("2d"),Z=pose(f),{b,fr,rr}=Z;c.scale(SS,SS);
+    const c=tmp.getContext("2d");c.scale(SS,SS);
+    const stand=f===STAND,ph=stand?0:f/FR*6.2832;
+    const b=stand?2:Math.sin(ph*2)*.6+2,fr=stand?2:b+Math.sin(ph)*.8,rr=stand?2:b-Math.sin(ph)*.8; // main's fore-and-aft rock
+    const Z={stand,u:f/FR,nod:0,arm:stand?0:Math.sin(ph)*.8};
+    // main's leg swing: hip angle and knee fold are sine waves of the stride phase
     const drawLeg=(i,col)=>{
-      const leg=LEGS[i],hx=leg.fore?31:12,hy=21+(leg.fore?fr:rr);
-      let L;
-      if(Z.stand){const tx=leg.fore?(leg.near?1:-.6):(leg.near?-1.2:.6);L=ik(hx,hy,hx+tx,GROUND,leg.fore?6.2:6.6,leg.fore?6.6:6.4,leg.fore)}
-      else L=legPose(Z.u,leg,hx,hy);
-      const sock=socks[i],lc=sock?white:(look.l||col),lcol=leg.near?lc:(sock?shade("#efe9dc",.8):shade(look.l||col,.75));
-      // upper leg tapers from a muscled forearm or gaskin
-      polyFill(c,P([[hx-2.2,hy-2],[hx+2.2,hy-2],[L.kx+1,L.ky],[L.kx-1,L.ky]]),col,true);
+      const fore=i>=2,near=i%2===1,hx=fore?(near?31:30):(near?12:13),hy=21+(fore?fr:rr);
+      const p=ph+[3.84,3.14,.7,0][i];
+      const th=stand?(fore?.06:-.08):(fore?.95:.8)*Math.sin(p)+(fore?.1:-.05),fl=stand?(fore?.12:.28):(fore?.3:.5)+1.15*Math.max(0,Math.cos(p));
+      const L1=fore?6:6.4,kx=hx+Math.sin(th)*L1,ky=hy+Math.cos(th)*L1,sh=th-fl,fx=kx+Math.sin(sh)*6.2,fy=ky+Math.cos(sh)*6.2;
+      const sock=socks[i],lc=look.l||col,lower=sock?(near?white:shade("#efe9dc",.8)):(near?lc:shade(lc,.8));
+      polyFill(c,P([[hx-2.2,hy-2],[hx+2.2,hy-2],[kx+1,ky],[kx-1,ky]]),col,true);
       c.fillStyle=col;c.beginPath();c.arc(hx*K,hy*K,2.3*K,0,7);c.fill();
-      line(c,L.kx*K,L.ky*K,L.fx*K,L.fy*K,leg.near?4.6:4.2,look.l&&!sock?(leg.near?look.l:shade(look.l,.8)):col);
-      if(sock)line(c,((L.kx+L.fx*2)/3)*K,((L.ky+L.fy*2)/3)*K,L.fx*K,L.fy*K,leg.near?4.6:4.2,lcol);
-      c.fillStyle=col;c.beginPath();c.arc(L.kx*K,L.ky*K,1.15*K,0,7);c.fill();
-      const ang=Math.atan2(L.fy-L.ky,L.fx-L.kx);
-      c.save();c.translate(L.fx*K,L.fy*K);c.rotate(ang-Math.PI/2);c.fillStyle="#17110c";c.fillRect(-3.4,-1,7,5);c.restore();
+      line(c,kx*K,ky*K,fx*K,fy*K,near?4.6:4.2,look.l&&!sock?(near?look.l:shade(look.l,.8)):col);
+      if(sock)line(c,((kx+fx*2)/3)*K,((ky+fy*2)/3)*K,fx*K,fy*K,near?4.6:4.2,lower);
+      c.fillStyle=col;c.beginPath();c.arc(kx*K,ky*K,1.15*K,0,7);c.fill();
+      c.save();c.translate(fx*K,fy*K);c.rotate(sh);c.fillStyle="#17110c";c.fillRect(-3.4,-1,7,5);c.restore();
     };
     // far legs, behind the body
     drawLeg(0,far);drawLeg(2,far);
     // tail streams out behind and ripples with the stride
-    const tw=Z.stand?0:Math.sin(Z.u*6.2832);
+    const tw=Z.stand?0:Math.sin(ph)*1.3;
     const tail=[[9.2,12.2+rr],[10.6,14.2+rr],[6.5,16.6+rr+tw*.5],[2.5,18.6+rr+tw*1.1],[-.8,19.6+rr+tw*1.6],[-1.4,18+rr+tw*1.3],[2.2,15+rr+tw*.6],[6,13+rr]];
     polyFill(c,P(Z.stand?[[9.2,12.2+rr],[10.6,14.2+rr],[9.4,20+rr],[8.4,27+rr],[7,28+rr],[7.4,20+rr],[8,14+rr]]:tail),mane);
     if(!Z.stand)for(const o of [0,1,2])line(c,(8.2-o*.4)*K,(13.4+rr+o*.5)*K,(.6+o*.9)*K,(18.8+rr+tw*(1.5-o*.3)+o*.6)*K,1,shade(mane,mane==="#e8e6e0"?.82:1.7));
@@ -549,7 +528,7 @@ function buildSheet(h,idx){
     line(c,37*K,(2.8+fr)*K,43*K,(9.8+fr)*K,1,"#20150e");line(c,37.2*K,(7.2+fr)*K,42.5*K,(9.4+fr)*K,1,"#20150e");
     // mane flicks with the stride
     polyFill(c,P([[26.5,12.5+fr],[32,3.3+fr],[35,2.5+fr],[30,10+fr],[28.5,14.5+fr]]),mane);
-    for(let i=0;i<7;i++)line(c,(27.8+i*1.1)*K,(11.4-i*1.3+fr)*K,(25+i*1.1)*K,(13.6-i*1.3+fr+(Z.stand?0:Math.sin(Z.u*6.2832+i*.6)*1.1))*K,2,mane);
+    for(let i=0;i<7;i++)line(c,(27.8+i*1.1)*K,(11.4-i*1.3+fr)*K,(25+i*1.1)*K,(13.6-i*1.3+fr+(Z.stand?0:Math.sin(ph+i)*1))*K,2,mane);
     c.restore();
     const bit=[42.6,9.6+fr],bx=pvx/K+(bit[0]-pvx/K)*Math.cos(nod)-(bit[1]-pvy/K)*Math.sin(nod),by=pvy/K+(bit[0]-pvx/K)*Math.sin(nod)+(bit[1]-pvy/K)*Math.cos(nod);
     // near legs, in front of the body
@@ -559,11 +538,11 @@ function buildSheet(h,idx){
     polyFill(c,P([[8.5,11.1+b],[19.5,11.1+b],[19.5,12.2+b],[8.5,12.2+b]]),silk,true);
     {const no=h.no||idx+1;c.fillStyle="#000";c.font=`700 ${no>9?17:20}px "Barlow Condensed",Arial,sans-serif`;c.textAlign="center";c.textBaseline="middle";c.fillText(String(no),14*K,(16.8+b)*K);c.textAlign="left"}
     // jockey rides the stride: knees soak it up, so the torso moves less than the horse
-    const j=Z.stand?b-1.6:2+(b-2)*.35;
+    const j=Z.stand?b-1.6:b;
     polyFill(c,P([[17,10.4+b],[23,10.4+b],[26,13.4+b],[20.6,14.8+b]]),"#f2efe3");
     polyFill(c,P([[20.6,13.8+b],[25,13.8+b],[25,18.4+b],[23.8,18.8+b],[20.6,18.2+b]]),"#16100c");
     c.fillStyle="#c9c2b0";c.fillRect(Math.round(20.8*K),Math.round((18.8+b)*K),Math.round(4.6*K),2);
-    const lean=Z.stand?-1.6:Z.arm*.5;
+    const lean=Z.stand?-1.6:0;
     const A=[17.6+lean*.3,6.5+j],B=[23+lean,1+j],C=[28.4+lean,3.6+j],D=[24,11+b];
     const q=(u,v)=>{const tx=A[0]+(B[0]-A[0])*u,ty=A[1]+(B[1]-A[1])*u,bx2=D[0]+(C[0]-D[0])*u,by2=D[1]+(C[1]-D[1])*u;return [tx+(bx2-tx)*v,ty+(by2-ty)*v]};
     const cell=(u0,u1,v0,v1)=>polyFill(c,P([q(u0,v0),q(u1,v0),q(u1,v1),q(u0,v1)]),alt,true);
@@ -574,7 +553,7 @@ function buildSheet(h,idx){
     if(pattern===4){cell(0,.5,0,.5);cell(.5,1,.5,1)}
     if(pattern===5)for(const [u,v] of [[.15,.15],[.55,.2],[.25,.6],[.65,.68]])cell(u,u+.18,v,v+.18);
     // hands push toward the bit with the horse's head
-    const sh=[26+lean,5+j],hand=Z.stand?[31.5,9+b]:[33.2+Z.nod*1.2,8.6+j+Z.nod*.6];
+    const sh=[26+lean,5+j],hand=Z.stand?[31.5,9+b]:[32.5,8.2+j+Z.arm];
     line(c,sh[0]*K,sh[1]*K,hand[0]*K,hand[1]*K,5,silk);
     c.fillStyle="#e9e3d4";c.fillRect(Math.round(hand[0]*K)-1,Math.round(hand[1]*K)-1,6,5);
     line(c,hand[0]*K,(hand[1]+.6)*K,bx*K,by*K,1,"#20150e");
@@ -749,29 +728,16 @@ function horsePositions(t){
   const tr=R.sim.trace,fl=t/R.sim.dt,i=clamp(Math.floor(fl),0,tr.length-2),u=clamp(fl-i,0,1);
   return tr[i].map((v,k)=>v+(tr[i+1][k]-v)*u);
 }
-function strideFrames(pos){
-  // Legs advance by distance run. Stride shortens as a horse slows after the post, so it canters down instead of
-  // galloping in slow motion. Replays rewind cleanly.
-  if(!R||!pos)return null;
-  const n=pos.length;
-  if(!R.ph||R.t<R.phT-.5||R.ph.length!==n){R.ph=pos.map((_,k)=>hash(k+3));R.pp=pos.slice();R.phT=R.t;R.pv=pos.map(()=>16.6)}
-  const dts=R.t-R.phT;
-  // a photo finish steps the clock back a fraction: hold the legs rather than run them backwards
-  if(R.t<R.phT){R.pp=pos.slice();R.phT=R.t;return R.ph}
-  for(let k=0;k<n;k++){const dp=pos[k]-R.pp[k];
-    if(dp>0&&dts>0){R.pv[k]+=(dp/dts-R.pv[k])*Math.min(1,dts*3);R.ph[k]+=Math.min(.42,dp/(STRIDE*clamp(.42+.6*R.pv[k]/16.8,.5,1.06)))}} // a dropped frame never flips the legs backwards
-  R.pp=pos.slice();R.phT=R.t;
-  return R.ph;
-}
 function drawHorses(camX,pos,now){
-  const f=S.race.field,idx=[...f.keys()].sort((a,b)=>f[a].barrier-f[b].barrier),ph=pos&&R?R.ph:null;
+  const f=S.race.field,idx=[...f.keys()].sort((a,b)=>f[a].barrier-f[b].barrier);
   for(const k of idx){
     const h=f[k],y=laneY(h.barrier-1),run=pos&&R&&!R.preUntil&&pos[k]>.3,moving=run&&R.running&&!R.photoOn;
     const x=(pos?pos[k]:0)*PX-camX-LW+2;
-    const ff=run&&ph?Math.floor((ph[k]%1)*FR):STAND;
+    const ff=run&&(R.running||R.photoOn)?(R.photoOn?3:(Math.floor(now/GAIT_MS)+k*3)%FR):STAND;
+    const sw=moving?Math.sin(now/260+k):0;
     if(x>-LW-10&&x<VW+4){
-      g.fillStyle="rgba(10,30,15,.3)";g.beginPath();g.ellipse(x+LW/2,y,LW/2-6,3,0,0,7);g.fill();
-      g.drawImage(sheets[k],ff*FW,0,FW,FH,x,y-LH+3,LW,LH);
+      g.fillStyle="rgba(10,30,15,.3)";g.beginPath();g.ellipse(x+LW/2,y+sw*.5,LW/2-6,3,0,0,7);g.fill();
+      g.drawImage(sheets[k],ff*FW,0,FW,FH,x,y-LH+3+sw,LW,LH);
       if(moving&&!reduced&&Math.random()<.65)particles.push({x:x+camX+8+Math.random()*10,y:y,vx:-Math.random()*1.3-.3,vy:-Math.random()*.7-.1,life:10+Math.random()*14,s:1+Math.floor(Math.random()*3)});
     }
   }
@@ -801,7 +767,7 @@ function drawCircle(now){
   const k=R.sim.order[0],h=S.race.field[k];
   out.fillStyle="rgba(12,16,10,.72)";out.fillRect(0,0,W,H);
   const g2=out.createRadialGradient(240,130,20,240,130,190);g2.addColorStop(0,"rgba(255,226,150,.55)");g2.addColorStop(1,"rgba(255,226,150,0)");out.fillStyle=g2;out.fillRect(0,0,W,H);
-  out.drawImage(sheets[k],13*FW,0,FW,FH,200-LW*1.42,50,LW*2.84,LH*2.84);
+  out.drawImage(sheets[k],2*FW,0,FW,FH,200-LW*1.42,50,LW*2.84,LH*2.84);
   out.textAlign="center";out.fillStyle="#ffb52e";out.font='400 30px "Anton",Impact,sans-serif';out.fillText(h.name,240,34,450);
   out.fillStyle="#efe4c8";out.font='600 18px "Barlow Condensed","Arial Narrow",sans-serif';out.fillText(`${h.jock} · ${S.race.title}`,240,216,450);out.textAlign="left";
   // placings board: first four, straight from the recorded finish
@@ -853,7 +819,7 @@ function frame(now){
     else if(R.preUntil){
       if(now>=R.preUntil){R.preUntil=0;R.jumpAt=now;R.last=now;tone(1250,.6,0,"square",.07);say(`And they're away in the <b>${S.race.title}</b>!`)}
     }else if(R.running){const dt=Math.min(.1,(now-R.last)/1000);R.last=now;R.t+=dt*R.rate;tick(now)}
-    pos=horsePositions(R.t);strideFrames(pos);
+    pos=horsePositions(R.t);
     if(R.running&&R.t>=R.sim.dt*(R.sim.trace.length-2)){R.running=false;if(R.replay){R.replay=false;R.circleAt=now+700}}
     const lead=Math.max(...pos),fx=S.race.dist*PX,target=Math.min(lead*PX-345,fx-300);
     cam+=(target-cam)*.12;
