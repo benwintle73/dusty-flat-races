@@ -58,7 +58,8 @@ canvas{width:100%;height:auto;display:block}
 .meets span{font:700 17px/1 var(--led);color:var(--amber);min-width:78px}
 .pick{display:flex;gap:8px;align-items:center;font:700 17px/1 var(--led);color:var(--amber)}
 .pick span{white-space:nowrap}
-#racesel{flex:1;min-width:0;min-height:44px;background:var(--paper);color:var(--ink);border:0;font:600 18px/1.1 var(--led);padding:0 8px}
+.wrap>*,.nav>*,.pick{min-width:0} /* a long race name in the dropdown must not widen the page */
+#racesel{flex:1;min-width:0;width:100%;max-width:100%;text-overflow:ellipsis;min-height:44px;background:var(--paper);color:var(--ink);border:0;font:600 18px/1.1 var(--led);padding:0 8px}
 .book-sum{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
 .book-sum div{background:var(--tote);color:var(--paper);padding:8px 10px}
 .book-sum small{display:block;font:600 13px/1 var(--led);letter-spacing:.8px;text-transform:uppercase;color:var(--amber-dim);margin-bottom:4px}
@@ -76,6 +77,16 @@ canvas{width:100%;height:auto;display:block}
 .s-lost .tk-stamp{background:var(--red);color:#fff}
 .s-void .tk-stamp{background:#6e6a60;color:#fff}
 .tk-act{background:none;border:1px solid currentColor;color:inherit;min-height:32px;padding:0 8px;font:600 14px/1 var(--body);margin:4px 5px 0 0}
+.ff{display:grid;gap:6px;margin-top:6px}
+.ff-id{font-size:15px;color:#d9c79b}
+.ff-l20{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.ff-l20 span{font:700 13px/1 var(--led);letter-spacing:.6px;text-transform:uppercase;color:#d9c79b}
+.ff-l20 b{font:700 18px/1.1 var(--led);letter-spacing:1.5px;word-break:break-all}
+.ff-t{width:100%;border-collapse:collapse;font-size:15px}
+.ff-t td{padding:3px 4px;border-top:1px solid rgba(239,228,200,.18)}
+.ff-t td:last-child{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+.ff-note{font-size:15px;color:#d9c79b;margin-top:6px}
+.ff-src{font-size:13px;color:#bfae86}
 .detail-h{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:4px}
 .big:disabled{opacity:.45;cursor:not-allowed}
 .bets{list-style:none;margin:0;padding:0;display:grid;gap:4px}
@@ -274,7 +285,7 @@ canvas{width:100%;height:auto;display:block}
 <script>
 "use strict";
 /* ---------- helpers ---------- */
-const APP_VERSION="2.0.3"; // bump on every release; shown after the title
+const APP_VERSION="2.1.0"; // bump on every release; shown after the title
 const $=id=>document.getElementById(id);
 let RNG=Math.random;
 const mulberry=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
@@ -1394,6 +1405,37 @@ function renderEnd(){
   $("rs").onclick=()=>{const dd=S.dailyDone;fresh();S.dailyDone=dd;R=null;renderAll();say("Fresh start. Betting open.")};
 }
 const maxBet=()=>S.mode!=="career"?Infinity:TIERS[S.tier].max;
+/* ---------- FormFav form guide for real races (key stays on the server) ---------- */
+const FF_URL="https://nkkhbtrrytctpfwjenrz.supabase.co/functions/v1/otr-form",FF={};
+const escH=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function ffKey(){return S.mode==="real"&&S.real?`${S.real.date}|${S.track}|${S.real.races[S.idx].number}`:null}
+function ffLoad(){
+  const key=ffKey();if(!key||FF[key])return FF[key];
+  const [date,venue,race]=key.split("|");FF[key]={state:"loading"};
+  fetch(`${FF_URL}?date=${date}&venue=${encodeURIComponent(venue)}&race=${race}`).then(r=>r.json().then(j=>({ok:r.ok,j}))).then(({ok,j})=>{FF[key]=ok&&j.runners?{state:"ok",data:j}:{state:"none",msg:j.error}})
+    .catch(()=>{FF[key]={state:"none",msg:"Form guide is unavailable right now."}})
+    .finally(()=>{if(ffKey()===key&&S.phase==="bet")renderDetail()});
+  return FF[key];
+}
+function ffHtml(h){
+  const f=ffLoad();
+  if(!f||f.state==="loading")return '<div class="ff-note">Loading form guide…</div>';
+  if(f.state!=="ok")return `<div class="ff-note">${escH(f.msg||"No form guide for this race.")}</div>`;
+  const u=f.data.runners.find(x=>+x.no===+h.no);
+  if(!u)return '<div class="ff-note">No form guide for this runner.</div>';
+  const r=(l,x)=>`<tr><td>${l}</td><td>${x&&x.s?`${x.s}: ${x.w}-${x[2]}-${x[3]}`:"–"}</td></tr>`,st=u.st||{};
+  const cond=String(f.data.condition||S.race.trackLabel||"").toLowerCase(),wet=/heavy/.test(cond)?"heavy":/soft/.test(cond)?"soft":"good";
+  return `<div class="ff">
+    <div class="ff-id">${[u.age?u.age+"yo":"",escH(u.sex),u.sire?`${escH(u.sire)} × ${escH(u.dam)}`:"",Number(String(u.prize||"").replace(/[^0-9.]/g,""))>0?`${money(Math.round(Number(String(u.prize).replace(/[^0-9.]/g,""))))} prizemoney`:""].filter(Boolean).join(" · ")}</div>
+    ${u.last20?`<div class="ff-l20"><span>Last ${u.last20.length} starts</span><b>${escH(u.last20)}</b></div>`:""}
+    ${u.scr?'<div class="ff-note">FormFav lists this runner as scratched.</div>':""}
+    <table class="ff-t"><tbody>
+      ${r("Career",st.overall)}${r("This track",st.track)}${r("This distance",st.dist)}${r("Track & distance",st.td)}
+      ${r(`Good${wet==="good"?" (today)":""}`,st.good)}${r(`Soft${wet==="soft"?" (today)":""}`,st.soft)}${r(`Heavy${wet==="heavy"?" (today)":""}`,st.heavy)}
+      ${r("First up",st.up1)}${r("Second up",st.up2)}
+    </tbody></table>
+    <div class="ff-src">Starts: wins-seconds-thirds. Form guide by FormFav.</div></div>`;
+}
 function renderDetail(){
   const el=$("detail"),k=S.sel[S.sel.length-1];
   if(S.phase!=="bet"||k===undefined){el.innerHTML="";return}
@@ -1404,7 +1446,7 @@ function renderDetail(){
     if(h.fd){const fd=h.fd,rows=[st("Career",fd.overall)+st("Distance",fd.dist),st("Track",fd.track)+(fd.wet?`<td>Wet</td><td>${fd.wet}</td>`:"")];
       const rec=(fd.recent||[]).filter(r=>r.t).map(r=>`<tr><td>${r.d||""}</td><td>${r.t}</td><td>${r.m?r.m+"m":""}</td><td>${r.pos?r.pos+(r.of?"/"+r.of:""):"-"}</td></tr>`).join("");
       extra=`<table><tr>${rows[0]}</tr><tr>${rows[1]}</tr></table>${rec?`<table><tr><th>Date</th><th>Track</th><th>Dist</th><th>Finish</th></tr>${rec}</table>`:""}`}
-    else if(!S.race.feature)extra=`<div>Full form is only loaded for the race marked ★.</div>`;
+    else extra=ffHtml(h);
     el.innerHTML=`<div class="detail-h"><span><b>${h.name}</b> · ${h.jock}${h.trainer?" · "+h.trainer:""}</span><button class="tk-act" data-scr="${h.no}">Mark scratched</button></div>${h.form?`Recent form: ${h.form}`:""}${extra}`;return}
   el.innerHTML=`<b>${h.name}</b> last starts<table><tr><th>Track</th><th>Dist</th><th>Going</th><th>Finish</th></tr>${[...pool.runs].reverse().map(r=>`<tr><td>${r.t}</td><td>${r.d}m</td><td>${ratingName(r.r)}</td><td>${r.p==="x"?"Spell":r.p==="0"?"10th+":r.p+"/"+r.n}</td></tr>`).join("")}</table>`;
 }
