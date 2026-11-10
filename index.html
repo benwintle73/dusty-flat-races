@@ -299,7 +299,7 @@ canvas{width:100%;height:auto;display:block}
 <script>
 "use strict";
 /* ---------- helpers ---------- */
-const APP_VERSION="2.5.0"; // bump on every release; shown after the title
+const APP_VERSION="2.6.0"; // bump on every release; shown after the title
 const $=id=>document.getElementById(id);
 let RNG=Math.random;
 const mulberry=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
@@ -410,6 +410,7 @@ function makeHorse(name){
 }
 function newMeeting(){
   if(S.mode==="dogs")return newDogMeeting();
+  if(S.mode==="harness")return newHarnessMeeting();
   S.pool=shuffle(NAMES).map(makeHorse);
   S.track=pick(TIERS[S.tier||0].tracks);
   S.weather=irand(3,9);
@@ -423,6 +424,7 @@ function wetRecord(h){
 function buildRace(){
   if(S.mode==="real")return buildReal();
   if(S.mode==="dogs")return buildDogRace();
+  if(S.mode==="harness")return buildHarnessRace();
   const T=TIERS[S.tier||0];const [title,dist]=S.idx===7?T.cup:RACES[S.idx];
   const last=S.lastNames||[];
   let pool=S.pool.filter(h=>!last.includes(h.name));
@@ -495,7 +497,7 @@ function coatOf(h){const opts=LOOK_OF[h.coat%LOOK_OF.length]||[0];return COAT_LO
 const K=2.4,BW=47,BH=40,SW=Math.round(BW*K),SH=Math.round(BH*K),FR=10,STAND=FR,LOG=1.45,SS=1.5,FW=Math.round(SW*SS),FH=Math.round(SH*SS),GS=LOG/1.2;
 // Original motion from main: every joint follows one sine wave per stride, 10 frames, a frame every 48ms.
 const GAIT_MS=48,DOG_GAIT_MS=26;
-function buildSheet(h,idx){
+function buildSheet(h,idx,opt={}){
   const sheet=document.createElement("canvas");sheet.width=FW*(FR+1);sheet.height=FH;
   const out=sheet.getContext("2d");
   const look=coatOf(h),coat=look.b,mane=look.m,[silk,alt]=h.silk?[h.silk.c,h.silk.a]:SILKS[idx%SILKS.length];
@@ -511,7 +513,7 @@ function buildSheet(h,idx){
     // main's leg swing: hip angle and knee fold are sine waves of the stride phase
     const drawLeg=(i,col)=>{
       const fore=i>=2,near=i%2===1,hx=fore?(near?31:30):(near?12:13),hy=21+(fore?fr:rr);
-      const p=ph+[3.84,3.14,.7,0][i];
+      const p=ph+(opt.gait==='pace'?[3.14,0,3.14,0]:opt.gait==='trot'?[0,3.14,3.14,0]:[3.84,3.14,.7,0])[i]; // pacers move the legs on each side together, trotters the diagonal pairs
       const th=stand?(fore?.06:-.08):(fore?.95:.8)*Math.sin(p)+(fore?.1:-.05),fl=stand?(fore?.12:.28):(fore?.3:.5)+1.15*Math.max(0,Math.cos(p));
       const L1=fore?6:6.4,kx=hx+Math.sin(th)*L1,ky=hy+Math.cos(th)*L1,sh=th-fl,fx=kx+Math.sin(sh)*6.2,fy=ky+Math.cos(sh)*6.2;
       const sock=socks[i],lc=look.l||col,lower=sock?(near?white:shade("#efe9dc",.8)):(near?lc:shade(lc,.8));
@@ -564,6 +566,7 @@ function buildSheet(h,idx){
     polyFill(c,P([[8.5,11.1+b],[19.5,11.1+b],[19.5,21.5+b],[8.5,21.5+b]]),"#fbf8ee",true);
     polyFill(c,P([[8.5,11.1+b],[19.5,11.1+b],[19.5,12.2+b],[8.5,12.2+b]]),silk,true);
     {const no=h.no||idx+1;c.fillStyle="#000";c.font=`700 ${no>9?17:20}px "Barlow Condensed",Arial,sans-serif`;c.textAlign="center";c.textBaseline="middle";c.fillText(String(no),14*K,(16.8+b)*K);c.textAlign="left"}
+    if(!opt.noRider){
     // jockey rides the stride: knees soak it up, so the torso moves less than the horse
     const j=Z.stand?b-1.6:b;
     polyFill(c,P([[17,10.4+b],[23,10.4+b],[26,13.4+b],[20.6,14.8+b]]),"#f2efe3");
@@ -591,6 +594,7 @@ function buildSheet(h,idx){
     polyFill(c,P([[30+lean,-.2+j],[33.2+lean,.6+j],[33.2+lean,1.3+j],[30+lean,1.3+j]]),alt);
     c.fillStyle="#1b1b22";c.fillRect(Math.round((28.4+lean)*K),Math.round((2+j)*K),Math.round(2.6*K),3);
     c.fillStyle="#9fd2e8";c.fillRect(Math.round((29.6+lean)*K),Math.round((2+j)*K),3,2);
+    }
     c.globalCompositeOperation="source-atop";
     const gr=c.createLinearGradient(0,0,0,SH);gr.addColorStop(0,"rgba(255,255,255,.2)");gr.addColorStop(.5,"rgba(255,255,255,0)");gr.addColorStop(1,"rgba(0,0,0,.32)");c.fillStyle=gr;c.fillRect(0,0,SW,SH);
     c.globalCompositeOperation="source-over";
@@ -649,7 +653,7 @@ function buildDogRace(){
 // Moving between sections keeps each one's progress: the dogs wait in the career save until you come back.
 function leaveDogs(){if(S.mode!=="dogs")return;const c=S.career,k={...S};delete k.career;c.dogsSaved=k;S=c}
 function enterDogs(){
-  abortRace();
+  abortRace();leaveHarness();
   if(S.mode==="daily")leaveDaily();
   else if(S.mode==="real"){const c=S.career,k={...S};delete k.career;c.realSaved=k;S=c}
   const career=S,ds=career.dogsSaved;career.dogsSaved=null;
@@ -743,6 +747,205 @@ function dgHtml(h){
     <div class="ff-src">Starts: wins-seconds-thirds. Form guide by FormFav. Odds are game estimates from form.</div></div>`;
 }
 
+/* ---------- harness racing ---------- */
+// Pacers and trotters on the same race engine as the gallops (same simulation, odds, bets and results);
+// the field, the track, the sulky pictures, the start and the playback speed differ.
+const HN_NAMES=["Shiny Ute","Pothole Patrol","Two Stroke","Cattle Grid","Servo Pie","Sulky Sue","Hoof Hearted","Dusty Hubcap","Gravel Rash","Ute Muster","Saturday Arvo","Bush Telegraph","Tin Shed","Windmill Willy","Bore Water","Corrugated Iron","Dingo Fence","Swag Man","Road Train","Billy Boiler","Woolshed Dance","Fuel Light","Paddock Basher","Dirt Track Dan","Esky Lid","Thongs On","Choko Vine","Galah Session","Back Paddock","Silo Art","Muddy Gumboot","Rusty Gate","Mallee Bull","Shearer's Shout","Wheelie Bin","Long Weekend","Fence Post","Gum Nut","Tractor Pull","Hay Shed","Flannel Shirt","Country Pub","Cockatoo Gate","Sheep Station","Red Gum","Drover's Dog","Bull Bar","Sunday Roast"];
+const HN_DRIVERS=["K. Pizzuto","L. Justice","G. Rennie","J. McCarthy","C. Alford","T. Moran","D. Morris","B. White","H. Parish","E. Lepper","K. Beale","A. Ashwood","R. Duncan","N. Jack"];
+const HN_TRAINERS=["E. Stewart","A. Tritton","D. Aiken","K. Gath","B. Cole","G. Bull","T. French","M. Purdon","J. Payne","S. Lang"];
+const HN_TRACKS=["Dusty Flat Paceway","Goat Creek Trots","Wattle Gully Harness","Bullock Bend Paceway","Mount Misery Trots"];
+// [name, distance, mobile start, trotters]
+const HN_RACES=[["Maiden Mobile Pace",1609,1,0],["Servo Pie Pace",1720,1,0],["Bush Telegraph Trot",2150,1,1],["Tin Shed Handicap",2240,0,0],["Ute Muster Pace",1780,1,0],["Road Train Pace",2190,1,0],["Shearers' Standing Start",2650,0,0],["The Golden Sulky",2575,1,0]];
+const HN_NAN=["Drawn to sit on the leader's back. Can't lose from there.","Nan likes a pacer that can fire off the gate.","Two-time winner on this track. Nan never bets against the track.","Drawn wide, but the mobile won't trouble this one.","Nan's mate in the stewards' tower rates the driver.","Trotter that's never galloped. Nan loves a steady trotter."];
+const HN_STYLE={front:"Leads",mid:"Sits in the trail",back:"Comes from behind"};
+const isHarness=()=>S&&S.mode==="harness";
+const hnTrack=r=>r<=5?"Good":r<=7?"Slow":"Heavy";
+function makePacer(name){
+  const q=clamp(.5+gauss()*.24,.05,.97),sta=rand(.1,1);
+  const form=Array.from({length:5},()=>{if(RNG()<.06)return "x";const v=Math.round(1+(1-q)*7+gauss()*2);return v>=10?"0":String(clamp(v,1,9))}).join("");
+  const runs=[...form].map(p=>({t:pick(HN_TRACKS),d:pick([1609,1720,1780,2150,2190,2240,2575,2650]),r:irand(3,6),p,n:irand(7,12)}));
+  const sex=pick(["Gelding","Gelding","Mare","Horse"]);
+  return {name,q,sta,style:pick(["front","mid","mid","back"]),wet:rand(0,1),cons:rand(.1,1),form,runs,jock:pick(HN_DRIVERS),trainer:pick(HN_TRAINERS),coat:irand(0,COATS.length-1),sex,age:irand(3,9)};
+}
+function newHarnessMeeting(){
+  S.pool=shuffle(HN_NAMES).map(makePacer);
+  S.track=pick(HN_TRACKS);S.weather=irand(3,6);
+  S.idx=0;S.startBank=S.bank;S.ledger=[];
+  buildHarnessRace();
+}
+function buildHarnessRace(){
+  if(S.rh)return buildRealHarness();
+  const [title,dist,mobile,trot]=HN_RACES[S.idx];
+  const last=S.lastNames||[];
+  const pool=S.pool.filter(h=>!last.includes(h.name));
+  const n=S.idx===7?10:irand(7,10);
+  const chosen=S.idx===7?pool.slice().sort((a,b)=>b.q-a.q).slice(0,n):shuffle(pool).slice(0,n);
+  const rating=clamp(S.weather+irand(-1,1),3,8);
+  const lanes=shuffle([...Array(n).keys()].map(i=>i+1));
+  // mobile: eight across the front, the rest in the second row; standing: everyone on the line
+  const field=shuffle(chosen).map((h,i)=>{const l=lanes[i],front=!mobile||l<=8;return {...h,no:i+1,barrier:l,row:front?"front":"second",bar:front?l:l-8,weight:56,silk:{c:SILKS[i%SILKS.length][0],a:SILKS[i%SILKS.length][1],p:strHash(h.name)%6},trot:!!trot}});
+  const race={title,dist,rating,trackLabel:hnTrack(rating),field,placeN:n>=8?3:2,no:S.idx+1,harness:true,mobile:!!mobile,trot:!!trot};
+  priceRace(race);
+  const nanPick=field.slice().sort((a,b)=>b.q+gauss()*.25-a.q)[0];
+  race.tip={name:nanPick.name,no:nanPick.no,why:pick(HN_NAN)};
+  S.race=race;S.bets=[];S.sel=[];S.phase="bet";S.result=null;
+  save();
+}
+const rowTag=h=>h.row==="second"?`Sr${h.bar}`:`Fr${h.bar}`;
+// Moving between sections keeps each one's progress, as with the dogs.
+function leaveHarness(){if(!S||S.mode!=="harness")return;const c=S.career,k={...S};delete k.career;c.harnessSaved=k;S=c}
+function enterHarness(){
+  abortRace();
+  if(S.mode==="daily")leaveDaily();
+  else if(S.mode==="real"){const c=S.career,k={...S};delete k.career;c.realSaved=k;S=c}
+  leaveDogs();
+  const career=S,hs=career.harnessSaved;career.harnessSaved=null;
+  if(hs&&hs.race){S={...hs,career};if(S.phase==="race")S.phase="bet";save()}
+  else{S={bank:1000,meeting:1,best:1000,bigCollect:0,loans:0,type:"win",sel:[],bets:[],phase:"bet",ledger:[],tier:0,mode:"harness",career};newHarnessMeeting()}
+  R=null;renderAll();loadHarnessMeets();say(`Harness at <b>${S.track}</b>. Betting open on the <b>${S.race.title}</b>.`);
+}
+
+/* real harness meetings (FormFav fields, simulated races) */
+const HN_URL=DG_URL+"?code=harness";
+let HNM=null,hnBusy="",hnFailed=false;const HNC={};
+function loadHarnessMeets(force){
+  if((HNM&&!force)||hnBusy==="list")return;hnBusy="list";
+  fetch(`${HN_URL}&list=1`).then(r=>r.json()).then(j=>{HNM=j.days?j:null;hnFailed=!j.days}).catch(()=>{hnFailed=true})
+    .finally(()=>{hnBusy="";if(S)renderNav()});
+}
+const hnToday=()=>HNM&&HNM.days&&HNM.days.find(d=>d.date===HNM.today)?HNM.days.find(d=>d.date===HNM.today).meetings:[];
+// front row by barrier, then the second row
+function hnLineup(card){
+  const run=card.runners.filter(u=>!u.scr&&u.barrier);
+  const fr=run.filter(u=>u.row!=="second").sort((a,b)=>a.barrier-b.barrier),sr=run.filter(u=>u.row==="second").sort((a,b)=>a.barrier-b.barrier);
+  return [...fr,...sr];
+}
+function hnChances(rs){
+  const sm=(x,pr,k)=>x&&x.s?(x.w+(x[2]||0)*.5+pr*k)/(x.s+k):pr;
+  const POS={1:1,2:.7,3:.5,4:.36,5:.27,6:.2,7:.15,8:.12,9:.1,0:.08};
+  const sc=rs.map(u=>{
+    const o=u.st&&u.st.overall,s=o?o.s:0,win=((o?o.w:0)+.8)/(s+6),plc=((o?o.w+(o[2]||0)+(o[3]||0):0)+2.2)/(s+6);
+    const f=[...String(u.form||"")].reverse().slice(0,5),wt=[1,.8,.65,.5,.4];let a=0,b=0;
+    f.forEach((c,i)=>{a+=wt[i]*(POS[c]??.1);b+=wt[i]});const rec=b?a/b:.3;
+    const td=sm(u.st&&(u.st.td||u.st.dist||u.st.track),.25,3);
+    const v=.3*win/.13+.2*plc/.37+.32*rec/.4+.18*td/.25;
+    // the draw matters most at the trots: inside the front row is gold, the second row is a battle
+    const bias=u.row==="second"?Math.max(.62,.9-.06*(u.barrier-1)):Math.max(.7,1.16-.055*(u.barrier-1));
+    return Math.pow(Math.max(.05,v),2.2)*bias;
+  });
+  let sum=sc.reduce((x,y)=>x+y,0),p=sc.map(x=>Math.max(.012,x/sum));sum=p.reduce((x,y)=>x+y,0);return p.map(x=>x/sum);
+}
+function buildRealHarness(){
+  const card=S.rh.cards[S.idx],rs=hnLineup(card),p=hnChances(rs),mobile=!/\bss\b|stand/i.test(card.name||""),trot=/trot/i.test(card.name||"");
+  const field=rs.map((u,i)=>({name:u.name,no:u.no,barrier:i+1,row:u.row==="second"?"second":"front",bar:u.barrier,q:.5,sta:.8,style:"mid",wet:.5,cons:.6,form:u.form||"",runs:[],hn:u,
+    jock:u.driver||"Driver TBC",trainer:u.trainer||"",sex:u.sex||"",age:u.age,coat:strHash(u.name)%COATS.length,weight:56,win:ladder(1/(p[i]*1.14)),silk:{c:SILKS[i%SILKS.length][0],a:SILKS[i%SILKS.length][1],p:strHash(u.name)%6},trot}));
+  const rating=/slow|heavy/i.test(card.cond||"")?7:4;
+  const race={title:card.name||`Race ${card.race}`,realNo:card.race,dist:card.distance||1609,rating,trackLabel:card.cond||"Good",field,placeN:field.length>=8?3:2,no:S.idx+1,cls:card.cls,harness:true,realHarness:true,mobile,trot,jump:card.jump};
+  if(field.length>=2)calibrate(race);
+  const best=field.slice().sort((a,b)=>a.win-b.win)[0];
+  race.tip=best?{name:best.name,no:best.no,why:"Best of the form and the draw. Nan backs the numbers."}:null;
+  S.race=race;S.bets=[];S.sel=[];S.phase="bet";S.result=null;save();
+}
+const hnSlim=c=>({...c,runners:c.runners.map(({sire,dam,...u})=>({...u,last20:String(u.last20||"").slice(-12),blood:sire?`${sire} × ${dam||"?"}`:""}))});
+function setRealHarness(slug,ri){
+  const m=hnToday().find(x=>x.slug===slug);if(!m||hnBusy)return;
+  const go=cards=>{
+    const ok=cards.filter(c=>hnLineup(c).length>=4);
+    if(!ok.length){say(`No races with a full field at <b>${m.track}</b> right now.`);return}
+    abortRace();refundBets();
+    if(!S.rh){S.gameHn={pool:S.pool,track:S.track,weather:S.weather,idx:S.idx,startBank:S.startBank,ledger:S.ledger,lastNames:S.lastNames,meeting:S.meeting,race:S.race,phase:S.phase==="race"?"bet":S.phase};S.pool=[]}
+    S.rh={date:m.date,slug:m.slug,track:m.track,cards:ok.map(hnSlim)};S.track=m.track;S.startBank=S.bank;S.ledger=[];
+    const want=ri!==undefined?m.races[ri]&&m.races[ri].number:null;
+    let i=want!=null?ok.findIndex(c=>c.race===want):ok.findIndex(c=>!closed(c.jump));
+    S.idx=i>=0?i:0;R=null;buildRealHarness();renderAll();say(`Real harness at <b>${m.track}</b>. Betting open on <b>R${S.race.realNo}</b>.`);
+    document.querySelector(".stage").scrollIntoView({block:"start"});
+  };
+  const key=`${m.date}|${m.slug}`;if(HNC[key])return go(HNC[key]);
+  hnBusy=slug;renderNav();say(`Loading the <b>${m.track}</b> form...`);
+  fetch(`${HN_URL}&date=${m.date}&venue=${encodeURIComponent(m.slug)}`).then(r=>r.json()).then(j=>{
+    if(!j.races){say(escH(j.error||"That meeting couldn't load. Try again soon."));return}
+    HNC[key]=j.races;go(j.races)}).catch(()=>say("That meeting couldn't load. Try again soon.")).finally(()=>{hnBusy="";renderNav()});
+}
+function setHarnessRace(ri){if(!S.rh||ri===S.idx&&S.phase==="bet")return;abortRace();refundBets();S.idx=ri;R=null;buildRealHarness();renderAll();say(`Betting open on <b>${S.track} R${S.race.realNo}</b>.`)}
+function backToGameHarness(){
+  abortRace();refundBets();const g0=S.gameHn;S.rh=null;S.gameHn=null;
+  if(g0&&g0.race){Object.assign(S,g0);S.bets=[];S.sel=[];S.result=null;if(S.phase==="end"){S.meeting++;S.lastNames=[];newHarnessMeeting()}}
+  else{S.meeting=(S.meeting||0)+1;newHarnessMeeting()}
+  R=null;save();renderAll();say(`Back to the game harness at <b>${S.track}</b>.`);
+}
+function harnessNavHtml(){
+  if(!isHarness())return "";
+  if(!HNM&&!hnFailed&&!hnBusy)setTimeout(loadHarnessMeets,0);
+  const ms=hnToday(),cur=S.rh?S.rh.slug:"";
+  const btn=ms.map(m=>`<button data-hnm="${m.slug}" aria-pressed="${cur===m.slug&&!bookOpen&&!resOpen}" ${hnBusy===m.slug?"disabled":""}>${escH(m.track)}${hnBusy===m.slug?"…":""}</button>`).join("");
+  const sel=S.rh?`<label class="pick"><span>Races</span><select id="hnsel">${S.rh.cards.map((c,i)=>`<option value="${i}" ${i===S.idx?"selected":""}>R${c.race} ${timeOf(c.jump)} ${escH(c.name||"")} ${c.distance?c.distance+"m":""}${closed(c.jump)?" (jumped)":""}</option>`).join("")}</select></label>`:"";
+  return `<div class="meets"><span>Real harness today</span><button data-hngame="1" aria-pressed="${!S.rh&&!bookOpen&&!resOpen}">Game meeting</button>${btn||`<span>${hnFailed?"Real harness meetings only load on the public game site":hnBusy==="list"?"Loading…":"No meetings loaded"}</span>`}</div>${sel}`;
+}
+function hnHtml(h){
+  const u=h.hn,r=(l,x)=>`<tr><td>${l}</td><td>${x&&x.s?`${x.s}: ${x.w}-${x[2]}-${x[3]}`:"–"}</td></tr>`,st=u.st||{},prize=Number(String(u.prize||"").replace(/[^0-9.]/g,""));
+  return `<div class="ff"><div class="ff-id">${[u.age?u.age+"yo":"",escH(u.sex),escH(u.blood),prize>0?`${money(Math.round(prize))} prizemoney`:""].filter(Boolean).join(" · ")}</div>
+    ${u.last20?`<div class="ff-l20"><span>Last ${u.last20.length} starts</span><b>${escH(u.last20)}</b></div>`:""}
+    <table class="ff-t"><tbody>${r("Career",st.overall)}${r("This track",st.track)}${r("This distance",st.dist)}${r("Track & distance",st.td)}${r("First up",st.up1)}${r("Second up",st.up2)}</tbody></table>
+    <div class="ff-src">Starts: wins-seconds-thirds. Form guide by FormFav. Odds are game estimates from form and the draw.</div></div>`;
+}
+
+/* sulky, driver and horse: the gallops horse without a rider, pacing (or trotting), with a sulky behind */
+function buildHarnessSheet(h,idx){
+  const hs=buildSheet(h,idx,{noRider:true,gait:h.trot?"trot":"pace"});
+  const sheet=document.createElement("canvas");sheet.width=FW*(FR+1);sheet.height=FH;
+  const out=sheet.getContext("2d"),U=K*SS,s=.74,[silk,alt]=h.silk?[h.silk.c,h.silk.a]:SILKS[idx%SILKS.length];
+  const ox=47-46*s,oy=40-38.5*s;
+  for(let f=0;f<=FR;f++){
+    const c=out;c.save();c.translate(f*FW,0);c.beginPath();c.rect(0,0,FW,FH);c.clip();
+    const stand=f===STAND,ph=stand?0:f/FR*6.2832,bob=stand?0:Math.sin(ph*2)*.35;
+    const P=a=>a.map(([x,y])=>[x*U,y*U]);
+    const wheel=(cx,cy,r,col)=>{c.strokeStyle=col;c.lineWidth=1.3*SS;c.beginPath();c.arc(cx*U,cy*U,r*U,0,7);c.stroke();
+      for(let i=0;i<6;i++){const a=(stand?0:-f/FR*6.2832)+i*Math.PI/3;c.beginPath();c.moveTo(cx*U,cy*U);c.lineTo((cx+Math.cos(a)*r)*U,(cy+Math.sin(a)*r)*U);c.stroke()}
+      c.fillStyle=col;c.beginPath();c.arc(cx*U,cy*U,.7*U,0,7);c.fill()};
+    // far wheel, then the horse, then shafts, near wheel, seat and driver
+    wheel(9.6,31.4,5.2,"#4a4740");
+    c.drawImage(hs,f*FW,0,FW,FH,ox*U,oy*U,FW*s,FH*s);
+    const hip=[ox+11*s,oy+(16+2)*s+bob],sh=[ox+31*s,oy+(18+2)*s+bob];
+    line(c,8*U,(23.6+bob)*U,sh[0]*U,sh[1]*U,1.6*SS,"#2b2b2f");
+    line(c,8*U,(25+bob)*U,9.6*U,31.4*U,1.4*SS,"#2b2b2f");
+    wheel(9.6,31.4,5.2,"#1f1f23");
+    polyFill(c,P([[3.6,23+bob],[11,23+bob],[11,24.4+bob],[3.6,24.4+bob]]),"#2b2b2f");
+    // driver: seated, legs out along the shafts, leaning back, reins to the bit
+    line(c,7.6*U,(21.6+bob)*U,15.6*U,(22.4+bob)*U,3.2*SS,"#f2efe3");
+    c.fillStyle="#16100c";c.fillRect(15*U,(21.2+bob)*U,1.8*U,1.8*U);
+    polyFill(c,P([[4.6,22.6+bob],[9,22.6+bob],[8.4,14.6+bob],[4.2,15.4+bob]]),silk);
+    polyFill(c,P([[5.2,18+bob],[8.8,17.6+bob],[8.7,19+bob],[5.3,19.4+bob]]),alt,true);
+    const hand=[12.4,18.4+bob+(stand?0:Math.sin(ph)*.3)];
+    line(c,7.6*U,(16+bob)*U,hand[0]*U,hand[1]*U,2.4*SS,silk);
+    c.fillStyle="#e9e3d4";c.fillRect(hand[0]*U-2,hand[1]*U-2,5,4);
+    line(c,hand[0]*U,hand[1]*U,(ox+42.6*s)*U,(oy+11.6*s+bob)*U,.8*SS,"#3a2a1c");
+    polyFill(c,P([[5,11+bob],[8.8,10.6+bob],[9.4,13.6+bob],[5,14.2+bob]]),"#e6b48e");
+    polyFill(c,P([[4.4,9.4+bob],[6.6,8+bob],[9.2,8.6+bob],[9.8,11.6+bob],[4.4,12+bob]]),alt);
+    c.fillStyle="#1b1b22";c.fillRect(7.6*U,11.6*U+bob*U,2*U,.9*U);
+    c.restore();
+  }
+  return sheet;
+}
+// the mobile barrier: a starting car with wings across the field, which folds and speeds off at the start
+function drawMobileCar(camX,now){
+  if(!R)return;
+  const n=S.race.field.length,top=laneY(0),bot=laneY(n-1),since=R.jumpAt?(now-R.jumpAt)/1000:0;
+  if(since>4)return;
+  const x=-camX+6+since*since*160,fold=clamp(since/.7,0,1);
+  if(x>VW+80)return;
+  const carY=(top+bot)/2-30; // in the middle of the track, just ahead of its wings
+  // wings
+  if(fold<1){g.globalAlpha=1-fold;g.fillStyle="#f4f1e6";const wb=top-36,wt=bot+4-(bot-top)*fold;
+    g.fillRect(x,wb,3,wt-wb);for(let y=wb+8;y<wt;y+=14){g.fillRect(x,y,10,2)}g.fillStyle="#c8321f";g.fillRect(x+3,wb,2,wt-wb);g.globalAlpha=1}
+  // car body
+  const cx=x+8;g.fillStyle="rgba(10,30,15,.3)";g.beginPath();g.ellipse(cx+24,carY+23,26,3,0,0,7);g.fill();
+  g.fillStyle="#f4f1e6";g.fillRect(cx,carY+6,48,13);g.fillRect(cx+12,carY-1,26,9);
+  g.fillStyle="#2a62c9";g.fillRect(cx,carY+12,48,3);
+  g.fillStyle="#9fd2e8";g.fillRect(cx+14,carY+1,10,5);g.fillRect(cx+26,carY+1,10,5);
+  g.fillStyle="#17120c";g.beginPath();g.arc(cx+11,carY+20,4.5,0,7);g.arc(cx+38,carY+20,4.5,0,7);g.fill();
+  g.fillStyle="#f2c92b";g.fillRect(cx+22,carY-3,6,2);
+}
+
 /* greyhound sprite: same frame size and timing as the horses, so the renderer treats them alike */
 function buildDogSheet(h,idx){
   const sheet=document.createElement("canvas");sheet.width=FW*(FR+1);sheet.height=FH;
@@ -814,7 +1017,7 @@ const reduced=matchMedia("(prefers-reduced-motion: reduce)").matches;
 let sheets=[],sheetKey="",R=null,particles=[],confetti=[];
 function ensureSheets(){
   const key=S.mode+S.race.field.map(h=>h.name+h.no).join()+S.meeting+S.idx;
-  if(key!==sheetKey){sheetKey=key;sheets=S.race.field.map((h,i)=>S.race.dogs?buildDogSheet(h,i):buildSheet(h,i))}
+  if(key!==sheetKey){sheetKey=key;sheets=S.race.field.map((h,i)=>S.race.dogs?buildDogSheet(h,i):S.race.harness?buildHarnessSheet(h,i):buildSheet(h,i))}
 }
 const laneY=l=>{const n=S.race.dogs?8:S.race.field.length;return 126+l*(88/(n-1))};
 const mix=(a,b,t)=>a.map((v,i)=>Math.round(v+(b[i]-v)*t));
@@ -875,9 +1078,9 @@ function drawScene(camX,now){
     g.fillStyle="#efe4c8";g.fillRect(sx+232,86,6,10)}
   if(tier.theme>=3)for(let i=-3;i<6;i++){const px=sx+i*80;g.fillStyle="#efe4c8";g.fillRect(px,8,1,20);polyFill(g,[[px+1,8],[px+1+11+Math.sin(now/200+i)*2,12],[px+1,16]],["#c8321f","#f2c92b","#2a62c9"][(i+3)%3])}
   if(tier.theme>=3)for(let i=-6;i<3;i++){const px=sx-300-i*60;g.fillStyle="#f6f2e8";polyFill(g,[[px,84],[px+24,70],[px+48,84]],"#f6f2e8");g.fillStyle="#d8342a";g.fillRect(px,84,48,8)}
-  if(S.race.dogs){
-    // greyhound track: raked loam, with grass inside the near rail
-    const wet=clamp((S.race.rating-4)/4,0,1),sa=mix([206,166,108],[150,112,72],wet),sb=mix([184,140,88],[128,94,60],wet);
+  if(S.race.dogs||S.race.harness){
+    // greyhound track: raked loam (harness: red clay), with grass inside the near rail
+    const wet=clamp((S.race.rating-4)/4,0,1),hc=S.race.harness,sa=mix(hc?[186,112,76]:[206,166,108],hc?[132,80,56]:[150,112,72],wet),sb=mix(hc?[164,96,66]:[184,140,88],hc?[112,68,48]:[128,94,60],wet);
     const tg=g.createLinearGradient(0,96,0,236);tg.addColorStop(0,css(mix(sb,[90,70,50],.3)));tg.addColorStop(1,css(sa));g.fillStyle=tg;g.fillRect(0,96,VW,140);
     g.fillStyle=css(mix(sb,[120,90,60],.4));for(let y=104;y<218;y+=6)g.fillRect(0,y,VW,1);
     g.fillStyle=css(mix(sa,[250,220,170],.35));for(let i=0;i<80;i++){const px=((i*71.3+hash(i)*300-camX)%VW+VW)%VW,py=104+hash(i*3)*112;g.fillRect(px,py,2,1)}
@@ -975,10 +1178,10 @@ function drawHorses(camX,pos,now){
   for(const k of idx){
     const h=f[k],y=laneY(h.barrier-1),run=pos&&R&&!R.preUntil&&pos[k]>.3,moving=run&&R.running&&!R.photoOn;
     const x=(pos?pos[k]:0)*PX-camX-LW+2;
-    const ff=run&&(R.running||R.photoOn)?(R.photoOn?3:(Math.floor(now/(S.race.dogs?DOG_GAIT_MS:GAIT_MS))+k*3)%FR):STAND;
+    const roll=S.race.harness&&S.race.mobile&&R&&R.preUntil&&pos;const ff=roll?(Math.floor(now/GAIT_MS)+k*3)%FR:run&&(R.running||R.photoOn)?(R.photoOn?3:(Math.floor(now/(S.race.dogs?DOG_GAIT_MS:GAIT_MS))+k*3)%FR):STAND;
     const sw=moving&&!S.race.dogs?Math.sin(now/260+k):0;
     if(x>-LW-10&&x<VW+4){
-      g.fillStyle="rgba(10,30,15,.3)";g.beginPath();if(S.race.dogs)g.ellipse(x+LW*.52,y+sw*.5,LW*.3,2.4,0,0,7);else g.ellipse(x+LW/2,y+sw*.5,LW/2-6,3,0,0,7);g.fill();
+      g.fillStyle="rgba(10,30,15,.3)";g.beginPath();if(S.race.dogs)g.ellipse(x+LW*.52,y+sw*.5,LW*.3,2.4,0,0,7);else if(S.race.harness)g.ellipse(x+LW*.55,y+sw*.5,LW*.42,3,0,0,7);else g.ellipse(x+LW/2,y+sw*.5,LW/2-6,3,0,0,7);g.fill();
       g.drawImage(sheets[k],ff*FW,0,FW,FH,x,y-LH+3+sw,LW,LH);
       if(moving&&!reduced&&Math.random()<.65)particles.push({x:x+camX+8+Math.random()*10,y:y,vx:-Math.random()*1.3-.3,vy:-Math.random()*.7-.1,life:10+Math.random()*14,s:1+Math.floor(Math.random()*3)});
     }
@@ -1087,7 +1290,7 @@ function frame(now){
   if(R){
     if(R.photoOn){if(now>R.photoUntil){R.photoOn=false;cv.style.filter="";$("photo").style.display="none";R.last=now;fireWinnerCall()}}
     else if(R.preUntil){
-      if(now>=R.preUntil){R.preUntil=0;R.jumpAt=now;R.last=now;tone(1250,.6,0,"square",.07);say(S.race.dogs?`The lids are up in the <b>${S.race.title}</b>!`:`And they're away in the <b>${S.race.title}</b>!`)}
+      if(now>=R.preUntil){R.preUntil=0;R.jumpAt=now;R.last=now;tone(1250,.6,0,"square",.07);say(S.race.dogs?`The lids are up in the <b>${S.race.title}</b>!`:S.race.harness?(S.race.mobile?`The mobile pulls away and they're racing in the <b>${S.race.title}</b>!`:`They're away from the stand in the <b>${S.race.title}</b>!`):`And they're away in the <b>${S.race.title}</b>!`)}
     }else if(R.running){const dt=Math.min(.1,(now-R.last)/1000);R.last=now;R.t+=dt*R.rate;tick(now)}
     pos=horsePositions(R.t);
     if(R.running&&R.t>=R.sim.dt*(R.sim.trace.length-2)){R.running=false;if(R.replay){R.replay=false;R.circleAt=now+700}}
@@ -1109,7 +1312,7 @@ function frame(now){
   let camX=cam-OS;
   if(R&&R.photoOn)camX=S.race.dist*PX-240-OS;
   const VPX=W*RES,HPX=H*RES,OSP=OS*RES;
-  const showGates=!pos||R.t<8;
+  const showGates=(!pos||R.t<8)&&!S.race.harness;
   out.setTransform(RES,0,0,RES,0,0);
   if(aerial){drawAerial(pos,now);}
   else{
@@ -1118,6 +1321,8 @@ function frame(now){
     if(S.race.dogs)drawLure(camX,pos,now);
     drawHorses(camX,pos,now);
     if(showGates)drawDoors(camX,doors);
+    if(S.race.harness&&S.race.mobile)drawMobileCar(camX,now);
+    else if(S.race.harness&&(!pos||R.t<6)){g.fillStyle="#f4f1e6";g.fillRect(-camX+4,laneY(0)-34,2,laneY(S.race.field.length-1)-laneY(0)+38)}
     drawParticles(camX);
     out.setTransform(1,0,0,1,0,0);
     if(R&&R.photoOn){
@@ -1265,9 +1470,9 @@ function renderPicker(){
 function refundBets(){if(S.phase==="bet"||S.phase==="race")for(const b of S.bets)S.bank=Math.round((S.bank+b.stake)*100)/100;S.bets=[]}
 function abortRace(){if(S.phase==="race"){refundBets();S.phase="bet"}R=null;stopCrowd();particles=[];cv.style.filter="";$("photo").style.display="none";$("hud").style.display="none";picker=null}
 function leaveDaily(){const c=S.career;c.dailyDone=c.dailyDone||{};c.dailyDone[S.day]=S.bank;S=c}
-function goCareer(){abortRace();leaveDogs();if(S.mode==="daily")leaveDaily();else if(S.mode==="real"){const c=S.career;const keep={...S};delete keep.career;c.realSaved=keep;S=c}save();renderAll();say(`Back at <b>${S.track}</b>.`)}
+function goCareer(){abortRace();leaveDogs();leaveHarness();if(S.mode==="daily")leaveDaily();else if(S.mode==="real"){const c=S.career;const keep={...S};delete keep.career;c.realSaved=keep;S=c}save();renderAll();say(`Back at <b>${S.track}</b>.`)}
 function enterReal(i){
-  abortRace();leaveDogs();if(S.mode==="daily")leaveDaily();
+  abortRace();leaveDogs();leaveHarness();if(S.mode==="daily")leaveDaily();
   const career=S,rs=career.realSaved;career.realSaved=null;
   S=rs?{...rs,career,realList:MEETS}:{bank:1000,meeting:1,best:1000,bigCollect:0,loans:0,type:"win",sel:[],bets:[],phase:"bet",ledger:[],tier:0,mode:"real",realList:MEETS,pool:[],startBank:1000,career};
   S.phase="bet";goMeeting(i);
@@ -1319,7 +1524,7 @@ function setReal(mi,ri){
   if(S.mode==="real"&&S.real&&MEETS[mi]&&S.real.key===MEETS[mi].key&&S.idx===ri){bookOpen=false;resOpen=false;renderAll();return}
   abortRace();bookOpen=false;
   if(S.mode==="daily")leaveDaily();
-  leaveDogs();
+  leaveDogs();leaveHarness();
   if(S.mode!=="real"){
     const career=S,rs=career.realSaved;career.realSaved=null;
     S=rs?{...rs,career}:{bank:1000,meeting:1,best:1000,bigCollect:0,loans:0,type:"win",sel:[],bets:[],phase:"bet",ledger:[],tier:0,mode:"real",pool:[],startBank:1000,career};
@@ -1333,14 +1538,16 @@ let NTG=[];
 function schedule(){
   const out=[];
   MEETS.forEach((m,mi)=>{if(m.date!==REAL_TODAY)return;m.races.forEach((r,ri)=>{const t=Date.parse(r.jump);if(Number.isFinite(t))out.push({t,code:"H",venue:m.venue,no:r.number,mi,ri,key:`H|${m.key}|${r.number}`})})});
+  hnToday().forEach(m=>m.races.forEach((r,ri)=>{const t=Date.parse(r.jump);if(Number.isFinite(t))out.push({t,code:"N",venue:m.track,no:r.number,slug:m.slug,ri,key:`N|${m.slug}|${r.number}`})}));
   dgToday().forEach(m=>m.races.forEach((r,ri)=>{const t=Date.parse(r.jump);if(Number.isFinite(t))out.push({t,code:"D",venue:m.track,no:r.number,slug:m.slug,ri,key:`D|${m.slug}|${r.number}`})}));
   return out.sort((a,b)=>a.t-b.t||a.venue.localeCompare(b.venue));
 }
 const upcoming=()=>{const now=Date.now();return schedule().filter(x=>x.t>now-60e3)};
-const curSched=()=>S.mode==="real"&&S.real&&S.real.races[S.idx]?`H|${S.real.key}|${S.real.races[S.idx].number}`:isDogs()&&S.rd&&S.race?`D|${S.rd.slug}|${S.race.realNo}`:null;
+const curSched=()=>S.mode==="real"&&S.real&&S.real.races[S.idx]?`H|${S.real.key}|${S.real.races[S.idx].number}`:isDogs()&&S.rd&&S.race?`D|${S.rd.slug}|${S.race.realNo}`:isHarness()&&S.rh&&S.race?`N|${S.rh.slug}|${S.race.realNo}`:null;
 function goSched(x){
   if(!x)return;resOpen=false;bookOpen=false;
   if(x.code==="H")return setReal(x.mi,x.ri);
+  if(x.code==="N"){if(!isHarness())enterHarness();if(S.rh&&S.rh.slug===x.slug){const i=S.rh.cards.findIndex(c=>c.race===x.no);if(i>=0)return setHarnessRace(i)}return setRealHarness(x.slug,x.ri)}
   if(!isDogs())enterDogs();
   if(S.rd&&S.rd.slug===x.slug){const i=S.rd.cards.findIndex(c=>c.race===x.no);if(i>=0)return setDogRace(i)}
   setRealDog(x.slug,x.ri);
@@ -1353,7 +1560,7 @@ function goNextScheduled(){
 function ntgHtml(){
   NTG=upcoming().slice(0,40);if(!NTG.length)return "";
   const cur=curSched();
-  return `<div class="meets nextgo"><span>Next to go</span><button data-ntg="next">Next race &#9656;</button><select id="ntgsel" aria-label="Today's races in start order">${NTG.some(x=>x.key===cur)?"":'<option value="" selected>All of today\'s races, in order</option>'}${NTG.map((x,i)=>`<option value="${i}" ${x.key===cur?"selected":""}>${timeOf(new Date(x.t).toISOString())} · ${escH(x.venue)} R${x.no} · ${x.code==="H"?"Horses":"Dogs"}${x.t<=Date.now()?" (jumped)":""}</option>`).join("")}</select></div>`;
+  return `<div class="meets nextgo"><span>Next to go</span><button data-ntg="next">Next race &#9656;</button><select id="ntgsel" aria-label="Today's races in start order">${NTG.some(x=>x.key===cur)?"":'<option value="" selected>All of today\'s races, in order</option>'}${NTG.map((x,i)=>`<option value="${i}" ${x.key===cur?"selected":""}>${timeOf(new Date(x.t).toISOString())} · ${escH(x.venue)} R${x.no} · ${x.code==="H"?"Horses":x.code==="N"?"Harness":"Dogs"}${x.t<=Date.now()?" (jumped)":""}</option>`).join("")}</select></div>`;
 }
 function enterHorses(){
   if(!MEETS.length){loadMeets();say(meetsFailed?"Real horse meetings couldn't load. Try again soon.":"Loading today's horse meetings...");return}
@@ -1369,10 +1576,10 @@ function renderNav(){
   let groups="",cur=S.mode==="real"?`${S.realIdx},${S.idx}`:"";
   MEETS.forEach((m,mi)=>{groups+=`<optgroup label="${dayName(m.date)} · ${m.venue}">`+m.races.map((r,ri)=>{const k=raceKey(m,r.number),done=RS[k]&&RS[k].done;return `<option value="${mi},${ri}" ${cur===mi+","+ri?"selected":""}>R${r.number} ${timeOf(r.jump)} ${r.name}${r.feature?" ★":""}${done?" (result in)":closed(r.jump)?" (closed)":""}</option>`}).join("")+`</optgroup>`});
   const pend=pendingCount();
-  $("nav").innerHTML=`<div><button data-nav="career" aria-pressed="${S.mode==="career"&&!bookOpen&&!resOpen}">Career</button><button data-nav="daily" aria-pressed="${S.mode==="daily"&&!bookOpen&&!resOpen}" ${S.mode!=="daily"&&dd!==undefined?"disabled":""}>${dd!==undefined&&S.mode!=="daily"?"Daily "+money(dd):"Daily"}</button><button data-nav="horses" aria-pressed="${S.mode==="real"&&!bookOpen&&!resOpen}">Horses</button><button data-nav="dogs" aria-pressed="${S.mode==="dogs"&&!bookOpen&&!resOpen}">Dogs</button><button data-nav="results" aria-pressed="${resOpen}">Results</button><button data-nav="book" aria-pressed="${bookOpen}">My Book${pend?` (${pend})`:""}</button>${S.mode!=="daily"?'<button class="alt" data-nav="restart">Restart meet</button>':""}</div>
-  ${ntgHtml()}${dogNavHtml()}${S.mode!=="real"?"":[...new Set(MEETS.map(m=>m.date))].map(d=>`<div class="meets"><span>${d===REAL_TODAY?"Today":"Tomorrow"===dayRel(d)?"Tomorrow":dayName(d)}</span>${MEETS.map((m,mi)=>m.date!==d?"":`<button data-meet="${mi}" aria-pressed="${S.mode==="real"&&mi===S.realIdx&&!bookOpen&&!resOpen}">${m.venue}</button>`).join("")}</div>`).join("")+`<label class="pick"><span>All races</span><select id="racesel" ${MEETS.length?"":"disabled"}>${cur?"":`<option value="" selected>${MEETS.length?"Pick a race":meetsFailed?"Real races only load on the public game site":"Loading races"}</option>`}${groups}</select></label>`}`;
+  $("nav").innerHTML=`<div><button data-nav="career" aria-pressed="${S.mode==="career"&&!bookOpen&&!resOpen}">Career</button><button data-nav="daily" aria-pressed="${S.mode==="daily"&&!bookOpen&&!resOpen}" ${S.mode!=="daily"&&dd!==undefined?"disabled":""}>${dd!==undefined&&S.mode!=="daily"?"Daily "+money(dd):"Daily"}</button><button data-nav="horses" aria-pressed="${S.mode==="real"&&!bookOpen&&!resOpen}">Horses</button><button data-nav="dogs" aria-pressed="${S.mode==="dogs"&&!bookOpen&&!resOpen}">Dogs</button><button data-nav="harness" aria-pressed="${S.mode==="harness"&&!bookOpen&&!resOpen}">Harness</button><button data-nav="results" aria-pressed="${resOpen}">Results</button><button data-nav="book" aria-pressed="${bookOpen}">My Book${pend?` (${pend})`:""}</button>${S.mode!=="daily"?'<button class="alt" data-nav="restart">Restart meet</button>':""}</div>
+  ${ntgHtml()}${dogNavHtml()}${harnessNavHtml()}${S.mode!=="real"?"":[...new Set(MEETS.map(m=>m.date))].map(d=>`<div class="meets"><span>${d===REAL_TODAY?"Today":"Tomorrow"===dayRel(d)?"Tomorrow":dayName(d)}</span>${MEETS.map((m,mi)=>m.date!==d?"":`<button data-meet="${mi}" aria-pressed="${S.mode==="real"&&mi===S.realIdx&&!bookOpen&&!resOpen}">${m.venue}</button>`).join("")}</div>`).join("")+`<label class="pick"><span>All races</span><select id="racesel" ${MEETS.length?"":"disabled"}>${cur?"":`<option value="" selected>${MEETS.length?"Pick a race":meetsFailed?"Real races only load on the public game site":"Loading races"}</option>`}${groups}</select></label>`}`;
 }
-$("nav").addEventListener("change",e=>{if(e.target.id==="ntgsel"){if(e.target.value==="")return;audio();return goSched(NTG[+e.target.value])}if(e.target.id==="dgsel"){resOpen=false;bookOpen=false;audio();return setDogRace(+e.target.value)}if(e.target.id!=="racesel"||!e.target.value)return;resOpen=false;const [m,r]=e.target.value.split(",").map(Number);audio();setReal(m,r)});
+$("nav").addEventListener("change",e=>{if(e.target.id==="hnsel"){resOpen=false;bookOpen=false;audio();return setHarnessRace(+e.target.value)}if(e.target.id==="ntgsel"){if(e.target.value==="")return;audio();return goSched(NTG[+e.target.value])}if(e.target.id==="dgsel"){resOpen=false;bookOpen=false;audio();return setDogRace(+e.target.value)}if(e.target.id!=="racesel"||!e.target.value)return;resOpen=false;const [m,r]=e.target.value.split(",").map(Number);audio();setReal(m,r)});
 $("nav").addEventListener("click",e=>{
   const b=e.target.closest("button");if(!b||b.disabled)return;audio();
   if(b.dataset.nav==="results"){if(resOpen){resOpen=false;resSel=null;renderNav();renderCard()}else openResults();return}
@@ -1382,9 +1589,12 @@ $("nav").addEventListener("click",e=>{
     return setReal(mi,open>=0?open:0)}
   if(b.dataset.nav==="career"){bookOpen=false;if(S.mode==="career")return renderAll();return goCareer()}
   if(b.dataset.nav==="book"){bookOpen=!bookOpen;bookMsg="";settleBook();renderNav();renderCard();if(bookOpen)$("card").scrollIntoView({block:"start"});return}
-  if(b.dataset.nav==="daily"){bookOpen=false;if(S.mode==="daily")return renderAll();abortRace();if(S.mode==="real"){const c=S.career;const k={...S};delete k.career;c.realSaved=k;S=c}leaveDogs();return startDaily()}
+  if(b.dataset.nav==="daily"){bookOpen=false;if(S.mode==="daily")return renderAll();abortRace();if(S.mode==="real"){const c=S.career;const k={...S};delete k.career;c.realSaved=k;S=c}leaveDogs();leaveHarness();return startDaily()}
   if(b.dataset.nav==="horses"){bookOpen=false;if(S.mode==="real")return renderAll();return enterHorses()}
   if(b.dataset.nav==="dogs"){bookOpen=false;if(S.mode==="dogs")return renderAll();return enterDogs()}
+  if(b.dataset.nav==="harness"){bookOpen=false;if(S.mode==="harness")return renderAll();return enterHarness()}
+  if(b.dataset.hnm!==undefined){bookOpen=false;if(S.rh&&S.rh.slug===b.dataset.hnm)return renderAll();return setRealHarness(b.dataset.hnm)}
+  if(b.dataset.hngame!==undefined){bookOpen=false;if(!S.rh)return renderAll();return backToGameHarness()}
   if(b.dataset.ntg!==undefined){return goNextScheduled()}
   if(b.dataset.dgm!==undefined){bookOpen=false;if(S.rd&&S.rd.slug===b.dataset.dgm)return renderAll();return setRealDog(b.dataset.dgm)}
   if(b.dataset.dgame!==undefined){bookOpen=false;if(!S.rd)return renderAll();return backToGameDogs()}
@@ -1478,10 +1688,10 @@ function buildResult(){
   const race=S.race,sim=R.sim,o=sim.order,w=sim.fin[o[0]],x=S.result;
   const real=S.mode==="real",src=real?S.real.races[S.idx]:null,lenM=race.dogs?1.2:LEN_M; // a greyhound length is about 1.2m
   const runners=o.map((k,i)=>{const h=race.field[k],t=sim.fin[k],c=silkOf(h,k);
-    return {pos:i+1,no:h.no,name:h.name,jock:h.jock,bar:h.realBarrier||h.barrier,wt:race.dogs?(h.kg||null):h.weight,win:h.win,place:h.place,time:Math.round(t*100)/100,
+    return {pos:i+1,no:h.no,name:h.name,jock:h.jock,bar:h.realBarrier||h.barrier,wt:race.dogs?(h.kg||null):race.harness?null:h.weight,win:h.win,place:h.place,time:Math.round(t*100)/100,
       mar:i?(t-sim.fin[o[i-1]])*FIN_V/lenM:0,btn:(t-w)*FIN_V/lenM,silk:[rugCss(h)||c[0],h.silk?inkOn(c[0]):c[1]]}});
   return {id:x.rid,at:new Date().toISOString(),mode:S.mode,
-    meet:race.realDogs?`Real Dogs (simulated) · R${race.realNo}`:race.dogs?`Greyhounds · Meeting ${S.meeting}`:real?"Real Races (simulated)":S.mode==="daily"?"Daily Meeting "+S.day:`${TIERS[S.tier||0].name} · Meeting ${S.meeting}`,
+    meet:race.realHarness?`Real Harness (simulated) · R${race.realNo}`:race.harness?`Harness · Meeting ${S.meeting}`:race.realDogs?`Real Dogs (simulated) · R${race.realNo}`:race.dogs?`Greyhounds · Meeting ${S.meeting}`:real?"Real Races (simulated)":S.mode==="daily"?"Daily Meeting "+S.day:`${TIERS[S.tier||0].name} · Meeting ${S.meeting}`,
     track:S.track,raceNo:race.realNo||race.no,title:race.title,dist:race.dist,cond:race.trackLabel||ratingName(race.rating),
     jump:real&&src?src.jump:null,date:real?S.real.date:null,key:real&&src?raceKey(S.real,src.number):null,placeN:race.placeN,runners,
     div:{quin:x.quin,exacta:x.exacta,tri:x.tri,first4:x.first4||null},staked:x.staked,ret:x.ret};
@@ -1589,12 +1799,12 @@ function startRace(){
   audio();bookOpen=false;resOpen=false;renderNav();
   const sim=S.mode==="daily"?withSeed(S.seed+S.idx*131,()=>simulate(S.race.field,S.race,true)):simulate(S.race.field,S.race,true);
   const fin=sim.order.map(k=>sim.fin[k]);
-  R={preUntil:performance.now()+2300,jumpAt:0,sim,t:0,rate:S.race.dogs?(S.race.dist/16.5)/(12+(S.race.dist-300)*.012):(S.race.dist/17)/(20+(S.race.dist-1000)*.03),running:true,last:performance.now(),called:0,photoDone:false,settled:false,lastHoof:0,evI:0,
+  R={preUntil:performance.now()+2300,jumpAt:0,sim,t:0,rate:S.race.dogs?(S.race.dist/16.5)/(12+(S.race.dist-300)*.012):S.race.harness?(S.race.dist/17)/(28+(S.race.dist-1600)*.014):(S.race.dist/17)/(20+(S.race.dist-1000)*.03),running:true,last:performance.now(),called:0,photoDone:false,settled:false,lastHoof:0,evI:0,
      isPhoto:fin[1]-fin[0]<.11,startPos:null,p70:null,winCalled:false};
   S.phase="race";cam=-340;particles=[];
   renderAll();
   if(S.race.dogs){[[330,.5],[392,.6]].reduce((w,[f,d])=>{tone(f,d,w,"sawtooth",.025);return w+d*.8},0)}else bugle();startCrowd();
-  say(S.race.dogs?`They're in the boxes for the <b>${S.race.title}</b>. Here comes the lure...`:`They're loading for the <b>${S.race.title}</b>...`);
+  say(S.race.dogs?`They're in the boxes for the <b>${S.race.title}</b>. Here comes the lure...`:S.race.harness?(S.race.mobile?`The mobile's moving for the <b>${S.race.title}</b>. They're gathering behind the gate...`:`They're lining up for a standing start in the <b>${S.race.title}</b>...`):`They're loading for the <b>${S.race.title}</b>...`);
   document.querySelector(".stage").scrollIntoView({behavior:reduced?"auto":"smooth",block:"start"});
 }
 function posStr(o,k){const i=o.indexOf(k)+1;return i===1?"in front":i===2?"second":i===3?"third":i+"th"}
@@ -1661,7 +1871,7 @@ function settle(){
   flashBank(res.ret>res.staked?"up":res.staked>0?"down":"");
 }
 function flashBank(c){const b=$("bank");b.className=c;setTimeout(()=>b.className="",1400)}
-const lastIdx=()=>S.mode==="real"?S.real.races.length-1:isDogs()&&S.rd?S.rd.cards.length-1:7;
+const lastIdx=()=>S.mode==="real"?S.real.races.length-1:isDogs()&&S.rd?S.rd.cards.length-1:isHarness()&&S.rh?S.rh.cards.length-1:7;
 function nextRace(){
   R=null;cv.style.filter="";
   if(S.idx>=lastIdx()){
@@ -1690,8 +1900,8 @@ function nextMeeting(){S.meeting++;S.lastNames=[];newMeeting();R=null;renderAll(
 function stake(){return Math.max(0,Math.floor(+$("stake").value||0))}
 function silk(h,k,tag){const a=silkOf(h,k)[0],b=h.silk?inkOn(a):SILKS[k%SILKS.length][1];return `<span class="silk" style="background:${rugCss(h)||a};color:${b}">${h.no}${tag?`<i>${tag}</i>`:""}</span>`}
 function renderHeader(){
-  $("meet").textContent=S.mode==="dogs"?(S.rd?`Real Dogs · ${S.track} · ${dayName(S.rd.date)}`:`Greyhounds · ${S.track} · Meeting ${S.meeting}`):S.mode==="real"?`Real Races · ${S.track} · ${S.real.date}`:S.mode==="daily"?`Daily Meeting ${S.day}`:`${TIERS[S.tier].name} · ${S.track} · Meeting ${S.meeting}`;
-  const dd=(S.dailyDone||{})[dayKey()];const db=$("daily");db.hidden=S.mode!=="career";const rb=$("realbtn");rb.hidden=S.mode!=="career";rb.disabled=S.phase!=="bet"||S.bets.length>0;$("foot").innerHTML=isDogs()&&S.rd?"Fields and form by FormFav. Odds are game estimates from form. Play money only. Results are simulated, not the actual race.":S.mode==="real"?`${dataCredit()}. Play money only. Results are simulated, not the actual race.`:"Play money only. No real bets, deposits or prizes.";db.disabled=dd!==undefined||S.phase!=="bet"||S.bets.length>0;db.textContent=dd!==undefined?`Today's daily: ${money(dd)}`:"Play Daily Meeting";
+  $("meet").textContent=S.mode==="harness"?(S.rh?`Real Harness · ${S.track} · ${dayName(S.rh.date)}`:`Harness · ${S.track} · Meeting ${S.meeting}`):S.mode==="dogs"?(S.rd?`Real Dogs · ${S.track} · ${dayName(S.rd.date)}`:`Greyhounds · ${S.track} · Meeting ${S.meeting}`):S.mode==="real"?`Real Races · ${S.track} · ${S.real.date}`:S.mode==="daily"?`Daily Meeting ${S.day}`:`${TIERS[S.tier].name} · ${S.track} · Meeting ${S.meeting}`;
+  const dd=(S.dailyDone||{})[dayKey()];const db=$("daily");db.hidden=S.mode!=="career";const rb=$("realbtn");rb.hidden=S.mode!=="career";rb.disabled=S.phase!=="bet"||S.bets.length>0;$("foot").innerHTML=isHarness()&&S.rh?"Fields and form by FormFav. Odds are game estimates from form and the draw. Play money only. Results are simulated, not the actual race.":isDogs()&&S.rd?"Fields and form by FormFav. Odds are game estimates from form. Play money only. Results are simulated, not the actual race.":S.mode==="real"?`${dataCredit()}. Play money only. Results are simulated, not the actual race.`:"Play money only. No real bets, deposits or prizes.";db.disabled=dd!==undefined||S.phase!=="bet"||S.bets.length>0;db.textContent=dd!==undefined?`Today's daily: ${money(dd)}`:"Play Daily Meeting";
   $("raceNo").textContent=`${S.race.no}/${lastIdx()+1}`;
   $("bank").textContent=money(S.bank);
 }
@@ -1711,7 +1921,7 @@ function renderCard(){
     const tag=on&&TYPES[S.type][1]>1?(S.type==="quin"?"•":i+1):"";
     return `<button class="runner${on?" on":""}" data-k="${k}" aria-pressed="${on}" ${S.phase!=="bet"?"disabled":""}>
       ${silk(h,k,tag)}
-      <span><span class="rname">${h.name}</span><br><span class="rmeta">${r.realDogs?`${h.form?`<b>${escH(h.form)}</b> · `:""}Box ${h.box}${h.reserve?" (reserve)":""}${h.sex?" · "+escH(h.sex):""}<br>Trainer ${escH(h.jock)}`:r.dogs?`<b>${h.form}</b> · Box ${h.no} · ${h.kg}kg · ${h.sex}<br>Trainer ${h.jock} · ${DOG_STYLE[h.style]} · ${DOG_COATS[h.coat%DOG_COATS.length].n}`:h.real?`${h.form?`<b>${h.form}</b> · `:""}B${h.realBarrier} · ${h.weight}kg · ${h.jock}<br>${h.trainer||""}${h.speed?" · "+h.speed:""}`:`<b>${h.form}</b> · B${h.barrier} · ${h.weight}kg · ${h.jock}<br>${STYLE[h.style]} · Best ${h.trip}m · Wet ${h.wetRec}`}</span></span>
+      <span><span class="rname">${h.name}</span><br><span class="rmeta">${r.harness?`${h.form?`<b>${escH(h.form)}</b> · `:""}${rowTag(h)} · Driver ${escH(h.jock)}<br>${h.trainer?"Trainer "+escH(h.trainer)+" · ":""}${r.trot?"Trotter":"Pacer"}${h.style&&!r.realHarness?" · "+HN_STYLE[h.style]:""}${h.age?" · "+h.age+"yo":""}${h.sex?" "+escH(String(h.sex).toLowerCase()):""}`:r.realDogs?`${h.form?`<b>${escH(h.form)}</b> · `:""}Box ${h.box}${h.reserve?" (reserve)":""}${h.sex?" · "+escH(h.sex):""}<br>Trainer ${escH(h.jock)}`:r.dogs?`<b>${h.form}</b> · Box ${h.no} · ${h.kg}kg · ${h.sex}<br>Trainer ${h.jock} · ${DOG_STYLE[h.style]} · ${DOG_COATS[h.coat%DOG_COATS.length].n}`:h.real?`${h.form?`<b>${h.form}</b> · `:""}B${h.realBarrier} · ${h.weight}kg · ${h.jock}<br>${h.trainer||""}${h.speed?" · "+h.speed:""}`:`<b>${h.form}</b> · B${h.barrier} · ${h.weight}kg · ${h.jock}<br>${STYLE[h.style]} · Best ${h.trip}m · Wet ${h.wetRec}`}</span></span>
       <span class="odds"><small>Win</small>${oddsTxt(h.win)}</span>
       <span class="odds"><small>Place</small>${oddsTxt(h.place)}</span>
     </button>`}).join("")}</div>`;
@@ -1734,6 +1944,12 @@ function renderResult(){
 function renderEnd(){
   const net=S.bank-S.startBank,ratio=S.bank/Math.max(1,S.startBank+0);
   let title=RANK[0][1];for(const [m,t] of RANK)if(ratio>=m)title=t;
+  if(S.mode==="harness"){
+    $("card").innerHTML=`<h2>${S.track} is done for the night</h2>${S.rh?'<div class="conds"><span>Real fields, simulated races</span></div>':""}<div class="net ${net>=0?"won":"lost"}">${net>=0?"Up":"Down"} ${money(Math.abs(net))}</div><div class="tip">Verdict: <b>${title}</b></div>
+    <table class="tbl">${S.ledger.map(l=>`<tr><td>Race ${l.no}</td><td class="n">Bet ${money(l.staked)}</td><td class="n ${l.ret>l.staked?"won":l.ret<l.staked?"lost":""}">${money(l.ret-l.staked)}</td></tr>`).join("")}</table>
+    <div class="conds"><span>Harness bank ${money(S.bank)}</span><span>Best ${money(S.best)}</span></div>
+    ${S.rh?`<div class="tip">Pick another real meeting above, or go back to the game harness.</div><button class="big next" id="nm">Game harness meeting</button>`:`<button class="big next" id="nm">Next harness meeting</button>`}<button class="reset" id="dd">Back to the gallops</button>`;
+    $("nm").onclick=S.rh?backToGameHarness:nextMeeting;$("dd").onclick=goCareer;return}
   if(S.mode==="dogs"){
     $("card").innerHTML=`<h2>${S.track} is done for the night</h2>${S.rd?'<div class="conds"><span>Real fields, simulated races</span></div>':""}<div class="net ${net>=0?"won":"lost"}">${net>=0?"Up":"Down"} ${money(Math.abs(net))}</div><div class="tip">Verdict: <b>${title}</b></div>
     <table class="tbl">${S.ledger.map(l=>`<tr><td>Race ${l.no}</td><td class="n">Bet ${money(l.staked)}</td><td class="n ${l.ret>l.staked?"won":l.ret<l.staked?"lost":""}">${money(l.ret-l.staked)}</td></tr>`).join("")}</table>
@@ -1792,6 +2008,7 @@ function renderDetail(){
   const el=$("detail"),k=S.sel[S.sel.length-1];
   if(S.phase!=="bet"||k===undefined){el.innerHTML="";return}
   const h=S.race.field[k],pool=(S.pool||[]).find(p=>p.name===h.name)||h;
+  if(h.hn){el.innerHTML=`<div class="detail-h"><span><b>${escH(h.name)}</b> · Driver ${escH(h.jock)}${h.trainer?" · Trainer "+escH(h.trainer):""}</span></div>${h.form?`Recent form: ${escH(h.form)}`:""}${hnHtml(h)}`;return}
   if(h.dg){el.innerHTML=`<div class="detail-h"><span><b>${escH(h.name)}</b> · Trainer ${escH(h.jock)}</span></div>${h.form?`Recent form: ${escH(h.form)}`:""}${dgHtml(h)}`;return}
   if(h.real){
     const st=(l,s)=>s&&s.s?`<td>${l}</td><td>${s.s}: ${s.w}-${s.p}</td>`:"";
@@ -1801,7 +2018,7 @@ function renderDetail(){
       extra=`<table><tr>${rows[0]}</tr><tr>${rows[1]}</tr></table>${rec?`<table><tr><th>Date</th><th>Track</th><th>Dist</th><th>Finish</th></tr>${rec}</table>`:""}`}
     else extra=ffHtml(h);
     el.innerHTML=`<div class="detail-h"><span><b>${h.name}</b> · ${h.jock}${h.trainer?" · "+h.trainer:""}</span><button class="tk-act" data-scr="${h.no}">Mark scratched</button></div>${h.form?`Recent form: ${h.form}`:""}${extra}`;return}
-  el.innerHTML=`<b>${h.name}</b> last starts<table><tr><th>Track</th><th>Dist</th><th>Going</th><th>Finish</th></tr>${[...pool.runs].reverse().map(r=>`<tr><td>${r.t}</td><td>${r.d}m</td><td>${S.race.dogs?dogTrack(r.r):ratingName(r.r)}</td><td>${r.p==="x"?"Spell":r.p==="0"?"10th+":r.p+"/"+r.n}</td></tr>`).join("")}</table>`;
+  el.innerHTML=`<b>${h.name}</b> last starts<table><tr><th>Track</th><th>Dist</th><th>Going</th><th>Finish</th></tr>${[...pool.runs].reverse().map(r=>`<tr><td>${r.t}</td><td>${r.d}m</td><td>${S.race.dogs?dogTrack(r.r):S.race.harness?hnTrack(r.r):ratingName(r.r)}</td><td>${r.p==="x"?"Spell":r.p==="0"?"10th+":r.p+"/"+r.n}</td></tr>`).join("")}</table>`;
 }
 function renderSlip(){
   const bet=S.phase==="bet";
@@ -1937,9 +2154,10 @@ async function sbRows(query,init={},table="otr_accounts"){
 }
 // A real or daily meeting sits on top of the career save, and its race data is rebuilt from the feed.
 function cloudState(){
-  const c=(S.mode==="real"||S.mode==="daily"||S.mode==="dogs")&&S.career?S.career:S;
+  const c=(S.mode==="real"||S.mode==="daily"||S.mode==="dogs"||S.mode==="harness")&&S.career?S.career:S;
   const out={...c};delete out.realSaved;
   if(S.mode==="dogs"){const d={...S};delete d.career;out.dogsSaved=d}
+  if(S.mode==="harness"){const d={...S};delete d.career;out.harnessSaved=d}
   return out;
 }
 function saveSync(){lsSet(K_SYNC,SYNC)}
@@ -2186,7 +2404,7 @@ function start(data){
   renderAll();
   say(S.phase==="bet"?`Betting open on the <b>${S.race.title}</b>. Read the form, pick a runner, then jump.`:"");
   requestAnimationFrame(frame);
-  loadMeets();loadDogMeets();
+  loadMeets();loadDogMeets();loadHarnessMeets();
   setInterval(()=>{if(S&&S.phase!=="race"&&document.activeElement?.tagName!=="SELECT")renderNav()},60e3);
   bootAccount();
 }
