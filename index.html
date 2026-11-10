@@ -117,8 +117,7 @@ canvas{width:100%;height:auto;display:block}
 #hudrem small{display:block;font:600 clamp(12px,1.8vw,16px)/1.2 var(--led);color:#f0d9a8}
 #hudrem.final{color:var(--amber);animation:pulse .6s ease-in-out infinite alternate}
 #hudrem.final small::before{content:"FINAL 200M · ";color:#fff}
-#hud #hudtop{display:none}
-@media (max-width:600px){#hud #hudrem{margin-left:auto;text-align:right}#runorder{font-size:15px}#runorder i{min-width:22px;height:22px}}
+@media (max-width:600px){#hud #hudtop{display:none}#hud #hudrem{margin-left:auto;text-align:right}#runorder{font-size:15px}#runorder i{min-width:22px;height:22px}}
 @keyframes pulse{to{transform:scale(1.08)}}
 @media (prefers-reduced-motion:reduce){#hudrem.final{animation:none}}
 #runline{background:var(--tote);padding:6px 10px 8px;display:grid;gap:6px;border-top:2px solid var(--tote2)}
@@ -130,9 +129,9 @@ canvas{width:100%;height:auto;display:block}
 #runorder i{font-style:normal;font-weight:700;min-width:24px;height:24px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.35)}
 #runorder .mine i{outline:2px solid #ffe07a;outline-offset:1px}
 #runorder b{margin-right:6px;color:var(--amber)}
-#hudtop{background:rgba(15,12,8,.82);padding:5px 8px;display:grid;gap:3px;font:600 clamp(13px,2vw,18px)/1.1 var(--led);color:#fff;max-width:45%}
+#hudtop{background:rgba(15,12,8,.55);padding:3px 6px;display:grid;gap:2px;font:600 clamp(11px,1.35vw,14px)/1.1 var(--led);color:#fff;max-width:30%;border-radius:2px}
 #hudtop div{display:flex;gap:5px;align-items:center;white-space:nowrap;overflow:hidden}
-#hudtop i{font-style:normal;font-weight:700;min-width:1.5em;text-align:center;padding:1px 2px}
+#hudtop i{font-style:normal;font-weight:700;min-width:1.4em;text-align:center;padding:0 2px}
 #hudtop span{overflow:hidden;text-overflow:ellipsis}
 .tips{background:var(--tote);color:var(--paper);padding:8px 10px;display:grid;gap:3px}
 .tips-h{display:flex;justify-content:space-between;gap:8px;align-items:baseline;font-size:14px;color:var(--paper2)}
