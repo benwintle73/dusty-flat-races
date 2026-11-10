@@ -204,8 +204,10 @@ canvas{width:100%;height:auto;display:block}
 .off-days,.off-meets{margin:6px 0}
 .nextgo button[data-ntg]{background:var(--amber);color:var(--tote);border:0;min-height:44px;padding:0 12px;font:400 18px/1 var(--display);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap}
 #ntgsel{flex:1;min-width:0;width:100%;min-height:44px;background:var(--paper);color:var(--ink);border:0;font:600 17px/1.1 var(--led);padding:0 8px;text-overflow:ellipsis}
-.tip-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;background:#fff8e6;border:1px solid #bda97f;padding:8px 10px}
-.tip-pick{font-size:18px}.tip-pick small{color:#5b5446;margin-left:4px}
+.nt-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;background:#fff8e6;border:1px solid #bda97f;color:var(--ink);padding:8px 10px}
+.nt-row .off-meta{color:#4a4336}
+.nt-pick{font-size:18px;color:var(--ink)}.nt-pick small{color:#4a4336;margin-left:4px;font-weight:700}
+.nt-row .tk-act{background:var(--ink);color:var(--paper);border:0;min-height:40px;padding:0 14px;font-weight:700}
 .simtag{font:700 12px/1 var(--led);font-style:normal;letter-spacing:.6px;text-transform:uppercase;background:#6e6a60;color:#fff;padding:2px 5px;vertical-align:2px}
 .simbanner{background:#6e6a60;color:#fff;font:700 15px/1 var(--led);letter-spacing:.6px;text-transform:uppercase;padding:7px 10px}
 .res-tbl{font-size:16px}
@@ -301,7 +303,7 @@ canvas{width:100%;height:auto;display:block}
 <script>
 "use strict";
 /* ---------- helpers ---------- */
-const APP_VERSION="2.7.0"; // bump on every release; shown after the title
+const APP_VERSION="2.7.1"; // bump on every release; shown after the title
 const $=id=>document.getElementById(id);
 let RNG=Math.random;
 const mulberry=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
@@ -1609,8 +1611,8 @@ function renderTips(){
   let rough=null;for(const x of ready)for(const u of x.picks.slice(1,4))if(u.price>=8&&(!rough||u.p*u.price>rough.u.p*rough.u.price))rough={x,u};
   const tag=x=>`${timeOf(new Date(x.t).toISOString())} · ${escH(x.venue)} R${x.no} · ${CODE_NAME[x.code]}`;
   const row=(x,i)=>{const p=x.picks;
-    return `<div class="tip-row"><div><div class="off-meta">${tag(x)}${x.t<=now?" (jumped)":""}</div>
-      ${p===undefined?'<div class="off-pend">Nan is reading the form…</div>':!p||!p.length?'<div class="off-pend">No field yet</div>':`<div class="tip-pick"><b>${p[0].no}. ${escH(p[0].name)}</b> <small>${div(p[0].price)}</small></div><div class="off-meta">Then ${p.slice(1,3).map(u=>`${u.no}. ${escH(u.name)}`).join(", ")}</div>`}</div>
+    return `<div class="nt-row"><div><div class="off-meta">${tag(x)}${x.t<=now?" (jumped)":""}</div>
+      ${p===undefined?'<div class="off-pend">Nan is reading the form…</div>':!p||!p.length?'<div class="off-pend">No field yet</div>':`<div class="nt-pick"><b>${p[0].no}. ${escH(p[0].name)}</b> <small>${div(p[0].price)}</small></div><div class="off-meta">Then ${p.slice(1,3).map(u=>`${u.no}. ${escH(u.name)}`).join(", ")}</div>`}</div>
       <button class="tk-act" data-tipgo="${i}">Bet</button></div>`};
   c.innerHTML=`<h2>Nan's Tips</h2><div class="conds"><span>Today's real races, in start order</span></div>
   <div class="tabs off-days">${[["all","All"],["H","Horses"],["D","Dogs"],["N","Harness"]].map(([k,l])=>`<button data-tipf="${k}" aria-pressed="${TIPF===k}">${l}</button>`).join("")}</div>
