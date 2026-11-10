@@ -191,6 +191,8 @@ canvas{width:100%;height:auto;display:block}
 #acct{width:min(420px,calc(100vw - 24px));background:var(--paper);color:var(--ink);border:3px solid var(--tote2);padding:16px}
 #acct::backdrop{background:rgba(0,0,0,.65)}
 #acct [hidden]{display:none}
+#acctConflict{display:grid;gap:8px}
+#acctConflict .big+.big{background:var(--paper2);color:var(--ink);border:2px solid var(--tote)}
 .acct-h{display:flex;justify-content:space-between;align-items:center;gap:8px}
 .acct-h h2{margin:0;font:400 26px/1 var(--display);letter-spacing:.5px;text-transform:uppercase}
 .acct-h button,.acct-links button{background:none;border:0;color:var(--ink);text-decoration:underline;min-height:44px;padding:0 4px;font:600 17px/1 var(--led)}
@@ -262,6 +264,10 @@ canvas{width:100%;height:auto;display:block}
     <button id="acctGo" class="big" type="submit">Log in</button>
   </form>
   <button id="acctOut" class="big" hidden>Log out</button>
+  <div id="acctConflict" hidden><p>This account was played on another device while this one was offline or out of date. Choose which game to keep. Race results from both devices are kept either way.</p>
+    <p id="acctCmp"></p>
+    <button id="acctUseOther" class="big">Load the other device's game</button>
+    <button id="acctKeepHere" class="big">Keep this device's game</button></div>
   <div class="acct-links"><button id="acctToSignup">Create account</button><button id="acctToLogin" hidden>Back to log in</button><button id="acctToForgot">Forgot password</button></div>
 </dialog>
 
@@ -753,7 +759,7 @@ function strideFrames(pos){
   // a photo finish steps the clock back a fraction: hold the legs rather than run them backwards
   if(R.t<R.phT){R.pp=pos.slice();R.phT=R.t;return R.ph}
   for(let k=0;k<n;k++){const dp=pos[k]-R.pp[k];
-    if(dp>0&&dts>0){R.pv[k]+=(dp/dts-R.pv[k])*Math.min(1,dts*3);R.ph[k]+=dp/(STRIDE*clamp(.42+.6*R.pv[k]/16.8,.5,1.06))}}
+    if(dp>0&&dts>0){R.pv[k]+=(dp/dts-R.pv[k])*Math.min(1,dts*3);R.ph[k]+=Math.min(.42,dp/(STRIDE*clamp(.42+.6*R.pv[k]/16.8,.5,1.06)))}} // a dropped frame never flips the legs backwards
   R.pp=pos.slice();R.phT=R.t;
   return R.ph;
 }
@@ -1542,7 +1548,7 @@ const K_AUTH="otrauth1",K_SYNC="otrsync1",K_GUEST="otrguest1";
 const lsGet=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}};
 const lsSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
 const lsDel=k=>{try{localStorage.removeItem(k)}catch(e){}};
-let AUTH=lsGet(K_AUTH),SYNC=lsGet(K_SYNC)||{},cloudQuiet=false,cloudTimer=0,cloudBusy=false,cloudAgain=false,cloudStatus="",refreshing=null;
+let cloudConflict=null,AUTH=lsGet(K_AUTH),SYNC=lsGet(K_SYNC)||{},cloudQuiet=false,cloudTimer=0,cloudBusy=false,cloudAgain=false,cloudStatus="",refreshing=null;
 const SITE=()=>location.origin+location.pathname;
 async function sbAuth(path,body,method="POST",token){
   const h={apikey:SB_KEY,"Content-Type":"application/json"};if(token)h.Authorization="Bearer "+token;
@@ -1584,9 +1590,18 @@ async function cloudPush(opts={}){
   if(cloudBusy){cloudAgain=true;return}
   cloudBusy=true;clearTimeout(cloudTimer);
   try{
-    const body=JSON.stringify({user_id:AUTH.uid,state:cloudState(),book:BOOK,updated_at:new Date().toISOString()});
-    const rows=await sbRows("?on_conflict=user_id",{method:"POST",body,keepalive:!!opts.keepalive&&body.length<60000,headers:{Prefer:"resolution=merge-duplicates,return=representation"}});
-    SYNC={uid:AUTH.uid,at:rows[0].updated_at,dirty:false};saveSync();
+    const uid=AUTH.uid,stamp=new Date().toISOString();let rows;
+    if(cloudConflict&&!opts.force){await pushResults(opts);cloudBusy=false;return}
+    if(SYNC.uid===uid&&SYNC.at&&!opts.force){
+      const body=JSON.stringify({state:cloudState(),book:BOOK,updated_at:stamp});
+      rows=await sbRows(`?user_id=eq.${uid}&updated_at=eq.${encodeURIComponent(SYNC.at)}`,{method:"PATCH",body,keepalive:!!opts.keepalive&&body.length<60000,headers:{Prefer:"return=representation"}});
+      if(!rows.length){await pushResults(opts);cloudBusy=false;return syncConflict()}
+    }else{
+      const body=JSON.stringify({user_id:uid,state:cloudState(),book:BOOK,updated_at:stamp});
+      rows=await sbRows("?on_conflict=user_id",{method:"POST",body,keepalive:!!opts.keepalive&&body.length<60000,headers:{Prefer:"resolution=merge-duplicates,return=representation"}});
+    }
+    cloudConflict=null;
+    SYNC={uid,at:rows[0].updated_at,dirty:false};saveSync();
     await pushResults(opts);
     setCloudStatus(RESULTS.pend.length?"Saved. Some results are still waiting to upload.":"Saved to your account.");
   }catch(e){if(AUTH)setCloudStatus("Couldn't reach the server. Saved on this device for now.")}
@@ -1619,6 +1634,7 @@ async function cloudPull(){
   await pullResults(false);
   if(!row||!row.state||!row.state.race){await cloudPush();return false}
   if(same&&SYNC.at===row.updated_at){if(SYNC.dirty||RESULTS.pend.length)await cloudPush();else setCloudStatus("Saved to your account.");return false}
+  if(same&&SYNC.dirty){await pushResults();syncConflict(row);return false}
   adopt(row);
   if(RESULTS.pend.length)await pushResults();
   SYNC={uid,at:row.updated_at,dirty:false};saveSync();setCloudStatus("Saved to your account.");
@@ -1665,6 +1681,13 @@ async function pullResults(older){
   if(resOpen&&(RESULTS.list.length!==before||older))renderCard();
 }
 async function loadOlderResults(){if(resLoading)return;resLoading=true;renderCard();await pullResults(true);resLoading=false;renderCard()}
+async function syncConflict(row){
+  if(!AUTH)return;
+  if(!row){try{row=(await sbRows(`?user_id=eq.${AUTH.uid}&select=state,book,updated_at`))[0]}catch(e){return}}
+  if(!row)return;
+  cloudConflict=row;setCloudStatus("Your game changed on another device.");
+  acctMode="conflict";acctNote("");renderAccount();if(!dlg.open)dlg.showModal();
+}
 async function afterLogin(){await cloudPull();renderAccount()}
 async function logOut(force){
   clearTimeout(cloudTimer);
@@ -1695,16 +1718,20 @@ function renderAccount(){
   const b=$("acctbtn");
   b.textContent=AUTH?AUTH.email.split("@")[0]:"Log in";
   b.title=AUTH?AUTH.email:"Log in or create an account to save your game";
-  const m=AUTH?(acctMode==="newpass"?"newpass":"in"):(acctMode==="in"||acctMode==="newpass"?"login":acctMode);
+  const m=AUTH?(acctMode==="newpass"?"newpass":acctMode==="conflict"&&cloudConflict?"conflict":"in"):(acctMode==="in"||acctMode==="newpass"||acctMode==="conflict"?"login":acctMode);
   acctMode=m;
-  const titles={login:"Log in",signup:"Create account",forgot:"Reset password",newpass:"Set a new password",in:"Your account"};
+  if(m==="conflict"&&!cloudConflict)acctMode="in";
+  const titles={login:"Log in",signup:"Create account",forgot:"Reset password",newpass:"Set a new password",in:"Your account",conflict:"Game saved on two devices"};
   $("acctTitle").textContent=titles[m];
   $("acctWho").textContent=m==="in"?AUTH.email:"";
   $("acctWho").hidden=m!=="in";
   $("acctStatus").textContent=m==="in"?cloudStatus:"";
   $("acctStatus").hidden=m!=="in"||!cloudStatus;
-  $("acctForm").hidden=m==="in";
+  $("acctForm").hidden=m==="in"||m==="conflict";
   $("acctOut").hidden=m!=="in";
+  $("acctConflict").hidden=m!=="conflict";
+  if(m==="conflict"){const o=cloudConflict.state||{},oc=o.mode==="career"||!o.career?o:o.career,h=cloudState(),pend=b=>(b&&b.tickets||[]).filter(t=>t.status==="pending").length;
+    $("acctCmp").innerHTML=`This device: bank <b>${money(h.bank)}</b>, meeting ${h.meeting||1}, ${pend(BOOK)} open tickets.<br>Other device: bank <b>${money(oc.bank||0)}</b>, meeting ${oc.meeting||1}, ${pend(cloudConflict.book)} open tickets.`}
   $("acctEmailRow").hidden=m==="newpass";
   $("acctEmail").required=m!=="newpass";
   $("acctPassRow").hidden=m==="forgot";
@@ -1721,6 +1748,8 @@ function acctNote(t,bad){const n=$("acctNote");n.textContent=t||"";n.hidden=!t;n
 function openAcct(mode){acctMode=mode||(AUTH?"in":"login");acctNote("");renderAccount();if(!dlg.open)dlg.showModal();if(!AUTH&&acctMode!=="in")$("acctEmail").focus();if(AUTH){cloudPull()}}
 $("acctbtn").onclick=()=>openAcct();
 $("acctClose").onclick=()=>dlg.close();
+$("acctUseOther").onclick=()=>{const row=cloudConflict;if(!row)return;cloudConflict=null;adopt(row);SYNC={uid:AUTH.uid,at:row.updated_at,dirty:false};saveSync();acctMode="in";renderAccount();setCloudStatus("Loaded the game from your other device.");dlg.close()};
+$("acctKeepHere").onclick=async()=>{if(!cloudConflict)return;cloudConflict=null;await cloudPush({force:true});acctMode="in";renderAccount();dlg.close()};
 $("acctToSignup").onclick=()=>{acctMode="signup";acctNote("");renderAccount()};
 $("acctToLogin").onclick=()=>{acctMode="login";acctNote("");renderAccount()};
 $("acctToForgot").onclick=()=>{acctMode="forgot";acctNote("");renderAccount()};
