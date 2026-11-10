@@ -26,6 +26,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--amber);outline-
 .wrap{max-width:1180px;margin:0 auto;padding:12px 16px 28px;display:grid;gap:12px}
 .mast{display:flex;flex-wrap:wrap;gap:6px 22px;align-items:center;background:var(--tote);border:3px solid var(--tote2);padding:8px 14px}
 .mast h1{margin:0;font:400 clamp(26px,4vw,38px)/1 var(--display);color:var(--amber);letter-spacing:.8px;text-transform:uppercase}
+.mast h1 .ver{font:600 15px/1 var(--led);text-transform:none;letter-spacing:.5px;color:var(--amber-dim);vertical-align:middle;margin-left:4px}
 .mast .meet{font:600 20px/1.1 var(--led);color:var(--amber-dim);flex:1 1 200px}
 .led{display:flex;flex-direction:column;align-items:flex-end}
 .led small{font:600 14px/1 var(--led);letter-spacing:1px;color:var(--amber-dim)}
@@ -52,7 +53,7 @@ canvas{width:100%;height:auto;display:block}
 .big{min-height:52px;border:0;font:400 20px/1 var(--display);letter-spacing:.6px;text-transform:uppercase;padding:4px 8px}
 .big.place{background:var(--paper);color:var(--ink)}
 .big.jump{background:var(--red);color:#fff}
-.big.ticket{background:var(--amber);color:var(--tote)}
+.big.tobook{background:var(--amber);color:var(--tote)}
 .meets{align-items:center}
 .meets span{font:700 17px/1 var(--led);color:var(--amber);min-width:78px}
 .pick{display:flex;gap:8px;align-items:center;font:700 17px/1 var(--led);color:var(--amber)}
@@ -113,6 +114,21 @@ canvas{width:100%;height:auto;display:block}
 .reset{background:none;border:0;color:var(--ink2);text-decoration:underline;min-height:40px;justify-self:start;padding:0}
 #hud{position:absolute;inset:8px 8px auto 8px;display:none;justify-content:space-between;align-items:flex-start;pointer-events:none;line-height:1}
 #hudrem{font:700 clamp(26px,5vw,44px)/1 var(--led);color:#fff;text-shadow:0 2px 0 #000;margin-left:clamp(92px,21%,150px)}
+#hudrem small{display:block;font:600 clamp(12px,1.8vw,16px)/1.2 var(--led);color:#f0d9a8}
+#hudrem.final{color:var(--amber);animation:pulse .6s ease-in-out infinite alternate}
+#hudrem.final small::before{content:"FINAL 200M · ";color:#fff}
+@media (max-width:600px){#hud #hudtop{display:none}#hud #hudrem{margin-left:auto;text-align:right}#runorder{font-size:15px}#runorder i{min-width:22px;height:22px}}
+@keyframes pulse{to{transform:scale(1.08)}}
+@media (prefers-reduced-motion:reduce){#hudrem.final{animation:none}}
+#runline{background:var(--tote);padding:6px 10px 8px;display:grid;gap:6px;border-top:2px solid var(--tote2)}
+#runline[hidden]{display:none}
+.runtrack{height:6px;background:var(--tote2);position:relative}
+#runbar{position:absolute;inset:0 auto 0 0;background:linear-gradient(90deg,var(--amber-dim),var(--amber));width:0}
+#runorder{display:flex;flex-wrap:wrap;row-gap:5px;gap:4px;align-items:center;overflow:hidden;font:600 16px/1 var(--led);color:#fff;white-space:nowrap}
+#runorder span{display:flex;gap:5px;align-items:center}
+#runorder i{font-style:normal;font-weight:700;min-width:24px;height:24px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.35)}
+#runorder .mine i{outline:2px solid #ffe07a;outline-offset:1px}
+#runorder b{margin-right:6px;color:var(--amber)}
 #hudtop{background:rgba(15,12,8,.82);padding:5px 8px;display:grid;gap:3px;font:600 clamp(13px,2vw,18px)/1.1 var(--led);color:#fff;max-width:45%}
 #hudtop div{display:flex;gap:5px;align-items:center;white-space:nowrap;overflow:hidden}
 #hudtop i{font-style:normal;font-weight:700;min-width:1.5em;text-align:center;padding:1px 2px}
@@ -147,9 +163,36 @@ canvas{width:100%;height:auto;display:block}
   .odds{font-size:21px}
 }
 .acctbtn{background:none;border:2px solid var(--amber-dim);color:var(--amber);min-height:44px;max-width:150px;padding:0 12px;font:700 18px/1 var(--led);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.res-day{display:grid;gap:6px}
+.res-day h3{margin:8px 0 0;font:400 20px/1 var(--display);letter-spacing:.4px;text-transform:uppercase}
+.res-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;text-align:left;background:#fff8e6;border:1px solid #bda97f;color:var(--ink);padding:8px 10px;min-height:56px}
+.res-row:hover{background:#fff}
+.res-row>span:nth-child(2){display:grid;gap:2px;min-width:0}
+.res-race{font:700 18px/1.1 var(--led)}
+.res-meta{font-size:14px;color:var(--ink2)}
+.res-win{font-size:15px}
+.res-go{font:700 16px/1 var(--led);color:var(--red)}
+.res-winner{display:flex;gap:12px;align-items:center;background:var(--tote);color:var(--paper);padding:10px 12px;border-left:6px solid var(--amber)}
+.res-winner>span{display:grid;gap:2px}
+.res-winner small{font:600 13px/1 var(--led);letter-spacing:1px;text-transform:uppercase;color:var(--amber)}
+.res-winner b{font:400 24px/1.05 var(--display);letter-spacing:.4px}
+.res-scroll{overflow-x:auto}
+.res-tbl .narrow{display:none}
+@media (max-width:520px){.res-tbl .wide{display:none}.res-tbl .narrow{display:inline}.res-tbl{font-size:15px}.res-tbl td,.res-tbl th{padding:5px 2px}.res-row{grid-template-columns:auto minmax(0,1fr)}.res-go{display:none}}
+.simtag{font:700 12px/1 var(--led);font-style:normal;letter-spacing:.6px;text-transform:uppercase;background:#6e6a60;color:#fff;padding:2px 5px;vertical-align:2px}
+.simbanner{background:#6e6a60;color:#fff;font:700 15px/1 var(--led);letter-spacing:.6px;text-transform:uppercase;padding:7px 10px}
+.res-tbl{font-size:16px}
+.res-tbl th{font:700 14px/1 var(--led);letter-spacing:.6px;text-transform:uppercase;color:var(--ink2)}
+.res-tbl small{color:var(--ink2);font-size:13px}
+.res-tbl .silk{width:30px;height:30px;font-size:20px}
+.res-first td{background:#ffe9a8}
+.res-placed td{background:#f8efd4}
+.res-first td:first-child{box-shadow:inset 5px 0 0 var(--amber)}
 #acct{width:min(420px,calc(100vw - 24px));background:var(--paper);color:var(--ink);border:3px solid var(--tote2);padding:16px}
 #acct::backdrop{background:rgba(0,0,0,.65)}
 #acct [hidden]{display:none}
+#acctConflict{display:grid;gap:8px}
+#acctConflict .big+.big{background:var(--paper2);color:var(--ink);border:2px solid var(--tote)}
 .acct-h{display:flex;justify-content:space-between;align-items:center;gap:8px}
 .acct-h h2{margin:0;font:400 26px/1 var(--display);letter-spacing:.5px;text-transform:uppercase}
 .acct-h button,.acct-links button{background:none;border:0;color:var(--ink);text-decoration:underline;min-height:44px;padding:0 4px;font:600 17px/1 var(--led)}
@@ -168,7 +211,7 @@ canvas{width:100%;height:auto;display:block}
 <body>
 <div class="wrap">
   <header class="mast">
-    <h1>Off To The Races</h1>
+    <h1>Off To The Races <span class="ver" id="ver"></span></h1>
     <div class="meet" id="meet"></div>
     <div class="led"><small>RACE</small><b id="raceNo"></b></div>
     <div class="led"><small>BANK</small><b id="bank"></b></div>
@@ -178,6 +221,7 @@ canvas{width:100%;height:auto;display:block}
   <div class="grid">
     <section class="stage" aria-label="Track">
       <div class="canvas-wrap"><canvas id="c" width="960" height="472"></canvas><div id="photo">PHOTO</div><div id="hud"><div id="hudrem"></div><div id="hudtop"></div></div></div>
+      <div id="runline" hidden><div class="runtrack"><div id="runbar"></div></div><div id="runorder" aria-label="Running order"></div></div>
       <div class="call" id="call" aria-live="polite"></div>
     </section>
     <section class="card" id="card"></section>
@@ -196,7 +240,7 @@ canvas{width:100%;height:auto;display:block}
       </div>
       <div class="go">
         <button class="big place" id="place">Place bet</button>
-        <button class="big ticket" id="ticket" hidden>Add to My Book</button>
+        <button class="big tobook" id="ticket" hidden>Add to My Book</button>
         <button class="big jump" id="jump">Jump</button>
       </div>
       <ul class="bets" id="bets"></ul>
@@ -220,12 +264,17 @@ canvas{width:100%;height:auto;display:block}
     <button id="acctGo" class="big" type="submit">Log in</button>
   </form>
   <button id="acctOut" class="big" hidden>Log out</button>
+  <div id="acctConflict" hidden><p>This account was played on another device while this one was offline or out of date. Choose which game to keep. Race results from both devices are kept either way.</p>
+    <p id="acctCmp"></p>
+    <button id="acctUseOther" class="big">Load the other device's game</button>
+    <button id="acctKeepHere" class="big">Keep this device's game</button></div>
   <div class="acct-links"><button id="acctToSignup">Create account</button><button id="acctToLogin" hidden>Back to log in</button><button id="acctToForgot">Forgot password</button></div>
 </dialog>
 
 <script>
 "use strict";
 /* ---------- helpers ---------- */
+const APP_VERSION="2.0.0"; // bump on every release; shown after the title
 const $=id=>document.getElementById(id);
 let RNG=Math.random;
 const mulberry=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
@@ -406,70 +455,96 @@ function line(c,x0,y0,x1,y1,w,col){c.strokeStyle=col;c.lineWidth=w;c.lineCap="ro
 const DIG={0:"111101101101111",1:"010110010010111",2:"111001111100111",3:"111001111001111",4:"101101111001001",5:"111100111001111",6:"111100111101111",7:"111001010010010",8:"111101111101111",9:"111101111001111",m:"000000101111101"};
 function digits(c,str,x,y,col,s=1){c.fillStyle=col;c.font=`700 ${Math.round(6.4*s)}px "Barlow Condensed",Arial,sans-serif`;c.textBaseline="top";c.textAlign="left";c.fillText(String(str),x,y-s*.4)}
 const shade=(hex,a)=>{const n=parseInt(hex.slice(1),16),f=v=>clamp(Math.round(v*a),0,255);return `rgb(${f(n>>16)},${f(n>>8&255)},${f(n&255)})`};
-const K=2.4,BW=47,BH=40,SW=Math.round(BW*K),SH=Math.round(BH*K),FR=10,LOG=1.2;
 const strHash=s=>{let h=7;for(const ch of s)h=(h*31+ch.charCodeAt(0))>>>0;return h};
+// Coat palette: body, mane/tail, lower legs, dapples. Saved horses keep their old coat number; the name picks the shade.
+const COAT_LOOKS=[
+  {n:"Bay",b:"#7a3f1d",m:"#1a100a",l:"#1f140d"},{n:"Dark bay",b:"#4a2614",m:"#120a06",l:"#140c08"},
+  {n:"Chestnut",b:"#a8521f",m:"#8a3f14",l:"#a8521f"},{n:"Liver chestnut",b:"#5e2c16",m:"#4a2210",l:"#5e2c16"},
+  {n:"Grey",b:"#b9b6ae",m:"#e8e6e0",l:"#77746e",d:"#d8d5ce"},{n:"Black",b:"#211c1b",m:"#0b0909",l:"#0f0c0c"},
+  {n:"Brown",b:"#3b2418",m:"#130c08",l:"#170e0a"},{n:"Light bay",b:"#a3622b",m:"#1d120b",l:"#22160e"},
+  {n:"Iron grey",b:"#7d7b78",m:"#2e2c2b",l:"#3b3937",d:"#9a9895"},{n:"Golden chestnut",b:"#c26f2c",m:"#e2b07a",l:"#c26f2c"}];
+const LOOK_OF=[[0,7,1],[0,2,7],[1,6,3],[4,8,4],[2,9,3],[5,6,1]];
+function coatOf(h){const opts=LOOK_OF[h.coat%LOOK_OF.length]||[0];return COAT_LOOKS[opts[strHash(h.name)%opts.length]]}
+const K=2.4,BW=47,BH=40,SW=Math.round(BW*K),SH=Math.round(BH*K),FR=10,STAND=FR,LOG=1.45,SS=1.5,FW=Math.round(SW*SS),FH=Math.round(SH*SS),GS=LOG/1.2;
+// Original motion from main: every joint follows one sine wave per stride, 10 frames, a frame every 48ms.
+const GAIT_MS=48;
 function buildSheet(h,idx){
-  const sheet=document.createElement("canvas");sheet.width=SW*FR;sheet.height=SH;
-  const out=sheet.getContext("2d",{willReadFrequently:true});
-  const [coat,mane]=COATS[h.coat],[silk,alt]=h.silk?[h.silk.c,h.silk.a]:SILKS[idx%SILKS.length];
-  const hs=strHash(h.name),pattern=h.silk?h.silk.p:hs%6,blaze=hs%3===0,sock=(hs>>3)%2===0;
+  const sheet=document.createElement("canvas");sheet.width=FW*(FR+1);sheet.height=FH;
+  const out=sheet.getContext("2d");
+  const look=coatOf(h),coat=look.b,mane=look.m,[silk,alt]=h.silk?[h.silk.c,h.silk.a]:SILKS[idx%SILKS.length];
+  const hs=strHash(h.name),pattern=h.silk?h.silk.p:hs%6,face=(hs>>2)%5,socks=[(hs>>5)%4===0,(hs>>7)%4===0,(hs>>9)%3===0,(hs>>11)%3===0];
   const P=a=>a.map(([x,y])=>[x*K,y*K]);
-  const low=shade(coat,.72),far=shade(coat,.5),hi=shade(coat,1.28),hi2=shade(coat,1.55);
-  for(let f=0;f<FR;f++){
-    const tmp=document.createElement("canvas");tmp.width=SW;tmp.height=SH;
-    const c=tmp.getContext("2d",{willReadFrequently:true}),ph=f/FR*6.2832;
-    const b=Math.sin(ph*2)*.6+2,fr=b+Math.sin(ph)*.8,rr=b-Math.sin(ph)*.8; // the body rocks fore and aft
-    const joint=(x,y,r,col)=>{c.fillStyle=col;c.fillRect(Math.round(x*K-r),Math.round(y*K-r),r*2,r*2)};
-    const leg=(hx,hy,p,col,white,front)=>{
-      const th=(front?.95:.8)*Math.sin(p)+(front?.1:-.05),fl=(front?.3:.5)+1.15*Math.max(0,Math.cos(p));
-      const L1=front?6:6.4,kx=hx+Math.sin(th)*L1,ky=hy+Math.cos(th)*L1,sh=th-fl,fx=kx+Math.sin(sh)*6.2,fy=ky+Math.cos(sh)*6.2;
-      line(c,hx*K,hy*K,kx*K,ky*K,front?5:6,col);joint(kx,ky,3,col);
-      line(c,kx*K,ky*K,fx*K,fy*K,3,white?"#eee8da":col);joint(fx,fy,2,white?"#eee8da":col);
-      c.fillStyle="#120d09";c.fillRect(Math.round(fx*K)-3,Math.round(fy*K)+1,7,4);
+  const low=shade(coat,.72),far=shade(coat,.55),hi=shade(coat,1.25),hi2=shade(coat,1.5),white="#efe9dc";
+  for(let f=0;f<=FR;f++){
+    const tmp=document.createElement("canvas");tmp.width=FW;tmp.height=FH;
+    const c=tmp.getContext("2d");c.scale(SS,SS);
+    const stand=f===STAND,ph=stand?0:f/FR*6.2832;
+    const b=stand?2:Math.sin(ph*2)*.6+2,fr=stand?2:b+Math.sin(ph)*.8,rr=stand?2:b-Math.sin(ph)*.8; // main's fore-and-aft rock
+    const Z={stand,u:f/FR,nod:0,arm:stand?0:Math.sin(ph)*.8};
+    // main's leg swing: hip angle and knee fold are sine waves of the stride phase
+    const drawLeg=(i,col)=>{
+      const fore=i>=2,near=i%2===1,hx=fore?(near?31:30):(near?12:13),hy=21+(fore?fr:rr);
+      const p=ph+[3.84,3.14,.7,0][i];
+      const th=stand?(fore?.06:-.08):(fore?.95:.8)*Math.sin(p)+(fore?.1:-.05),fl=stand?(fore?.12:.28):(fore?.3:.5)+1.15*Math.max(0,Math.cos(p));
+      const L1=fore?6:6.4,kx=hx+Math.sin(th)*L1,ky=hy+Math.cos(th)*L1,sh=th-fl,fx=kx+Math.sin(sh)*6.2,fy=ky+Math.cos(sh)*6.2;
+      const sock=socks[i],lc=look.l||col,lower=sock?(near?white:shade("#efe9dc",.8)):(near?lc:shade(lc,.8));
+      polyFill(c,P([[hx-2.2,hy-2],[hx+2.2,hy-2],[kx+1,ky],[kx-1,ky]]),col,true);
+      c.fillStyle=col;c.beginPath();c.arc(hx*K,hy*K,2.3*K,0,7);c.fill();
+      line(c,kx*K,ky*K,fx*K,fy*K,near?4.6:4.2,look.l&&!sock?(near?look.l:shade(look.l,.8)):col);
+      if(sock)line(c,((kx+fx*2)/3)*K,((ky+fy*2)/3)*K,fx*K,fy*K,near?4.6:4.2,lower);
+      c.fillStyle=col;c.beginPath();c.arc(kx*K,ky*K,1.15*K,0,7);c.fill();
+      c.save();c.translate(fx*K,fy*K);c.rotate(sh);c.fillStyle="#17110c";c.fillRect(-3.4,-1,7,5);c.restore();
     };
-    // far legs
-    leg(30,21+fr,ph+.7,far,false,true);leg(13,21+rr,ph+3.84,far,false,false);
-    // tail
-    const tw=Math.sin(ph)*2;
-    polyFill(c,P([[9,12+rr],[10.5,14.5+rr],[6,18+rr+tw*.6],[1.5,23+rr+tw*1.3],[-.5,21+rr+tw],[2,16+rr+tw*.4]]),mane);
-    for(const o of [0,1.2])line(c,(8-o)*K,(14+rr+o)*K,(1.5+o)*K,(20+rr+tw*1.4+o)*K,1,shade(mane,1.8));
-    // neck, arched
-    polyFill(c,P([[27,13+fr],[29.5,8.5+fr],[33.5,3.8+fr],[38,5+fr],[37,10+fr],[34,19.5+fr],[29,19+fr]]),coat);
-    polyFill(c,P([[34,19.5+fr],[37,10+fr],[38,6.5+fr],[35.5,12+fr],[32.5,20+fr]]),low);
-    // head
-    polyFill(c,P([[35,2+fr],[38.5,1.8+fr],[41.5,3.5+fr],[45.2,6.6+fr],[45.4,9.2+fr],[43.5,10.6+fr],[40.5,10+fr],[37.5,9+fr],[35.5,6.5+fr]]),coat);
-    polyFill(c,P([[37.5,8+fr],[43,9.8+fr],[43.5,10.6+fr],[40.5,10+fr]]),low);
-    polyFill(c,P([[35,.2+fr],[36.2,-1.3+fr],[37.8,1+fr],[37.8,3.6+fr],[35.2,3.6+fr]]),low);
-    polyFill(c,P([[36.5,1.8+fr],[39,1.5+fr],[39.5,3.4+fr],[37.5,4+fr]]),mane);
-    if(blaze)polyFill(c,P([[39.8,3+fr],[41.2,3.5+fr],[45,7+fr],[44,7.8+fr],[40.5,5.5+fr]]),"#eee8da");
-    c.fillStyle="#0e0906";c.fillRect(Math.round(39*K),Math.round((4.6+fr)*K),4,4);c.fillRect(Math.round(44.2*K),Math.round((8.2+fr)*K),3,3);
-    c.fillStyle="#fff";c.fillRect(Math.round(39*K)+1,Math.round((4.6+fr)*K),1,1);
-    // bridle
-    line(c,37*K,(2.8+fr)*K,43*K,(9.8+fr)*K,1,"#20150e");line(c,37.2*K,(7.2+fr)*K,42.5*K,(9.4+fr)*K,1,"#20150e");
-    // mane
-    polyFill(c,P([[26.5,12.5+fr],[32,3.3+fr],[35,2.5+fr],[30,10+fr],[28.5,14.5+fr]]),mane);
-    for(let i=0;i<7;i++)line(c,(27.8+i*1.1)*K,(11.4-i*1.3+fr)*K,(25.4+i*1.1)*K,(13.4-i*1.3+fr+Math.sin(ph+i)*1)*K,2,mane);
+    // far legs, behind the body
+    drawLeg(0,far);drawLeg(2,far);
+    // tail streams out behind and ripples with the stride
+    const tw=Z.stand?0:Math.sin(ph)*1.3;
+    const tail=[[9.2,12.2+rr],[10.6,14.2+rr],[6.5,16.6+rr+tw*.5],[2.5,18.6+rr+tw*1.1],[-.8,19.6+rr+tw*1.6],[-1.4,18+rr+tw*1.3],[2.2,15+rr+tw*.6],[6,13+rr]];
+    polyFill(c,P(Z.stand?[[9.2,12.2+rr],[10.6,14.2+rr],[9.4,20+rr],[8.4,27+rr],[7,28+rr],[7.4,20+rr],[8,14+rr]]:tail),mane);
+    if(!Z.stand)for(const o of [0,1,2])line(c,(8.2-o*.4)*K,(13.4+rr+o*.5)*K,(.6+o*.9)*K,(18.8+rr+tw*(1.5-o*.3)+o*.6)*K,1,shade(mane,mane==="#e8e6e0"?.82:1.7));
     // barrel: rump, back, withers, chest, belly
-    polyFill(c,P([[8.4,14+rr],[10,11.3+rr],[14.5,10.6+b],[20,11.6+b],[26,11+fr],[30.2,12.5+fr],[32.4,16+fr],[31.8,20.5+fr],[27,23.2+fr],[20,23.6+b],[14,22.2+rr],[10,20.5+rr]]),coat);
-    polyFill(c,P([[10.4,20.5+rr],[14,22.2+rr],[20,23.6+b],[27,23.2+fr],[31.8,20.5+fr],[31,19+fr],[26,21.4+fr],[20,21.6+b],[14,20.3+rr]]),low);
-    polyFill(c,P([[10,11.6+rr],[14.5,11+b],[20,12+b],[26,11.4+fr],[26,12.4+fr],[20,13+b],[14.5,12+b],[10,12.8+rr]]),hi);
-    // muscle: quarter, shoulder, flank line
-    polyFill(c,P([[9.8,13+rr],[15,12.8+rr],[16.6,17+rr],[13.5,20+rr],[10.4,18.6+rr]]),hi);polyFill(c,P([[10.6,13.8+rr],[13.6,13.6+rr],[14.2,16+rr],[11.4,16.6+rr]]),hi2);
-    polyFill(c,P([[26.4,13+fr],[30.5,14+fr],[31.2,18.6+fr],[27.6,20+fr]]),hi);polyFill(c,P([[27.4,14+fr],[29.6,14.6+fr],[29.8,16.4+fr],[27.8,16.4+fr]]),hi2);
-    line(c,17*K,(13.5+b)*K,16.2*K,(21.5+b)*K,1,low);
-    // near legs
-    leg(31,21+fr,ph,coat,sock,true);leg(12,21+rr,ph+3.14,coat,sock,false);
-    // girth + saddle cloth + number
-    polyFill(c,P([[8.5,11.3+b],[19.5,11.3+b],[19.5,21.7+b],[8.5,21.7+b]]),"#fbf8ee",true);
-    polyFill(c,P([[8.5,11.3+b],[19.5,11.3+b],[19.5,12.4+b],[8.5,12.4+b]]),silk,true);
-    {const no=h.no||idx+1,sz=3.1;c.fillStyle="#000";c.font=`700 ${no>9?17:20}px "Barlow Condensed",Arial,sans-serif`;c.textAlign="center";c.textBaseline="middle";c.fillText(String(no),14*K,(17+b)*K);c.textAlign="left"}
-    // jockey: knee, boot, stirrup
-    polyFill(c,P([[17,10.6+b],[23,10.6+b],[26,13.6+b],[20.6,15+b]]),"#f2efe3");
-    polyFill(c,P([[20.6,14+b],[25,14+b],[25,18.6+b],[23.8,19+b],[20.6,18.4+b]]),"#16100c");
-    c.fillStyle="#c9c2b0";c.fillRect(Math.round(20.8*K),Math.round((19+b)*K),Math.round(4.6*K),2);
-    // torso, low crouch, and silks pattern
-    const A=[17.6,6.5+b],B=[23,1+b],C=[28.4,3.6+b],D=[24,11+b];
-    const q=(u,v)=>{const tx=A[0]+(B[0]-A[0])*u,ty=A[1]+(B[1]-A[1])*u,bx=D[0]+(C[0]-D[0])*u,by=D[1]+(C[1]-D[1])*u;return [tx+(bx-tx)*v,ty+(by-ty)*v]};
+    polyFill(c,P([[8.4,14+rr],[10,11.3+rr],[14.5,10.4+b],[20,11.4+b],[26,10.8+fr],[30.4,12.3+fr],[33,16+fr],[32.2,20.6+fr],[27,23+fr],[20,23.2+b],[14,22.2+rr],[9.6,20.6+rr]]),coat);
+    polyFill(c,P([[10.4,20.5+rr],[14,22.2+rr],[20,23.2+b],[27,23+fr],[32.2,20.6+fr],[31,19+fr],[26,21.2+fr],[20,21.4+b],[14,20.3+rr]]),low);
+    polyFill(c,P([[10,11.6+rr],[14.5,10.8+b],[20,11.8+b],[26,11.2+fr],[26,12.2+fr],[20,12.8+b],[14.5,11.8+b],[10,12.8+rr]]),hi);
+    polyFill(c,P([[9.8,13+rr],[15,12.8+rr],[16.8,17+rr],[13.5,20.2+rr],[10.2,18.6+rr]]),hi);polyFill(c,P([[10.6,13.8+rr],[13.6,13.6+rr],[14.2,16+rr],[11.4,16.6+rr]]),hi2);
+    polyFill(c,P([[26.4,13+fr],[30.6,14+fr],[31.6,18.6+fr],[27.6,20+fr]]),hi);polyFill(c,P([[27.4,14+fr],[29.6,14.6+fr],[29.8,16.4+fr],[27.8,16.4+fr]]),hi2);
+    line(c,17*K,(13.5+b)*K,16.2*K,(21.3+b)*K,1,low);line(c,22*K,(14+b)*K,21.6*K,(21.6+b)*K,1,low);
+    if(look.d)for(let i=0;i<14;i++){const x=11+((hs>>i)%17)+hash(i+hs%97)*3,y=13+hash(i*3+hs%31)*8;c.fillStyle=look.d;c.globalAlpha=.55;c.beginPath();c.arc(x*K,(y+b)*K,.9*K,0,7);c.fill();c.globalAlpha=1}
+    // neck and head nod down as the forelegs land, pivoting at the withers
+    c.save();const pvx=28.5*K,pvy=(14+fr)*K,nod=Z.nod*.09;c.translate(pvx,pvy);c.rotate(nod);c.translate(-pvx,-pvy);
+    polyFill(c,P([[26.6,13+fr],[29.4,8.2+fr],[33.6,3.6+fr],[38.2,4.8+fr],[37.2,10+fr],[34.4,19.4+fr],[29,19+fr]]),coat);
+    polyFill(c,P([[34.4,19.4+fr],[37.2,10+fr],[38.2,6.5+fr],[35.6,12+fr],[32.6,20+fr]]),low);
+    polyFill(c,P([[35,2+fr],[38.5,1.6+fr],[41.8,3.3+fr],[45.6,6.6+fr],[45.8,9.3+fr],[43.8,10.8+fr],[40.6,10.2+fr],[37.5,9+fr],[35.5,6.5+fr]]),coat);
+    polyFill(c,P([[37.5,8+fr],[43.2,9.9+fr],[43.8,10.8+fr],[40.6,10.2+fr]]),low);
+    polyFill(c,P([[35,.2+fr],[36.2,-1.4+fr],[37.8,1+fr],[37.8,3.6+fr],[35.2,3.6+fr]]),low);
+    if(face===1)polyFill(c,P([[39.6,3.2+fr],[40.8,3.4+fr],[40.6,4.6+fr],[39.4,4.4+fr]]),white);
+    if(face===2)polyFill(c,P([[39.8,3+fr],[41.2,3.5+fr],[45.2,7+fr],[44.2,7.8+fr],[40.5,5.5+fr]]),white);
+    if(face===3)polyFill(c,P([[39.4,2.6+fr],[41.6,3.2+fr],[45.6,6.6+fr],[45.6,8.8+fr],[43.6,8.6+fr],[40,5.6+fr]]),white);
+    if(face===4)polyFill(c,P([[44.4,7.6+fr],[45.6,7.4+fr],[45.7,8.8+fr],[44.6,9+fr]]),white);
+    c.fillStyle="#0e0906";c.fillRect(Math.round(39*K),Math.round((4.6+fr)*K),4,4);c.fillRect(Math.round(44.4*K),Math.round((8.2+fr)*K),3,3);
+    c.fillStyle="#fff";c.fillRect(Math.round(39*K)+1,Math.round((4.6+fr)*K),1,1);
+    // blinkers on one in three runners, bridle and bit
+    if(hs%3===1){polyFill(c,P([[38,3.6+fr],[40.6,3.4+fr],[40.6,6.2+fr],[38,6.4+fr]]),silk,true)}
+    line(c,37*K,(2.8+fr)*K,43*K,(9.8+fr)*K,1,"#20150e");line(c,37.2*K,(7.2+fr)*K,42.5*K,(9.4+fr)*K,1,"#20150e");
+    // mane flicks with the stride
+    polyFill(c,P([[26.5,12.5+fr],[32,3.3+fr],[35,2.5+fr],[30,10+fr],[28.5,14.5+fr]]),mane);
+    for(let i=0;i<7;i++)line(c,(27.8+i*1.1)*K,(11.4-i*1.3+fr)*K,(25+i*1.1)*K,(13.6-i*1.3+fr+(Z.stand?0:Math.sin(ph+i)*1))*K,2,mane);
+    c.restore();
+    const bit=[42.6,9.6+fr],bx=pvx/K+(bit[0]-pvx/K)*Math.cos(nod)-(bit[1]-pvy/K)*Math.sin(nod),by=pvy/K+(bit[0]-pvx/K)*Math.sin(nod)+(bit[1]-pvy/K)*Math.cos(nod);
+    // near legs, in front of the body
+    drawLeg(1,coat);drawLeg(3,coat);
+    // saddle cloth and number
+    polyFill(c,P([[8.5,11.1+b],[19.5,11.1+b],[19.5,21.5+b],[8.5,21.5+b]]),"#fbf8ee",true);
+    polyFill(c,P([[8.5,11.1+b],[19.5,11.1+b],[19.5,12.2+b],[8.5,12.2+b]]),silk,true);
+    {const no=h.no||idx+1;c.fillStyle="#000";c.font=`700 ${no>9?17:20}px "Barlow Condensed",Arial,sans-serif`;c.textAlign="center";c.textBaseline="middle";c.fillText(String(no),14*K,(16.8+b)*K);c.textAlign="left"}
+    // jockey rides the stride: knees soak it up, so the torso moves less than the horse
+    const j=Z.stand?b-1.6:b;
+    polyFill(c,P([[17,10.4+b],[23,10.4+b],[26,13.4+b],[20.6,14.8+b]]),"#f2efe3");
+    polyFill(c,P([[20.6,13.8+b],[25,13.8+b],[25,18.4+b],[23.8,18.8+b],[20.6,18.2+b]]),"#16100c");
+    c.fillStyle="#c9c2b0";c.fillRect(Math.round(20.8*K),Math.round((18.8+b)*K),Math.round(4.6*K),2);
+    const lean=Z.stand?-1.6:0;
+    const A=[17.6+lean*.3,6.5+j],B=[23+lean,1+j],C=[28.4+lean,3.6+j],D=[24,11+b];
+    const q=(u,v)=>{const tx=A[0]+(B[0]-A[0])*u,ty=A[1]+(B[1]-A[1])*u,bx2=D[0]+(C[0]-D[0])*u,by2=D[1]+(C[1]-D[1])*u;return [tx+(bx2-tx)*v,ty+(by2-ty)*v]};
     const cell=(u0,u1,v0,v1)=>polyFill(c,P([q(u0,v0),q(u1,v0),q(u1,v1),q(u0,v1)]),alt,true);
     polyFill(c,P([A,B,C,D]),silk);
     if(pattern===1)for(const u of [.12,.42,.72])cell(u,u+.14,0,1);
@@ -477,19 +552,22 @@ function buildSheet(h,idx){
     if(pattern===3)polyFill(c,P([q(0,.1),q(0,.4),q(1,.9),q(1,.6)]),alt);
     if(pattern===4){cell(0,.5,0,.5);cell(.5,1,.5,1)}
     if(pattern===5)for(const [u,v] of [[.15,.15],[.55,.2],[.25,.6],[.65,.68]])cell(u,u+.18,v,v+.18);
-    // arm and reins, whip hand pumps
-    const arm=Math.sin(ph)*.8;
-    line(c,26*K,(5+b)*K,32.5*K,(8.2+b+arm)*K,5,silk);c.fillStyle="#e6b48e";c.fillRect(Math.round(32.5*K),Math.round((8.2+b+arm)*K),5,5);
-    line(c,33*K,(8.6+b+arm)*K,42.4*K,(9.6+fr)*K,1,"#20150e");
-    // helmet, face, goggles
-    polyFill(c,P([[27,1+b],[30.6,1+b],[30.6,4.6+b],[27,4.6+b]]),"#e6b48e");
-    polyFill(c,P([[25.8,-1+b],[28,-2.4+b],[30.2,-1.8+b],[30.8,1.3+b],[25.8,1.3+b]]),alt);
-    polyFill(c,P([[30,-.2+b],[33,.6+b],[33,1.3+b],[30,1.3+b]]),alt);
-    c.fillStyle="#1b1b22";c.fillRect(Math.round(28.4*K),Math.round((2+b)*K),Math.round(2.4*K),3);
+    // hands push toward the bit with the horse's head
+    const sh=[26+lean,5+j],hand=Z.stand?[31.5,9+b]:[32.5,8.2+j+Z.arm];
+    line(c,sh[0]*K,sh[1]*K,hand[0]*K,hand[1]*K,5,silk);
+    c.fillStyle="#e9e3d4";c.fillRect(Math.round(hand[0]*K)-1,Math.round(hand[1]*K)-1,6,5);
+    line(c,hand[0]*K,(hand[1]+.6)*K,bx*K,by*K,1,"#20150e");
+    if(!Z.stand)line(c,(hand[0]-.6)*K,(hand[1]+.4)*K,(hand[0]-5.4)*K,(hand[1]-3.6-Z.arm)*K,1,"#3a2a1c");
+    // face, helmet cover in the second colour, goggles
+    polyFill(c,P([[27+lean,1+j],[30.6+lean,1+j],[30.6+lean,4.6+j],[27+lean,4.6+j]]),"#e6b48e");
+    polyFill(c,P([[25.6+lean,-1+j],[28+lean,-2.6+j],[30.4+lean,-2+j],[31+lean,1.3+j],[25.6+lean,1.3+j]]),alt);
+    polyFill(c,P([[30+lean,-.2+j],[33.2+lean,.6+j],[33.2+lean,1.3+j],[30+lean,1.3+j]]),alt);
+    c.fillStyle="#1b1b22";c.fillRect(Math.round((28.4+lean)*K),Math.round((2+j)*K),Math.round(2.6*K),3);
+    c.fillStyle="#9fd2e8";c.fillRect(Math.round((29.6+lean)*K),Math.round((2+j)*K),3,2);
     c.globalCompositeOperation="source-atop";
-    const gr=c.createLinearGradient(0,0,0,SH);gr.addColorStop(0,"rgba(255,255,255,.2)");gr.addColorStop(.5,"rgba(255,255,255,0)");gr.addColorStop(1,"rgba(0,0,0,.34)");c.fillStyle=gr;c.fillRect(0,0,SW,SH);
+    const gr=c.createLinearGradient(0,0,0,SH);gr.addColorStop(0,"rgba(255,255,255,.2)");gr.addColorStop(.5,"rgba(255,255,255,0)");gr.addColorStop(1,"rgba(0,0,0,.32)");c.fillStyle=gr;c.fillRect(0,0,SW,SH);
     c.globalCompositeOperation="source-over";
-    out.drawImage(tmp,f*SW,0);
+    out.drawImage(tmp,f*FW,0);
   }
   return sheet;
 }
@@ -515,6 +593,7 @@ function palette(){
   const turfA=mix([84,150,68],[52,106,56],wet),turfB=mix([74,136,60],[46,96,50],wet);
   return {top,bot,turfA,turfB,hill:mix([86,110,92],[80,70,90],t),far:mix([128,150,150],[150,110,120],t),t};
 }
+const ADS=[["NO LIMITS 24/7","#121212","#d7aa38"],["GOLDFIELDS FEED & GRAIN","#2f6b3a","#f4f1e6"],["NAN'S BAKERY","#f4f1e6","#c8321f"],["DUSTY FLAT CWA SCONES","#2d5fb8","#ffffff"],["BULLOCK BEND TYRES","#f2c92b","#1b1b22"],["GOAT CREEK HOTEL","#7a2f24","#f4f1e6"],["WATTLE GULLY STOCK","#efe4c8","#2a2318"]];
 const CROWD=["#e8c8a8","#c8342a","#2d5fb8","#f0e8d0","#e6b420","#3a7c4b","#d77ba8","#2b2b33"];
 function stand(sx,w,roofY,rows,roof,now){
   if(sx>VW||sx+w<-10)return;
@@ -571,29 +650,37 @@ function drawScene(camX,now){
   for(let i=0;i<70;i++){const px=((i*83.3+hash(i)*300-camX)%VW+VW)%VW,py=104+hash(i*3)*112;g.fillRect(px,py,3,1)}
   g.fillStyle="rgba(20,40,20,.28)";g.fillRect(0,100,VW,5);
   if(tier.theme>=2){const ro=((-camX)%9+9)%9;for(let x=ro-9;x<VW;x+=9){g.fillStyle=hash(Math.floor(x+camX))>.5?"#d8342a":"#ef7fa8";g.fillRect(x,95,5,4);g.fillStyle="#2f6b3a";g.fillRect(x+1,99,3,1)}}
-  g.fillStyle="#f6f2e8";g.fillRect(0,92,VW,3);g.fillStyle="#bdb7a8";g.fillRect(0,94,VW,1);
+  {const BW2=150,first=Math.floor((camX-BW2)/BW2*1.0);
+    for(let i=first;i<first+VW/BW2+3;i++){const x=i*BW2-camX+20,ad=ADS[((i%ADS.length)+ADS.length)%ADS.length];
+      if(x<-130||x>VW)continue;
+      g.fillStyle="#2b261d";g.fillRect(x+2,90,2,6);g.fillRect(x+104,90,2,6);
+      g.fillStyle=ad[1];g.fillRect(x,82,108,10);g.fillStyle=ad[2];g.fillRect(x,82,108,1.5);
+      g.fillStyle=ad[2];g.font='700 7.2px "Barlow Condensed","Arial Narrow",sans-serif';g.textBaseline="middle";g.textAlign="center";g.fillText(ad[0],x+54,87.6,102);g.textAlign="left"}}
+  if(sx>-40&&sx<VW+40){g.fillStyle="#efe4c8";g.fillRect(sx+16,48,20,16);g.fillStyle="#7a2f24";g.fillRect(sx+14,45,24,4);g.fillStyle="#2a2318";g.fillRect(sx+19,52,14,6);
+    g.fillStyle="#cfc4a8";g.fillRect(sx+18,64,2,28);g.fillRect(sx+32,64,2,28);g.fillStyle="#1b1b22";g.font='700 4.5px "Barlow Condensed",Arial,sans-serif';g.textAlign="center";g.fillText("JUDGE",sx+26,61.5);g.textAlign="left"}
+  g.fillStyle="#f6f2e8";g.fillRect(0,92,VW,3);g.fillStyle="#bdb7a8";g.fillRect(0,94,VW,1);g.fillStyle="rgba(10,30,15,.25)";g.fillRect(0,95,VW,2);
   const po=((-camX)%32+32)%32;g.fillStyle="#f6f2e8";for(let x=po-32;x<VW;x+=32)g.fillRect(x,92,2,9);
   for(let m=200;m<S.race.dist;m+=200){const mx=(S.race.dist-m)*PX-camX;
     if(mx>-20&&mx<VW+20){g.fillStyle="#f6f2e8";g.fillRect(mx,74,2,22);g.fillStyle="#1b1b22";g.fillRect(mx-9,66,21,9);digits(g,m,mx-7+(m<1000?2:0),68,"#ffd889")}}
   if(sx>-10&&sx<VW+10){
     for(let y=102;y<218;y+=4){g.fillStyle=(y/4)%2?"#f4f1e6":"#1d1d1d";g.fillRect(sx,y,2,4);g.fillStyle=(y/4)%2?"#1d1d1d":"#f4f1e6";g.fillRect(sx+2,y,2,4)}
     g.fillStyle="#f4f1e6";g.fillRect(sx,54,3,42);g.fillStyle="#c8321f";g.fillRect(sx-6,46,15,12);g.fillStyle="#f4f1e6";g.fillRect(sx-2,49,7,6)}
-  g.fillStyle="#f6f2e8";g.fillRect(0,221,VW,3);for(let x=po-32;x<VW;x+=32)g.fillRect(x,221,2,9);
+  g.fillStyle="rgba(10,30,15,.3)";g.fillRect(0,224,VW,2);g.fillStyle="#f6f2e8";g.fillRect(0,221,VW,3);for(let x=po-32;x<VW;x+=32)g.fillRect(x,221,2,9);
   g.fillStyle=css(mix(P.turfA,[30,60,40],.5));g.fillRect(0,230,VW,6);
 }
 function drawGates(camX,now){
   // rear frame only; the front doors are drawn over the horses by drawDoors
   const n=S.race.field.length;
   for(let l=0;l<n;l++){const y=laneY(l),x=-camX;
-    g.fillStyle="#1f5c3d";g.fillRect(x-58,y-37,2,39);g.fillRect(x-58,y-37,68,3);
+    g.fillStyle="#1f5c3d";g.fillRect(x-58,y-37*GS,2,39*GS);g.fillRect(x-58,y-37*GS,68,3);
     g.fillStyle="#2c7a52";g.fillRect(x-58,y-3,68,2);}
-  const top=laneY(0)-46,bot=laneY(n-1)+3,x=-camX;
+  const top=laneY(0)-46*GS,bot=laneY(n-1)+3,x=-camX;
   g.fillStyle="#1f5c3d";g.fillRect(x-60,top,4,bot-top);
 }
 function drawDoors(camX,open){
   const n=S.race.field.length,x=-camX;
   for(let l=0;l<n;l++){
-    const y=laneY(l),h=30,sw=12*(1-open);
+    const y=laneY(l),h=30*GS,sw=12*(1-open);
     g.fillStyle="#d9a321";g.fillRect(x+7,y-h-6,4,h+8);
     if(open<1){
       g.fillStyle="#c8321f";g.fillRect(x+11,y-h,sw,h);
@@ -623,9 +710,9 @@ function drawAerial(pos,now){
     out.save();out.translate(pt.x,pt.y);out.rotate(tang+Math.PI);out.scale(.62,.62);
     const st=Math.floor(now/70+k)%2?1.6:-1.6;
     out.fillStyle="rgba(0,0,0,.25)";out.beginPath();out.ellipse(1,2,13,5,0,0,7);out.fill();
-    out.fillStyle=COATS[h.coat][0];out.beginPath();out.ellipse(0,0,10,4,0,0,7);out.fill();out.beginPath();out.ellipse(11,0,4.5,2.2,0,0,7);out.fill();
+    out.fillStyle=coatOf(h).b;out.beginPath();out.ellipse(0,0,10,4,0,0,7);out.fill();out.beginPath();out.ellipse(11,0,4.5,2.2,0,0,7);out.fill();
     out.fillRect(-7+st,-5.5,2.5,2);out.fillRect(-7-st,3.5,2.5,2);out.fillRect(5+st,-5.5,2.5,2);out.fillRect(5-st,3.5,2.5,2);
-    out.fillStyle=COATS[h.coat][1];out.fillRect(-14,-1,5,2);
+    out.fillStyle=coatOf(h).m;out.fillRect(-14,-1,5,2);
     out.fillStyle=silkOf(h,k)[0];out.beginPath();out.arc(1,0,4,0,7);out.fill();out.fillStyle=silkOf(h,k)[1];out.beginPath();out.arc(3,0,1.8,0,7);out.fill();
     out.restore();
     tags.push([pt.x,pt.y,h.no,silkOf(h,k)[0],S.bets.some(b=>b.sel.includes(k))]);
@@ -644,14 +731,14 @@ function horsePositions(t){
 function drawHorses(camX,pos,now){
   const f=S.race.field,idx=[...f.keys()].sort((a,b)=>f[a].barrier-f[b].barrier);
   for(const k of idx){
-    const h=f[k],y=laneY(h.barrier-1),moving=pos&&R.running&&!R.photoOn;
-    const x=Math.round((pos?pos[k]:0)*PX-camX-LW+2);
-    const ff=(pos&&(R.running||R.photoOn))?(R.photoOn?3:(Math.floor(now/48)+k*3)%FR):0;
-    const sw=moving?Math.round(Math.sin(now/260+k)):0;
-    if(x>-70&&x<VW+4){
-      g.fillStyle="rgba(10,30,15,.3)";g.beginPath();g.ellipse(x+LW/2,y+sw,LW/2-5,2.6,0,0,7);g.fill();
-      g.drawImage(sheets[k],ff*SW,0,SW,SH,x,y-LH+3+sw,LW,LH);
-      if(moving&&!reduced&&Math.random()<.65)particles.push({x:x+camX+8+Math.random()*10,y:y+sw,vx:-Math.random()*1.3-.3,vy:-Math.random()*.7-.1,life:10+Math.random()*14,s:1+Math.floor(Math.random()*3)});
+    const h=f[k],y=laneY(h.barrier-1),run=pos&&R&&!R.preUntil&&pos[k]>.3,moving=run&&R.running&&!R.photoOn;
+    const x=(pos?pos[k]:0)*PX-camX-LW+2;
+    const ff=run&&(R.running||R.photoOn)?(R.photoOn?3:(Math.floor(now/GAIT_MS)+k*3)%FR):STAND;
+    const sw=moving?Math.sin(now/260+k):0;
+    if(x>-LW-10&&x<VW+4){
+      g.fillStyle="rgba(10,30,15,.3)";g.beginPath();g.ellipse(x+LW/2,y+sw*.5,LW/2-6,3,0,0,7);g.fill();
+      g.drawImage(sheets[k],ff*FW,0,FW,FH,x,y-LH+3+sw,LW,LH);
+      if(moving&&!reduced&&Math.random()<.65)particles.push({x:x+camX+8+Math.random()*10,y:y,vx:-Math.random()*1.3-.3,vy:-Math.random()*.7-.1,life:10+Math.random()*14,s:1+Math.floor(Math.random()*3)});
     }
   }
 }
@@ -680,27 +767,53 @@ function drawCircle(now){
   const k=R.sim.order[0],h=S.race.field[k];
   out.fillStyle="rgba(12,16,10,.72)";out.fillRect(0,0,W,H);
   const g2=out.createRadialGradient(240,130,20,240,130,190);g2.addColorStop(0,"rgba(255,226,150,.55)");g2.addColorStop(1,"rgba(255,226,150,0)");out.fillStyle=g2;out.fillRect(0,0,W,H);
-  out.drawImage(sheets[k],0,0,SW,SH,130,44,LW*3.4,LH*3.4);
+  out.drawImage(sheets[k],2*FW,0,FW,FH,200-LW*1.42,50,LW*2.84,LH*2.84);
   out.textAlign="center";out.fillStyle="#ffb52e";out.font='400 30px "Anton",Impact,sans-serif';out.fillText(h.name,240,34,450);
   out.fillStyle="#efe4c8";out.font='600 18px "Barlow Condensed","Arial Narrow",sans-serif';out.fillText(`${h.jock} · ${S.race.title}`,240,216,450);out.textAlign="left";
+  // placings board: first four, straight from the recorded finish
+  const top=R.sim.order.slice(0,4),bx=W-128,by=58;
+  out.fillStyle="rgba(15,12,8,.82)";out.fillRect(bx,by,120,14+top.length*21);
+  out.fillStyle="#ffb52e";out.font='700 11px "Barlow Condensed","Arial Narrow",sans-serif';out.fillText("PLACINGS",bx+8,by+12);
+  top.forEach((k,i)=>{const r=S.race.field[k],c=silkOf(r,k)[0],y=by+18+i*21;
+    out.fillStyle="#efe4c8";out.font='700 12px "Barlow Condensed","Arial Narrow",sans-serif';out.fillText(["1st","2nd","3rd","4th"][i],bx+8,y+12);
+    out.fillStyle=c;out.fillRect(bx+32,y+1,15,15);out.fillStyle=inkOn(c);out.textAlign="center";out.fillText(String(r.no),bx+39.5,y+12.5);out.textAlign="left";
+    out.fillStyle="#fff";out.font='600 12px "Barlow Condensed","Arial Narrow",sans-serif';out.fillText(r.name,bx+52,y+12,64)});
   if(!confetti.length)for(let i=0;i<70;i++)confetti.push({x:Math.random()*W,y:-Math.random()*H,v:.4+Math.random()*1.1,c:CROWD[i%CROWD.length]});
   for(const p of confetti){p.y+=reduced?0:p.v;if(p.y>H)p.y=-5;out.fillStyle=p.c;out.fillRect(p.x+Math.sin(p.y*.05)*7,p.y,3,3)}
 }
 let cam=-340,hudAt=0;
+function finalFrame(pos,camX,on){
+  // Fit the leaders (everyone within 30m of the front, and always the first four) and ease in over the last 320m.
+  const f=S.race.field,o=orderAt(pos),lead=pos[o[0]],D=S.race.dist;
+  const grp=o.filter((k,i)=>i<4||pos[k]>=lead-30);
+  let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;
+  for(const k of grp){const x=pos[k]*PX-camX,y=laneY(f[k].barrier-1);x0=Math.min(x0,x-LW-10);x1=Math.max(x1,x+30);y0=Math.min(y0,y-LH-34);y1=Math.max(y1,y+10)}
+  x1=Math.min(x1,VW);x0=Math.max(0,Math.min(x0,x1-60));
+  const ease=clamp((320-(D-lead))/120,0,1),fit=clamp(Math.min(W/(x1-x0),H/(y1-y0)),1,1.5),target=on?1+(fit-1)*ease:1;
+  const cx=(x0+x1)/2,cy=(y0+y1)/2;
+  if(!R.cz){R.cz=1;R.cx=OS+W/2;R.cy=H/2}
+  const k=reduced?1:.08;R.cz+=(target-R.cz)*k;R.cx+=((on?cx:OS+W/2)-R.cx)*k;R.cy+=((on?cy:H/2)-R.cy)*k;
+  const w=W/R.cz,h=H/R.cz;
+  return {x:clamp(R.cx-w/2,0,VW-w),y:clamp(R.cy-h/2,0,H-h),w,h};
+}
 function updateHud(now,pos,show){
   const el=$("hud");
-  if(!show||!pos){if(el.dataset.on!=="0"){el.dataset.on="0";el.style.display="none"}return}
+  if(!show||!pos){if(el.dataset.on!=="0"){el.dataset.on="0";el.style.display="none";$("runline").hidden=true}return}
+  $("runline").hidden=false;
   if(now-hudAt<170)return;hudAt=now;
   el.dataset.on="1";el.style.display="flex";
   const o=orderAt(pos),lead=pos[o[0]],rem=Math.max(0,Math.round((S.race.dist-lead)/10)*10);
-  $("hudrem").textContent=rem>0?rem+"m":"Finish";
+  $("hudrem").innerHTML=rem>0?`${rem}m<small>to go of ${S.race.dist}m</small>`:"Finish";
+  $("hudrem").classList.toggle("final",rem>0&&rem<=200);
+  $("runbar").style.width=clamp(lead/S.race.dist,0,1)*100+"%";
+  $("runorder").innerHTML=o.map((k,i)=>{const h=S.race.field[k],c=silkOf(h,k)[0],mine=S.bets.some(b=>b.sel.includes(k));return `<span class="${mine?"mine":""}"><i style="background:${c};color:${inkOn(c)}">${h.no}</i>${i===0?"<b>"+h.name+"</b>":""}</span>`}).join("");
   $("hudtop").innerHTML=o.slice(0,4).map((k,i)=>{const h=S.race.field[k],c=silkOf(h,k)[0];return `<div><i style="background:${c};color:${inkOn(c)}">${h.no}</i><span>${h.name}</span></div>`}).join("");
 }
 function frame(now){
   requestAnimationFrame(frame);
   if(!S||!S.race)return;
   ensureSheets();
-  let pos=null,bend=0,zoom=1,fy=.65,fxF=.62,progress=0,aerial=false,doors=0;
+  let pos=null,bend=0,zoom=1,fy=.65,fxF=.62,progress=0,aerial=false,doors=0,fin=false;
   if(R){
     if(R.photoOn){if(now>R.photoUntil){R.photoOn=false;cv.style.filter="";$("photo").style.display="none";R.last=now;fireWinnerCall()}}
     else if(R.preUntil){
@@ -717,13 +830,12 @@ function frame(now){
       if(hasTurn&&progress>.46&&progress<.74&&!R.settled)aerial=true;
       else if(hasTurn&&progress>.36&&progress<=.46)bend=(progress-.36)/.1;
       else if(hasTurn&&progress>=.74&&progress<.84)bend=1-(progress-.74)/.1;
-      if(R.preUntil){zoom=1.55;fxF=.97;fy=.92}
-      else if(R.jumpAt&&now-R.jumpAt<1400){const u=(now-R.jumpAt)/1400;zoom=1+.55*(1-u);fxF=.97-.35*u;fy=.92-.27*u}
-      else if(progress>.84&&progress<1.02)zoom=1+.28*clamp((progress-.84)/.08,0,1);
-      else if(progress>=1.02&&!R.settled)zoom=1.28;
+      if(R.preUntil){zoom=1.3;fxF=.97;fy=.72}
+      else if(R.jumpAt&&now-R.jumpAt<1400){const u=(now-R.jumpAt)/1400;zoom=1+.3*(1-u);fxF=.97-.35*u;fy=.72-.07*u}
+      else if(!R.photoOn&&!R.settled&&S.race.dist-Math.max(...pos)<=320)fin=true;
     }
     if(zoom>1&&!R.preUntil&&progress>.5){const f=S.race.field,o=orderAt(pos);fy=clamp((laneY(f[o[0]].barrier-1)-20-40)/120,.2,1)}
-  }else{cam=-340;zoom=reduced?1:1.55;fxF=.97;fy=.92}
+  }else{cam=-340;zoom=reduced?1:1.3;fxF=.97;fy=.72}
   let camX=cam-OS;
   if(R&&R.photoOn)camX=S.race.dist*PX-240-OS;
   const VPX=W*RES,HPX=H*RES,OSP=OS*RES;
@@ -744,11 +856,19 @@ function frame(now){
     }else if(bend>.02){
       for(let y=0;y<HPX;y+=2){const ly=y/RES,f=ly<72?0:Math.pow((ly-72)/164,2)*48*bend*RES;out.drawImage(offC,OSP-f,y,VPX,2,0,y,VPX,2)}
     }else{
-      const w=VPX/zoom,h=HPX/zoom;
-      out.drawImage(offC,OSP+(VPX-w)*fxF,(HPX-h)*fy,w,h,0,0,VPX,HPX);
+      if(fin||(R&&R.cz>1.001&&!R.settled&&!R.preUntil)){
+        const c=finalFrame(pos,camX,fin);
+        out.drawImage(offC,c.x*RES,c.y*RES,c.w*RES,c.h*RES,0,0,VPX,HPX);
+      }else{
+        if(R)R.cz=0;
+        const w=VPX/zoom,h=HPX/zoom;
+        out.drawImage(offC,OSP+(VPX-w)*fxF,(HPX-h)*fy,w,h,0,0,VPX,HPX);
+      }
     }
   }
   out.setTransform(RES,0,0,RES,0,0);
+  if(R&&pos&&!R.replay&&!reduced&&!R.flashAt&&Math.max(...pos)>=S.race.dist)R.flashAt=now;
+  if(R&&R.flashAt&&now-R.flashAt<260){out.fillStyle=`rgba(255,255,255,${.55*(1-(now-R.flashAt)/260)})`;out.fillRect(0,0,W,H)}
   drawRain(now);
   const circle=R&&R.circleAt&&now>R.circleAt;
   if(circle)drawCircle(now);else if(!aerial)drawOval(pos);
@@ -914,6 +1034,8 @@ function applyMeets(j){
 let meetsFailed=false;
 function loadMeets(){return fetch(REAL_URL).then(r=>r.json()).then(j=>{meetsFailed=false;applyMeets(j)}).catch(()=>{meetsFailed=true;if(S)renderNav()})}
 function setReal(mi,ri){
+  // picking the race already on screen only closes the side panels: a running race, its bets and its result stay put
+  if(S.mode==="real"&&S.real&&MEETS[mi]&&S.real.key===MEETS[mi].key&&S.idx===ri){bookOpen=false;resOpen=false;renderAll();return}
   abortRace();bookOpen=false;
   if(S.mode==="daily")leaveDaily();
   if(S.mode!=="real"){
@@ -930,14 +1052,18 @@ function renderNav(){
   let groups="",cur=S.mode==="real"?`${S.realIdx},${S.idx}`:"";
   MEETS.forEach((m,mi)=>{groups+=`<optgroup label="${dayName(m.date)} · ${m.venue}">`+m.races.map((r,ri)=>{const k=raceKey(m,r.number),done=RS[k]&&RS[k].done;return `<option value="${mi},${ri}" ${cur===mi+","+ri?"selected":""}>R${r.number} ${timeOf(r.jump)} ${r.name}${r.feature?" ★":""}${done?" (result in)":closed(r.jump)?" (closed)":""}</option>`}).join("")+`</optgroup>`});
   const pend=pendingCount();
-  $("nav").innerHTML=`<div><button data-nav="career" aria-pressed="${S.mode==="career"&&!bookOpen}">Career</button><button data-nav="daily" aria-pressed="${S.mode==="daily"&&!bookOpen}" ${S.mode!=="daily"&&dd!==undefined?"disabled":""}>${dd!==undefined&&S.mode!=="daily"?"Daily "+money(dd):"Daily"}</button><button data-nav="book" aria-pressed="${bookOpen}">My Book${pend?` (${pend})`:""}</button>${S.mode!=="daily"?'<button class="alt" data-nav="restart">Restart meet</button>':""}</div>
-  ${[...new Set(MEETS.map(m=>m.date))].map(d=>`<div class="meets"><span>${d===REAL_TODAY?"Today":"Tomorrow"===dayRel(d)?"Tomorrow":dayName(d)}</span>${MEETS.map((m,mi)=>m.date!==d?"":`<button data-meet="${mi}" aria-pressed="${S.mode==="real"&&mi===S.realIdx&&!bookOpen}">${m.venue}</button>`).join("")}</div>`).join("")}<label class="pick"><span>All races</span><select id="racesel" ${MEETS.length?"":"disabled"}>${cur?"":`<option value="" selected>${MEETS.length?"Pick a race":meetsFailed?"Real races only load on the public game site":"Loading races"}</option>`}${groups}</select></label>`;
+  $("nav").innerHTML=`<div><button data-nav="career" aria-pressed="${S.mode==="career"&&!bookOpen&&!resOpen}">Career</button><button data-nav="daily" aria-pressed="${S.mode==="daily"&&!bookOpen&&!resOpen}" ${S.mode!=="daily"&&dd!==undefined?"disabled":""}>${dd!==undefined&&S.mode!=="daily"?"Daily "+money(dd):"Daily"}</button><button data-nav="results" aria-pressed="${resOpen}">Results</button><button data-nav="book" aria-pressed="${bookOpen}">My Book${pend?` (${pend})`:""}</button>${S.mode!=="daily"?'<button class="alt" data-nav="restart">Restart meet</button>':""}</div>
+  ${[...new Set(MEETS.map(m=>m.date))].map(d=>`<div class="meets"><span>${d===REAL_TODAY?"Today":"Tomorrow"===dayRel(d)?"Tomorrow":dayName(d)}</span>${MEETS.map((m,mi)=>m.date!==d?"":`<button data-meet="${mi}" aria-pressed="${S.mode==="real"&&mi===S.realIdx&&!bookOpen&&!resOpen}">${m.venue}</button>`).join("")}</div>`).join("")}<label class="pick"><span>All races</span><select id="racesel" ${MEETS.length?"":"disabled"}>${cur?"":`<option value="" selected>${MEETS.length?"Pick a race":meetsFailed?"Real races only load on the public game site":"Loading races"}</option>`}${groups}</select></label>`;
 }
-$("nav").addEventListener("change",e=>{if(e.target.id!=="racesel"||!e.target.value)return;const [m,r]=e.target.value.split(",").map(Number);audio();setReal(m,r)});
+$("nav").addEventListener("change",e=>{if(e.target.id!=="racesel"||!e.target.value)return;resOpen=false;const [m,r]=e.target.value.split(",").map(Number);audio();setReal(m,r)});
 $("nav").addEventListener("click",e=>{
   const b=e.target.closest("button");if(!b||b.disabled)return;audio();
-  if(b.dataset.meet!==undefined){const mi=+b.dataset.meet,rs=MEETS[mi].races,open=rs.findIndex(r=>!closed(r.jump));return setReal(mi,open>=0?open:0)}
-  if(b.dataset.nav==="career"){bookOpen=false;return goCareer()}
+  if(b.dataset.nav==="results"){if(resOpen){resOpen=false;resSel=null;renderNav();renderCard()}else openResults();return}
+  resOpen=false;resSel=null;
+  if(b.dataset.meet!==undefined){const mi=+b.dataset.meet,rs=MEETS[mi].races,open=rs.findIndex(r=>!closed(r.jump));
+    if(S.mode==="real"&&S.real&&S.real.key===MEETS[mi].key){bookOpen=false;return renderAll()}
+    return setReal(mi,open>=0?open:0)}
+  if(b.dataset.nav==="career"){bookOpen=false;if(S.mode==="career")return renderAll();return goCareer()}
   if(b.dataset.nav==="book"){bookOpen=!bookOpen;bookMsg="";settleBook();renderNav();renderCard();if(bookOpen)$("card").scrollIntoView({block:"start"});return}
   if(b.dataset.nav==="daily"){bookOpen=false;if(S.mode==="daily")return renderAll();abortRace();if(S.mode==="real"){const c=S.career;const k={...S};delete k.career;c.realSaved=k;S=c}return startDaily()}
   if(b.dataset.nav==="restart"){bookOpen=false;return restartMeet()}
@@ -1011,13 +1137,98 @@ async function checkResults(){
   }catch(e){bookMsg="Couldn't reach the results feed. Try again soon."}
   bookBusy=false;renderNav();renderCard();
 }
+/* ---------- results history ---------- */
+// Every finished race is written here once, straight from the simulation that was played.
+// Nothing is ever trimmed. Logged-in players also get one permanent server row per race (otr_results),
+// so the full history survives even if this device runs out of space.
+const K_RES="otrresults1",K_RESQ="otrresq:",RES_PAGE=100;
+function normResults(r,owner){r=r&&Array.isArray(r.list)?r:{list:[]};return {owner:r.owner===undefined?(owner??null):r.owner,list:r.list,pend:Array.isArray(r.pend)?r.pend:[],more:!!r.more}}
+let RESULTS=(()=>{try{return normResults(JSON.parse(localStorage.getItem(K_RES)))}catch(e){return normResults(null)}})();
+let resOpen=false,resSel=null,resFull=false,resLoading=false;
+function saveResults(){try{localStorage.setItem(K_RES,JSON.stringify(RESULTS));resFull=false}catch(e){resFull=true}}
+const LEN_M=2.4,FIN_V=17; // one length is about 2.4m, horses finish at about 17m/s
+function marginTxt(l){
+  if(l<.05)return "Nose";if(l<.1)return "Short head";if(l<.2)return "Head";if(l<.3)return "Neck";
+  if(l<.6)return "1/2 len";if(l<.85)return "3/4 len";return (Math.round(l*10)/10).toFixed(1)+" len";
+}
+const timeTxt=s=>{const m=Math.floor(s/60),r=s-m*60;return m+":"+(r<10?"0":"")+r.toFixed(2)};
+function buildResult(){
+  const race=S.race,sim=R.sim,o=sim.order,w=sim.fin[o[0]],x=S.result;
+  const real=S.mode==="real",src=real?S.real.races[S.idx]:null;
+  const runners=o.map((k,i)=>{const h=race.field[k],t=sim.fin[k],c=silkOf(h,k);
+    return {pos:i+1,no:h.no,name:h.name,jock:h.jock,bar:h.realBarrier||h.barrier,wt:h.weight,win:h.win,place:h.place,time:Math.round(t*100)/100,
+      mar:i?(t-sim.fin[o[i-1]])*FIN_V/LEN_M:0,btn:(t-w)*FIN_V/LEN_M,silk:[c[0],h.silk?inkOn(c[0]):c[1]]}});
+  return {id:x.rid,at:new Date().toISOString(),mode:S.mode,
+    meet:real?"Real Races (simulated)":S.mode==="daily"?"Daily Meeting "+S.day:`${TIERS[S.tier||0].name} · Meeting ${S.meeting}`,
+    track:S.track,raceNo:race.realNo||race.no,title:race.title,dist:race.dist,cond:race.trackLabel||ratingName(race.rating),
+    jump:real&&src?src.jump:null,date:real?S.real.date:null,key:real&&src?raceKey(S.real,src.number):null,placeN:race.placeN,runners,
+    div:{quin:x.quin,exacta:x.exacta,tri:x.tri,first4:x.first4||null},staked:x.staked,ret:x.ret};
+}
+function recordResult(){
+  const x=S.result;if(!x)return;
+  x.rid=x.rid||Date.now().toString(36)+"-"+Math.floor(Math.random()*1e9).toString(36);
+  if(RESULTS.list.some(r=>r.id===x.rid))return;
+  RESULTS.list.unshift(buildResult());
+  if(RESULTS.owner&&!RESULTS.pend.includes(x.rid))RESULTS.pend.push(x.rid);
+  saveResults();
+  if(typeof cloudMark==="function")cloudMark();
+}
+function mergeResults(a,b){
+  const seen=new Set(),all=[];
+  for(const r of [...(a||[]),...(b||[])])if(r&&r.id&&!seen.has(r.id)){seen.add(r.id);all.push(r)}
+  all.sort((p,q)=>q.at<p.at?-1:q.at>p.at?1:q.id<p.id?-1:1);
+  return all;
+}
+const resDay=r=>new Date(r.at).toLocaleDateString("en-AU",{weekday:"long",day:"numeric",month:"long"});
+const resTime=r=>new Date(r.jump||r.at).toLocaleTimeString("en-AU",{hour:"numeric",minute:"2-digit"});
+const silkTag=s=>(no)=>`<span class="silk" style="background:${s[0]};color:${s[1]}">${no}</span>`;
+function renderResults(){
+  const c=$("card"),L=RESULTS.list;
+  if(resSel){const r=L.find(x=>x.id===resSel);if(r)return renderResultDetail(r);resSel=null}
+  const days=[];for(const r of L){const d=resDay(r);let g=days.find(x=>x.d===d);if(!g)days.push(g={d,rows:[]});g.rows.push(r)}
+  c.innerHTML=`<h2>Results</h2>
+  <div class="conds"><span>${L.length?`${L.length} race${L.length>1?"s":""} ${RESULTS.more?"loaded":"saved"}`:"No races yet"}</span><span>Newest first</span>${RESULTS.pend.length&&AUTH?`<span>${RESULTS.pend.length} waiting to upload</span>`:""}</div>
+  ${resFull?`<div class="tip">This device is out of storage space, so new results can't be saved here.${AUTH?" They are still saved to your account.":" Log in to keep them in your account."} Nothing has been deleted.</div>`:""}
+  ${days.length?days.map(g=>`<section class="res-day"><h3>${g.d}</h3>${g.rows.map(r=>{const w=r.runners[0];return `<button class="res-row" data-res="${r.id}">
+    ${silkTag(w.silk)(w.no)}<span><span class="res-race">R${r.raceNo} ${r.title}${r.mode==="real"?' <em class="simtag">Simulated</em>':""}</span><span class="res-meta">${r.track} · ${r.dist}m · ${resTime(r)}</span><span class="res-win">Won by <b>${w.name}</b> · ${timeTxt(w.time)}</span></span><span class="res-go">View</span></button>`}).join("")}</section>`).join("")
+  :'<div class="tip">Results appear here as soon as a race is run. Every race in Career, Daily and Real Races is saved.</div>'}
+  ${RESULTS.more&&AUTH?`<button class="big place" data-res="older" ${resLoading?"disabled":""}>${resLoading?"Loading":"Load older results"}</button>`:""}
+  <button class="reset" data-res="close">Back to the race</button>`;
+}
+function renderResultDetail(r){
+  const c=$("card"),d=r.div,w=r.runners[0];
+  c.innerHTML=`<div class="detail-h"><button class="reset" data-res="list">All results</button><button class="reset" data-res="close">Back to the race</button></div>
+  ${r.mode==="real"?'<div class="simbanner">Simulated race · not the official result</div>':""}
+  <h2>R${r.raceNo} ${r.title}</h2>
+  <div class="conds"><span>${r.track}</span><span>${resDay(r)}, ${resTime(r)}</span><span>${r.dist}m</span><span>${r.cond}</span><span>${r.runners.length} runners</span></div>
+  <div class="conds"><span>${r.meet}</span></div>
+  <div class="res-winner">${silkTag(w.silk)(w.no)}<span><small>Winner</small><b>${w.name}</b><span>${w.jock} · ${timeTxt(w.time)} · SP ${oddsTxt(w.win)}</span></span></div>
+  <div class="res-scroll"><table class="tbl res-tbl"><thead><tr><th>Pos</th><th></th><th>Horse</th><th class="n wide">Bar</th><th class="n wide">Wt</th><th class="n">Time</th><th class="n">Margin</th><th class="n wide">SP</th></tr></thead><tbody>
+  ${r.runners.map(x=>`<tr class="${x.pos===1?"res-first":x.pos<=4?"res-placed":""}"><td><b>${["1st","2nd","3rd","4th"][x.pos-1]||x.pos+"th"}</b></td><td>${silkTag(x.silk)(x.no)}</td><td><b>${x.name}</b><br><small>${x.jock}<span class="narrow"> · B${x.bar} · ${x.wt}kg · SP ${oddsTxt(x.win)}</span></small></td><td class="n wide">${x.bar}</td><td class="n wide">${x.wt}</td><td class="n">${timeTxt(x.time)}</td><td class="n">${x.pos===1?"":marginTxt(x.mar)}${x.pos>2?`<br><small>${(Math.round(x.btn*10)/10).toFixed(1)} len bhd</small>`:""}</td><td class="n wide">${oddsTxt(x.win)}</td></tr>`).join("")}
+  </tbody></table></div>
+  <div class="conds"><span>Win ${div(w.win)}</span>${r.runners.slice(0,r.placeN).map(x=>`<span>Place #${x.no} ${div(x.place)}</span>`).join("")}</div>
+  <div class="conds"><span>Quinella ${div(d.quin)}</span><span>Exacta ${div(d.exacta)}</span><span>Trifecta ${div(d.tri)}</span>${d.first4?`<span>First 4 ${div(d.first4)}</span>`:""}</div>
+  ${r.staked?`<div class="tip">Your bets: ${money(r.staked)} staked, ${money(r.ret)} returned.</div>`:""}
+  ${r.mode==="real"?`<div class="tip">This race was simulated by the game using the real field and market odds. ${r.key&&resultLine(r.key)?`Official result: <b>${resultLine(r.key)}</b>.`:"The official result is in My Book once it's in."}</div>`:""}
+  <div class="tip">Times and margins come from the race simulation. Margins are in lengths. SP is the starting price.</div>`;
+}
+$("card").addEventListener("click",e=>{
+  const b=e.target.closest("[data-res]");if(!b)return;
+  const v=b.dataset.res;
+  if(v==="close"){resOpen=false;resSel=null;renderNav();renderCard();return}
+  if(v==="older"){loadOlderResults();return}
+  if(v==="list"){resSel=null;renderCard();$("card").scrollIntoView({block:"start"});return}
+  resSel=v;renderCard();$("card").scrollIntoView({block:"start"});
+});
+function openResults(id){bookOpen=false;resOpen=true;resSel=id||null;renderNav();renderCard();$("card").scrollIntoView({block:"start"})}
+
 /* ---------- race playback ---------- */
 function say(html){$("call").innerHTML=html}
 const nm=k=>`<b>${S.race.field[k].name}</b>`;
 const orderAt=pos=>[...pos.keys()].sort((a,b)=>pos[b]-pos[a]);
 const myK=()=>{const c={};S.bets.forEach(b=>b.sel.forEach(k=>c[k]=(c[k]||0)+b.stake));const e=Object.entries(c).sort((a,b)=>b[1]-a[1])[0];return e?+e[0]:null};
 function startRace(){
-  audio();bookOpen=false;renderNav();
+  audio();bookOpen=false;resOpen=false;renderNav();
   const sim=S.mode==="daily"?withSeed(S.seed+S.idx*131,()=>simulate(S.race.field,S.race,true)):simulate(S.race.field,S.race,true);
   const fin=sim.order.map(k=>sim.fin[k]);
   R={preUntil:performance.now()+2300,jumpAt:0,sim,t:0,rate:(S.race.dist/17)/(20+(S.race.dist-1000)*.03),running:true,last:performance.now(),called:0,photoDone:false,settled:false,lastHoof:0,evI:0,
@@ -1085,6 +1296,7 @@ function settle(){
   S.lastNames=race.field.map(h=>h.name);
   S.ledger.push({no:race.no,staked:res.staked,ret:res.ret});
   S.result=res;S.phase="result";
+  recordResult();
   save();
   if(res.ret>res.staked)jingle();else if(res.staked>0)sad();
   renderAll();
@@ -1127,6 +1339,7 @@ function renderHeader(){
 }
 function renderCard(){
   if(bookOpen)return renderBook();
+  if(resOpen)return renderResults();
   if(picker)return renderPicker();
   const r=S.race,c=$("card");
   if(S.phase==="result")return renderResult();
@@ -1146,15 +1359,19 @@ function renderCard(){
     </button>`}).join("")}</div>`;
 }
 function renderResult(){
-  const r=S.race,x=S.result,c=$("card"),net=x.ret-x.staked;
-  const lbl=x.margin<.1?"Short head":x.margin<.5?"Half a length or less":x.margin.toFixed(1)+" lengths";
+  const r=S.race,x=S.result,c=$("card"),net=x.ret-x.staked,rec=RESULTS.list.find(q=>q.id===x.rid);
+  const rows=rec?rec.runners:x.order.map((k,i)=>({pos:i+1,no:r.field[k].no,name:r.field[k].name,jock:r.field[k].jock,win:r.field[k].win,place:r.field[k].place,mar:i?x.margin:0,time:0,silk:silkOf(r.field[k],k)}));
+  const ord=i=>["1st","2nd","3rd","4th"][i]||(i+1)+"th";
   c.innerHTML=`<h2>Result: ${r.title}</h2>
-  <table class="tbl">${x.order.slice(0,3).map((k,i)=>{const h=r.field[k];return `<tr><td>${silk(h,k)}</td><td><b>${["1st","2nd","3rd"][i]}</b> ${h.name}</td><td class="n">${i===0?"W "+div(h.win):""}<br>${i<r.placeN?"P "+div(h.place):""}</td></tr>`}).join("")}</table>
-  <div class="conds"><span>Margin: ${lbl}</span><span>Quinella ${div(x.quin)}</span><span>Exacta ${div(x.exacta)}</span><span>Trifecta ${div(x.tri)}</span>${x.first4?`<span>First 4 ${div(x.first4)}</span>`:""}</div>
+  <div class="conds"><span>${r.dist}m</span><span>${r.trackLabel||ratingName(r.rating)}</span>${rows[0].time?`<span>Winning time ${timeTxt(rows[0].time)}</span>`:""}</div>
+  <table class="tbl res-tbl">${rows.map((h,i)=>`<tr class="${i===0?"res-first":i<4?"res-placed":""}"><td><b>${ord(i)}</b></td><td>${silkTag(h.silk)(h.no)}</td><td><b>${h.name}</b><br><small>${h.jock}</small></td><td class="n">${i===0?"":marginTxt(h.mar)}</td><td class="n">${i===0?"W "+div(h.win)+"<br>":""}${i<r.placeN?"P "+div(h.place):""}</td></tr>`).join("")}</table>
+  <div class="conds"><span>Quinella ${div(x.quin)}</span><span>Exacta ${div(x.exacta)}</span><span>Trifecta ${div(x.tri)}</span>${x.first4?`<span>First 4 ${div(x.first4)}</span>`:""}</div>
   ${x.bets.length?`<table class="tbl">${x.bets.map(b=>`<tr><td>${b.label}<br><small>${money(b.stake)} at ${div(b.odds)}</small></td><td class="n ${b.w?"won":"lost"}">${b.w?money(b.pay):"Lost"}</td></tr>`).join("")}</table>
   <div class="net ${net>0?"won":net<0?"lost":""}">${net>0?"Collect "+money(x.ret):net<0?"Down "+money(-net):"Square"}</div>`:`<div>No bets on this one.</div>`}
-  <div class="go"><button class="big place" id="replay">Watch replay</button><button class="big next" id="next">${S.idx>=lastIdx()?"Meeting result":"Next race"}</button></div>`;
+  <div class="go"><button class="big place" id="replay">Watch replay</button><button class="big next" id="next">${S.idx>=lastIdx()?"Meeting result":"Next race"}</button></div>
+  ${rec?`<button class="reset" data-res="${rec.id}" id="fullres">Full result and times</button>`:""}`;
   $("next").onclick=nextRace;$("replay").onclick=replay;
+  const fr=$("fullres");if(fr)fr.onclick=e=>{e.stopPropagation();openResults(rec.id)};
 }
 function renderEnd(){
   const net=S.bank-S.startBank,ratio=S.bank/Math.max(1,S.startBank+0);
@@ -1297,7 +1514,7 @@ const K_AUTH="otrauth1",K_SYNC="otrsync1",K_GUEST="otrguest1";
 const lsGet=k=>{try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}};
 const lsSet=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
 const lsDel=k=>{try{localStorage.removeItem(k)}catch(e){}};
-let AUTH=lsGet(K_AUTH),SYNC=lsGet(K_SYNC)||{},cloudQuiet=false,cloudTimer=0,cloudBusy=false,cloudAgain=false,cloudStatus="",refreshing=null;
+let cloudConflict=null,AUTH=lsGet(K_AUTH),SYNC=lsGet(K_SYNC)||{},cloudQuiet=false,cloudTimer=0,cloudBusy=false,cloudAgain=false,cloudStatus="",refreshing=null;
 const SITE=()=>location.origin+location.pathname;
 async function sbAuth(path,body,method="POST",token){
   const h={apikey:SB_KEY,"Content-Type":"application/json"};if(token)h.Authorization="Bearer "+token;
@@ -1316,11 +1533,11 @@ function token(){
   return refreshing=refreshing||sbAuth("token?grant_type=refresh_token",{refresh_token:AUTH.refresh}).then(j=>{setSession(j);return AUTH.access}).catch(e=>{if(e.status>=400&&e.status<500){sessionLost()}return null}).finally(()=>{refreshing=null});
 }
 function sessionLost(){AUTH=null;lsDel(K_AUTH);setCloudStatus("Logged out. Log in again to keep saving.")}
-async function sbRows(query,init={}){
+async function sbRows(query,init={},table="otr_accounts"){
   const t=await token();if(!t)throw new Error("signed out");
-  const r=await fetch(SB_URL+"/rest/v1/otr_accounts"+query,{...init,headers:{apikey:SB_KEY,Authorization:"Bearer "+t,"Content-Type":"application/json",...(init.headers||{})}});
+  const r=await fetch(SB_URL+"/rest/v1/"+table+query,{...init,headers:{apikey:SB_KEY,Authorization:"Bearer "+t,"Content-Type":"application/json",...(init.headers||{})}});
   if(!r.ok)throw new Error("save failed "+r.status);
-  return r.json();
+  const txt=await r.text();return txt?JSON.parse(txt):[];
 }
 // A real or daily meeting sits on top of the career save, and its race data is rebuilt from the feed.
 function cloudState(){
@@ -1339,10 +1556,20 @@ async function cloudPush(opts={}){
   if(cloudBusy){cloudAgain=true;return}
   cloudBusy=true;clearTimeout(cloudTimer);
   try{
-    const body=JSON.stringify({user_id:AUTH.uid,state:cloudState(),book:BOOK,updated_at:new Date().toISOString()});
-    const rows=await sbRows("?on_conflict=user_id",{method:"POST",body,keepalive:!!opts.keepalive&&body.length<60000,headers:{Prefer:"resolution=merge-duplicates,return=representation"}});
-    SYNC={uid:AUTH.uid,at:rows[0].updated_at,dirty:false};saveSync();
-    setCloudStatus("Saved to your account.");
+    const uid=AUTH.uid,stamp=new Date().toISOString();let rows;
+    if(cloudConflict&&!opts.force){await pushResults(opts);cloudBusy=false;return}
+    if(SYNC.uid===uid&&SYNC.at&&!opts.force){
+      const body=JSON.stringify({state:cloudState(),book:BOOK,updated_at:stamp});
+      rows=await sbRows(`?user_id=eq.${uid}&updated_at=eq.${encodeURIComponent(SYNC.at)}`,{method:"PATCH",body,keepalive:!!opts.keepalive&&body.length<60000,headers:{Prefer:"return=representation"}});
+      if(!rows.length){await pushResults(opts);cloudBusy=false;return syncConflict()}
+    }else{
+      const body=JSON.stringify({user_id:uid,state:cloudState(),book:BOOK,updated_at:stamp});
+      rows=await sbRows("?on_conflict=user_id",{method:"POST",body,keepalive:!!opts.keepalive&&body.length<60000,headers:{Prefer:"resolution=merge-duplicates,return=representation"}});
+    }
+    cloudConflict=null;
+    SYNC={uid,at:rows[0].updated_at,dirty:false};saveSync();
+    await pushResults(opts);
+    setCloudStatus(RESULTS.pend.length?"Saved. Some results are still waiting to upload.":"Saved to your account.");
   }catch(e){if(AUTH)setCloudStatus("Couldn't reach the server. Saved on this device for now.")}
   cloudBusy=false;
   if(cloudAgain){cloudAgain=false;cloudPush()}
@@ -1353,6 +1580,7 @@ function adopt(row){
   S=row.state;picker=null;if(S.phase==="race")S.phase="bet";
   if(S.result&&S.result.first4===undefined)S.result.first4=0;
   BOOK=row.book&&row.book.tickets?{scr:{},...row.book}:{bank:1000,tickets:[],scr:{}};
+  resOpen=false;resSel=null;
   save();saveBook();
   settleBook();
   renderAll();say(`Welcome back. Your game is loaded at <b>${S.track}</b>.`);
@@ -1365,18 +1593,74 @@ async function cloudPull(){
   let rows;
   try{rows=await sbRows(`?user_id=eq.${uid}&select=state,book,updated_at`)}catch(e){if(AUTH)setCloudStatus("Couldn't reach the server. Saved on this device for now.");return false}
   if(!AUTH||AUTH.uid!==uid)return false;
-  const row=rows[0],same=SYNC.uid===uid;
+  const row=rows[0],same=SYNC.uid===uid,isNew=!row||!row.state||!row.state.race;
+  // keep the guest's own game and results aside before this account's arrive
+  if(!same&&!isNew&&!lsGet(K_GUEST))lsSet(K_GUEST,{state:lsGet("dustyflat2"),book:lsGet("otrbook1"),results:RESULTS.owner?null:RESULTS});
+  claimResults(uid,isNew);
+  await pullResults(false);
   if(!row||!row.state||!row.state.race){await cloudPush();return false}
-  if(same&&SYNC.at===row.updated_at){if(SYNC.dirty)await cloudPush();else setCloudStatus("Saved to your account.");return false}
-  if(!same&&!lsGet(K_GUEST))lsSet(K_GUEST,{state:lsGet("dustyflat2"),book:lsGet("otrbook1")});
+  if(same&&SYNC.at===row.updated_at){if(SYNC.dirty||RESULTS.pend.length)await cloudPush();else setCloudStatus("Saved to your account.");return false}
+  if(same&&SYNC.dirty){await pushResults();syncConflict(row);return false}
   adopt(row);
+  if(RESULTS.pend.length)await pushResults();
   SYNC={uid,at:row.updated_at,dirty:false};saveSync();setCloudStatus("Saved to your account.");
   return true;
 }
+// Results that couldn't upload before a logout or account switch wait under that player's id, never in someone else's history.
+function stashPending(){
+  const o=RESULTS.owner;if(!o||!RESULTS.pend.length)return;
+  const q=lsGet(K_RESQ+o)||{list:[]},keep=RESULTS.list.filter(r=>RESULTS.pend.includes(r.id));
+  lsSet(K_RESQ+o,{list:mergeResults(q.list,keep)});RESULTS.pend=[];
+}
+function claimResults(uid,newAccount){
+  if(RESULTS.owner!==uid){
+    if(RESULTS.owner)stashPending();
+    if(RESULTS.owner===null&&newAccount)RESULTS={owner:uid,list:RESULTS.list,pend:RESULTS.list.map(r=>r.id),more:false};
+    else RESULTS={owner:uid,list:[],pend:[],more:true};
+    resSel=null;
+  }
+  const q=lsGet(K_RESQ+uid);
+  if(q&&q.list&&q.list.length){RESULTS.list=mergeResults(RESULTS.list,q.list);for(const r of q.list)if(!RESULTS.pend.includes(r.id))RESULTS.pend.push(r.id)}
+  lsDel(K_RESQ+uid);
+  saveResults();
+}
+async function pushResults(opts={}){
+  if(!AUTH||RESULTS.owner!==AUTH.uid||!RESULTS.pend.length)return;
+  const uid=AUTH.uid,ids=RESULTS.pend.slice(0,50),rows=RESULTS.list.filter(r=>ids.includes(r.id)).map(r=>({user_id:uid,id:r.id,at:r.at,data:r}));
+  try{
+    if(rows.length)await sbRows("?on_conflict=user_id,id",{method:"POST",body:JSON.stringify(rows),keepalive:!!opts.keepalive&&JSON.stringify(rows).length<60000,headers:{Prefer:"resolution=ignore-duplicates,return=minimal"}},"otr_results");
+    if(RESULTS.owner!==uid)return;
+    RESULTS.pend=RESULTS.pend.filter(id=>!ids.includes(id));saveResults();
+    if(RESULTS.pend.length&&rows.length)return pushResults(opts);
+  }catch(e){}
+}
+async function pullResults(older){
+  if(!AUTH||RESULTS.owner!==AUTH.uid)return;
+  const uid=AUTH.uid,last=RESULTS.list[RESULTS.list.length-1];
+  const q=`?user_id=eq.${uid}&select=data&order=at.desc,id.desc&limit=${RES_PAGE}`+(older&&last?`&at=lt.${encodeURIComponent(last.at)}`:"");
+  let rows;try{rows=await sbRows(q,{},"otr_results")}catch(e){return}
+  if(!AUTH||AUTH.uid!==uid||RESULTS.owner!==uid)return;
+  const before=RESULTS.list.length;
+  RESULTS.list=mergeResults(RESULTS.list,rows.map(r=>r.data));
+  if(older||RESULTS.more)RESULTS.more=rows.length===RES_PAGE;
+  saveResults();
+  if(resOpen&&(RESULTS.list.length!==before||older))renderCard();
+}
+async function loadOlderResults(){if(resLoading)return;resLoading=true;renderCard();await pullResults(true);resLoading=false;renderCard()}
+async function syncConflict(row){
+  if(!AUTH)return;
+  if(!row){try{row=(await sbRows(`?user_id=eq.${AUTH.uid}&select=state,book,updated_at`))[0]}catch(e){return}}
+  if(!row)return;
+  cloudConflict=row;setCloudStatus("Your game changed on another device.");
+  acctMode="conflict";acctNote("");renderAccount();if(!dlg.open)dlg.showModal();
+}
 async function afterLogin(){await cloudPull();renderAccount()}
-async function logOut(){
+async function logOut(force){
   clearTimeout(cloudTimer);
-  if(AUTH&&SYNC.dirty)await cloudPush();
+  if(AUTH&&(SYNC.dirty||RESULTS.pend.length))await cloudPush();
+  if(AUTH&&SYNC.dirty&&!force){acctNote("Can't reach the server, so your latest bets and bank haven't saved to your account yet. Try again when you're back online, or log out anyway and lose those changes. Your race results are kept and will upload next time you log in here.",true);$("acctOut").textContent="Log out anyway";$("acctOut").dataset.force="1";return false}
+  $("acctOut").textContent="Log out";delete $("acctOut").dataset.force;
+  stashPending();
   const t=AUTH&&AUTH.access;
   if(t)fetch(SB_URL+"/auth/v1/logout",{method:"POST",headers:{apikey:SB_KEY,Authorization:"Bearer "+t}}).catch(()=>{});
   AUTH=null;lsDel(K_AUTH);SYNC={};lsDel(K_SYNC);cloudStatus="";
@@ -1386,7 +1670,8 @@ async function logOut(){
   abortRace();bookOpen=false;picker=null;
   if(g&&g.state&&g.state.race){S=g.state;if(S.phase==="race")S.phase="bet"}else{S=null;fresh()}
   BOOK=g&&g.book&&g.book.tickets?{scr:{},...g.book}:{bank:1000,tickets:[],scr:{}};
-  save();saveBook();settleBook();renderAll();say(`Logged out. Betting open on the <b>${S.race.title}</b>.`);
+  RESULTS=normResults(g&&g.results,null);RESULTS.owner=null;RESULTS.pend=[];resOpen=false;resSel=null;
+  save();saveBook();saveResults();settleBook();renderAll();say(`Logged out. Betting open on the <b>${S.race.title}</b>.`);
   cloudQuiet=false;
   renderAccount();
 }
@@ -1399,16 +1684,20 @@ function renderAccount(){
   const b=$("acctbtn");
   b.textContent=AUTH?AUTH.email.split("@")[0]:"Log in";
   b.title=AUTH?AUTH.email:"Log in or create an account to save your game";
-  const m=AUTH?(acctMode==="newpass"?"newpass":"in"):(acctMode==="in"||acctMode==="newpass"?"login":acctMode);
+  const m=AUTH?(acctMode==="newpass"?"newpass":acctMode==="conflict"&&cloudConflict?"conflict":"in"):(acctMode==="in"||acctMode==="newpass"||acctMode==="conflict"?"login":acctMode);
   acctMode=m;
-  const titles={login:"Log in",signup:"Create account",forgot:"Reset password",newpass:"Set a new password",in:"Your account"};
+  if(m==="conflict"&&!cloudConflict)acctMode="in";
+  const titles={login:"Log in",signup:"Create account",forgot:"Reset password",newpass:"Set a new password",in:"Your account",conflict:"Game saved on two devices"};
   $("acctTitle").textContent=titles[m];
   $("acctWho").textContent=m==="in"?AUTH.email:"";
   $("acctWho").hidden=m!=="in";
   $("acctStatus").textContent=m==="in"?cloudStatus:"";
   $("acctStatus").hidden=m!=="in"||!cloudStatus;
-  $("acctForm").hidden=m==="in";
+  $("acctForm").hidden=m==="in"||m==="conflict";
   $("acctOut").hidden=m!=="in";
+  $("acctConflict").hidden=m!=="conflict";
+  if(m==="conflict"){const o=cloudConflict.state||{},oc=o.mode==="career"||!o.career?o:o.career,h=cloudState(),pend=b=>(b&&b.tickets||[]).filter(t=>t.status==="pending").length;
+    $("acctCmp").innerHTML=`This device: bank <b>${money(h.bank)}</b>, meeting ${h.meeting||1}, ${pend(BOOK)} open tickets.<br>Other device: bank <b>${money(oc.bank||0)}</b>, meeting ${oc.meeting||1}, ${pend(cloudConflict.book)} open tickets.`}
   $("acctEmailRow").hidden=m==="newpass";
   $("acctEmail").required=m!=="newpass";
   $("acctPassRow").hidden=m==="forgot";
@@ -1425,10 +1714,12 @@ function acctNote(t,bad){const n=$("acctNote");n.textContent=t||"";n.hidden=!t;n
 function openAcct(mode){acctMode=mode||(AUTH?"in":"login");acctNote("");renderAccount();if(!dlg.open)dlg.showModal();if(!AUTH&&acctMode!=="in")$("acctEmail").focus();if(AUTH){cloudPull()}}
 $("acctbtn").onclick=()=>openAcct();
 $("acctClose").onclick=()=>dlg.close();
+$("acctUseOther").onclick=()=>{const row=cloudConflict;if(!row)return;cloudConflict=null;adopt(row);SYNC={uid:AUTH.uid,at:row.updated_at,dirty:false};saveSync();acctMode="in";renderAccount();setCloudStatus("Loaded the game from your other device.");dlg.close()};
+$("acctKeepHere").onclick=async()=>{if(!cloudConflict)return;cloudConflict=null;await cloudPush({force:true});acctMode="in";renderAccount();dlg.close()};
 $("acctToSignup").onclick=()=>{acctMode="signup";acctNote("");renderAccount()};
 $("acctToLogin").onclick=()=>{acctMode="login";acctNote("");renderAccount()};
 $("acctToForgot").onclick=()=>{acctMode="forgot";acctNote("");renderAccount()};
-$("acctOut").onclick=async()=>{await logOut();dlg.close()};
+$("acctOut").onclick=async()=>{if(await logOut(!!$("acctOut").dataset.force)!==false)dlg.close()};
 $("acctForm").addEventListener("submit",async e=>{
   e.preventDefault();
   const email=$("acctEmail").value.trim(),password=$("acctPass").value,go=$("acctGo");
@@ -1485,6 +1776,7 @@ document.addEventListener("visibilitychange",()=>{
 });
 window.addEventListener("online",()=>{if(AUTH&&SYNC.dirty)cloudPush()});
 
+$("ver").textContent="v"+APP_VERSION;
 /* ---------- boot ---------- */
 function start(data){
   load(data);
