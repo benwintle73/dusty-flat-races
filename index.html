@@ -36,7 +36,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--amber);outline-
 .stage{grid-area:stage;background:var(--tote);border:3px solid var(--tote2)}
 .canvas-wrap{position:relative;line-height:0}
 canvas{width:100%;height:auto;display:block}
-#photo{position:absolute;left:50%;top:10px;transform:translateX(-50%);background:var(--red);color:#fff;font:400 26px/1.2 var(--display);letter-spacing:1px;padding:4px 16px;display:none}
+#photo{position:absolute;right:10px;bottom:10px;background:var(--red);color:#fff;font:400 clamp(14px,2.4vw,22px)/1.2 var(--display);letter-spacing:1px;padding:3px 12px;display:none}
 .call{font:600 25px/1.15 var(--led);color:#f0d9a8;padding:9px 14px;min-height:64px}
 .call b{font-weight:700;color:#fff}
 .slip{grid-area:slip;background:var(--tote);border:3px solid var(--tote2);padding:12px;display:grid;gap:10px}
@@ -274,7 +274,7 @@ canvas{width:100%;height:auto;display:block}
 <script>
 "use strict";
 /* ---------- helpers ---------- */
-const APP_VERSION="2.0.2"; // bump on every release; shown after the title
+const APP_VERSION="2.0.3"; // bump on every release; shown after the title
 const $=id=>document.getElementById(id);
 let RNG=Math.random;
 const mulberry=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
@@ -851,8 +851,9 @@ function frame(now){
     out.setTransform(1,0,0,1,0,0);
     if(R&&R.photoOn){
       const s=R.sim,a=S.race.field[s.order[0]],b=S.race.field[s.order[1]];
-      const cy=clamp((laneY(a.barrier-1)+laneY(b.barrier-1))/2-14,60,176);
-      out.drawImage(offC,(OS+120)*RES,(cy-59)*RES,240*RES,118*RES,0,0,VPX,HPX);
+      const ya=laneY(a.barrier-1),yb=laneY(b.barrier-1),y0=Math.min(ya,yb)-LH-8,y1=Math.max(ya,yb)+10;
+      const ph=clamp(Math.max(118,y1-y0),118,H),pw=ph*W/H,top=clamp((y0+y1)/2-ph/2,0,H-ph),left=clamp(OS+240-pw/2,0,VW-pw);
+      out.drawImage(offC,left*RES,top*RES,pw*RES,ph*RES,0,0,VPX,HPX);
     }else if(bend>.02){
       for(let y=0;y<HPX;y+=2){const ly=y/RES,f=ly<72?0:Math.pow((ly-72)/164,2)*48*bend*RES;out.drawImage(offC,OSP-f,y,VPX,2,0,y,VPX,2)}
     }else{
@@ -871,7 +872,7 @@ function frame(now){
   if(R&&R.flashAt&&now-R.flashAt<260){out.fillStyle=`rgba(255,255,255,${.55*(1-(now-R.flashAt)/260)})`;out.fillRect(0,0,W,H)}
   drawRain(now);
   const circle=R&&R.circleAt&&now>R.circleAt;
-  if(circle)drawCircle(now);else if(!aerial)drawOval(pos);
+  if(circle)drawCircle(now);else if(!aerial&&!(R&&R.photoOn))drawOval(pos); // no map over the photo
   updateHud(now,pos,R&&!R.preUntil&&!circle&&!R.photoOn);
 }
 
