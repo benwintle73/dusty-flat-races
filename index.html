@@ -285,7 +285,7 @@ canvas{width:100%;height:auto;display:block}
 <script>
 "use strict";
 /* ---------- helpers ---------- */
-const APP_VERSION="2.2.1"; // bump on every release; shown after the title
+const APP_VERSION="2.3.0"; // bump on every release; shown after the title
 const $=id=>document.getElementById(id);
 let RNG=Math.random;
 const mulberry=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
@@ -614,6 +614,7 @@ function newDogMeeting(){
   buildDogRace();
 }
 function buildDogRace(){
+  if(S.rd)return buildRealDog();
   const [title,dist]=DOG_RACES[S.idx];
   const last=S.lastNames||[];
   const pool=S.pool.filter(h=>!last.includes(h.name));
@@ -640,15 +641,99 @@ function enterDogs(){
   const career=S,ds=career.dogsSaved;career.dogsSaved=null;
   if(ds&&ds.race){S={...ds,career};if(S.phase==="race")S.phase="bet";save()}
   else{S={bank:1000,meeting:1,best:1000,bigCollect:0,loans:0,type:"win",sel:[],bets:[],phase:"bet",ledger:[],tier:0,mode:"dogs",career};newDogMeeting()}
-  R=null;renderAll();say(`Greyhounds at <b>${S.track}</b>. Betting open on the <b>${S.race.title}</b>.`);
+  R=null;renderAll();loadDogMeets();say(`Greyhounds at <b>${S.track}</b>. Betting open on the <b>${S.race.title}</b>.`);
 }
-const rugCss=h=>h.silk&&h.no===2&&isDogs()?RUG2:null;
+const rugCss=h=>h.silk&&(h.box||h.no)===2&&isDogs()?RUG2:null;
+
+/* ---------- real greyhound meetings (FormFav fields, simulated races) ---------- */
+const DG_URL="https://nkkhbtrrytctpfwjenrz.supabase.co/functions/v1/otr-dogs";
+let DGM=null,dgBusy="",dgFailed=false;const DGC={};
+function loadDogMeets(force){
+  if((DGM&&!force)||dgBusy==="list")return;dgBusy="list";
+  fetch(`${DG_URL}?list=1`).then(r=>r.json()).then(j=>{DGM=j.days?j:null;dgFailed=!j.days}).catch(()=>{dgFailed=true})
+    .finally(()=>{dgBusy="";if(S&&isDogs())renderNav()});
+}
+const dgToday=()=>DGM&&DGM.days&&DGM.days.find(d=>d.date===DGM.today)?DGM.days.find(d=>d.date===DGM.today).meetings:[];
+// boxes as they will actually jump: scratched dogs out, reserves (9, 10) fill vacant boxes in order
+function dogLineup(card){
+  const run=card.runners.filter(u=>!u.scr),main=run.filter(u=>u.box>=1&&u.box<=8),res=run.filter(u=>!(u.box>=1&&u.box<=8)).sort((a,b)=>a.no-b.no);
+  const used=new Set(main.map(u=>u.box)),free=[1,2,3,4,5,6,7,8].filter(b=>!used.has(b));
+  return [...main,...res.slice(0,free.length).map((u,i)=>({...u,box:free[i],reserve:true}))].sort((a,b)=>a.box-b.box);
+}
+// form-based chances: career win and place rates, recent runs, track-and-distance and box records, a little box bias
+function dogChances(rs){
+  const sm=(x,pr,k)=>x&&x.s?(x.w+(x[2]||0)*.5+pr*k)/(x.s+k):pr;
+  const POS={1:1,2:.7,3:.5,4:.35,5:.25,6:.18,7:.12,8:.08},BIAS={1:1.12,2:1.04,3:.98,4:.95,5:.95,6:.97,7:.99,8:1.06};
+  const sc=rs.map(u=>{
+    const o=u.st&&u.st.overall,s=o?o.s:0,win=((o?o.w:0)+.6)/(s+5),plc=((o?o.w+(o[2]||0)+(o[3]||0):0)+1.8)/(s+5);
+    const f=[...String(u.form||"")].reverse().slice(0,5),wt=[1,.8,.65,.5,.4];let a=0,b=0;
+    f.forEach((c,i)=>{a+=wt[i]*(POS[c]??.1);b+=wt[i]});const rec=b?a/b:.3;
+    const td=sm(u.st&&(u.st.td||u.st.dist),.25,3),bx=sm(u.st&&u.st.box,.25,3);
+    const v=.3*win/.12+.2*plc/.36+.3*rec/.4+.12*td/.25+.08*bx/.25;
+    return Math.pow(Math.max(.05,v),2.4)*(BIAS[u.box]||1);
+  });
+  let sum=sc.reduce((x,y)=>x+y,0),p=sc.map(x=>Math.max(.015,x/sum));sum=p.reduce((x,y)=>x+y,0);return p.map(x=>x/sum);
+}
+function buildRealDog(){
+  const card=S.rd.cards[S.idx],rs=dogLineup(card),p=dogChances(rs);
+  const field=rs.map((u,i)=>({name:u.name,no:u.no,box:u.box,barrier:u.box,reserve:!!u.reserve,q:.5,sta:.8,style:"mid",wet:.5,cons:.6,form:u.form||"",runs:[],dg:u,
+    jock:u.trainer||"Trainer TBC",sex:u.sex||"",coat:strHash(u.name)%DOG_COATS.length,weight:56,win:ladder(1/(p[i]*1.13)),silk:{c:RUGS[u.box-1][0],a:RUGS[u.box-1][1],p:0}}));
+  const race={title:card.name||`Race ${card.race}`,realNo:card.race,dist:card.distance||400,rating:4,trackLabel:"Good",field,placeN:field.length>=8?3:2,no:S.idx+1,cls:card.cls,dogs:true,realDogs:true,jump:card.jump};
+  if(field.length>=2)calibrate(race);
+  const best=field.slice().sort((a,b)=>a.win-b.win)[0];
+  race.tip=best?{name:best.name,no:best.no,why:"Best of the form. Nan reckons the numbers don't lie."}:null;
+  S.race=race;S.bets=[];S.sel=[];S.phase="bet";S.result=null;save();
+}
+const slim=c=>({...c,runners:c.runners.map(({sire,dam,...u})=>({...u,last20:String(u.last20||"").slice(-12),blood:sire?`${sire} × ${dam||"?"}`:""}))});
+function setRealDog(slug,ri){
+  const m=dgToday().find(x=>x.slug===slug);if(!m||dgBusy)return;
+  const go=cards=>{
+    const ok=cards.filter(c=>dogLineup(c).length>=4);
+    if(!ok.length){say(`No races with a full field at <b>${m.track}</b> right now.`);return}
+    abortRace();refundBets();
+    if(!S.rd)S.gameDog={pool:S.pool,track:S.track,weather:S.weather,idx:S.idx,startBank:S.startBank,ledger:S.ledger,lastNames:S.lastNames,meeting:S.meeting,race:S.race,phase:S.phase==="race"?"bet":S.phase};
+    S.pool=[]; // the game dogs wait in gameDog until the game meeting resumes
+    S.rd={date:m.date,slug:m.slug,track:m.track,cards:ok.map(slim)};S.track=m.track;S.startBank=S.bank;S.ledger=[];
+    const want=ri!==undefined?m.races[ri]&&m.races[ri].number:null;
+    let i=want!=null?ok.findIndex(c=>c.race===want):ok.findIndex(c=>!closed(c.jump));
+    S.idx=i>=0?i:0;R=null;buildRealDog();renderAll();say(`Real dogs at <b>${m.track}</b>. Betting open on <b>R${S.race.realNo}</b>.`);
+    document.querySelector(".stage").scrollIntoView({block:"start"});
+  };
+  const key=`${m.date}|${m.slug}`;if(DGC[key])return go(DGC[key]);
+  dgBusy=slug;renderNav();say(`Loading the <b>${m.track}</b> form...`);
+  fetch(`${DG_URL}?date=${m.date}&venue=${encodeURIComponent(m.slug)}`).then(r=>r.json()).then(j=>{
+    if(!j.races){say(escH(j.error||"That meeting couldn't load. Try again soon."));return}
+    DGC[key]=j.races;go(j.races)}).catch(()=>say("That meeting couldn't load. Try again soon.")).finally(()=>{dgBusy="";renderNav()});
+}
+function setDogRace(ri){if(!S.rd||ri===S.idx&&S.phase==="bet")return;abortRace();refundBets();S.idx=ri;R=null;buildRealDog();renderAll();say(`Betting open on <b>${S.track} R${S.race.realNo}</b>.`)}
+function backToGameDogs(){
+  abortRace();refundBets();const g0=S.gameDog;S.rd=null;S.gameDog=null;
+  if(g0&&g0.race){Object.assign(S,g0);S.bets=[];S.sel=[];S.result=null;if(S.phase==="end"){S.meeting++;S.lastNames=[];newDogMeeting()}}
+  else{S.meeting=(S.meeting||0)+1;newDogMeeting()}
+  R=null;save();renderAll();say(`Back to the game dogs at <b>${S.track}</b>.`);
+}
+function dogNavHtml(){
+  if(!isDogs())return "";
+  if(!DGM&&!dgFailed&&!dgBusy)setTimeout(loadDogMeets,0);
+  const ms=dgToday(),cur=S.rd?S.rd.slug:"";
+  const btn=ms.map(m=>`<button data-dgm="${m.slug}" aria-pressed="${cur===m.slug&&!bookOpen&&!resOpen}" ${dgBusy===m.slug?"disabled":""}>${escH(m.track)}${dgBusy===m.slug?"…":""}</button>`).join("");
+  const sel=S.rd?`<label class="pick"><span>Races</span><select id="dgsel">${S.rd.cards.map((c,i)=>`<option value="${i}" ${i===S.idx?"selected":""}>R${c.race} ${timeOf(c.jump)} ${escH(c.name||"")} ${c.distance?c.distance+"m":""}${closed(c.jump)?" (jumped)":""}</option>`).join("")}</select></label>`:"";
+  return `<div class="meets"><span>Real dogs today</span><button data-dgame="1" aria-pressed="${!S.rd&&!bookOpen&&!resOpen}">Game meeting</button>${btn||`<span>${dgFailed?"Real dog meetings only load on the public game site":dgBusy==="list"?"Loading…":"No meetings loaded"}</span>`}</div>${sel}`;
+}
+function dgHtml(h){
+  const u=h.dg,r=(l,x)=>`<tr><td>${l}</td><td>${x&&x.s?`${x.s}: ${x.w}-${x[2]}-${x[3]}`:"–"}</td></tr>`,st=u.st||{},prize=Number(String(u.prize||"").replace(/[^0-9.]/g,""));
+  return `<div class="ff"><div class="ff-id">${[u.age?u.age+"yo":"",escH(u.sex),escH(u.blood),prize>0?`${money(Math.round(prize))} prizemoney`:""].filter(Boolean).join(" · ")}</div>
+    ${u.last20?`<div class="ff-l20"><span>Last ${u.last20.length} starts</span><b>${escH(u.last20)}</b></div>`:""}
+    ${h.reserve?`<div class="ff-note">Reserve runner ${h.no}, starting from box ${h.box}.</div>`:""}
+    <table class="ff-t"><tbody>${r("Career",st.overall)}${r("This track",st.track)}${r("This distance",st.dist)}${r("Track & distance",st.td)}${r(`Box ${h.box}`,st.box)}</tbody></table>
+    <div class="ff-src">Starts: wins-seconds-thirds. Form guide by FormFav. Odds are game estimates from form.</div></div>`;
+}
 
 /* greyhound sprite: same frame size and timing as the horses, so the renderer treats them alike */
 function buildDogSheet(h,idx){
   const sheet=document.createElement("canvas");sheet.width=FW*(FR+1);sheet.height=FH;
   const out=sheet.getContext("2d");
-  const coat=DOG_COATS[h.coat%DOG_COATS.length],hs=strHash(h.name),box=h.no||idx+1,[rug,ink]=RUGS[(box-1)%8];
+  const coat=DOG_COATS[h.coat%DOG_COATS.length],hs=strHash(h.name),box=h.box||h.no||idx+1,[rug,ink]=RUGS[(box-1)%8];
   const P=a=>a.map(([x,y])=>[x*K,y*K]);
   const dark=shade(coat.b,.7),far=shade(coat.b,.55),hi=shade(coat.b,1.25);
   for(let f=0;f<=FR;f++){
@@ -717,7 +802,7 @@ function ensureSheets(){
   const key=S.mode+S.race.field.map(h=>h.name+h.no).join()+S.meeting+S.idx;
   if(key!==sheetKey){sheetKey=key;sheets=S.race.field.map((h,i)=>S.race.dogs?buildDogSheet(h,i):buildSheet(h,i))}
 }
-const laneY=l=>{const n=S.race.field.length;return 126+l*(88/(n-1))};
+const laneY=l=>{const n=S.race.dogs?8:S.race.field.length;return 126+l*(88/(n-1))};
 const mix=(a,b,t)=>a.map((v,i)=>Math.round(v+(b[i]-v)*t));
 const css=a=>`rgb(${a[0]},${a[1]},${a[2]})`;
 function palette(){
@@ -812,7 +897,7 @@ function drawScene(camX,now){
 }
 function drawGates(camX,now){
   // rear frame only; the front doors are drawn over the horses by drawDoors
-  const n=S.race.field.length;
+  const n=S.race.dogs?8:S.race.field.length;
   for(let l=0;l<n;l++){const y=laneY(l),x=-camX;
     const fc=S.race.dogs?"#9aa0a8":"#1f5c3d",bc=S.race.dogs?"#c3c8ce":"#2c7a52";
     g.fillStyle=fc;g.fillRect(x-58,y-37*GS,2,39*GS);g.fillRect(x-58,y-37*GS,68,3);
@@ -821,7 +906,7 @@ function drawGates(camX,now){
   g.fillStyle=S.race.dogs?"#9aa0a8":"#1f5c3d";g.fillRect(x-60,top,4,bot-top);
 }
 function drawDoors(camX,open){
-  const n=S.race.field.length,x=-camX;
+  const n=S.race.dogs?8:S.race.field.length,x=-camX;
   for(let l=0;l<n;l++){
     const y=laneY(l),h=30*GS,sw=12*(1-open);
     g.fillStyle=S.race.dogs?"#9aa0a8":"#d9a321";g.fillRect(x+7,y-h-6,4,h+8);
@@ -1209,9 +1294,9 @@ function renderNav(){
   MEETS.forEach((m,mi)=>{groups+=`<optgroup label="${dayName(m.date)} · ${m.venue}">`+m.races.map((r,ri)=>{const k=raceKey(m,r.number),done=RS[k]&&RS[k].done;return `<option value="${mi},${ri}" ${cur===mi+","+ri?"selected":""}>R${r.number} ${timeOf(r.jump)} ${r.name}${r.feature?" ★":""}${done?" (result in)":closed(r.jump)?" (closed)":""}</option>`}).join("")+`</optgroup>`});
   const pend=pendingCount();
   $("nav").innerHTML=`<div><button data-nav="career" aria-pressed="${S.mode==="career"&&!bookOpen&&!resOpen}">Career</button><button data-nav="daily" aria-pressed="${S.mode==="daily"&&!bookOpen&&!resOpen}" ${S.mode!=="daily"&&dd!==undefined?"disabled":""}>${dd!==undefined&&S.mode!=="daily"?"Daily "+money(dd):"Daily"}</button><button data-nav="dogs" aria-pressed="${S.mode==="dogs"&&!bookOpen&&!resOpen}">Dogs</button><button data-nav="results" aria-pressed="${resOpen}">Results</button><button data-nav="book" aria-pressed="${bookOpen}">My Book${pend?` (${pend})`:""}</button>${S.mode!=="daily"?'<button class="alt" data-nav="restart">Restart meet</button>':""}</div>
-  ${[...new Set(MEETS.map(m=>m.date))].map(d=>`<div class="meets"><span>${d===REAL_TODAY?"Today":"Tomorrow"===dayRel(d)?"Tomorrow":dayName(d)}</span>${MEETS.map((m,mi)=>m.date!==d?"":`<button data-meet="${mi}" aria-pressed="${S.mode==="real"&&mi===S.realIdx&&!bookOpen&&!resOpen}">${m.venue}</button>`).join("")}</div>`).join("")}<label class="pick"><span>All races</span><select id="racesel" ${MEETS.length?"":"disabled"}>${cur?"":`<option value="" selected>${MEETS.length?"Pick a race":meetsFailed?"Real races only load on the public game site":"Loading races"}</option>`}${groups}</select></label>`;
+  ${[...new Set(MEETS.map(m=>m.date))].map(d=>`<div class="meets"><span>${d===REAL_TODAY?"Today":"Tomorrow"===dayRel(d)?"Tomorrow":dayName(d)}</span>${MEETS.map((m,mi)=>m.date!==d?"":`<button data-meet="${mi}" aria-pressed="${S.mode==="real"&&mi===S.realIdx&&!bookOpen&&!resOpen}">${m.venue}</button>`).join("")}</div>`).join("")}${dogNavHtml()}<label class="pick"><span>All races</span><select id="racesel" ${MEETS.length?"":"disabled"}>${cur?"":`<option value="" selected>${MEETS.length?"Pick a race":meetsFailed?"Real races only load on the public game site":"Loading races"}</option>`}${groups}</select></label>`;
 }
-$("nav").addEventListener("change",e=>{if(e.target.id!=="racesel"||!e.target.value)return;resOpen=false;const [m,r]=e.target.value.split(",").map(Number);audio();setReal(m,r)});
+$("nav").addEventListener("change",e=>{if(e.target.id==="dgsel"){resOpen=false;bookOpen=false;audio();return setDogRace(+e.target.value)}if(e.target.id!=="racesel"||!e.target.value)return;resOpen=false;const [m,r]=e.target.value.split(",").map(Number);audio();setReal(m,r)});
 $("nav").addEventListener("click",e=>{
   const b=e.target.closest("button");if(!b||b.disabled)return;audio();
   if(b.dataset.nav==="results"){if(resOpen){resOpen=false;resSel=null;renderNav();renderCard()}else openResults();return}
@@ -1223,6 +1308,8 @@ $("nav").addEventListener("click",e=>{
   if(b.dataset.nav==="book"){bookOpen=!bookOpen;bookMsg="";settleBook();renderNav();renderCard();if(bookOpen)$("card").scrollIntoView({block:"start"});return}
   if(b.dataset.nav==="daily"){bookOpen=false;if(S.mode==="daily")return renderAll();abortRace();if(S.mode==="real"){const c=S.career;const k={...S};delete k.career;c.realSaved=k;S=c}leaveDogs();return startDaily()}
   if(b.dataset.nav==="dogs"){bookOpen=false;if(S.mode==="dogs")return renderAll();return enterDogs()}
+  if(b.dataset.dgm!==undefined){bookOpen=false;if(S.rd&&S.rd.slug===b.dataset.dgm)return renderAll();return setRealDog(b.dataset.dgm)}
+  if(b.dataset.dgame!==undefined){bookOpen=false;if(!S.rd)return renderAll();return backToGameDogs()}
   if(b.dataset.nav==="restart"){bookOpen=false;return restartMeet()}
 });
 function addTicket(type,sel,st){
@@ -1313,10 +1400,10 @@ function buildResult(){
   const race=S.race,sim=R.sim,o=sim.order,w=sim.fin[o[0]],x=S.result;
   const real=S.mode==="real",src=real?S.real.races[S.idx]:null,lenM=race.dogs?1.2:LEN_M; // a greyhound length is about 1.2m
   const runners=o.map((k,i)=>{const h=race.field[k],t=sim.fin[k],c=silkOf(h,k);
-    return {pos:i+1,no:h.no,name:h.name,jock:h.jock,bar:h.realBarrier||h.barrier,wt:race.dogs?h.kg:h.weight,win:h.win,place:h.place,time:Math.round(t*100)/100,
+    return {pos:i+1,no:h.no,name:h.name,jock:h.jock,bar:h.realBarrier||h.barrier,wt:race.dogs?(h.kg||null):h.weight,win:h.win,place:h.place,time:Math.round(t*100)/100,
       mar:i?(t-sim.fin[o[i-1]])*FIN_V/lenM:0,btn:(t-w)*FIN_V/lenM,silk:[rugCss(h)||c[0],h.silk?inkOn(c[0]):c[1]]}});
   return {id:x.rid,at:new Date().toISOString(),mode:S.mode,
-    meet:race.dogs?`Greyhounds · Meeting ${S.meeting}`:real?"Real Races (simulated)":S.mode==="daily"?"Daily Meeting "+S.day:`${TIERS[S.tier||0].name} · Meeting ${S.meeting}`,
+    meet:race.realDogs?`Real Dogs (simulated) · R${race.realNo}`:race.dogs?`Greyhounds · Meeting ${S.meeting}`:real?"Real Races (simulated)":S.mode==="daily"?"Daily Meeting "+S.day:`${TIERS[S.tier||0].name} · Meeting ${S.meeting}`,
     track:S.track,raceNo:race.realNo||race.no,title:race.title,dist:race.dist,cond:race.trackLabel||ratingName(race.rating),
     jump:real&&src?src.jump:null,date:real?S.real.date:null,key:real&&src?raceKey(S.real,src.number):null,placeN:race.placeN,runners,
     div:{quin:x.quin,exacta:x.exacta,tri:x.tri,first4:x.first4||null},staked:x.staked,ret:x.ret};
@@ -1460,7 +1547,7 @@ function settle(){
   flashBank(res.ret>res.staked?"up":res.staked>0?"down":"");
 }
 function flashBank(c){const b=$("bank");b.className=c;setTimeout(()=>b.className="",1400)}
-const lastIdx=()=>S.mode==="real"?S.real.races.length-1:7;
+const lastIdx=()=>S.mode==="real"?S.real.races.length-1:isDogs()&&S.rd?S.rd.cards.length-1:7;
 function nextRace(){
   R=null;cv.style.filter="";
   if(S.idx>=lastIdx()){
@@ -1489,8 +1576,8 @@ function nextMeeting(){S.meeting++;S.lastNames=[];newMeeting();R=null;renderAll(
 function stake(){return Math.max(0,Math.floor(+$("stake").value||0))}
 function silk(h,k,tag){const a=silkOf(h,k)[0],b=h.silk?inkOn(a):SILKS[k%SILKS.length][1];return `<span class="silk" style="background:${rugCss(h)||a};color:${b}">${h.no}${tag?`<i>${tag}</i>`:""}</span>`}
 function renderHeader(){
-  $("meet").textContent=S.mode==="dogs"?`Greyhounds · ${S.track} · Meeting ${S.meeting}`:S.mode==="real"?`Real Races · ${S.track} · ${S.real.date}`:S.mode==="daily"?`Daily Meeting ${S.day}`:`${TIERS[S.tier].name} · ${S.track} · Meeting ${S.meeting}`;
-  const dd=(S.dailyDone||{})[dayKey()];const db=$("daily");db.hidden=S.mode!=="career";const rb=$("realbtn");rb.hidden=S.mode!=="career";rb.disabled=S.phase!=="bet"||S.bets.length>0;$("foot").textContent=S.mode==="real"?"Data provided by Krok Odds. Play money only. Results are simulated, not the actual race.":"Play money only. No real bets, deposits or prizes.";db.disabled=dd!==undefined||S.phase!=="bet"||S.bets.length>0;db.textContent=dd!==undefined?`Today's daily: ${money(dd)}`:"Play Daily Meeting";
+  $("meet").textContent=S.mode==="dogs"?(S.rd?`Real Dogs · ${S.track} · ${dayName(S.rd.date)}`:`Greyhounds · ${S.track} · Meeting ${S.meeting}`):S.mode==="real"?`Real Races · ${S.track} · ${S.real.date}`:S.mode==="daily"?`Daily Meeting ${S.day}`:`${TIERS[S.tier].name} · ${S.track} · Meeting ${S.meeting}`;
+  const dd=(S.dailyDone||{})[dayKey()];const db=$("daily");db.hidden=S.mode!=="career";const rb=$("realbtn");rb.hidden=S.mode!=="career";rb.disabled=S.phase!=="bet"||S.bets.length>0;$("foot").textContent=isDogs()&&S.rd?"Fields and form by FormFav. Odds are game estimates from form. Play money only. Results are simulated, not the actual race.":S.mode==="real"?"Data provided by Krok Odds. Play money only. Results are simulated, not the actual race.":"Play money only. No real bets, deposits or prizes.";db.disabled=dd!==undefined||S.phase!=="bet"||S.bets.length>0;db.textContent=dd!==undefined?`Today's daily: ${money(dd)}`:"Play Daily Meeting";
   $("raceNo").textContent=`${S.race.no}/${lastIdx()+1}`;
   $("bank").textContent=money(S.bank);
 }
@@ -1510,7 +1597,7 @@ function renderCard(){
     const tag=on&&TYPES[S.type][1]>1?(S.type==="quin"?"•":i+1):"";
     return `<button class="runner${on?" on":""}" data-k="${k}" aria-pressed="${on}" ${S.phase!=="bet"?"disabled":""}>
       ${silk(h,k,tag)}
-      <span><span class="rname">${h.name}</span><br><span class="rmeta">${r.dogs?`<b>${h.form}</b> · Box ${h.no} · ${h.kg}kg · ${h.sex}<br>Trainer ${h.jock} · ${DOG_STYLE[h.style]} · ${DOG_COATS[h.coat%DOG_COATS.length].n}`:h.real?`${h.form?`<b>${h.form}</b> · `:""}B${h.realBarrier} · ${h.weight}kg · ${h.jock}<br>${h.trainer||""}${h.speed?" · "+h.speed:""}`:`<b>${h.form}</b> · B${h.barrier} · ${h.weight}kg · ${h.jock}<br>${STYLE[h.style]} · Best ${h.trip}m · Wet ${h.wetRec}`}</span></span>
+      <span><span class="rname">${h.name}</span><br><span class="rmeta">${r.realDogs?`${h.form?`<b>${escH(h.form)}</b> · `:""}Box ${h.box}${h.reserve?" (reserve)":""}${h.sex?" · "+escH(h.sex):""}<br>Trainer ${escH(h.jock)}`:r.dogs?`<b>${h.form}</b> · Box ${h.no} · ${h.kg}kg · ${h.sex}<br>Trainer ${h.jock} · ${DOG_STYLE[h.style]} · ${DOG_COATS[h.coat%DOG_COATS.length].n}`:h.real?`${h.form?`<b>${h.form}</b> · `:""}B${h.realBarrier} · ${h.weight}kg · ${h.jock}<br>${h.trainer||""}${h.speed?" · "+h.speed:""}`:`<b>${h.form}</b> · B${h.barrier} · ${h.weight}kg · ${h.jock}<br>${STYLE[h.style]} · Best ${h.trip}m · Wet ${h.wetRec}`}</span></span>
       <span class="odds"><small>Win</small>${oddsTxt(h.win)}</span>
       <span class="odds"><small>Place</small>${oddsTxt(h.place)}</span>
     </button>`}).join("")}</div>`;
@@ -1534,11 +1621,11 @@ function renderEnd(){
   const net=S.bank-S.startBank,ratio=S.bank/Math.max(1,S.startBank+0);
   let title=RANK[0][1];for(const [m,t] of RANK)if(ratio>=m)title=t;
   if(S.mode==="dogs"){
-    $("card").innerHTML=`<h2>${S.track} is done for the night</h2><div class="net ${net>=0?"won":"lost"}">${net>=0?"Up":"Down"} ${money(Math.abs(net))}</div><div class="tip">Verdict: <b>${title}</b></div>
+    $("card").innerHTML=`<h2>${S.track} is done for the night</h2>${S.rd?'<div class="conds"><span>Real fields, simulated races</span></div>':""}<div class="net ${net>=0?"won":"lost"}">${net>=0?"Up":"Down"} ${money(Math.abs(net))}</div><div class="tip">Verdict: <b>${title}</b></div>
     <table class="tbl">${S.ledger.map(l=>`<tr><td>Race ${l.no}</td><td class="n">Bet ${money(l.staked)}</td><td class="n ${l.ret>l.staked?"won":l.ret<l.staked?"lost":""}">${money(l.ret-l.staked)}</td></tr>`).join("")}</table>
     <div class="conds"><span>Dogs bank ${money(S.bank)}</span><span>Best ${money(S.best)}</span></div>
-    <button class="big next" id="nm">Next dog meeting</button><button class="reset" id="dd">Back to the horses</button>`;
-    $("nm").onclick=nextMeeting;$("dd").onclick=goCareer;return}
+    ${S.rd?`<div class="tip">Pick another real meeting above, or go back to the game dogs.</div><button class="big next" id="nm">Game dog meeting</button>`:`<button class="big next" id="nm">Next dog meeting</button>`}<button class="reset" id="dd">Back to the horses</button>`;
+    $("nm").onclick=S.rd?backToGameDogs:nextMeeting;$("dd").onclick=goCareer;return}
   if(S.mode!=="career"){
     $("card").innerHTML=`<h2>${S.mode==="real"?S.track+" done":"Daily Meeting done"}</h2><div class="net ${net>=0?"won":"lost"}">Final bank ${money(S.bank)}</div><div class="tip">Verdict: <b>${title}</b></div>
     <table class="tbl">${S.ledger.map(l=>`<tr><td>Race ${l.no}</td><td class="n">Bet ${money(l.staked)}</td><td class="n ${l.ret>l.staked?"won":l.ret<l.staked?"lost":""}">${money(l.ret-l.staked)}</td></tr>`).join("")}</table>
@@ -1591,6 +1678,7 @@ function renderDetail(){
   const el=$("detail"),k=S.sel[S.sel.length-1];
   if(S.phase!=="bet"||k===undefined){el.innerHTML="";return}
   const h=S.race.field[k],pool=(S.pool||[]).find(p=>p.name===h.name)||h;
+  if(h.dg){el.innerHTML=`<div class="detail-h"><span><b>${escH(h.name)}</b> · Trainer ${escH(h.jock)}</span></div>${h.form?`Recent form: ${escH(h.form)}`:""}${dgHtml(h)}`;return}
   if(h.real){
     const st=(l,s)=>s&&s.s?`<td>${l}</td><td>${s.s}: ${s.w}-${s.p}</td>`:"";
     let extra="";
