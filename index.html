@@ -204,6 +204,8 @@ canvas{width:100%;height:auto;display:block}
 .off-days,.off-meets{margin:6px 0}
 .nextgo button[data-ntg]{background:var(--amber);color:var(--tote);border:0;min-height:44px;padding:0 12px;font:400 18px/1 var(--display);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap}
 #ntgsel{flex:1;min-width:0;width:100%;min-height:44px;background:var(--paper);color:var(--ink);border:0;font:600 17px/1.1 var(--led);padding:0 8px;text-overflow:ellipsis}
+.tip-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;background:#fff8e6;border:1px solid #bda97f;padding:8px 10px}
+.tip-pick{font-size:18px}.tip-pick small{color:#5b5446;margin-left:4px}
 .simtag{font:700 12px/1 var(--led);font-style:normal;letter-spacing:.6px;text-transform:uppercase;background:#6e6a60;color:#fff;padding:2px 5px;vertical-align:2px}
 .simbanner{background:#6e6a60;color:#fff;font:700 15px/1 var(--led);letter-spacing:.6px;text-transform:uppercase;padding:7px 10px}
 .res-tbl{font-size:16px}
@@ -299,7 +301,7 @@ canvas{width:100%;height:auto;display:block}
 <script>
 "use strict";
 /* ---------- helpers ---------- */
-const APP_VERSION="2.6.0"; // bump on every release; shown after the title
+const APP_VERSION="2.7.0"; // bump on every release; shown after the title
 const $=id=>document.getElementById(id);
 let RNG=Math.random;
 const mulberry=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
@@ -1545,7 +1547,7 @@ function schedule(){
 const upcoming=()=>{const now=Date.now();return schedule().filter(x=>x.t>now-60e3)};
 const curSched=()=>S.mode==="real"&&S.real&&S.real.races[S.idx]?`H|${S.real.key}|${S.real.races[S.idx].number}`:isDogs()&&S.rd&&S.race?`D|${S.rd.slug}|${S.race.realNo}`:isHarness()&&S.rh&&S.race?`N|${S.rh.slug}|${S.race.realNo}`:null;
 function goSched(x){
-  if(!x)return;resOpen=false;bookOpen=false;
+  if(!x)return;resOpen=false;bookOpen=false;tipsOpen=false;
   if(x.code==="H")return setReal(x.mi,x.ri);
   if(x.code==="N"){if(!isHarness())enterHarness();if(S.rh&&S.rh.slug===x.slug){const i=S.rh.cards.findIndex(c=>c.race===x.no);if(i>=0)return setHarnessRace(i)}return setRealHarness(x.slug,x.ri)}
   if(!isDogs())enterDogs();
@@ -1570,18 +1572,78 @@ function enterHorses(){
   if(x)return setReal(x.mi,x.ri);
   setReal(0,0);
 }
+/* ---------- Nan's Tips: her picks for every real race today, horses, dogs and harness ---------- */
+let tipsOpen=false,TIPF="all",TIPL=[];const TIPQ={};
+// horses: the market, nudged by recent form; dogs and harness: the same form ratings their odds come from
+function horseRank(r){
+  const POS={1:1,2:.7,3:.5,4:.36,5:.27,6:.2,7:.15,8:.12,9:.1,0:.08};
+  const m=r.runners.map(u=>1/(u.win||50)),ms=m.reduce((a,b)=>a+b,0);
+  const sc=r.runners.map((u,i)=>{const f=[...String(u.form||"").replace(/[^0-9]/g,"")].reverse().slice(0,4),wt=[1,.75,.55,.4];let a=0,b=0;f.forEach((c,j)=>{a+=wt[j]*POS[c];b+=wt[j]});return Math.pow(m[i]/ms,.85)*Math.pow(.6+(b?a/b:.3),.6)});
+  const s=sc.reduce((a,b)=>a+b,0);
+  return r.runners.map((u,i)=>({no:u.no,name:u.name,p:sc[i]/s,price:u.win})).sort((a,b)=>b.p-a.p);
+}
+const cardRank=(rs,p)=>rs.map((u,i)=>({no:u.no,name:u.name,p:p[i],price:ladder(1/(p[i]*1.13))})).sort((a,b)=>b.p-a.p);
+function tipCards(code,slug){const m=(code==="D"?dgToday():hnToday()).find(x=>x.slug===slug);if(!m)return null;return (code==="D"?DGC:HNC)[`${m.date}|${m.slug}`]||null}
+function loadTipCards(code,slug){
+  const k=code+slug,m=(code==="D"?dgToday():hnToday()).find(x=>x.slug===slug);if(!m||TIPQ[k])return;
+  if(Object.values(TIPQ).filter(v=>v==="busy").length>=3)return; // a few meetings at a time
+  TIPQ[k]="busy";
+  fetch(code==="D"?`${DG_URL}?date=${m.date}&venue=${encodeURIComponent(m.slug)}`:`${HN_URL}&date=${m.date}&venue=${encodeURIComponent(m.slug)}`).then(r=>r.json())
+    .then(j=>{if(!j.races)throw 0;(code==="D"?DGC:HNC)[`${m.date}|${m.slug}`]=j.races;TIPQ[k]="ok"}).catch(()=>{TIPQ[k]="fail"})
+    .finally(()=>{if(tipsOpen&&!resOpen&&!bookOpen)renderCard()});
+}
+function nanPicks(x){
+  if(x.code==="H"){const r=MEETS[x.mi]&&MEETS[x.mi].races[x.ri];return r?horseRank(r):null}
+  const cards=tipCards(x.code,x.slug);if(!cards){loadTipCards(x.code,x.slug);return undefined}
+  const c=cards.find(c=>c.race===x.no);if(!c)return null;
+  const rs=x.code==="D"?dogLineup(c):hnLineup(c);if(rs.length<4)return null;
+  return cardRank(rs,x.code==="D"?dogChances(rs):hnChances(rs));
+}
+const CODE_NAME={H:"Horses",D:"Dogs",N:"Harness"};
+function renderTips(){
+  const c=$("card"),now=Date.now();
+  TIPL=upcoming().filter(x=>x.t>now-60e3&&(TIPF==="all"||x.code===TIPF)).map(x=>({...x,picks:nanPicks(x)}));
+  const ready=TIPL.filter(x=>x.picks&&x.picks.length),waiting=TIPL.filter(x=>x.picks===undefined).length;
+  // Best Bet: Nan's most confident top pick; Roughie: the best-rated runner at $8 or more that isn't her top pick
+  const best=ready.slice().sort((a,b)=>b.picks[0].p-a.picks[0].p)[0];
+  let rough=null;for(const x of ready)for(const u of x.picks.slice(1,4))if(u.price>=8&&(!rough||u.p*u.price>rough.u.p*rough.u.price))rough={x,u};
+  const tag=x=>`${timeOf(new Date(x.t).toISOString())} · ${escH(x.venue)} R${x.no} · ${CODE_NAME[x.code]}`;
+  const row=(x,i)=>{const p=x.picks;
+    return `<div class="tip-row"><div><div class="off-meta">${tag(x)}${x.t<=now?" (jumped)":""}</div>
+      ${p===undefined?'<div class="off-pend">Nan is reading the form…</div>':!p||!p.length?'<div class="off-pend">No field yet</div>':`<div class="tip-pick"><b>${p[0].no}. ${escH(p[0].name)}</b> <small>${div(p[0].price)}</small></div><div class="off-meta">Then ${p.slice(1,3).map(u=>`${u.no}. ${escH(u.name)}`).join(", ")}</div>`}</div>
+      <button class="tk-act" data-tipgo="${i}">Bet</button></div>`};
+  c.innerHTML=`<h2>Nan's Tips</h2><div class="conds"><span>Today's real races, in start order</span></div>
+  <div class="tabs off-days">${[["all","All"],["H","Horses"],["D","Dogs"],["N","Harness"]].map(([k,l])=>`<button data-tipf="${k}" aria-pressed="${TIPF===k}">${l}</button>`).join("")}</div>
+  ${best?`<div class="tip"><b>Nan's Best Bet:</b> ${tag(best)} · <b>${best.picks[0].no}. ${escH(best.picks[0].name)}</b> ${div(best.picks[0].price)}</div>`:""}
+  ${rough?`<div class="tip"><b>Nan's Roughie:</b> ${tag(rough.x)} · <b>${rough.u.no}. ${escH(rough.u.name)}</b> ${div(rough.u.price)}</div>`:""}
+  ${waiting?`<div class="off-meta">Nan is still reading the form for ${waiting} race${waiting>1?"s":""}…</div>`:""}
+  ${TIPL.length?`<div class="res-day">${TIPL.map(row).join("")}</div>`:'<div class="tip">No more real races today. Nan will be back tomorrow.</div>'}
+  <div class="tip">Nan's picks come from the market and recent form for horses, and from form and the draw for dogs and harness. For fun only.</div>
+  <button class="reset" data-tipclose="1">Back to the race</button>`;
+}
+function openTips(){tipsOpen=true;resOpen=false;resSel=null;bookOpen=false;loadDogMeets();loadHarnessMeets();renderNav();renderCard();$("card").scrollIntoView({block:"start"})}
+$("card").addEventListener("click",e=>{
+  const b=e.target.closest("[data-tipf],[data-tipgo],[data-tipclose]");if(!b)return;
+  if(b.dataset.tipf){TIPF=b.dataset.tipf;return renderCard()}
+  if(b.dataset.tipclose){tipsOpen=false;renderNav();return renderCard()}
+  const x=TIPL[+b.dataset.tipgo];if(!x)return;tipsOpen=false;audio();goSched(x);
+  if(x.code==="H"||S.rd||S.rh){const k=x.picks&&x.picks[0];if(k){const i=S.race.field.findIndex(h=>h.no===k.no);if(i>=0){S.type="win";S.sel=[i];renderAll()}}}
+});
+
 function pendingCount(){return BOOK.tickets.filter(t=>t.status==="pending").length}
 function renderNav(){
   const dd=(S.dailyDone||(S.career&&S.career.dailyDone)||{})[dayKey()];
   let groups="",cur=S.mode==="real"?`${S.realIdx},${S.idx}`:"";
   MEETS.forEach((m,mi)=>{groups+=`<optgroup label="${dayName(m.date)} · ${m.venue}">`+m.races.map((r,ri)=>{const k=raceKey(m,r.number),done=RS[k]&&RS[k].done;return `<option value="${mi},${ri}" ${cur===mi+","+ri?"selected":""}>R${r.number} ${timeOf(r.jump)} ${r.name}${r.feature?" ★":""}${done?" (result in)":closed(r.jump)?" (closed)":""}</option>`}).join("")+`</optgroup>`});
   const pend=pendingCount();
-  $("nav").innerHTML=`<div><button data-nav="career" aria-pressed="${S.mode==="career"&&!bookOpen&&!resOpen}">Career</button><button data-nav="daily" aria-pressed="${S.mode==="daily"&&!bookOpen&&!resOpen}" ${S.mode!=="daily"&&dd!==undefined?"disabled":""}>${dd!==undefined&&S.mode!=="daily"?"Daily "+money(dd):"Daily"}</button><button data-nav="horses" aria-pressed="${S.mode==="real"&&!bookOpen&&!resOpen}">Horses</button><button data-nav="dogs" aria-pressed="${S.mode==="dogs"&&!bookOpen&&!resOpen}">Dogs</button><button data-nav="harness" aria-pressed="${S.mode==="harness"&&!bookOpen&&!resOpen}">Harness</button><button data-nav="results" aria-pressed="${resOpen}">Results</button><button data-nav="book" aria-pressed="${bookOpen}">My Book${pend?` (${pend})`:""}</button>${S.mode!=="daily"?'<button class="alt" data-nav="restart">Restart meet</button>':""}</div>
+  $("nav").innerHTML=`<div><button data-nav="career" aria-pressed="${S.mode==="career"&&!bookOpen&&!resOpen}">Career</button><button data-nav="daily" aria-pressed="${S.mode==="daily"&&!bookOpen&&!resOpen}" ${S.mode!=="daily"&&dd!==undefined?"disabled":""}>${dd!==undefined&&S.mode!=="daily"?"Daily "+money(dd):"Daily"}</button><button data-nav="horses" aria-pressed="${S.mode==="real"&&!bookOpen&&!resOpen}">Horses</button><button data-nav="dogs" aria-pressed="${S.mode==="dogs"&&!bookOpen&&!resOpen}">Dogs</button><button data-nav="harness" aria-pressed="${S.mode==="harness"&&!bookOpen&&!resOpen}">Harness</button><button data-nav="tips" aria-pressed="${tipsOpen&&!resOpen&&!bookOpen}">Nan's Tips</button><button data-nav="results" aria-pressed="${resOpen}">Results</button><button data-nav="book" aria-pressed="${bookOpen}">My Book${pend?` (${pend})`:""}</button>${S.mode!=="daily"?'<button class="alt" data-nav="restart">Restart meet</button>':""}</div>
   ${ntgHtml()}${dogNavHtml()}${harnessNavHtml()}${S.mode!=="real"?"":[...new Set(MEETS.map(m=>m.date))].map(d=>`<div class="meets"><span>${d===REAL_TODAY?"Today":"Tomorrow"===dayRel(d)?"Tomorrow":dayName(d)}</span>${MEETS.map((m,mi)=>m.date!==d?"":`<button data-meet="${mi}" aria-pressed="${S.mode==="real"&&mi===S.realIdx&&!bookOpen&&!resOpen}">${m.venue}</button>`).join("")}</div>`).join("")+`<label class="pick"><span>All races</span><select id="racesel" ${MEETS.length?"":"disabled"}>${cur?"":`<option value="" selected>${MEETS.length?"Pick a race":meetsFailed?"Real races only load on the public game site":"Loading races"}</option>`}${groups}</select></label>`}`;
 }
-$("nav").addEventListener("change",e=>{if(e.target.id==="hnsel"){resOpen=false;bookOpen=false;audio();return setHarnessRace(+e.target.value)}if(e.target.id==="ntgsel"){if(e.target.value==="")return;audio();return goSched(NTG[+e.target.value])}if(e.target.id==="dgsel"){resOpen=false;bookOpen=false;audio();return setDogRace(+e.target.value)}if(e.target.id!=="racesel"||!e.target.value)return;resOpen=false;const [m,r]=e.target.value.split(",").map(Number);audio();setReal(m,r)});
+$("nav").addEventListener("change",e=>{tipsOpen=false;if(e.target.id==="hnsel"){resOpen=false;bookOpen=false;audio();return setHarnessRace(+e.target.value)}if(e.target.id==="ntgsel"){if(e.target.value==="")return;audio();return goSched(NTG[+e.target.value])}if(e.target.id==="dgsel"){resOpen=false;bookOpen=false;audio();return setDogRace(+e.target.value)}if(e.target.id!=="racesel"||!e.target.value)return;resOpen=false;const [m,r]=e.target.value.split(",").map(Number);audio();setReal(m,r)});
 $("nav").addEventListener("click",e=>{
   const b=e.target.closest("button");if(!b||b.disabled)return;audio();
+  if(b.dataset.nav==="tips"){if(tipsOpen&&!resOpen&&!bookOpen){tipsOpen=false;renderNav();return renderCard()}return openTips()}
+  tipsOpen=false;
   if(b.dataset.nav==="results"){if(resOpen){resOpen=false;resSel=null;renderNav();renderCard()}else openResults();return}
   resOpen=false;resSel=null;
   if(b.dataset.meet!==undefined){const mi=+b.dataset.meet,rs=MEETS[mi].races,open=rs.findIndex(r=>!closed(r.jump));
@@ -1908,6 +1970,7 @@ function renderHeader(){
 function renderCard(){
   if(bookOpen)return renderBook();
   if(resOpen)return renderResults();
+  if(tipsOpen)return renderTips();
   if(picker)return renderPicker();
   const r=S.race,c=$("card");
   if(S.phase==="result")return renderResult();
