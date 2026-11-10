@@ -285,7 +285,7 @@ canvas{width:100%;height:auto;display:block}
 <script>
 "use strict";
 /* ---------- helpers ---------- */
-const APP_VERSION="2.1.0"; // bump on every release; shown after the title
+const APP_VERSION="2.2.0"; // bump on every release; shown after the title
 const $=id=>document.getElementById(id);
 let RNG=Math.random;
 const mulberry=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
@@ -395,6 +395,7 @@ function makeHorse(name){
   return {name,q,sta,style:pick(["front","mid","mid","back"]),wet:rand(0,1),cons:rand(.1,1),form,runs,jock:pick(JOCKS),coat:irand(0,COATS.length-1)};
 }
 function newMeeting(){
+  if(S.mode==="dogs")return newDogMeeting();
   S.pool=shuffle(NAMES).map(makeHorse);
   S.track=pick(TIERS[S.tier||0].tracks);
   S.weather=irand(3,9);
@@ -407,6 +408,7 @@ function wetRecord(h){
 }
 function buildRace(){
   if(S.mode==="real")return buildReal();
+  if(S.mode==="dogs")return buildDogRace();
   const T=TIERS[S.tier||0];const [title,dist]=S.idx===7?T.cup:RACES[S.idx];
   const last=S.lastNames||[];
   let pool=S.pool.filter(h=>!last.includes(h.name));
@@ -583,6 +585,123 @@ function buildSheet(h,idx){
   return sheet;
 }
 
+/* ---------- greyhounds ---------- */
+// Dogs run on the same race engine as the horses (same simulation, odds, bets and results); only the field,
+// the track, the pictures and the playback speed differ.
+const DOG_NAMES=["Zoomies","Couch Potato","Rapid Rissole","Lure Me In","Snoot Boop","Sir Sniffsalot","Sock Thief","Biscuit Bandit","Tail Spin","Squeaky Toy","Lounge Lizard","Bin Night Bandit","Noodle Legs","Fast Eddie","Treat Yo Self","Bark Twain","Hot Dog Harry","Kibble Krusher","Leash Lightning","Slipper Snatcher","Puppacino","Ute Tray Rider","Ballarat Blur","Maryborough Missile","Goldfields Gus","Ziggy Zoom","Walkies Wendy","Brindle Bob","Nan's Footstool","Sunbeam Snoozer","Postie's Nightmare","Ball Is Life","Zoom Zoom Zara","Tea Towel Thief","Doona Hog","Squirrel Alert","Head Tilt","Belly Rubz","Muddy Paws","Fetch Me Later","Pavlova Pinch","Smoko Sprinter"];
+const DOG_TRAINERS=["S. Pike","D. Nolan","K. McPhee","T. Byrne","R. Hart","J. Tran","G. Walsh","B. Doyle","M. Reid","L. Kowalski","S. O'Toole","T. Farrell"];
+const DOG_TRACKS=["Dusty Flat Dogs","Goat Creek Lure Park","Wattle Gully Greyhounds","Mount Misery Dogs","Bullock Bend Raceway"];
+const DOG_RACES=[["Couch Potato Maiden",300],["Bin Night Stakes",400],["Squeaky Toy Sprint",450],["Sausage Sizzle Stake",515],["Snoot Boop Handicap",520],["Sock Thief Plate",595],["Lounge Lizard Mile",600],["The Golden Lure",715]];
+const DOG_NAN=["Says it looked at her sausage roll.","It has the same ears as her old kelpie.","She likes the colour of its rug.","Her neighbour's nephew walks it.","Reckons it smiled at her."];
+const DOG_STYLE={front:"Early speed",mid:"Midfield",back:"Strong finisher"};
+// Australian rug colours by box: 2 is black and white stripes, drawn as stripes on the dog and on the number tags.
+const RUGS=[["#d8342a","#fff"],["#ffffff","#111"],["#f4f1e6","#111"],["#2a62c9","#fff"],["#f2c92b","#111"],["#2a9a55","#fff"],["#151517","#fff"],["#ec7fb0","#111"]];
+const RUG2="linear-gradient(180deg,#111 0 24%,#f4f1e6 24% 76%,#111 76%)";
+const DOG_COATS=[{n:"Black",b:"#1d1a1a",d:null},{n:"Brindle",b:"#5a3f2a",d:"#2a1d14"},{n:"Fawn",b:"#c99a62",d:null},{n:"Red fawn",b:"#a8622f",d:null},{n:"Blue",b:"#7d8792",d:null},{n:"White and black",b:"#ece7dc",d:"#1d1a1a",patch:true},{n:"Blue brindle",b:"#6f7178",d:"#3d3f45"}];
+const isDogs=()=>S&&S.mode==="dogs";
+const dogTrack=r=>r<=5?"Good":r<=7?"Slow":"Heavy";
+function makeDog(name){
+  const q=clamp(.5+gauss()*.24,.05,.97),sta=rand(.05,1);
+  const form=Array.from({length:5},()=>{if(RNG()<.05)return "x";const v=Math.round(1+(1-q)*6+gauss()*1.8);return String(clamp(v,1,8))}).join("");
+  const runs=[...form].map(p=>({t:pick(DOG_TRACKS),d:pick([300,400,450,515,520,595,600,715]),r:irand(3,6),p,n:8}));
+  const bitch=RNG()<.45;
+  return {name,q,sta,style:pick(["front","front","mid","back"]),wet:rand(0,1),cons:rand(.1,1),form,runs,jock:pick(DOG_TRAINERS),coat:irand(0,DOG_COATS.length-1),kg:Math.round((bitch?rand(25.5,30.5):rand(29.5,35.5))*10)/10,sex:bitch?"Bitch":"Dog"};
+}
+function newDogMeeting(){
+  S.pool=shuffle(DOG_NAMES).map(makeDog);
+  S.track=pick(DOG_TRACKS);S.weather=irand(3,6);
+  S.idx=0;S.startBank=S.bank;S.ledger=[];
+  buildDogRace();
+}
+function buildDogRace(){
+  const [title,dist]=DOG_RACES[S.idx];
+  const last=S.lastNames||[];
+  const pool=S.pool.filter(h=>!last.includes(h.name));
+  const n=S.idx===7?8:RNG()<.2?7:8;
+  let chosen=S.idx===7?pool.slice().sort((a,b)=>b.q-a.q).slice(0,n):shuffle(pool).slice(0,n);
+  // a short field leaves a vacant box, as at the real dogs
+  const boxes=shuffle([1,2,3,4,5,6,7,8]).slice(0,n);
+  const rating=clamp(S.weather+irand(-1,1),3,8);
+  const field=shuffle(chosen).map((h,i)=>({...h,no:boxes[i],barrier:boxes[i],weight:56,
+    silk:{c:RUGS[boxes[i]-1][0],a:RUGS[boxes[i]-1][1],p:0},trip:Math.round((300+h.sta*450)/50)*50}));
+  const race={title,dist,rating,trackLabel:dogTrack(rating),field,placeN:n>=8?3:2,no:S.idx+1,dogs:true};
+  priceRace(race);
+  const nanPick=field.slice().sort((a,b)=>b.q+gauss()*.25-a.q)[0];
+  race.tip={name:nanPick.name,no:nanPick.no,why:pick(DOG_NAN)};
+  S.race=race;S.bets=[];S.sel=[];S.phase="bet";S.result=null;
+  save();
+}
+// Moving between sections keeps each one's progress: the dogs wait in the career save until you come back.
+function leaveDogs(){if(S.mode!=="dogs")return;const c=S.career,k={...S};delete k.career;c.dogsSaved=k;S=c}
+function enterDogs(){
+  abortRace();
+  if(S.mode==="daily")leaveDaily();
+  else if(S.mode==="real"){const c=S.career,k={...S};delete k.career;c.realSaved=k;S=c}
+  const career=S,ds=career.dogsSaved;career.dogsSaved=null;
+  if(ds&&ds.race){S={...ds,career};if(S.phase==="race")S.phase="bet";save()}
+  else{S={bank:1000,meeting:1,best:1000,bigCollect:0,loans:0,type:"win",sel:[],bets:[],phase:"bet",ledger:[],tier:0,mode:"dogs",career};newDogMeeting()}
+  R=null;renderAll();say(`Greyhounds at <b>${S.track}</b>. Betting open on the <b>${S.race.title}</b>.`);
+}
+const rugCss=h=>h.silk&&h.no===2&&isDogs()?RUG2:null;
+
+/* greyhound sprite: same frame size and timing as the horses, so the renderer treats them alike */
+function buildDogSheet(h,idx){
+  const sheet=document.createElement("canvas");sheet.width=FW*(FR+1);sheet.height=FH;
+  const out=sheet.getContext("2d");
+  const coat=DOG_COATS[h.coat%DOG_COATS.length],hs=strHash(h.name),box=h.no||idx+1,[rug,ink]=RUGS[(box-1)%8];
+  const P=a=>a.map(([x,y])=>[x*K,y*K]);
+  const dark=shade(coat.b,.7),far=shade(coat.b,.55),hi=shade(coat.b,1.25);
+  for(let f=0;f<=FR;f++){
+    const tmp=document.createElement("canvas");tmp.width=FW;tmp.height=FH;
+    const c=tmp.getContext("2d");c.scale(SS,SS);
+    const stand=f===STAND,ph=stand?0:f/FR*6.2832;
+    // double-suspension gallop: the back stretches out flat, then gathers into an arch, once per stride
+    const gth=stand?.15:Math.sin(ph),ext=-Math.min(0,gth),arch=Math.max(0,gth);
+    const bob=stand?0:-1.3*Math.abs(gth)+.6;
+    const hipX=13+2.4*arch-1.2*ext,shX=31-.6*arch+.8*ext,by=19+bob,top=by-5.2-1.6*arch;
+    const leg=(hx,hy,th,fl,L1,L2,col,front)=>{
+      const kx=hx+Math.sin(th)*L1,ky=hy+Math.cos(th)*L1,sh=front?th-fl:th+fl,fx=kx+Math.sin(sh)*L2,fy=ky+Math.cos(sh)*L2;
+      line(c,hx*K,hy*K,kx*K,ky*K,front?3.6:4.4,col);line(c,kx*K,ky*K,fx*K,fy*K,2.6,col);
+      c.save();c.translate(fx*K,fy*K);c.rotate(sh);c.fillStyle=shade(col,.8);c.fillRect(-2.5,-.5,5,3.4);c.restore();
+    };
+    const fore=(o,col)=>{const g=stand?0:Math.sin(ph+o);leg(shX,by+2,stand?.05:-.25-.85*g,stand?.15:.25+.7*Math.max(0,Math.cos(ph+o)),6,6.6,col,true)};
+    const hind=(o,col)=>{const g=stand?0:Math.sin(ph+o);leg(hipX,by,stand?-.1:-.05+.95*g,stand?.35:.45+.6*Math.max(0,-Math.cos(ph+o)),6.4,7,col,false)};
+    // far legs
+    fore(.45,far);hind(.45,far);
+    // tail: long and thin, streaming back with a curl
+    const tw=stand?0:Math.sin(ph*2)*1.2;
+    c.strokeStyle=coat.b;c.lineWidth=1.6*K/2.4;c.lineCap="round";c.beginPath();c.moveTo((hipX-3)*K,(top+2)*K);c.quadraticCurveTo((hipX-9)*K,(top+5+tw)*K,(hipX-13)*K,(top+3+tw*1.8)*K);c.stroke();
+    // body: deep chest, tucked waist, rounded rump
+    polyFill(c,P([[hipX-3,top+1],[hipX+2,top-.6],[(hipX+shX)/2,top-.4-1.2*arch],[shX-2,top-.4],[shX+2.5,top+1.6],[shX+3.4,by+3.6],[shX,by+6],[shX-5,by+5.6],[(hipX+shX)/2+1,by+1.6+1.6*arch],[hipX+3,by+1.8],[hipX-2.6,by+1]]),coat.b);
+    polyFill(c,P([[shX-5,by+5.4],[shX,by+5.8],[shX+3,by+3.6],[shX+1,by+4.6]]),dark);
+    if(coat.d&&!coat.patch)for(let i=0;i<9;i++){const x=hipX-1+i*((shX-hipX+2)/9);line(c,x*K,(top+.6)*K,(x-.8)*K,(by+3.2)*K,1,coat.d)}
+    if(coat.patch){polyFill(c,P([[hipX-2,top+.6],[hipX+5,top],[hipX+6,by+1],[hipX-1.5,by+.8]]),coat.d);polyFill(c,P([[shX-1,top-.2],[shX+3,top+1.4],[shX+3,by],[shX-2,by-1]]),coat.d)}
+    // racing rug in the box colour, number on the side
+    const rx0=hipX+1.6,rx1=shX-1.2;
+    polyFill(c,P([[rx0,top+.2],[rx1,top-.2],[rx1+.4,by+2.6],[rx0+.4,by+2.2]]),rug,true);
+    if(box===2){c.fillStyle="#111";for(let y=top+.8;y<by+2.4;y+=1.6)c.fillRect(rx0*K,y*K,(rx1-rx0+.4)*K,.75*K)}
+    polyFill(c,P([[rx0,top+.2],[rx1,top-.2],[rx1,top+.7],[rx0,top+1.1]]),shade(rug==="#ffffff"?"#dddddd":rug,.75),true);
+    {const cx=(rx0+rx1)/2,cy=(top+by+2.4)/2;c.fillStyle=box===2?"#f4f1e6":"rgba(0,0,0,0)";if(box===2){c.beginPath();c.arc(cx*K,cy*K,3*K,0,7);c.fill()}
+      c.fillStyle=box===2?"#111":ink;c.font=`700 ${Math.round(5.6*K)}px "Barlow Condensed",Arial,sans-serif`;c.textAlign="center";c.textBaseline="middle";c.fillText(String(box),cx*K,(cy+.2)*K);c.textAlign="left"}
+    // neck and narrow head, reaching forward when stretched out
+    const reach=stand?-1.6:1.2*ext-.6*arch,hx=shX+5.4+reach,hy=top-3.2+(stand?-2.2:.8*arch);
+    polyFill(c,P([[shX-1.6,top+.6],[shX+2.2,top-1.4],[hx-1,hy-1.2],[hx+1,hy+1.6],[shX+3.4,by+1]]),coat.b);
+    polyFill(c,P([[hx-2.4,hy-1.6],[hx+1.4,hy-2.2],[hx+6.4,hy+.1],[hx+6.2,hy+1.3],[hx+1.2,hy+2.2],[hx-2,hy+1.4]]),coat.b);
+    polyFill(c,P([[hx-1.8,hy-1.6],[hx-.2,hy-3],[hx+.8,hy-1.8]]),dark);
+    c.fillStyle="#0c0a09";c.fillRect(Math.round((hx+1.2)*K),Math.round((hy-.9)*K),3,3);
+    // wire racing muzzle
+    c.strokeStyle="#d9d3c4";c.lineWidth=1;c.beginPath();c.moveTo((hx+2.4)*K,(hy-1.4)*K);c.lineTo((hx+6.8)*K,(hy-.1)*K);c.lineTo((hx+6.6)*K,(hy+1.8)*K);c.lineTo((hx+2.4)*K,(hy+2.2)*K);c.closePath();c.stroke();
+    c.beginPath();c.moveTo((hx+4.4)*K,(hy-.9)*K);c.lineTo((hx+4.4)*K,(hy+2)*K);c.stroke();
+    // near legs, in front of the body
+    fore(0,coat.patch?"#ece7dc":hi);hind(0,coat.patch?"#ece7dc":hi);
+    c.globalCompositeOperation="source-atop";
+    const gr=c.createLinearGradient(0,0,0,SH);gr.addColorStop(0,"rgba(255,255,255,.18)");gr.addColorStop(.55,"rgba(255,255,255,0)");gr.addColorStop(1,"rgba(0,0,0,.28)");c.fillStyle=gr;c.fillRect(0,0,SW,SH);
+    c.globalCompositeOperation="source-over";
+    out.drawImage(tmp,f*FW,0);
+  }
+  return sheet;
+}
+
 /* ---------- renderer ---------- */
 const cv=$("c"),RES=2,W=480,H=236,PX=6,OS=60,VW=W+OS*2,LW=Math.round(BW*LOG),LH=Math.round(BH*LOG);
 const out=cv.getContext("2d");out.imageSmoothingEnabled=true;out.imageSmoothingQuality="high";
@@ -591,8 +710,8 @@ const g=offC.getContext("2d");g.imageSmoothingEnabled=true;g.imageSmoothingQuali
 const reduced=matchMedia("(prefers-reduced-motion: reduce)").matches;
 let sheets=[],sheetKey="",R=null,particles=[],confetti=[];
 function ensureSheets(){
-  const key=S.race.field.map(h=>h.name).join()+S.meeting+S.idx;
-  if(key!==sheetKey){sheetKey=key;sheets=S.race.field.map((h,i)=>buildSheet(h,i))}
+  const key=S.mode+S.race.field.map(h=>h.name+h.no).join()+S.meeting+S.idx;
+  if(key!==sheetKey){sheetKey=key;sheets=S.race.field.map((h,i)=>S.race.dogs?buildDogSheet(h,i):buildSheet(h,i))}
 }
 const laneY=l=>{const n=S.race.field.length;return 126+l*(88/(n-1))};
 const mix=(a,b,t)=>a.map((v,i)=>Math.round(v+(b[i]-v)*t));
@@ -653,13 +772,21 @@ function drawScene(camX,now){
     g.fillStyle="#efe4c8";g.fillRect(sx+232,86,6,10)}
   if(tier.theme>=3)for(let i=-3;i<6;i++){const px=sx+i*80;g.fillStyle="#efe4c8";g.fillRect(px,8,1,20);polyFill(g,[[px+1,8],[px+1+11+Math.sin(now/200+i)*2,12],[px+1,16]],["#c8321f","#f2c92b","#2a62c9"][(i+3)%3])}
   if(tier.theme>=3)for(let i=-6;i<3;i++){const px=sx-300-i*60;g.fillStyle="#f6f2e8";polyFill(g,[[px,84],[px+24,70],[px+48,84]],"#f6f2e8");g.fillStyle="#d8342a";g.fillRect(px,84,48,8)}
-  // turf
+  if(S.race.dogs){
+    // greyhound track: raked loam, with grass inside the near rail
+    const wet=clamp((S.race.rating-4)/4,0,1),sa=mix([206,166,108],[150,112,72],wet),sb=mix([184,140,88],[128,94,60],wet);
+    const tg=g.createLinearGradient(0,96,0,236);tg.addColorStop(0,css(mix(sb,[90,70,50],.3)));tg.addColorStop(1,css(sa));g.fillStyle=tg;g.fillRect(0,96,VW,140);
+    g.fillStyle=css(mix(sb,[120,90,60],.4));for(let y=104;y<218;y+=6)g.fillRect(0,y,VW,1);
+    g.fillStyle=css(mix(sa,[250,220,170],.35));for(let i=0;i<80;i++){const px=((i*71.3+hash(i)*300-camX)%VW+VW)%VW,py=104+hash(i*3)*112;g.fillRect(px,py,2,1)}
+    g.fillStyle="rgba(60,40,20,.25)";g.fillRect(0,100,VW,5);
+  }else{
   {const tg=g.createLinearGradient(0,96,0,236);tg.addColorStop(0,css(mix(P.turfB,[30,70,40],.25)));tg.addColorStop(1,css(mix(P.turfB,[150,190,110],.18)));g.fillStyle=tg;g.fillRect(0,96,VW,140)}
   const off=((-camX)%128+128)%128;
   g.globalAlpha=.32;g.fillStyle=css(mix(P.turfA,[170,210,120],.3));for(let x=off-128;x<VW;x+=128)g.fillRect(x,102,64,116);g.globalAlpha=1;
   g.fillStyle=css(mix(P.turfA,[30,70,40],.35));
   for(let i=0;i<70;i++){const px=((i*83.3+hash(i)*300-camX)%VW+VW)%VW,py=104+hash(i*3)*112;g.fillRect(px,py,3,1)}
   g.fillStyle="rgba(20,40,20,.28)";g.fillRect(0,100,VW,5);
+  }
   if(tier.theme>=2){const ro=((-camX)%9+9)%9;for(let x=ro-9;x<VW;x+=9){g.fillStyle=hash(Math.floor(x+camX))>.5?"#d8342a":"#ef7fa8";g.fillRect(x,95,5,4);g.fillStyle="#2f6b3a";g.fillRect(x+1,99,3,1)}}
   {const BW2=150,first=Math.floor((camX-BW2)/BW2*1.0);
     for(let i=first;i<first+VW/BW2+3;i++){const x=i*BW2-camX+20,ad=ADS[((i%ADS.length)+ADS.length)%ADS.length];
@@ -671,7 +798,7 @@ function drawScene(camX,now){
     g.fillStyle="#cfc4a8";g.fillRect(sx+18,64,2,28);g.fillRect(sx+32,64,2,28);g.fillStyle="#1b1b22";g.font='700 4.5px "Barlow Condensed",Arial,sans-serif';g.textAlign="center";g.fillText("JUDGE",sx+26,61.5);g.textAlign="left"}
   g.fillStyle="#f6f2e8";g.fillRect(0,92,VW,3);g.fillStyle="#bdb7a8";g.fillRect(0,94,VW,1);g.fillStyle="rgba(10,30,15,.25)";g.fillRect(0,95,VW,2);
   const po=((-camX)%32+32)%32;g.fillStyle="#f6f2e8";for(let x=po-32;x<VW;x+=32)g.fillRect(x,92,2,9);
-  for(let m=200;m<S.race.dist;m+=200){const mx=(S.race.dist-m)*PX-camX;
+  for(let m=S.race.dogs?100:200;m<S.race.dist;m+=S.race.dogs?100:200){const mx=(S.race.dist-m)*PX-camX;
     if(mx>-20&&mx<VW+20){g.fillStyle="#f6f2e8";g.fillRect(mx,74,2,22);g.fillStyle="#1b1b22";g.fillRect(mx-9,66,21,9);digits(g,m,mx-7+(m<1000?2:0),68,"#ffd889")}}
   if(sx>-10&&sx<VW+10){
     for(let y=102;y<218;y+=4){g.fillStyle=(y/4)%2?"#f4f1e6":"#1d1d1d";g.fillRect(sx,y,2,4);g.fillStyle=(y/4)%2?"#1d1d1d":"#f4f1e6";g.fillRect(sx+2,y,2,4)}
@@ -683,18 +810,19 @@ function drawGates(camX,now){
   // rear frame only; the front doors are drawn over the horses by drawDoors
   const n=S.race.field.length;
   for(let l=0;l<n;l++){const y=laneY(l),x=-camX;
-    g.fillStyle="#1f5c3d";g.fillRect(x-58,y-37*GS,2,39*GS);g.fillRect(x-58,y-37*GS,68,3);
-    g.fillStyle="#2c7a52";g.fillRect(x-58,y-3,68,2);}
+    const fc=S.race.dogs?"#9aa0a8":"#1f5c3d",bc=S.race.dogs?"#c3c8ce":"#2c7a52";
+    g.fillStyle=fc;g.fillRect(x-58,y-37*GS,2,39*GS);g.fillRect(x-58,y-37*GS,68,3);
+    g.fillStyle=bc;g.fillRect(x-58,y-3,68,2);}
   const top=laneY(0)-46*GS,bot=laneY(n-1)+3,x=-camX;
-  g.fillStyle="#1f5c3d";g.fillRect(x-60,top,4,bot-top);
+  g.fillStyle=S.race.dogs?"#9aa0a8":"#1f5c3d";g.fillRect(x-60,top,4,bot-top);
 }
 function drawDoors(camX,open){
   const n=S.race.field.length,x=-camX;
   for(let l=0;l<n;l++){
     const y=laneY(l),h=30*GS,sw=12*(1-open);
-    g.fillStyle="#d9a321";g.fillRect(x+7,y-h-6,4,h+8);
+    g.fillStyle=S.race.dogs?"#9aa0a8":"#d9a321";g.fillRect(x+7,y-h-6,4,h+8);
     if(open<1){
-      g.fillStyle="#c8321f";g.fillRect(x+11,y-h,sw,h);
+      g.fillStyle=S.race.dogs?RUGS[l%8][0]:"#c8321f";g.fillRect(x+11,y-h,sw,h);
       g.fillStyle="#f4f1e6";g.fillRect(x+12,y-h+3,Math.max(0,sw-2),3);g.fillRect(x+12,y-9,Math.max(0,sw-2),3);
     }else{g.fillStyle="rgba(200,50,31,.75)";g.fillRect(x+11,y-h,2,h)}
     g.fillStyle="#17120c";g.fillRect(x-6,y-h-14,14,9);digits(g,l+1,x-4+(l+1<10?3:0),y-h-12,"#ffd889");
@@ -747,11 +875,22 @@ function drawHorses(camX,pos,now){
     const ff=run&&(R.running||R.photoOn)?(R.photoOn?3:(Math.floor(now/GAIT_MS)+k*3)%FR):STAND;
     const sw=moving?Math.sin(now/260+k):0;
     if(x>-LW-10&&x<VW+4){
-      g.fillStyle="rgba(10,30,15,.3)";g.beginPath();g.ellipse(x+LW/2,y+sw*.5,LW/2-6,3,0,0,7);g.fill();
+      g.fillStyle="rgba(10,30,15,.3)";g.beginPath();if(S.race.dogs)g.ellipse(x+LW*.52,y+sw*.5,LW*.3,2.4,0,0,7);else g.ellipse(x+LW/2,y+sw*.5,LW/2-6,3,0,0,7);g.fill();
       g.drawImage(sheets[k],ff*FW,0,FW,FH,x,y-LH+3+sw,LW,LH);
       if(moving&&!reduced&&Math.random()<.65)particles.push({x:x+camX+8+Math.random()*10,y:y,vx:-Math.random()*1.3-.3,vy:-Math.random()*.7-.1,life:10+Math.random()*14,s:1+Math.floor(Math.random()*3)});
     }
   }
+}
+function drawLure(camX,pos,now){
+  // the lure runs along the outside rail a few lengths ahead of the leader
+  const lead=pos?Math.max(...pos):0,run=R&&!R.preUntil;
+  const x=(run?lead+9+Math.min(6,(R.t||0)*3):-1.5)*PX-camX,b=run&&!reduced?Math.sin(now/45)*1.2:0;
+  if(x<-20||x>VW+20)return;
+  g.fillStyle="#6b6f76";g.fillRect(x-1,90,2,10);g.fillRect(x-14,90,15,2);
+  g.fillStyle="#efe7d6";g.beginPath();g.ellipse(x+2,104+b,6,3.4,0,0,7);g.fill();
+  g.fillStyle="#cdbf9f";g.beginPath();g.ellipse(x-3,103.4+b,2.6,2,0,0,7);g.fill();
+  g.fillStyle="#efe7d6";g.beginPath();g.ellipse(x+7,103+b,2.2,1.6,0,0,7);g.fill();
+  line(g,x,100,x+2,102+b,1,"#6b6f76");
 }
 function drawParticles(camX){
   g.fillStyle=S.race.rating>=6?"#5a4a33":"#b89d6c";
@@ -817,8 +956,8 @@ function updateHud(now,pos,show){
   $("hudrem").innerHTML=rem>0?`${rem}m<small>to go of ${S.race.dist}m</small>`:"Finish";
   $("hudrem").classList.toggle("final",rem>0&&rem<=200);
   $("runbar").style.width=clamp(lead/S.race.dist,0,1)*100+"%";
-  $("runorder").innerHTML=o.map((k,i)=>{const h=S.race.field[k],c=silkOf(h,k)[0],mine=S.bets.some(b=>b.sel.includes(k));return `<span class="${mine?"mine":""}"><i style="background:${c};color:${inkOn(c)}">${h.no}</i>${i===0?"<b>"+h.name+"</b>":""}</span>`}).join("");
-  $("hudtop").innerHTML=o.slice(0,4).map((k,i)=>{const h=S.race.field[k],c=silkOf(h,k)[0];return `<div><i style="background:${c};color:${inkOn(c)}">${h.no}</i><span>${h.name}</span></div>`}).join("");
+  $("runorder").innerHTML=o.map((k,i)=>{const h=S.race.field[k],c=silkOf(h,k)[0],mine=S.bets.some(b=>b.sel.includes(k));return `<span class="${mine?"mine":""}"><i style="background:${rugCss(h)||c};color:${inkOn(c)}">${h.no}</i>${i===0?"<b>"+h.name+"</b>":""}</span>`}).join("");
+  $("hudtop").innerHTML=o.slice(0,4).map((k,i)=>{const h=S.race.field[k],c=silkOf(h,k)[0];return `<div><i style="background:${rugCss(h)||c};color:${inkOn(c)}">${h.no}</i><span>${h.name}</span></div>`}).join("");
 }
 function frame(now){
   requestAnimationFrame(frame);
@@ -828,7 +967,7 @@ function frame(now){
   if(R){
     if(R.photoOn){if(now>R.photoUntil){R.photoOn=false;cv.style.filter="";$("photo").style.display="none";R.last=now;fireWinnerCall()}}
     else if(R.preUntil){
-      if(now>=R.preUntil){R.preUntil=0;R.jumpAt=now;R.last=now;tone(1250,.6,0,"square",.07);say(`And they're away in the <b>${S.race.title}</b>!`)}
+      if(now>=R.preUntil){R.preUntil=0;R.jumpAt=now;R.last=now;tone(1250,.6,0,"square",.07);say(S.race.dogs?`The lids are up in the <b>${S.race.title}</b>!`:`And they're away in the <b>${S.race.title}</b>!`)}
     }else if(R.running){const dt=Math.min(.1,(now-R.last)/1000);R.last=now;R.t+=dt*R.rate;tick(now)}
     pos=horsePositions(R.t);
     if(R.running&&R.t>=R.sim.dt*(R.sim.trace.length-2)){R.running=false;if(R.replay){R.replay=false;R.circleAt=now+700}}
@@ -856,6 +995,7 @@ function frame(now){
   else{
     drawScene(camX,now);
     if(showGates)drawGates(camX,now);
+    if(S.race.dogs)drawLure(camX,pos,now);
     drawHorses(camX,pos,now);
     if(showGates)drawDoors(camX,doors);
     drawParticles(camX);
@@ -997,9 +1137,9 @@ function renderPicker(){
 function refundBets(){if(S.phase==="bet"||S.phase==="race")for(const b of S.bets)S.bank=Math.round((S.bank+b.stake)*100)/100;S.bets=[]}
 function abortRace(){if(S.phase==="race"){refundBets();S.phase="bet"}R=null;stopCrowd();particles=[];cv.style.filter="";$("photo").style.display="none";$("hud").style.display="none";picker=null}
 function leaveDaily(){const c=S.career;c.dailyDone=c.dailyDone||{};c.dailyDone[S.day]=S.bank;S=c}
-function goCareer(){abortRace();if(S.mode==="daily")leaveDaily();else if(S.mode==="real"){const c=S.career;const keep={...S};delete keep.career;c.realSaved=keep;S=c}save();renderAll();say(`Back at <b>${S.track}</b>.`)}
+function goCareer(){abortRace();leaveDogs();if(S.mode==="daily")leaveDaily();else if(S.mode==="real"){const c=S.career;const keep={...S};delete keep.career;c.realSaved=keep;S=c}save();renderAll();say(`Back at <b>${S.track}</b>.`)}
 function enterReal(i){
-  abortRace();if(S.mode==="daily")leaveDaily();
+  abortRace();leaveDogs();if(S.mode==="daily")leaveDaily();
   const career=S,rs=career.realSaved;career.realSaved=null;
   S=rs?{...rs,career,realList:MEETS}:{bank:1000,meeting:1,best:1000,bigCollect:0,loans:0,type:"win",sel:[],bets:[],phase:"bet",ledger:[],tier:0,mode:"real",realList:MEETS,pool:[],startBank:1000,career};
   S.phase="bet";goMeeting(i);
@@ -1064,7 +1204,7 @@ function renderNav(){
   let groups="",cur=S.mode==="real"?`${S.realIdx},${S.idx}`:"";
   MEETS.forEach((m,mi)=>{groups+=`<optgroup label="${dayName(m.date)} · ${m.venue}">`+m.races.map((r,ri)=>{const k=raceKey(m,r.number),done=RS[k]&&RS[k].done;return `<option value="${mi},${ri}" ${cur===mi+","+ri?"selected":""}>R${r.number} ${timeOf(r.jump)} ${r.name}${r.feature?" ★":""}${done?" (result in)":closed(r.jump)?" (closed)":""}</option>`}).join("")+`</optgroup>`});
   const pend=pendingCount();
-  $("nav").innerHTML=`<div><button data-nav="career" aria-pressed="${S.mode==="career"&&!bookOpen&&!resOpen}">Career</button><button data-nav="daily" aria-pressed="${S.mode==="daily"&&!bookOpen&&!resOpen}" ${S.mode!=="daily"&&dd!==undefined?"disabled":""}>${dd!==undefined&&S.mode!=="daily"?"Daily "+money(dd):"Daily"}</button><button data-nav="results" aria-pressed="${resOpen}">Results</button><button data-nav="book" aria-pressed="${bookOpen}">My Book${pend?` (${pend})`:""}</button>${S.mode!=="daily"?'<button class="alt" data-nav="restart">Restart meet</button>':""}</div>
+  $("nav").innerHTML=`<div><button data-nav="career" aria-pressed="${S.mode==="career"&&!bookOpen&&!resOpen}">Career</button><button data-nav="daily" aria-pressed="${S.mode==="daily"&&!bookOpen&&!resOpen}" ${S.mode!=="daily"&&dd!==undefined?"disabled":""}>${dd!==undefined&&S.mode!=="daily"?"Daily "+money(dd):"Daily"}</button><button data-nav="dogs" aria-pressed="${S.mode==="dogs"&&!bookOpen&&!resOpen}">Dogs</button><button data-nav="results" aria-pressed="${resOpen}">Results</button><button data-nav="book" aria-pressed="${bookOpen}">My Book${pend?` (${pend})`:""}</button>${S.mode!=="daily"?'<button class="alt" data-nav="restart">Restart meet</button>':""}</div>
   ${[...new Set(MEETS.map(m=>m.date))].map(d=>`<div class="meets"><span>${d===REAL_TODAY?"Today":"Tomorrow"===dayRel(d)?"Tomorrow":dayName(d)}</span>${MEETS.map((m,mi)=>m.date!==d?"":`<button data-meet="${mi}" aria-pressed="${S.mode==="real"&&mi===S.realIdx&&!bookOpen&&!resOpen}">${m.venue}</button>`).join("")}</div>`).join("")}<label class="pick"><span>All races</span><select id="racesel" ${MEETS.length?"":"disabled"}>${cur?"":`<option value="" selected>${MEETS.length?"Pick a race":meetsFailed?"Real races only load on the public game site":"Loading races"}</option>`}${groups}</select></label>`;
 }
 $("nav").addEventListener("change",e=>{if(e.target.id!=="racesel"||!e.target.value)return;resOpen=false;const [m,r]=e.target.value.split(",").map(Number);audio();setReal(m,r)});
@@ -1077,7 +1217,8 @@ $("nav").addEventListener("click",e=>{
     return setReal(mi,open>=0?open:0)}
   if(b.dataset.nav==="career"){bookOpen=false;if(S.mode==="career")return renderAll();return goCareer()}
   if(b.dataset.nav==="book"){bookOpen=!bookOpen;bookMsg="";settleBook();renderNav();renderCard();if(bookOpen)$("card").scrollIntoView({block:"start"});return}
-  if(b.dataset.nav==="daily"){bookOpen=false;if(S.mode==="daily")return renderAll();abortRace();if(S.mode==="real"){const c=S.career;const k={...S};delete k.career;c.realSaved=k;S=c}return startDaily()}
+  if(b.dataset.nav==="daily"){bookOpen=false;if(S.mode==="daily")return renderAll();abortRace();if(S.mode==="real"){const c=S.career;const k={...S};delete k.career;c.realSaved=k;S=c}leaveDogs();return startDaily()}
+  if(b.dataset.nav==="dogs"){bookOpen=false;if(S.mode==="dogs")return renderAll();return enterDogs()}
   if(b.dataset.nav==="restart"){bookOpen=false;return restartMeet()}
 });
 function addTicket(type,sel,st){
@@ -1166,12 +1307,12 @@ function marginTxt(l){
 const timeTxt=s=>{const m=Math.floor(s/60),r=s-m*60;return m+":"+(r<10?"0":"")+r.toFixed(2)};
 function buildResult(){
   const race=S.race,sim=R.sim,o=sim.order,w=sim.fin[o[0]],x=S.result;
-  const real=S.mode==="real",src=real?S.real.races[S.idx]:null;
+  const real=S.mode==="real",src=real?S.real.races[S.idx]:null,lenM=race.dogs?1.2:LEN_M; // a greyhound length is about 1.2m
   const runners=o.map((k,i)=>{const h=race.field[k],t=sim.fin[k],c=silkOf(h,k);
-    return {pos:i+1,no:h.no,name:h.name,jock:h.jock,bar:h.realBarrier||h.barrier,wt:h.weight,win:h.win,place:h.place,time:Math.round(t*100)/100,
-      mar:i?(t-sim.fin[o[i-1]])*FIN_V/LEN_M:0,btn:(t-w)*FIN_V/LEN_M,silk:[c[0],h.silk?inkOn(c[0]):c[1]]}});
+    return {pos:i+1,no:h.no,name:h.name,jock:h.jock,bar:h.realBarrier||h.barrier,wt:race.dogs?h.kg:h.weight,win:h.win,place:h.place,time:Math.round(t*100)/100,
+      mar:i?(t-sim.fin[o[i-1]])*FIN_V/lenM:0,btn:(t-w)*FIN_V/lenM,silk:[rugCss(h)||c[0],h.silk?inkOn(c[0]):c[1]]}});
   return {id:x.rid,at:new Date().toISOString(),mode:S.mode,
-    meet:real?"Real Races (simulated)":S.mode==="daily"?"Daily Meeting "+S.day:`${TIERS[S.tier||0].name} · Meeting ${S.meeting}`,
+    meet:race.dogs?`Greyhounds · Meeting ${S.meeting}`:real?"Real Races (simulated)":S.mode==="daily"?"Daily Meeting "+S.day:`${TIERS[S.tier||0].name} · Meeting ${S.meeting}`,
     track:S.track,raceNo:race.realNo||race.no,title:race.title,dist:race.dist,cond:race.trackLabel||ratingName(race.rating),
     jump:real&&src?src.jump:null,date:real?S.real.date:null,key:real&&src?raceKey(S.real,src.number):null,placeN:race.placeN,runners,
     div:{quin:x.quin,exacta:x.exacta,tri:x.tri,first4:x.first4||null},staked:x.staked,ret:x.ret};
@@ -1243,12 +1384,12 @@ function startRace(){
   audio();bookOpen=false;resOpen=false;renderNav();
   const sim=S.mode==="daily"?withSeed(S.seed+S.idx*131,()=>simulate(S.race.field,S.race,true)):simulate(S.race.field,S.race,true);
   const fin=sim.order.map(k=>sim.fin[k]);
-  R={preUntil:performance.now()+2300,jumpAt:0,sim,t:0,rate:(S.race.dist/17)/(20+(S.race.dist-1000)*.03),running:true,last:performance.now(),called:0,photoDone:false,settled:false,lastHoof:0,evI:0,
+  R={preUntil:performance.now()+2300,jumpAt:0,sim,t:0,rate:S.race.dogs?1.25:(S.race.dist/17)/(20+(S.race.dist-1000)*.03),running:true,last:performance.now(),called:0,photoDone:false,settled:false,lastHoof:0,evI:0,
      isPhoto:fin[1]-fin[0]<.11,startPos:null,p70:null,winCalled:false};
   S.phase="race";cam=-340;particles=[];
   renderAll();
-  bugle();startCrowd();
-  say(`They're loading for the <b>${S.race.title}</b>...`);
+  if(S.race.dogs){[[330,.5],[392,.6]].reduce((w,[f,d])=>{tone(f,d,w,"sawtooth",.025);return w+d*.8},0)}else bugle();startCrowd();
+  say(S.race.dogs?`They're in the boxes for the <b>${S.race.title}</b>. Here comes the lure...`:`They're loading for the <b>${S.race.title}</b>...`);
   document.querySelector(".stage").scrollIntoView({behavior:reduced?"auto":"smooth",block:"start"});
 }
 function posStr(o,k){const i=o.indexOf(k)+1;return i===1?"in front":i===2?"second":i===3?"third":i+"th"}
@@ -1342,9 +1483,9 @@ function nextMeeting(){S.meeting++;S.lastNames=[];newMeeting();R=null;renderAll(
 
 /* ---------- UI ---------- */
 function stake(){return Math.max(0,Math.floor(+$("stake").value||0))}
-function silk(h,k,tag){const a=silkOf(h,k)[0],b=h.silk?inkOn(a):SILKS[k%SILKS.length][1];return `<span class="silk" style="background:${a};color:${b}">${h.no}${tag?`<i>${tag}</i>`:""}</span>`}
+function silk(h,k,tag){const a=silkOf(h,k)[0],b=h.silk?inkOn(a):SILKS[k%SILKS.length][1];return `<span class="silk" style="background:${rugCss(h)||a};color:${b}">${h.no}${tag?`<i>${tag}</i>`:""}</span>`}
 function renderHeader(){
-  $("meet").textContent=S.mode==="real"?`Real Races · ${S.track} · ${S.real.date}`:S.mode==="daily"?`Daily Meeting ${S.day}`:`${TIERS[S.tier].name} · ${S.track} · Meeting ${S.meeting}`;
+  $("meet").textContent=S.mode==="dogs"?`Greyhounds · ${S.track} · Meeting ${S.meeting}`:S.mode==="real"?`Real Races · ${S.track} · ${S.real.date}`:S.mode==="daily"?`Daily Meeting ${S.day}`:`${TIERS[S.tier].name} · ${S.track} · Meeting ${S.meeting}`;
   const dd=(S.dailyDone||{})[dayKey()];const db=$("daily");db.hidden=S.mode!=="career";const rb=$("realbtn");rb.hidden=S.mode!=="career";rb.disabled=S.phase!=="bet"||S.bets.length>0;$("foot").textContent=S.mode==="real"?"Data provided by Krok Odds. Play money only. Results are simulated, not the actual race.":"Play money only. No real bets, deposits or prizes.";db.disabled=dd!==undefined||S.phase!=="bet"||S.bets.length>0;db.textContent=dd!==undefined?`Today's daily: ${money(dd)}`:"Play Daily Meeting";
   $("raceNo").textContent=`${S.race.no}/${lastIdx()+1}`;
   $("bank").textContent=money(S.bank);
@@ -1365,7 +1506,7 @@ function renderCard(){
     const tag=on&&TYPES[S.type][1]>1?(S.type==="quin"?"•":i+1):"";
     return `<button class="runner${on?" on":""}" data-k="${k}" aria-pressed="${on}" ${S.phase!=="bet"?"disabled":""}>
       ${silk(h,k,tag)}
-      <span><span class="rname">${h.name}</span><br><span class="rmeta">${h.real?`${h.form?`<b>${h.form}</b> · `:""}B${h.realBarrier} · ${h.weight}kg · ${h.jock}<br>${h.trainer||""}${h.speed?" · "+h.speed:""}`:`<b>${h.form}</b> · B${h.barrier} · ${h.weight}kg · ${h.jock}<br>${STYLE[h.style]} · Best ${h.trip}m · Wet ${h.wetRec}`}</span></span>
+      <span><span class="rname">${h.name}</span><br><span class="rmeta">${r.dogs?`<b>${h.form}</b> · Box ${h.no} · ${h.kg}kg · ${h.sex}<br>Trainer ${h.jock} · ${DOG_STYLE[h.style]} · ${DOG_COATS[h.coat%DOG_COATS.length].n}`:h.real?`${h.form?`<b>${h.form}</b> · `:""}B${h.realBarrier} · ${h.weight}kg · ${h.jock}<br>${h.trainer||""}${h.speed?" · "+h.speed:""}`:`<b>${h.form}</b> · B${h.barrier} · ${h.weight}kg · ${h.jock}<br>${STYLE[h.style]} · Best ${h.trip}m · Wet ${h.wetRec}`}</span></span>
       <span class="odds"><small>Win</small>${oddsTxt(h.win)}</span>
       <span class="odds"><small>Place</small>${oddsTxt(h.place)}</span>
     </button>`}).join("")}</div>`;
@@ -1388,6 +1529,12 @@ function renderResult(){
 function renderEnd(){
   const net=S.bank-S.startBank,ratio=S.bank/Math.max(1,S.startBank+0);
   let title=RANK[0][1];for(const [m,t] of RANK)if(ratio>=m)title=t;
+  if(S.mode==="dogs"){
+    $("card").innerHTML=`<h2>${S.track} is done for the night</h2><div class="net ${net>=0?"won":"lost"}">${net>=0?"Up":"Down"} ${money(Math.abs(net))}</div><div class="tip">Verdict: <b>${title}</b></div>
+    <table class="tbl">${S.ledger.map(l=>`<tr><td>Race ${l.no}</td><td class="n">Bet ${money(l.staked)}</td><td class="n ${l.ret>l.staked?"won":l.ret<l.staked?"lost":""}">${money(l.ret-l.staked)}</td></tr>`).join("")}</table>
+    <div class="conds"><span>Dogs bank ${money(S.bank)}</span><span>Best ${money(S.best)}</span></div>
+    <button class="big next" id="nm">Next dog meeting</button><button class="reset" id="dd">Back to the horses</button>`;
+    $("nm").onclick=nextMeeting;$("dd").onclick=goCareer;return}
   if(S.mode!=="career"){
     $("card").innerHTML=`<h2>${S.mode==="real"?S.track+" done":"Daily Meeting done"}</h2><div class="net ${net>=0?"won":"lost"}">Final bank ${money(S.bank)}</div><div class="tip">Verdict: <b>${title}</b></div>
     <table class="tbl">${S.ledger.map(l=>`<tr><td>Race ${l.no}</td><td class="n">Bet ${money(l.staked)}</td><td class="n ${l.ret>l.staked?"won":l.ret<l.staked?"lost":""}">${money(l.ret-l.staked)}</td></tr>`).join("")}</table>
@@ -1448,7 +1595,7 @@ function renderDetail(){
       extra=`<table><tr>${rows[0]}</tr><tr>${rows[1]}</tr></table>${rec?`<table><tr><th>Date</th><th>Track</th><th>Dist</th><th>Finish</th></tr>${rec}</table>`:""}`}
     else extra=ffHtml(h);
     el.innerHTML=`<div class="detail-h"><span><b>${h.name}</b> · ${h.jock}${h.trainer?" · "+h.trainer:""}</span><button class="tk-act" data-scr="${h.no}">Mark scratched</button></div>${h.form?`Recent form: ${h.form}`:""}${extra}`;return}
-  el.innerHTML=`<b>${h.name}</b> last starts<table><tr><th>Track</th><th>Dist</th><th>Going</th><th>Finish</th></tr>${[...pool.runs].reverse().map(r=>`<tr><td>${r.t}</td><td>${r.d}m</td><td>${ratingName(r.r)}</td><td>${r.p==="x"?"Spell":r.p==="0"?"10th+":r.p+"/"+r.n}</td></tr>`).join("")}</table>`;
+  el.innerHTML=`<b>${h.name}</b> last starts<table><tr><th>Track</th><th>Dist</th><th>Going</th><th>Finish</th></tr>${[...pool.runs].reverse().map(r=>`<tr><td>${r.t}</td><td>${r.d}m</td><td>${S.race.dogs?dogTrack(r.r):ratingName(r.r)}</td><td>${r.p==="x"?"Spell":r.p==="0"?"10th+":r.p+"/"+r.n}</td></tr>`).join("")}</table>`;
 }
 function renderSlip(){
   const bet=S.phase==="bet";
@@ -1584,8 +1731,9 @@ async function sbRows(query,init={},table="otr_accounts"){
 }
 // A real or daily meeting sits on top of the career save, and its race data is rebuilt from the feed.
 function cloudState(){
-  const c=(S.mode==="real"||S.mode==="daily")&&S.career?S.career:S;
+  const c=(S.mode==="real"||S.mode==="daily"||S.mode==="dogs")&&S.career?S.career:S;
   const out={...c};delete out.realSaved;
+  if(S.mode==="dogs"){const d={...S};delete d.career;out.dogsSaved=d}
   return out;
 }
 function saveSync(){lsSet(K_SYNC,SYNC)}
