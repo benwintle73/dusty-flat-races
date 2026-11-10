@@ -26,6 +26,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--amber);outline-
 .wrap{max-width:1180px;margin:0 auto;padding:12px 16px 28px;display:grid;gap:12px}
 .mast{display:flex;flex-wrap:wrap;gap:6px 22px;align-items:center;background:var(--tote);border:3px solid var(--tote2);padding:8px 14px}
 .mast h1{margin:0;font:400 clamp(26px,4vw,38px)/1 var(--display);color:var(--amber);letter-spacing:.8px;text-transform:uppercase}
+.mast h1 .ver{font:600 15px/1 var(--led);text-transform:none;letter-spacing:.5px;color:var(--amber-dim);vertical-align:middle;margin-left:4px}
 .mast .meet{font:600 20px/1.1 var(--led);color:var(--amber-dim);flex:1 1 200px}
 .led{display:flex;flex-direction:column;align-items:flex-end}
 .led small{font:600 14px/1 var(--led);letter-spacing:1px;color:var(--amber-dim)}
@@ -116,13 +117,14 @@ canvas{width:100%;height:auto;display:block}
 #hudrem small{display:block;font:600 clamp(12px,1.8vw,16px)/1.2 var(--led);color:#f0d9a8}
 #hudrem.final{color:var(--amber);animation:pulse .6s ease-in-out infinite alternate}
 #hudrem.final small::before{content:"FINAL 200M · ";color:#fff}
+@media (max-width:600px){#hud #hudtop{display:none}#hud #hudrem{margin-left:auto;text-align:right}#runorder{font-size:15px}#runorder i{min-width:22px;height:22px}}
 @keyframes pulse{to{transform:scale(1.08)}}
 @media (prefers-reduced-motion:reduce){#hudrem.final{animation:none}}
 #runline{background:var(--tote);padding:6px 10px 8px;display:grid;gap:6px;border-top:2px solid var(--tote2)}
 #runline[hidden]{display:none}
 .runtrack{height:6px;background:var(--tote2);position:relative}
 #runbar{position:absolute;inset:0 auto 0 0;background:linear-gradient(90deg,var(--amber-dim),var(--amber));width:0}
-#runorder{display:flex;gap:4px;align-items:center;overflow:hidden;font:600 16px/1 var(--led);color:#fff;white-space:nowrap}
+#runorder{display:flex;flex-wrap:wrap;row-gap:5px;gap:4px;align-items:center;overflow:hidden;font:600 16px/1 var(--led);color:#fff;white-space:nowrap}
 #runorder span{display:flex;gap:5px;align-items:center}
 #runorder i{font-style:normal;font-weight:700;min-width:24px;height:24px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.35)}
 #runorder .mine i{outline:2px solid #ffe07a;outline-offset:1px}
@@ -175,11 +177,16 @@ canvas{width:100%;height:auto;display:block}
 .res-winner small{font:600 13px/1 var(--led);letter-spacing:1px;text-transform:uppercase;color:var(--amber)}
 .res-winner b{font:400 24px/1.05 var(--display);letter-spacing:.4px}
 .res-scroll{overflow-x:auto}
+.res-tbl .narrow{display:none}
+@media (max-width:520px){.res-tbl .wide{display:none}.res-tbl .narrow{display:inline}.res-tbl{font-size:15px}.res-tbl td,.res-tbl th{padding:5px 2px}.res-row{grid-template-columns:auto minmax(0,1fr)}.res-go{display:none}}
+.simtag{font:700 12px/1 var(--led);font-style:normal;letter-spacing:.6px;text-transform:uppercase;background:#6e6a60;color:#fff;padding:2px 5px;vertical-align:2px}
+.simbanner{background:#6e6a60;color:#fff;font:700 15px/1 var(--led);letter-spacing:.6px;text-transform:uppercase;padding:7px 10px}
 .res-tbl{font-size:16px}
 .res-tbl th{font:700 14px/1 var(--led);letter-spacing:.6px;text-transform:uppercase;color:var(--ink2)}
 .res-tbl small{color:var(--ink2);font-size:13px}
 .res-tbl .silk{width:30px;height:30px;font-size:20px}
 .res-first td{background:#ffe9a8}
+.res-placed td{background:#f8efd4}
 .res-first td:first-child{box-shadow:inset 5px 0 0 var(--amber)}
 #acct{width:min(420px,calc(100vw - 24px));background:var(--paper);color:var(--ink);border:3px solid var(--tote2);padding:16px}
 #acct::backdrop{background:rgba(0,0,0,.65)}
@@ -202,7 +209,7 @@ canvas{width:100%;height:auto;display:block}
 <body>
 <div class="wrap">
   <header class="mast">
-    <h1>Off To The Races</h1>
+    <h1>Off To The Races <span class="ver" id="ver"></span></h1>
     <div class="meet" id="meet"></div>
     <div class="led"><small>RACE</small><b id="raceNo"></b></div>
     <div class="led"><small>BANK</small><b id="bank"></b></div>
@@ -261,6 +268,7 @@ canvas{width:100%;height:auto;display:block}
 <script>
 "use strict";
 /* ---------- helpers ---------- */
+const APP_VERSION="2.0.0"; // bump on every release; shown after the title
 const $=id=>document.getElementById(id);
 let RNG=Math.random;
 const mulberry=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
@@ -451,7 +459,7 @@ const COAT_LOOKS=[
   {n:"Iron grey",b:"#7d7b78",m:"#2e2c2b",l:"#3b3937",d:"#9a9895"},{n:"Golden chestnut",b:"#c26f2c",m:"#e2b07a",l:"#c26f2c"}];
 const LOOK_OF=[[0,7,1],[0,2,7],[1,6,3],[4,8,4],[2,9,3],[5,6,1]];
 function coatOf(h){const opts=LOOK_OF[h.coat%LOOK_OF.length]||[0];return COAT_LOOKS[opts[strHash(h.name)%opts.length]]}
-const K=2.4,BW=47,BH=40,SW=Math.round(BW*K),SH=Math.round(BH*K),FR=16,STAND=FR,LOG=1.2;
+const K=2.4,BW=47,BH=40,SW=Math.round(BW*K),SH=Math.round(BH*K),FR=16,STAND=FR,LOG=1.45,SS=1.5,FW=Math.round(SW*SS),FH=Math.round(SH*SS),GS=LOG/1.2;
 // Rotary gallop: each leg plants for STANCE of the stride, in the order trailing hind, leading hind, trailing fore, leading fore.
 const STANCE=.3,REACH=4.6,BACK=5.4,GROUND=33.6;
 const LEGS=[{o:0,fore:false,near:false},{o:.1,fore:false,near:true},{o:.3,fore:true,near:false},{o:.42,fore:true,near:true}];
@@ -478,15 +486,15 @@ function pose(f){
   return {u,b,fr:b+pitch*.9,rr:b-pitch*.9,nod:Math.cos(6.2832*(u-.55)),arm:Math.cos(6.2832*(u-.6)),stand:false};
 }
 function buildSheet(h,idx){
-  const sheet=document.createElement("canvas");sheet.width=SW*(FR+1);sheet.height=SH;
+  const sheet=document.createElement("canvas");sheet.width=FW*(FR+1);sheet.height=FH;
   const out=sheet.getContext("2d");
   const look=coatOf(h),coat=look.b,mane=look.m,[silk,alt]=h.silk?[h.silk.c,h.silk.a]:SILKS[idx%SILKS.length];
   const hs=strHash(h.name),pattern=h.silk?h.silk.p:hs%6,face=(hs>>2)%5,socks=[(hs>>5)%4===0,(hs>>7)%4===0,(hs>>9)%3===0,(hs>>11)%3===0];
   const P=a=>a.map(([x,y])=>[x*K,y*K]);
   const low=shade(coat,.72),far=shade(coat,.55),hi=shade(coat,1.25),hi2=shade(coat,1.5),white="#efe9dc";
   for(let f=0;f<=FR;f++){
-    const tmp=document.createElement("canvas");tmp.width=SW;tmp.height=SH;
-    const c=tmp.getContext("2d"),Z=pose(f),{b,fr,rr}=Z;
+    const tmp=document.createElement("canvas");tmp.width=FW;tmp.height=FH;
+    const c=tmp.getContext("2d"),Z=pose(f),{b,fr,rr}=Z;c.scale(SS,SS);
     const drawLeg=(i,col)=>{
       const leg=LEGS[i],hx=leg.fore?31:12,hy=21+(leg.fore?fr:rr);
       let L;
@@ -574,7 +582,7 @@ function buildSheet(h,idx){
     c.globalCompositeOperation="source-atop";
     const gr=c.createLinearGradient(0,0,0,SH);gr.addColorStop(0,"rgba(255,255,255,.2)");gr.addColorStop(.5,"rgba(255,255,255,0)");gr.addColorStop(1,"rgba(0,0,0,.32)");c.fillStyle=gr;c.fillRect(0,0,SW,SH);
     c.globalCompositeOperation="source-over";
-    out.drawImage(tmp,f*SW,0);
+    out.drawImage(tmp,f*FW,0);
   }
   return sheet;
 }
@@ -679,15 +687,15 @@ function drawGates(camX,now){
   // rear frame only; the front doors are drawn over the horses by drawDoors
   const n=S.race.field.length;
   for(let l=0;l<n;l++){const y=laneY(l),x=-camX;
-    g.fillStyle="#1f5c3d";g.fillRect(x-58,y-37,2,39);g.fillRect(x-58,y-37,68,3);
+    g.fillStyle="#1f5c3d";g.fillRect(x-58,y-37*GS,2,39*GS);g.fillRect(x-58,y-37*GS,68,3);
     g.fillStyle="#2c7a52";g.fillRect(x-58,y-3,68,2);}
-  const top=laneY(0)-46,bot=laneY(n-1)+3,x=-camX;
+  const top=laneY(0)-46*GS,bot=laneY(n-1)+3,x=-camX;
   g.fillStyle="#1f5c3d";g.fillRect(x-60,top,4,bot-top);
 }
 function drawDoors(camX,open){
   const n=S.race.field.length,x=-camX;
   for(let l=0;l<n;l++){
-    const y=laneY(l),h=30,sw=12*(1-open);
+    const y=laneY(l),h=30*GS,sw=12*(1-open);
     g.fillStyle="#d9a321";g.fillRect(x+7,y-h-6,4,h+8);
     if(open<1){
       g.fillStyle="#c8321f";g.fillRect(x+11,y-h,sw,h);
@@ -735,18 +743,30 @@ function horsePositions(t){
   const tr=R.sim.trace,fl=t/R.sim.dt,i=clamp(Math.floor(fl),0,tr.length-2),u=clamp(fl-i,0,1);
   return tr[i].map((v,k)=>v+(tr[i+1][k]-v)*u);
 }
+function strideFrames(pos){
+  // Legs advance by distance run. Stride shortens as a horse slows after the post, so it canters down instead of
+  // galloping in slow motion. Replays rewind cleanly.
+  if(!R||!pos)return null;
+  const n=pos.length;
+  if(!R.ph||R.t<R.phT-.5||R.ph.length!==n){R.ph=pos.map((_,k)=>hash(k+3));R.pp=pos.slice();R.phT=R.t;R.pv=pos.map(()=>16.6)}
+  const dts=R.t-R.phT;
+  // a photo finish steps the clock back a fraction: hold the legs rather than run them backwards
+  if(R.t<R.phT){R.pp=pos.slice();R.phT=R.t;return R.ph}
+  for(let k=0;k<n;k++){const dp=pos[k]-R.pp[k];
+    if(dp>0&&dts>0){R.pv[k]+=(dp/dts-R.pv[k])*Math.min(1,dts*3);R.ph[k]+=dp/(STRIDE*clamp(.42+.6*R.pv[k]/16.8,.5,1.06))}}
+  R.pp=pos.slice();R.phT=R.t;
+  return R.ph;
+}
 function drawHorses(camX,pos,now){
-  const f=S.race.field,idx=[...f.keys()].sort((a,b)=>f[a].barrier-f[b].barrier);
+  const f=S.race.field,idx=[...f.keys()].sort((a,b)=>f[a].barrier-f[b].barrier),ph=pos&&R?R.ph:null;
   for(const k of idx){
-    const h=f[k],y=laneY(h.barrier-1),moving=pos&&R.running&&!R.photoOn&&!R.preUntil&&pos[k]>.3;
-    const x=Math.round((pos?pos[k]:0)*PX-camX-LW+2);
-    const run=pos&&R&&!R.preUntil&&pos[k]>.3;
-    const ff=run?Math.floor(((pos[k]/STRIDE+hash(k+3))%1)*FR):STAND;
-    const sw=0;
-    if(x>-70&&x<VW+4){
-      g.fillStyle="rgba(10,30,15,.3)";g.beginPath();g.ellipse(x+LW/2,y+sw,LW/2-5,2.6,0,0,7);g.fill();
-      g.drawImage(sheets[k],ff*SW,0,SW,SH,x,y-LH+3+sw,LW,LH);
-      if(moving&&!reduced&&Math.random()<.65)particles.push({x:x+camX+8+Math.random()*10,y:y+sw,vx:-Math.random()*1.3-.3,vy:-Math.random()*.7-.1,life:10+Math.random()*14,s:1+Math.floor(Math.random()*3)});
+    const h=f[k],y=laneY(h.barrier-1),run=pos&&R&&!R.preUntil&&pos[k]>.3,moving=run&&R.running&&!R.photoOn;
+    const x=(pos?pos[k]:0)*PX-camX-LW+2;
+    const ff=run&&ph?Math.floor((ph[k]%1)*FR):STAND;
+    if(x>-LW-10&&x<VW+4){
+      g.fillStyle="rgba(10,30,15,.3)";g.beginPath();g.ellipse(x+LW/2,y,LW/2-6,3,0,0,7);g.fill();
+      g.drawImage(sheets[k],ff*FW,0,FW,FH,x,y-LH+3,LW,LH);
+      if(moving&&!reduced&&Math.random()<.65)particles.push({x:x+camX+8+Math.random()*10,y:y,vx:-Math.random()*1.3-.3,vy:-Math.random()*.7-.1,life:10+Math.random()*14,s:1+Math.floor(Math.random()*3)});
     }
   }
 }
@@ -775,13 +795,35 @@ function drawCircle(now){
   const k=R.sim.order[0],h=S.race.field[k];
   out.fillStyle="rgba(12,16,10,.72)";out.fillRect(0,0,W,H);
   const g2=out.createRadialGradient(240,130,20,240,130,190);g2.addColorStop(0,"rgba(255,226,150,.55)");g2.addColorStop(1,"rgba(255,226,150,0)");out.fillStyle=g2;out.fillRect(0,0,W,H);
-  out.drawImage(sheets[k],13*SW,0,SW,SH,130,44,LW*3.4,LH*3.4);
+  out.drawImage(sheets[k],13*FW,0,FW,FH,200-LW*1.42,50,LW*2.84,LH*2.84);
   out.textAlign="center";out.fillStyle="#ffb52e";out.font='400 30px "Anton",Impact,sans-serif';out.fillText(h.name,240,34,450);
   out.fillStyle="#efe4c8";out.font='600 18px "Barlow Condensed","Arial Narrow",sans-serif';out.fillText(`${h.jock} · ${S.race.title}`,240,216,450);out.textAlign="left";
+  // placings board: first four, straight from the recorded finish
+  const top=R.sim.order.slice(0,4),bx=W-128,by=58;
+  out.fillStyle="rgba(15,12,8,.82)";out.fillRect(bx,by,120,14+top.length*21);
+  out.fillStyle="#ffb52e";out.font='700 11px "Barlow Condensed","Arial Narrow",sans-serif';out.fillText("PLACINGS",bx+8,by+12);
+  top.forEach((k,i)=>{const r=S.race.field[k],c=silkOf(r,k)[0],y=by+18+i*21;
+    out.fillStyle="#efe4c8";out.font='700 12px "Barlow Condensed","Arial Narrow",sans-serif';out.fillText(["1st","2nd","3rd","4th"][i],bx+8,y+12);
+    out.fillStyle=c;out.fillRect(bx+32,y+1,15,15);out.fillStyle=inkOn(c);out.textAlign="center";out.fillText(String(r.no),bx+39.5,y+12.5);out.textAlign="left";
+    out.fillStyle="#fff";out.font='600 12px "Barlow Condensed","Arial Narrow",sans-serif';out.fillText(r.name,bx+52,y+12,64)});
   if(!confetti.length)for(let i=0;i<70;i++)confetti.push({x:Math.random()*W,y:-Math.random()*H,v:.4+Math.random()*1.1,c:CROWD[i%CROWD.length]});
   for(const p of confetti){p.y+=reduced?0:p.v;if(p.y>H)p.y=-5;out.fillStyle=p.c;out.fillRect(p.x+Math.sin(p.y*.05)*7,p.y,3,3)}
 }
 let cam=-340,hudAt=0;
+function finalFrame(pos,camX,on){
+  // Fit the leaders (everyone within 30m of the front, and always the first four) and ease in over the last 320m.
+  const f=S.race.field,o=orderAt(pos),lead=pos[o[0]],D=S.race.dist;
+  const grp=o.filter((k,i)=>i<4||pos[k]>=lead-30);
+  let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;
+  for(const k of grp){const x=pos[k]*PX-camX,y=laneY(f[k].barrier-1);x0=Math.min(x0,x-LW-10);x1=Math.max(x1,x+30);y0=Math.min(y0,y-LH-34);y1=Math.max(y1,y+10)}
+  x1=Math.min(x1,VW);x0=Math.max(0,Math.min(x0,x1-60));
+  const ease=clamp((320-(D-lead))/120,0,1),fit=clamp(Math.min(W/(x1-x0),H/(y1-y0)),1,1.5),target=on?1+(fit-1)*ease:1;
+  const cx=(x0+x1)/2,cy=(y0+y1)/2;
+  if(!R.cz){R.cz=1;R.cx=OS+W/2;R.cy=H/2}
+  const k=reduced?1:.08;R.cz+=(target-R.cz)*k;R.cx+=((on?cx:OS+W/2)-R.cx)*k;R.cy+=((on?cy:H/2)-R.cy)*k;
+  const w=W/R.cz,h=H/R.cz;
+  return {x:clamp(R.cx-w/2,0,VW-w),y:clamp(R.cy-h/2,0,H-h),w,h};
+}
 function updateHud(now,pos,show){
   const el=$("hud");
   if(!show||!pos){if(el.dataset.on!=="0"){el.dataset.on="0";el.style.display="none";$("runline").hidden=true}return}
@@ -789,7 +831,7 @@ function updateHud(now,pos,show){
   if(now-hudAt<170)return;hudAt=now;
   el.dataset.on="1";el.style.display="flex";
   const o=orderAt(pos),lead=pos[o[0]],rem=Math.max(0,Math.round((S.race.dist-lead)/10)*10);
-  $("hudrem").innerHTML=rem>0?`${rem}m<small>to go · ${S.race.dist}m</small>`:"Finish";
+  $("hudrem").innerHTML=rem>0?`${rem}m<small>to go of ${S.race.dist}m</small>`:"Finish";
   $("hudrem").classList.toggle("final",rem>0&&rem<=200);
   $("runbar").style.width=clamp(lead/S.race.dist,0,1)*100+"%";
   $("runorder").innerHTML=o.map((k,i)=>{const h=S.race.field[k],c=silkOf(h,k)[0],mine=S.bets.some(b=>b.sel.includes(k));return `<span class="${mine?"mine":""}"><i style="background:${c};color:${inkOn(c)}">${h.no}</i>${i===0?"<b>"+h.name+"</b>":""}</span>`}).join("");
@@ -799,13 +841,13 @@ function frame(now){
   requestAnimationFrame(frame);
   if(!S||!S.race)return;
   ensureSheets();
-  let pos=null,bend=0,zoom=1,fy=.65,fxF=.62,progress=0,aerial=false,doors=0;
+  let pos=null,bend=0,zoom=1,fy=.65,fxF=.62,progress=0,aerial=false,doors=0,fin=false;
   if(R){
     if(R.photoOn){if(now>R.photoUntil){R.photoOn=false;cv.style.filter="";$("photo").style.display="none";R.last=now;fireWinnerCall()}}
     else if(R.preUntil){
       if(now>=R.preUntil){R.preUntil=0;R.jumpAt=now;R.last=now;tone(1250,.6,0,"square",.07);say(`And they're away in the <b>${S.race.title}</b>!`)}
     }else if(R.running){const dt=Math.min(.1,(now-R.last)/1000);R.last=now;R.t+=dt*R.rate;tick(now)}
-    pos=horsePositions(R.t);
+    pos=horsePositions(R.t);strideFrames(pos);
     if(R.running&&R.t>=R.sim.dt*(R.sim.trace.length-2)){R.running=false;if(R.replay){R.replay=false;R.circleAt=now+700}}
     const lead=Math.max(...pos),fx=S.race.dist*PX,target=Math.min(lead*PX-345,fx-300);
     cam+=(target-cam)*.12;
@@ -816,13 +858,12 @@ function frame(now){
       if(hasTurn&&progress>.46&&progress<.74&&!R.settled)aerial=true;
       else if(hasTurn&&progress>.36&&progress<=.46)bend=(progress-.36)/.1;
       else if(hasTurn&&progress>=.74&&progress<.84)bend=1-(progress-.74)/.1;
-      if(R.preUntil){zoom=1.55;fxF=.97;fy=.92}
-      else if(R.jumpAt&&now-R.jumpAt<1400){const u=(now-R.jumpAt)/1400;zoom=1+.55*(1-u);fxF=.97-.35*u;fy=.92-.27*u}
-      else if(progress>.84&&progress<1.02)zoom=1+.28*clamp((progress-.84)/.08,0,1);
-      else if(progress>=1.02&&!R.settled)zoom=1.28;
+      if(R.preUntil){zoom=1.3;fxF=.97;fy=.72}
+      else if(R.jumpAt&&now-R.jumpAt<1400){const u=(now-R.jumpAt)/1400;zoom=1+.3*(1-u);fxF=.97-.35*u;fy=.72-.07*u}
+      else if(!R.photoOn&&!R.settled&&S.race.dist-Math.max(...pos)<=320)fin=true;
     }
     if(zoom>1&&!R.preUntil&&progress>.5){const f=S.race.field,o=orderAt(pos);fy=clamp((laneY(f[o[0]].barrier-1)-20-40)/120,.2,1)}
-  }else{cam=-340;zoom=reduced?1:1.55;fxF=.97;fy=.92}
+  }else{cam=-340;zoom=reduced?1:1.3;fxF=.97;fy=.72}
   let camX=cam-OS;
   if(R&&R.photoOn)camX=S.race.dist*PX-240-OS;
   const VPX=W*RES,HPX=H*RES,OSP=OS*RES;
@@ -843,8 +884,14 @@ function frame(now){
     }else if(bend>.02){
       for(let y=0;y<HPX;y+=2){const ly=y/RES,f=ly<72?0:Math.pow((ly-72)/164,2)*48*bend*RES;out.drawImage(offC,OSP-f,y,VPX,2,0,y,VPX,2)}
     }else{
-      const w=VPX/zoom,h=HPX/zoom;
-      out.drawImage(offC,OSP+(VPX-w)*fxF,(HPX-h)*fy,w,h,0,0,VPX,HPX);
+      if(fin||(R&&R.cz>1.001&&!R.settled&&!R.preUntil)){
+        const c=finalFrame(pos,camX,fin);
+        out.drawImage(offC,c.x*RES,c.y*RES,c.w*RES,c.h*RES,0,0,VPX,HPX);
+      }else{
+        if(R)R.cz=0;
+        const w=VPX/zoom,h=HPX/zoom;
+        out.drawImage(offC,OSP+(VPX-w)*fxF,(HPX-h)*fy,w,h,0,0,VPX,HPX);
+      }
     }
   }
   out.setTransform(RES,0,0,RES,0,0);
@@ -1015,6 +1062,8 @@ function applyMeets(j){
 let meetsFailed=false;
 function loadMeets(){return fetch(REAL_URL).then(r=>r.json()).then(j=>{meetsFailed=false;applyMeets(j)}).catch(()=>{meetsFailed=true;if(S)renderNav()})}
 function setReal(mi,ri){
+  // picking the race already on screen only closes the side panels: a running race, its bets and its result stay put
+  if(S.mode==="real"&&S.real&&MEETS[mi]&&S.real.key===MEETS[mi].key&&S.idx===ri){bookOpen=false;resOpen=false;renderAll();return}
   abortRace();bookOpen=false;
   if(S.mode==="daily")leaveDaily();
   if(S.mode!=="real"){
@@ -1039,8 +1088,10 @@ $("nav").addEventListener("click",e=>{
   const b=e.target.closest("button");if(!b||b.disabled)return;audio();
   if(b.dataset.nav==="results"){if(resOpen){resOpen=false;resSel=null;renderNav();renderCard()}else openResults();return}
   resOpen=false;resSel=null;
-  if(b.dataset.meet!==undefined){const mi=+b.dataset.meet,rs=MEETS[mi].races,open=rs.findIndex(r=>!closed(r.jump));return setReal(mi,open>=0?open:0)}
-  if(b.dataset.nav==="career"){bookOpen=false;return goCareer()}
+  if(b.dataset.meet!==undefined){const mi=+b.dataset.meet,rs=MEETS[mi].races,open=rs.findIndex(r=>!closed(r.jump));
+    if(S.mode==="real"&&S.real&&S.real.key===MEETS[mi].key){bookOpen=false;return renderAll()}
+    return setReal(mi,open>=0?open:0)}
+  if(b.dataset.nav==="career"){bookOpen=false;if(S.mode==="career")return renderAll();return goCareer()}
   if(b.dataset.nav==="book"){bookOpen=!bookOpen;bookMsg="";settleBook();renderNav();renderCard();if(bookOpen)$("card").scrollIntoView({block:"start"});return}
   if(b.dataset.nav==="daily"){bookOpen=false;if(S.mode==="daily")return renderAll();abortRace();if(S.mode==="real"){const c=S.career;const k={...S};delete k.career;c.realSaved=k;S=c}return startDaily()}
   if(b.dataset.nav==="restart"){bookOpen=false;return restartMeet()}
@@ -1116,10 +1167,13 @@ async function checkResults(){
 }
 /* ---------- results history ---------- */
 // Every finished race is written here once, straight from the simulation that was played.
-const K_RES="otrresults1",RES_MAX=200;
-let RESULTS=(()=>{try{const r=JSON.parse(localStorage.getItem(K_RES));if(r&&Array.isArray(r.list))return r}catch(e){}return {list:[]}})();
-let resOpen=false,resSel=null;
-function saveResults(){try{localStorage.setItem(K_RES,JSON.stringify(RESULTS))}catch(e){}cloudMark()}
+// Nothing is ever trimmed. Logged-in players also get one permanent server row per race (otr_results),
+// so the full history survives even if this device runs out of space.
+const K_RES="otrresults1",K_RESQ="otrresq:",RES_PAGE=100;
+function normResults(r,owner){r=r&&Array.isArray(r.list)?r:{list:[]};return {owner:r.owner===undefined?(owner??null):r.owner,list:r.list,pend:Array.isArray(r.pend)?r.pend:[],more:!!r.more}}
+let RESULTS=(()=>{try{return normResults(JSON.parse(localStorage.getItem(K_RES)))}catch(e){return normResults(null)}})();
+let resOpen=false,resSel=null,resFull=false,resLoading=false;
+function saveResults(){try{localStorage.setItem(K_RES,JSON.stringify(RESULTS));resFull=false}catch(e){resFull=true}}
 const LEN_M=2.4,FIN_V=17; // one length is about 2.4m, horses finish at about 17m/s
 function marginTxt(l){
   if(l<.05)return "Nose";if(l<.1)return "Short head";if(l<.2)return "Head";if(l<.3)return "Neck";
@@ -1135,7 +1189,7 @@ function buildResult(){
   return {id:x.rid,at:new Date().toISOString(),mode:S.mode,
     meet:real?"Real Races (simulated)":S.mode==="daily"?"Daily Meeting "+S.day:`${TIERS[S.tier||0].name} · Meeting ${S.meeting}`,
     track:S.track,raceNo:race.realNo||race.no,title:race.title,dist:race.dist,cond:race.trackLabel||ratingName(race.rating),
-    jump:real&&src?src.jump:null,date:real?S.real.date:null,placeN:race.placeN,runners,
+    jump:real&&src?src.jump:null,date:real?S.real.date:null,key:real&&src?raceKey(S.real,src.number):null,placeN:race.placeN,runners,
     div:{quin:x.quin,exacta:x.exacta,tri:x.tri,first4:x.first4||null},staked:x.staked,ret:x.ret};
 }
 function recordResult(){
@@ -1143,14 +1197,15 @@ function recordResult(){
   x.rid=x.rid||Date.now().toString(36)+"-"+Math.floor(Math.random()*1e9).toString(36);
   if(RESULTS.list.some(r=>r.id===x.rid))return;
   RESULTS.list.unshift(buildResult());
-  if(RESULTS.list.length>RES_MAX)RESULTS.list.length=RES_MAX;
+  if(RESULTS.owner&&!RESULTS.pend.includes(x.rid))RESULTS.pend.push(x.rid);
   saveResults();
+  if(typeof cloudMark==="function")cloudMark();
 }
 function mergeResults(a,b){
   const seen=new Set(),all=[];
   for(const r of [...(a||[]),...(b||[])])if(r&&r.id&&!seen.has(r.id)){seen.add(r.id);all.push(r)}
-  all.sort((p,q)=>q.at<p.at?-1:q.at>p.at?1:0);
-  return all.slice(0,RES_MAX);
+  all.sort((p,q)=>q.at<p.at?-1:q.at>p.at?1:q.id<p.id?-1:1);
+  return all;
 }
 const resDay=r=>new Date(r.at).toLocaleDateString("en-AU",{weekday:"long",day:"numeric",month:"long"});
 const resTime=r=>new Date(r.jump||r.at).toLocaleTimeString("en-AU",{hour:"numeric",minute:"2-digit"});
@@ -1160,32 +1215,36 @@ function renderResults(){
   if(resSel){const r=L.find(x=>x.id===resSel);if(r)return renderResultDetail(r);resSel=null}
   const days=[];for(const r of L){const d=resDay(r);let g=days.find(x=>x.d===d);if(!g)days.push(g={d,rows:[]});g.rows.push(r)}
   c.innerHTML=`<h2>Results</h2>
-  <div class="conds"><span>${L.length?`${L.length} race${L.length>1?"s":""} saved`:"No races yet"}</span><span>Newest first</span></div>
+  <div class="conds"><span>${L.length?`${L.length} race${L.length>1?"s":""} ${RESULTS.more?"loaded":"saved"}`:"No races yet"}</span><span>Newest first</span>${RESULTS.pend.length&&AUTH?`<span>${RESULTS.pend.length} waiting to upload</span>`:""}</div>
+  ${resFull?`<div class="tip">This device is out of storage space, so new results can't be saved here.${AUTH?" They are still saved to your account.":" Log in to keep them in your account."} Nothing has been deleted.</div>`:""}
   ${days.length?days.map(g=>`<section class="res-day"><h3>${g.d}</h3>${g.rows.map(r=>{const w=r.runners[0];return `<button class="res-row" data-res="${r.id}">
-    ${silkTag(w.silk)(w.no)}<span><span class="res-race">R${r.raceNo} ${r.title}</span><span class="res-meta">${r.track} · ${r.dist}m · ${resTime(r)}</span><span class="res-win">Won by <b>${w.name}</b> · ${timeTxt(w.time)}</span></span><span class="res-go">View</span></button>`}).join("")}</section>`).join("")
+    ${silkTag(w.silk)(w.no)}<span><span class="res-race">R${r.raceNo} ${r.title}${r.mode==="real"?' <em class="simtag">Simulated</em>':""}</span><span class="res-meta">${r.track} · ${r.dist}m · ${resTime(r)}</span><span class="res-win">Won by <b>${w.name}</b> · ${timeTxt(w.time)}</span></span><span class="res-go">View</span></button>`}).join("")}</section>`).join("")
   :'<div class="tip">Results appear here as soon as a race is run. Every race in Career, Daily and Real Races is saved.</div>'}
+  ${RESULTS.more&&AUTH?`<button class="big place" data-res="older" ${resLoading?"disabled":""}>${resLoading?"Loading":"Load older results"}</button>`:""}
   <button class="reset" data-res="close">Back to the race</button>`;
 }
 function renderResultDetail(r){
   const c=$("card"),d=r.div,w=r.runners[0];
   c.innerHTML=`<div class="detail-h"><button class="reset" data-res="list">All results</button><button class="reset" data-res="close">Back to the race</button></div>
+  ${r.mode==="real"?'<div class="simbanner">Simulated race · not the official result</div>':""}
   <h2>R${r.raceNo} ${r.title}</h2>
   <div class="conds"><span>${r.track}</span><span>${resDay(r)}, ${resTime(r)}</span><span>${r.dist}m</span><span>${r.cond}</span><span>${r.runners.length} runners</span></div>
   <div class="conds"><span>${r.meet}</span></div>
   <div class="res-winner">${silkTag(w.silk)(w.no)}<span><small>Winner</small><b>${w.name}</b><span>${w.jock} · ${timeTxt(w.time)} · SP ${oddsTxt(w.win)}</span></span></div>
-  <div class="res-scroll"><table class="tbl res-tbl"><thead><tr><th>Pos</th><th></th><th>Horse</th><th class="n">Bar</th><th class="n">Wt</th><th class="n">Time</th><th class="n">Margin</th><th class="n">SP</th></tr></thead><tbody>
-  ${r.runners.map(x=>`<tr class="${x.pos===1?"res-first":""}"><td><b>${x.pos}</b></td><td>${silkTag(x.silk)(x.no)}</td><td><b>${x.name}</b><br><small>${x.jock}</small></td><td class="n">${x.bar}</td><td class="n">${x.wt}</td><td class="n">${timeTxt(x.time)}</td><td class="n">${x.pos===1?"":marginTxt(x.mar)}${x.pos>2?`<br><small>${(Math.round(x.btn*10)/10).toFixed(1)} len bhd</small>`:""}</td><td class="n">${oddsTxt(x.win)}</td></tr>`).join("")}
+  <div class="res-scroll"><table class="tbl res-tbl"><thead><tr><th>Pos</th><th></th><th>Horse</th><th class="n wide">Bar</th><th class="n wide">Wt</th><th class="n">Time</th><th class="n">Margin</th><th class="n wide">SP</th></tr></thead><tbody>
+  ${r.runners.map(x=>`<tr class="${x.pos===1?"res-first":x.pos<=4?"res-placed":""}"><td><b>${["1st","2nd","3rd","4th"][x.pos-1]||x.pos+"th"}</b></td><td>${silkTag(x.silk)(x.no)}</td><td><b>${x.name}</b><br><small>${x.jock}<span class="narrow"> · B${x.bar} · ${x.wt}kg · SP ${oddsTxt(x.win)}</span></small></td><td class="n wide">${x.bar}</td><td class="n wide">${x.wt}</td><td class="n">${timeTxt(x.time)}</td><td class="n">${x.pos===1?"":marginTxt(x.mar)}${x.pos>2?`<br><small>${(Math.round(x.btn*10)/10).toFixed(1)} len bhd</small>`:""}</td><td class="n wide">${oddsTxt(x.win)}</td></tr>`).join("")}
   </tbody></table></div>
   <div class="conds"><span>Win ${div(w.win)}</span>${r.runners.slice(0,r.placeN).map(x=>`<span>Place #${x.no} ${div(x.place)}</span>`).join("")}</div>
   <div class="conds"><span>Quinella ${div(d.quin)}</span><span>Exacta ${div(d.exacta)}</span><span>Trifecta ${div(d.tri)}</span>${d.first4?`<span>First 4 ${div(d.first4)}</span>`:""}</div>
   ${r.staked?`<div class="tip">Your bets: ${money(r.staked)} staked, ${money(r.ret)} returned.</div>`:""}
-  ${r.mode==="real"?'<div class="tip">Simulated race using the real field. This is not the official result.</div>':""}
+  ${r.mode==="real"?`<div class="tip">This race was simulated by the game using the real field and market odds. ${r.key&&resultLine(r.key)?`Official result: <b>${resultLine(r.key)}</b>.`:"The official result is in My Book once it's in."}</div>`:""}
   <div class="tip">Times and margins come from the race simulation. Margins are in lengths. SP is the starting price.</div>`;
 }
 $("card").addEventListener("click",e=>{
   const b=e.target.closest("[data-res]");if(!b)return;
   const v=b.dataset.res;
   if(v==="close"){resOpen=false;resSel=null;renderNav();renderCard();return}
+  if(v==="older"){loadOlderResults();return}
   if(v==="list"){resSel=null;renderCard();$("card").scrollIntoView({block:"start"});return}
   resSel=v;renderCard();$("card").scrollIntoView({block:"start"});
 });
@@ -1330,9 +1389,10 @@ function renderCard(){
 function renderResult(){
   const r=S.race,x=S.result,c=$("card"),net=x.ret-x.staked,rec=RESULTS.list.find(q=>q.id===x.rid);
   const rows=rec?rec.runners:x.order.map((k,i)=>({pos:i+1,no:r.field[k].no,name:r.field[k].name,jock:r.field[k].jock,win:r.field[k].win,place:r.field[k].place,mar:i?x.margin:0,time:0,silk:silkOf(r.field[k],k)}));
+  const ord=i=>["1st","2nd","3rd","4th"][i]||(i+1)+"th";
   c.innerHTML=`<h2>Result: ${r.title}</h2>
   <div class="conds"><span>${r.dist}m</span><span>${r.trackLabel||ratingName(r.rating)}</span>${rows[0].time?`<span>Winning time ${timeTxt(rows[0].time)}</span>`:""}</div>
-  <table class="tbl res-tbl">${rows.map((h,i)=>`<tr class="${i===0?"res-first":""}"><td><b>${h.pos}</b></td><td>${silkTag(h.silk)(h.no)}</td><td><b>${h.name}</b><br><small>${h.jock}</small></td><td class="n">${i===0?"":marginTxt(h.mar)}</td><td class="n">${i===0?"W "+div(h.win)+"<br>":""}${i<r.placeN?"P "+div(h.place):""}</td></tr>`).join("")}</table>
+  <table class="tbl res-tbl">${rows.map((h,i)=>`<tr class="${i===0?"res-first":i<4?"res-placed":""}"><td><b>${ord(i)}</b></td><td>${silkTag(h.silk)(h.no)}</td><td><b>${h.name}</b><br><small>${h.jock}</small></td><td class="n">${i===0?"":marginTxt(h.mar)}</td><td class="n">${i===0?"W "+div(h.win)+"<br>":""}${i<r.placeN?"P "+div(h.place):""}</td></tr>`).join("")}</table>
   <div class="conds"><span>Quinella ${div(x.quin)}</span><span>Exacta ${div(x.exacta)}</span><span>Trifecta ${div(x.tri)}</span>${x.first4?`<span>First 4 ${div(x.first4)}</span>`:""}</div>
   ${x.bets.length?`<table class="tbl">${x.bets.map(b=>`<tr><td>${b.label}<br><small>${money(b.stake)} at ${div(b.odds)}</small></td><td class="n ${b.w?"won":"lost"}">${b.w?money(b.pay):"Lost"}</td></tr>`).join("")}</table>
   <div class="net ${net>0?"won":net<0?"lost":""}">${net>0?"Collect "+money(x.ret):net<0?"Down "+money(-net):"Square"}</div>`:`<div>No bets on this one.</div>`}
@@ -1501,11 +1561,11 @@ function token(){
   return refreshing=refreshing||sbAuth("token?grant_type=refresh_token",{refresh_token:AUTH.refresh}).then(j=>{setSession(j);return AUTH.access}).catch(e=>{if(e.status>=400&&e.status<500){sessionLost()}return null}).finally(()=>{refreshing=null});
 }
 function sessionLost(){AUTH=null;lsDel(K_AUTH);setCloudStatus("Logged out. Log in again to keep saving.")}
-async function sbRows(query,init={}){
+async function sbRows(query,init={},table="otr_accounts"){
   const t=await token();if(!t)throw new Error("signed out");
-  const r=await fetch(SB_URL+"/rest/v1/otr_accounts"+query,{...init,headers:{apikey:SB_KEY,Authorization:"Bearer "+t,"Content-Type":"application/json",...(init.headers||{})}});
+  const r=await fetch(SB_URL+"/rest/v1/"+table+query,{...init,headers:{apikey:SB_KEY,Authorization:"Bearer "+t,"Content-Type":"application/json",...(init.headers||{})}});
   if(!r.ok)throw new Error("save failed "+r.status);
-  return r.json();
+  const txt=await r.text();return txt?JSON.parse(txt):[];
 }
 // A real or daily meeting sits on top of the career save, and its race data is rebuilt from the feed.
 function cloudState(){
@@ -1524,10 +1584,11 @@ async function cloudPush(opts={}){
   if(cloudBusy){cloudAgain=true;return}
   cloudBusy=true;clearTimeout(cloudTimer);
   try{
-    const body=JSON.stringify({user_id:AUTH.uid,state:cloudState(),book:BOOK,results:RESULTS,updated_at:new Date().toISOString()});
+    const body=JSON.stringify({user_id:AUTH.uid,state:cloudState(),book:BOOK,updated_at:new Date().toISOString()});
     const rows=await sbRows("?on_conflict=user_id",{method:"POST",body,keepalive:!!opts.keepalive&&body.length<60000,headers:{Prefer:"resolution=merge-duplicates,return=representation"}});
     SYNC={uid:AUTH.uid,at:rows[0].updated_at,dirty:false};saveSync();
-    setCloudStatus("Saved to your account.");
+    await pushResults(opts);
+    setCloudStatus(RESULTS.pend.length?"Saved. Some results are still waiting to upload.":"Saved to your account.");
   }catch(e){if(AUTH)setCloudStatus("Couldn't reach the server. Saved on this device for now.")}
   cloudBusy=false;
   if(cloudAgain){cloudAgain=false;cloudPush()}
@@ -1538,9 +1599,8 @@ function adopt(row){
   S=row.state;picker=null;if(S.phase==="race")S.phase="bet";
   if(S.result&&S.result.first4===undefined)S.result.first4=0;
   BOOK=row.book&&row.book.tickets?{scr:{},...row.book}:{bank:1000,tickets:[],scr:{}};
-  const rl=row.results&&Array.isArray(row.results.list)?row.results.list:[];
-  RESULTS={list:row.sameUser?mergeResults(RESULTS.list,rl):rl.slice(0,RES_MAX)};resOpen=false;resSel=null;
-  save();saveBook();saveResults();
+  resOpen=false;resSel=null;
+  save();saveBook();
   settleBook();
   renderAll();say(`Welcome back. Your game is loaded at <b>${S.track}</b>.`);
   cloudQuiet=false;
@@ -1550,20 +1610,68 @@ async function cloudPull(){
   if(!AUTH||!S)return false;
   const uid=AUTH.uid;
   let rows;
-  try{rows=await sbRows(`?user_id=eq.${uid}&select=state,book,results,updated_at`)}catch(e){if(AUTH)setCloudStatus("Couldn't reach the server. Saved on this device for now.");return false}
+  try{rows=await sbRows(`?user_id=eq.${uid}&select=state,book,updated_at`)}catch(e){if(AUTH)setCloudStatus("Couldn't reach the server. Saved on this device for now.");return false}
   if(!AUTH||AUTH.uid!==uid)return false;
-  const row=rows[0],same=SYNC.uid===uid;
+  const row=rows[0],same=SYNC.uid===uid,isNew=!row||!row.state||!row.state.race;
+  // keep the guest's own game and results aside before this account's arrive
+  if(!same&&!isNew&&!lsGet(K_GUEST))lsSet(K_GUEST,{state:lsGet("dustyflat2"),book:lsGet("otrbook1"),results:RESULTS.owner?null:RESULTS});
+  claimResults(uid,isNew);
+  await pullResults(false);
   if(!row||!row.state||!row.state.race){await cloudPush();return false}
-  if(same&&SYNC.at===row.updated_at){if(SYNC.dirty)await cloudPush();else setCloudStatus("Saved to your account.");return false}
-  if(!same&&!lsGet(K_GUEST))lsSet(K_GUEST,{state:lsGet("dustyflat2"),book:lsGet("otrbook1"),results:lsGet(K_RES)});
-  row.sameUser=same;adopt(row);
+  if(same&&SYNC.at===row.updated_at){if(SYNC.dirty||RESULTS.pend.length)await cloudPush();else setCloudStatus("Saved to your account.");return false}
+  adopt(row);
+  if(RESULTS.pend.length)await pushResults();
   SYNC={uid,at:row.updated_at,dirty:false};saveSync();setCloudStatus("Saved to your account.");
   return true;
 }
+// Results that couldn't upload before a logout or account switch wait under that player's id, never in someone else's history.
+function stashPending(){
+  const o=RESULTS.owner;if(!o||!RESULTS.pend.length)return;
+  const q=lsGet(K_RESQ+o)||{list:[]},keep=RESULTS.list.filter(r=>RESULTS.pend.includes(r.id));
+  lsSet(K_RESQ+o,{list:mergeResults(q.list,keep)});RESULTS.pend=[];
+}
+function claimResults(uid,newAccount){
+  if(RESULTS.owner!==uid){
+    if(RESULTS.owner)stashPending();
+    if(RESULTS.owner===null&&newAccount)RESULTS={owner:uid,list:RESULTS.list,pend:RESULTS.list.map(r=>r.id),more:false};
+    else RESULTS={owner:uid,list:[],pend:[],more:true};
+    resSel=null;
+  }
+  const q=lsGet(K_RESQ+uid);
+  if(q&&q.list&&q.list.length){RESULTS.list=mergeResults(RESULTS.list,q.list);for(const r of q.list)if(!RESULTS.pend.includes(r.id))RESULTS.pend.push(r.id)}
+  lsDel(K_RESQ+uid);
+  saveResults();
+}
+async function pushResults(opts={}){
+  if(!AUTH||RESULTS.owner!==AUTH.uid||!RESULTS.pend.length)return;
+  const uid=AUTH.uid,ids=RESULTS.pend.slice(0,50),rows=RESULTS.list.filter(r=>ids.includes(r.id)).map(r=>({user_id:uid,id:r.id,at:r.at,data:r}));
+  try{
+    if(rows.length)await sbRows("?on_conflict=user_id,id",{method:"POST",body:JSON.stringify(rows),keepalive:!!opts.keepalive&&JSON.stringify(rows).length<60000,headers:{Prefer:"resolution=ignore-duplicates,return=minimal"}},"otr_results");
+    if(RESULTS.owner!==uid)return;
+    RESULTS.pend=RESULTS.pend.filter(id=>!ids.includes(id));saveResults();
+    if(RESULTS.pend.length&&rows.length)return pushResults(opts);
+  }catch(e){}
+}
+async function pullResults(older){
+  if(!AUTH||RESULTS.owner!==AUTH.uid)return;
+  const uid=AUTH.uid,last=RESULTS.list[RESULTS.list.length-1];
+  const q=`?user_id=eq.${uid}&select=data&order=at.desc,id.desc&limit=${RES_PAGE}`+(older&&last?`&at=lt.${encodeURIComponent(last.at)}`:"");
+  let rows;try{rows=await sbRows(q,{},"otr_results")}catch(e){return}
+  if(!AUTH||AUTH.uid!==uid||RESULTS.owner!==uid)return;
+  const before=RESULTS.list.length;
+  RESULTS.list=mergeResults(RESULTS.list,rows.map(r=>r.data));
+  if(older||RESULTS.more)RESULTS.more=rows.length===RES_PAGE;
+  saveResults();
+  if(resOpen&&(RESULTS.list.length!==before||older))renderCard();
+}
+async function loadOlderResults(){if(resLoading)return;resLoading=true;renderCard();await pullResults(true);resLoading=false;renderCard()}
 async function afterLogin(){await cloudPull();renderAccount()}
-async function logOut(){
+async function logOut(force){
   clearTimeout(cloudTimer);
-  if(AUTH&&SYNC.dirty)await cloudPush();
+  if(AUTH&&(SYNC.dirty||RESULTS.pend.length))await cloudPush();
+  if(AUTH&&SYNC.dirty&&!force){acctNote("Can't reach the server, so your latest bets and bank haven't saved to your account yet. Try again when you're back online, or log out anyway and lose those changes. Your race results are kept and will upload next time you log in here.",true);$("acctOut").textContent="Log out anyway";$("acctOut").dataset.force="1";return false}
+  $("acctOut").textContent="Log out";delete $("acctOut").dataset.force;
+  stashPending();
   const t=AUTH&&AUTH.access;
   if(t)fetch(SB_URL+"/auth/v1/logout",{method:"POST",headers:{apikey:SB_KEY,Authorization:"Bearer "+t}}).catch(()=>{});
   AUTH=null;lsDel(K_AUTH);SYNC={};lsDel(K_SYNC);cloudStatus="";
@@ -1573,7 +1681,7 @@ async function logOut(){
   abortRace();bookOpen=false;picker=null;
   if(g&&g.state&&g.state.race){S=g.state;if(S.phase==="race")S.phase="bet"}else{S=null;fresh()}
   BOOK=g&&g.book&&g.book.tickets?{scr:{},...g.book}:{bank:1000,tickets:[],scr:{}};
-  RESULTS=g&&g.results&&Array.isArray(g.results.list)?g.results:{list:[]};resOpen=false;resSel=null;
+  RESULTS=normResults(g&&g.results,null);RESULTS.owner=null;RESULTS.pend=[];resOpen=false;resSel=null;
   save();saveBook();saveResults();settleBook();renderAll();say(`Logged out. Betting open on the <b>${S.race.title}</b>.`);
   cloudQuiet=false;
   renderAccount();
@@ -1616,7 +1724,7 @@ $("acctClose").onclick=()=>dlg.close();
 $("acctToSignup").onclick=()=>{acctMode="signup";acctNote("");renderAccount()};
 $("acctToLogin").onclick=()=>{acctMode="login";acctNote("");renderAccount()};
 $("acctToForgot").onclick=()=>{acctMode="forgot";acctNote("");renderAccount()};
-$("acctOut").onclick=async()=>{await logOut();dlg.close()};
+$("acctOut").onclick=async()=>{if(await logOut(!!$("acctOut").dataset.force)!==false)dlg.close()};
 $("acctForm").addEventListener("submit",async e=>{
   e.preventDefault();
   const email=$("acctEmail").value.trim(),password=$("acctPass").value,go=$("acctGo");
@@ -1673,6 +1781,7 @@ document.addEventListener("visibilitychange",()=>{
 });
 window.addEventListener("online",()=>{if(AUTH&&SYNC.dirty)cloudPush()});
 
+$("ver").textContent="v"+APP_VERSION;
 /* ---------- boot ---------- */
 function start(data){
   load(data);
