@@ -1516,7 +1516,7 @@ const posTxt=p=>["1st","2nd","3rd","4th"][p-1]||p+"th";
 function offRaceHtml(r){
   const t=Date.parse(r.t),done=r.fin&&r.fin.length;
   const st=done?(r.st==="final"?"Final":"Interim"):Number.isFinite(t)&&t>Date.now()?`Jumps ${timeOf(r.t)}`:"Result to come";
-  return `<section class="off-race"><h3>R${r.n} ${escH(r.nm||"")}</h3><div class="off-meta">${[Number.isFinite(t)?timeOf(r.t):"",r.d?r.d+"m":"",r.tc?escH(r.tc):"",st].filter(Boolean).join(" · ")}</div>
+  return `<section class="off-race"><h3>R${r.n} ${escH(r.nm||"")}</h3><div class="off-meta">${[Number.isFinite(t)?timeOf(r.t):"",r.d?r.d+"m":"",r.tc?escH(r.tc):"",done?st:""].filter(Boolean).join(" · ")}</div>
   ${done?`<div class="res-scroll"><table class="tbl res-tbl"><thead><tr><th>Pos</th><th>No</th><th>Horse</th><th class="n">Win</th><th class="n">Place</th></tr></thead><tbody>${r.fin.map(x=>`<tr class="${x.pos===1?"res-first":x.pos<=4?"res-placed":""}"><td><b>${posTxt(x.pos)}</b></td><td>${x.no}</td><td><b>${escH(x.name)}</b></td><td class="n">${x.win?div(x.win):""}</td><td class="n">${x.place?div(x.place):""}</td></tr>`).join("")}</tbody></table></div>`:`<div class="off-pend">${st}</div>`}
   ${r.exo&&r.exo.length?`<div class="off-exo">${r.exo.map(e=>`<span>${escH(e.type)} <b>${escH(e.sel)}</b> ${div(e.amount)}</span>`).join("")}</div>`:""}
   ${r.scr&&r.scr.length?`<div class="off-meta">Scratched: ${r.scr.map(x=>`${x.no} ${escH(x.name||"")}`).join(", ")}</div>`:""}</section>`;
