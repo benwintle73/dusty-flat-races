@@ -285,7 +285,7 @@ canvas{width:100%;height:auto;display:block}
 <script>
 "use strict";
 /* ---------- helpers ---------- */
-const APP_VERSION="2.3.0"; // bump on every release; shown after the title
+const APP_VERSION="2.4.0"; // bump on every release; shown after the title
 const $=id=>document.getElementById(id);
 let RNG=Math.random;
 const mulberry=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
@@ -1164,8 +1164,16 @@ function tipsHtml(){
   const v=T.value?`<div class="tip-value">Value: <b>${r.field[T.value.k].no}. ${r.field[T.value.k].name}</b> at ${oddsTxt(r.field[T.value.k].win)}. Form rates it above its price.</div>`:"";
   return `<div class="tips"><div class="tips-h"><b>Tips</b><span>${T.basis}. Tap to load a bet.</span></div>${T.tips.map(row).join("")}${v}</div>`;
 }
-/* ---------- real races (Krok Odds via Supabase) ---------- */
-const REAL_URL="https://nkkhbtrrytctpfwjenrz.supabase.co/functions/v1/otr-races";
+/* ---------- real races (PuntersEdge, with Krok Odds as the fallback, via Supabase) ---------- */
+const REAL_URL="https://nkkhbtrrytctpfwjenrz.supabase.co/functions/v1/otr-pe",KROK_URL="https://nkkhbtrrytctpfwjenrz.supabase.co/functions/v1/otr-races";
+let REAL_SRC="pe";
+// PuntersEdge first; Krok answers if PuntersEdge is down or has nothing loaded
+function fetchReal(qs=""){
+  const get=u=>fetch(u+qs).then(r=>r.json().then(j=>({ok:r.ok,j})));
+  return get(REAL_URL).then(({ok,j})=>{if(ok&&!j.error&&(qs||(j.days&&j.days.length)))return j;throw 0})
+    .catch(()=>get(KROK_URL).then(({j})=>({...j,src:"krok"})));
+}
+const dataCredit=()=>REAL_SRC==="krok"?"Data provided by Krok Odds":'Race data by <a href="https://puntersedge.online" target="_blank" rel="noopener">PuntersEdge</a>';
 let picker=null;
 const COLOR_WORDS=[["FLUORESCENT GREEN","#6cff3a"],["FLURO GREEN","#6cff3a"],["FLUORO GREEN","#6cff3a"],["FLUORESCENT PINK","#ff4fb0"],["HOT PINK","#ff4fb0"],["LIGHT PINK","#f7b6cf"],["ROYAL BLUE","#2348c9"],["NAVY BLUE","#1b2a5e"],["DEEP NAVY","#16224e"],["NAVY","#1b2a5e"],["LIGHT BLUE","#7cc4ee"],["SKY BLUE","#7cc4ee"],["DARK GREEN","#14602f"],["BOTTLE GREEN","#14602f"],["LIME","#a6e22e"],["TURQUOISE","#25c4c0"],["AQUA","#49d6d0"],["MAROON","#7c1730"],["BURGUNDY","#6c1530"],["OLD GOLD","#c79a2b"],["GOLD","#e0b12d"],["SILVER","#c2c7cc"],["ORANGE","#ef7d22"],["PURPLE","#6d2fa3"],["MAUVE","#b48bd0"],["BROWN","#6a4324"],["GREY","#8f9499"],["PINK","#ec7fb0"],["YELLOW","#f2c92b"],["GREEN","#2a9a55"],["BLUE","#2a62c9"],["RED","#d8342a"],["BLACK","#1b1b22"],["WHITE","#f4f1e6"]];
 function parseSilks(txt,k){
@@ -1211,15 +1219,15 @@ const ratingLabel=t=>String(t).toLowerCase().replace(/\b[a-z]/g,c=>c.toUpperCase
 function openReal(){
   if(S.mode!=="career"||S.phase==="race"||S.bets.length)return;
   picker={loading:true};renderCard();
-  fetch(REAL_URL).then(r=>r.json()).then(j=>{picker={meetings:j.meetings||[],err:j.error};renderCard()}).catch(()=>{picker={meetings:[],err:"Real Races couldn't load here. Play it on the public site."};renderCard()});
+  fetchReal().then(j=>{REAL_SRC=j.src||"pe";picker={meetings:j.meetings||[],err:j.error};renderCard()}).catch(()=>{picker={meetings:[],err:"Real Races couldn't load here. Play it on the public site."};renderCard()});
 }
 function renderPicker(){
   const c=$("card");
-  const list=(picker.meetings||[]).map((m,i)=>`<button class="runner" data-m="${i}" style="grid-template-columns:minmax(0,1fr) auto"><span><span class="rname">${m.venue}</span><br><span class="rmeta">${m.state} · ${m.date} · ${m.races.length} races${m.metro?" · Metro":""}${m.races.some(r=>r.feature)?" · ★ Form guide":""}</span></span><span class="odds" style="font-size:22px">Play</span></button>`).join("");
+  const list=(picker.meetings||[]).map((m,i)=>`<button class="runner" data-m="${i}" style="grid-template-columns:minmax(0,1fr) auto"><span><span class="rname">${m.venue}</span><br><span class="rmeta">${m.state?m.state+" · ":""}${m.date} · ${m.races.length} races${m.metro?" · Metro":""}${m.races.some(r=>r.feature)?" · ★ Form guide":""}</span></span><span class="odds" style="font-size:22px">Play</span></button>`).join("");
   c.innerHTML=`<h2>Real Races</h2><div class="conds"><span>Real horses, jockeys and prices</span></div>
   ${picker.loading?"<div>Loading the card...</div>":picker.err?`<div>${picker.err}</div>`:list?`<div class="runners">${list}</div>`:"<div>No meetings are loaded yet. Try again soon.</div>"}
   <div class="tip">Races are simulated from real market prices, barriers, weights and running style, plus full form on the race marked ★. Results are not the actual race result.</div>
-  <div class="tip">Data provided by Krok Odds</div>
+  <div class="tip">${dataCredit()}</div>
   <button class="big next" id="pb">Back</button>`;
   $("pb").onclick=()=>{picker=null;renderCard()};
 }
@@ -1240,7 +1248,7 @@ function goRace(i){if(S.phase==="bet"&&i===S.idx)return;refundBets();S.phase="be
 function realBanner(){
   if(S.mode!=="real")return "";
   const src=S.real.races[S.idx],k=raceKey(S.real,src.number),man=BOOK.scr[k]||[],rl=resultLine(k);
-  return `<div class="conds"><span>${dayName(S.real.date)} · ${S.track} · ${timeOf(src.jump)}</span>${closed(src.jump)?'<span class="feat">Betting closed</span>':""}</div>${rl?`<div class="tip">Official result: <b>${rl}</b></div>`:""}${man.length?`<div class="tip">You scratched: ${man.map(n=>`<b>${n}</b> <button class="tk-act" data-unscr="${n}">Undo</button>`).join(" ")}</div>`:""}`;
+  return `<div class="conds"><span>${dayName(S.real.date)} · ${S.track} · ${timeOf(src.jump)}</span>${closed(src.jump)?'<span class="feat">Betting closed</span>':""}</div>${rl?`<div class="tip">Official result: <b>${rl}</b></div>`:""}${src.est?`<div class="tip">No bookmaker market yet: prices are estimated from form.</div>`:""}${man.length?`<div class="tip">You scratched: ${man.map(n=>`<b>${n}</b> <button class="tk-act" data-unscr="${n}">Undo</button>`).join(" ")}</div>`:""}`;
 }
 function tabsHtml(){return "";
   if(S.mode!=="real"||S.phase!=="bet")return "";
@@ -1264,6 +1272,7 @@ const dayName=d=>new Date(d+"T02:00:00Z").toLocaleDateString("en-AU",{weekday:"s
 const dayRel=d=>{if(!REAL_TODAY)return "";const n=Math.round((Date.parse(d+"T02:00:00Z")-Date.parse(REAL_TODAY+"T02:00:00Z"))/864e5);return n===1?"Tomorrow":""};
 const closed=j=>{const t=Date.parse(j);return Number.isFinite(t)&&Date.now()>=t};
 function applyMeets(j){
+  REAL_SRC=j.src||"pe";
   MEETS=(j.days||[]).flatMap(d=>d.meetings);RS=j.results||{};REAL_TODAY=j.today||null;
   if(S&&S.mode==="real"){
     const k=S.real.key,i=MEETS.findIndex(m=>m.key===k);
@@ -1273,7 +1282,7 @@ function applyMeets(j){
   settleBook();if(S){renderNav();if(bookOpen)renderCard()}
 }
 let meetsFailed=false;
-function loadMeets(){return fetch(REAL_URL).then(r=>r.json()).then(j=>{meetsFailed=false;applyMeets(j)}).catch(()=>{meetsFailed=true;if(S)renderNav()})}
+function loadMeets(){return fetchReal().then(j=>{meetsFailed=false;applyMeets(j)}).catch(()=>{meetsFailed=true;if(S)renderNav()})}
 function setReal(mi,ri){
   // picking the race already on screen only closes the side panels: a running race, its bets and its result stay put
   if(S.mode==="real"&&S.real&&MEETS[mi]&&S.real.key===MEETS[mi].key&&S.idx===ri){bookOpen=false;resOpen=false;renderAll();return}
@@ -1364,7 +1373,7 @@ function renderBook(){
   <div class="go book-go"><button class="big next" data-book="check" ${bookBusy?"disabled":""}>${bookBusy?"Checking":"Check results"}</button><button class="big place" data-book="copy">Copy note</button></div>
   ${BOOK.bank<5?'<button class="reset" data-book="topup">Add $1,000 to my book</button>':""}
   ${days.length?days.map(d=>{const tt=T.filter(t=>t.date===d);return `<section class="book-day"><h3>${dayName(d)}</h3>${tt.map(ticketHtml).join("")}</section>`}).join(""):'<div>No tickets yet. Pick a real race, choose your bet and press Add to My Book.</div>'}
-  <div class="tip">Data provided by Krok Odds. Play money only.</div>
+  <div class="tip">${dataCredit()}. Play money only.</div>
   <button class="reset" data-book="close">Back to the race</button>`;
 }
 async function checkResults(){
@@ -1373,7 +1382,7 @@ async function checkResults(){
   const date=pending[0]||REAL_TODAY;
   bookBusy=true;bookMsg="";renderCard();
   try{
-    const j=await fetch(`${REAL_URL}?refresh=1&date=${date}`).then(r=>r.json());
+    const j=await fetchReal(`?refresh=1&date=${date}`);
     if(j.error)throw new Error(j.error);
     applyMeets(j);
     const when=j.next?new Date(j.next).toLocaleTimeString("en-AU",{hour:"numeric",minute:"2-digit"}):"";
@@ -1577,7 +1586,7 @@ function stake(){return Math.max(0,Math.floor(+$("stake").value||0))}
 function silk(h,k,tag){const a=silkOf(h,k)[0],b=h.silk?inkOn(a):SILKS[k%SILKS.length][1];return `<span class="silk" style="background:${rugCss(h)||a};color:${b}">${h.no}${tag?`<i>${tag}</i>`:""}</span>`}
 function renderHeader(){
   $("meet").textContent=S.mode==="dogs"?(S.rd?`Real Dogs · ${S.track} · ${dayName(S.rd.date)}`:`Greyhounds · ${S.track} · Meeting ${S.meeting}`):S.mode==="real"?`Real Races · ${S.track} · ${S.real.date}`:S.mode==="daily"?`Daily Meeting ${S.day}`:`${TIERS[S.tier].name} · ${S.track} · Meeting ${S.meeting}`;
-  const dd=(S.dailyDone||{})[dayKey()];const db=$("daily");db.hidden=S.mode!=="career";const rb=$("realbtn");rb.hidden=S.mode!=="career";rb.disabled=S.phase!=="bet"||S.bets.length>0;$("foot").textContent=isDogs()&&S.rd?"Fields and form by FormFav. Odds are game estimates from form. Play money only. Results are simulated, not the actual race.":S.mode==="real"?"Data provided by Krok Odds. Play money only. Results are simulated, not the actual race.":"Play money only. No real bets, deposits or prizes.";db.disabled=dd!==undefined||S.phase!=="bet"||S.bets.length>0;db.textContent=dd!==undefined?`Today's daily: ${money(dd)}`:"Play Daily Meeting";
+  const dd=(S.dailyDone||{})[dayKey()];const db=$("daily");db.hidden=S.mode!=="career";const rb=$("realbtn");rb.hidden=S.mode!=="career";rb.disabled=S.phase!=="bet"||S.bets.length>0;$("foot").innerHTML=isDogs()&&S.rd?"Fields and form by FormFav. Odds are game estimates from form. Play money only. Results are simulated, not the actual race.":S.mode==="real"?`${dataCredit()}. Play money only. Results are simulated, not the actual race.`:"Play money only. No real bets, deposits or prizes.";db.disabled=dd!==undefined||S.phase!=="bet"||S.bets.length>0;db.textContent=dd!==undefined?`Today's daily: ${money(dd)}`:"Play Daily Meeting";
   $("raceNo").textContent=`${S.race.no}/${lastIdx()+1}`;
   $("bank").textContent=money(S.bank);
 }
