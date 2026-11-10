@@ -133,6 +133,12 @@ canvas{width:100%;height:auto;display:block}
 @media (prefers-reduced-motion:reduce){#hudrem.final{animation:none}}
 #runline{background:var(--tote);padding:6px 10px 8px;display:grid;gap:6px;border-top:2px solid var(--tote2)}
 #runline[hidden]{display:none}
+#mybets{display:grid;gap:3px;font:600 15px/1.2 var(--led);color:#f0d9a8}
+#mybets:empty{display:none}
+#mybets div{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center}
+#mybets em{font-style:normal;font-weight:700;padding:1px 6px;background:#3a3428;color:#cfc4a8}
+#mybets em.up{background:#1f6b3a;color:#fff}#mybets em.near{background:#8a6a12;color:#fff}
+#mybets small{color:#a99d82}
 .runtrack{height:6px;background:var(--tote2);position:relative}
 #runbar{position:absolute;inset:0 auto 0 0;background:linear-gradient(90deg,var(--amber-dim),var(--amber));width:0}
 #runorder{display:flex;flex-wrap:wrap;row-gap:5px;gap:4px;align-items:center;overflow:hidden;font:600 16px/1 var(--led);color:#fff;white-space:nowrap}
@@ -190,6 +196,14 @@ canvas{width:100%;height:auto;display:block}
 .res-scroll{overflow-x:auto}
 .res-tbl .narrow{display:none}
 @media (max-width:520px){.res-tbl .wide{display:none}.res-tbl .narrow{display:inline}.res-tbl{font-size:15px}.res-tbl td,.res-tbl th{padding:5px 2px}.res-row{grid-template-columns:auto minmax(0,1fr)}.res-go{display:none}}
+.off-race{background:#fff8e6;border:1px solid #bda97f;padding:8px 10px;display:grid;gap:6px}
+.off-race h3{margin:0;font:400 19px/1.15 var(--display);letter-spacing:.3px;text-transform:uppercase}
+.off-race .off-meta{font-size:15px;color:#5b5446}
+.off-race .off-pend{font:700 16px/1 var(--led);color:#6e6a60}
+.off-exo{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:15px}
+.off-days,.off-meets{margin:6px 0}
+.nextgo button[data-ntg]{background:var(--amber);color:var(--tote);border:0;min-height:44px;padding:0 12px;font:400 18px/1 var(--display);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap}
+#ntgsel{flex:1;min-width:0;width:100%;min-height:44px;background:var(--paper);color:var(--ink);border:0;font:600 17px/1.1 var(--led);padding:0 8px;text-overflow:ellipsis}
 .simtag{font:700 12px/1 var(--led);font-style:normal;letter-spacing:.6px;text-transform:uppercase;background:#6e6a60;color:#fff;padding:2px 5px;vertical-align:2px}
 .simbanner{background:#6e6a60;color:#fff;font:700 15px/1 var(--led);letter-spacing:.6px;text-transform:uppercase;padding:7px 10px}
 .res-tbl{font-size:16px}
@@ -232,7 +246,7 @@ canvas{width:100%;height:auto;display:block}
   <div class="grid">
     <section class="stage" aria-label="Track">
       <div class="canvas-wrap"><canvas id="c" width="960" height="472"></canvas><div id="photo">PHOTO</div><div id="hud"><div id="hudrem"></div><div id="hudtop"></div></div></div>
-      <div id="runline" hidden><div class="runtrack"><div id="runbar"></div></div><div id="runorder" aria-label="Running order"></div></div>
+      <div id="runline" hidden><div class="runtrack"><div id="runbar"></div></div><div id="runorder" aria-label="Running order"></div><div id="mybets" aria-label="Your bets on this race"></div></div>
       <div class="call" id="call" aria-live="polite"></div>
     </section>
     <section class="card" id="card"></section>
@@ -285,7 +299,7 @@ canvas{width:100%;height:auto;display:block}
 <script>
 "use strict";
 /* ---------- helpers ---------- */
-const APP_VERSION="2.4.0"; // bump on every release; shown after the title
+const APP_VERSION="2.5.0"; // bump on every release; shown after the title
 const $=id=>document.getElementById(id);
 let RNG=Math.random;
 const mulberry=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
@@ -651,7 +665,7 @@ let DGM=null,dgBusy="",dgFailed=false;const DGC={};
 function loadDogMeets(force){
   if((DGM&&!force)||dgBusy==="list")return;dgBusy="list";
   fetch(`${DG_URL}?list=1`).then(r=>r.json()).then(j=>{DGM=j.days?j:null;dgFailed=!j.days}).catch(()=>{dgFailed=true})
-    .finally(()=>{dgBusy="";if(S&&isDogs())renderNav()});
+    .finally(()=>{dgBusy="";if(S)renderNav()});
 }
 const dgToday=()=>DGM&&DGM.days&&DGM.days.find(d=>d.date===DGM.today)?DGM.days.find(d=>d.date===DGM.today).meetings:[];
 // boxes as they will actually jump: scratched dogs out, reserves (9, 10) fill vacant boxes in order
@@ -1035,6 +1049,22 @@ function finalFrame(pos,camX,on){
   const w=W/R.cz,h=H/R.cz;
   return {x:clamp(R.cx-w/2,0,VW-w),y:clamp(R.cy-h/2,0,H-h),w,h};
 }
+// your bets on the race being run, with where each one stands right now
+function betStand(b,o){
+  const at=k=>o.indexOf(k)+1,pn=S.race.placeN,s=b.sel,top=n=>o.slice(0,n);
+  if(b.type==="win")return at(s[0])===1?["up","Leading"]:at(s[0])<=pn?["near",`Running ${posTxt(at(s[0]))}`]:["",`Running ${posTxt(at(s[0]))}`];
+  if(b.type==="place")return at(s[0])<=pn?["up",`In the places (${posTxt(at(s[0]))})`]:["",`Running ${posTxt(at(s[0]))}`];
+  if(b.type==="ew")return at(s[0])===1?["up","Leading"]:at(s[0])<=pn?["near",`Placing (${posTxt(at(s[0]))})`]:["",`Running ${posTxt(at(s[0]))}`];
+  const n={quin:2,exacta:2,tri:3,first4:4}[b.type]||2,ok=b.type==="quin"?s.every(k=>top(2).includes(k)):s.every((k,i)=>o[i]===k);
+  return ok?["up","Landing"]:s.every(k=>at(k)<=n+1)?["near","Close"]:["","Not yet"];
+}
+function myBetsHtml(o){
+  const sim=S.bets.map(b=>{const [c,t]=betStand(b,o);return `<div><span>${b.label} <small>${money(b.stake)} at ${div(b.odds)}</small></span><em class="${c}">${t}</em></div>`});
+  let book=[];
+  if(S.mode==="real"&&S.real&&S.real.races[S.idx]){const k=raceKey(S.real,S.real.races[S.idx].number);
+    book=BOOK.tickets.filter(t=>t.key===k&&t.status==="pending").map(t=>`<div><span>My Book: ${escH(t.type==="win"||t.type==="place"?t.type[0].toUpperCase()+t.type.slice(1):t.type)} ${t.nos.join(t.type==="quin"?" & ":"-")} <small>${money(t.stake)} at ${div(t.odds)} · settles on the real result</small></span></div>`)}
+  return sim.length||book.length?`<div><b>Your bets</b></div>${sim.join("")}${book.join("")}`:"";
+}
 function updateHud(now,pos,show){
   const el=$("hud");
   if(!show||!pos){if(el.dataset.on!=="0"){el.dataset.on="0";el.style.display="none";$("runline").hidden=true}return}
@@ -1046,6 +1076,7 @@ function updateHud(now,pos,show){
   $("hudrem").classList.toggle("final",rem>0&&rem<=200);
   $("runbar").style.width=clamp(lead/S.race.dist,0,1)*100+"%";
   $("runorder").innerHTML=o.map((k,i)=>{const h=S.race.field[k],c=silkOf(h,k)[0],mine=S.bets.some(b=>b.sel.includes(k));return `<span class="${mine?"mine":""}"><i style="background:${rugCss(h)||c};color:${inkOn(c)}">${h.no}</i>${i===0?"<b>"+h.name+"</b>":""}</span>`}).join("");
+  $("mybets").innerHTML=myBetsHtml(o);
   $("hudtop").innerHTML=o.slice(0,4).map((k,i)=>{const h=S.race.field[k],c=silkOf(h,k)[0];return `<div><i style="background:${rugCss(h)||c};color:${inkOn(c)}">${h.no}</i><span>${h.name}</span></div>`}).join("");
 }
 function frame(now){
@@ -1288,6 +1319,7 @@ function setReal(mi,ri){
   if(S.mode==="real"&&S.real&&MEETS[mi]&&S.real.key===MEETS[mi].key&&S.idx===ri){bookOpen=false;resOpen=false;renderAll();return}
   abortRace();bookOpen=false;
   if(S.mode==="daily")leaveDaily();
+  leaveDogs();
   if(S.mode!=="real"){
     const career=S,rs=career.realSaved;career.realSaved=null;
     S=rs?{...rs,career}:{bank:1000,meeting:1,best:1000,bigCollect:0,loans:0,type:"win",sel:[],bets:[],phase:"bet",ledger:[],tier:0,mode:"real",pool:[],startBank:1000,career};
@@ -1296,16 +1328,51 @@ function setReal(mi,ri){
   buildReal();renderAll();say(`Betting open on <b>${S.track} R${S.real.races[ri].number}</b>.`);
   document.querySelector(".stage").scrollIntoView({block:"start"});
 }
+/* ---------- next to go: today's real horse and dog races in start order ---------- */
+let NTG=[];
+function schedule(){
+  const out=[];
+  MEETS.forEach((m,mi)=>{if(m.date!==REAL_TODAY)return;m.races.forEach((r,ri)=>{const t=Date.parse(r.jump);if(Number.isFinite(t))out.push({t,code:"H",venue:m.venue,no:r.number,mi,ri,key:`H|${m.key}|${r.number}`})})});
+  dgToday().forEach(m=>m.races.forEach((r,ri)=>{const t=Date.parse(r.jump);if(Number.isFinite(t))out.push({t,code:"D",venue:m.track,no:r.number,slug:m.slug,ri,key:`D|${m.slug}|${r.number}`})}));
+  return out.sort((a,b)=>a.t-b.t||a.venue.localeCompare(b.venue));
+}
+const upcoming=()=>{const now=Date.now();return schedule().filter(x=>x.t>now-60e3)};
+const curSched=()=>S.mode==="real"&&S.real&&S.real.races[S.idx]?`H|${S.real.key}|${S.real.races[S.idx].number}`:isDogs()&&S.rd&&S.race?`D|${S.rd.slug}|${S.race.realNo}`:null;
+function goSched(x){
+  if(!x)return;resOpen=false;bookOpen=false;
+  if(x.code==="H")return setReal(x.mi,x.ri);
+  if(!isDogs())enterDogs();
+  if(S.rd&&S.rd.slug===x.slug){const i=S.rd.cards.findIndex(c=>c.race===x.no);if(i>=0)return setDogRace(i)}
+  setRealDog(x.slug,x.ri);
+}
+function goNextScheduled(){
+  const up=upcoming(),i=up.findIndex(x=>x.key===curSched());
+  const x=i>=0?up[i+1]:up.find(x=>x.t>Date.now())||up[0];
+  if(x)goSched(x);else say("No more real races today.");
+}
+function ntgHtml(){
+  NTG=upcoming().slice(0,40);if(!NTG.length)return "";
+  const cur=curSched();
+  return `<div class="meets nextgo"><span>Next to go</span><button data-ntg="next">Next race &#9656;</button><select id="ntgsel" aria-label="Today's races in start order">${NTG.some(x=>x.key===cur)?"":'<option value="" selected>All of today\'s races, in order</option>'}${NTG.map((x,i)=>`<option value="${i}" ${x.key===cur?"selected":""}>${timeOf(new Date(x.t).toISOString())} · ${escH(x.venue)} R${x.no} · ${x.code==="H"?"Horses":"Dogs"}${x.t<=Date.now()?" (jumped)":""}</option>`).join("")}</select></div>`;
+}
+function enterHorses(){
+  if(!MEETS.length){loadMeets();say(meetsFailed?"Real horse meetings couldn't load. Try again soon.":"Loading today's horse meetings...");return}
+  const home=S.mode==="career"?S:S.career,rs=home&&home.realSaved,mi0=rs&&rs.real?MEETS.findIndex(m=>m.key===rs.real.key):-1;
+  if(mi0>=0)return setReal(mi0,Math.min(rs.idx||0,MEETS[mi0].races.length-1));
+  const x=upcoming().find(x=>x.code==="H"&&x.t>Date.now());
+  if(x)return setReal(x.mi,x.ri);
+  setReal(0,0);
+}
 function pendingCount(){return BOOK.tickets.filter(t=>t.status==="pending").length}
 function renderNav(){
   const dd=(S.dailyDone||(S.career&&S.career.dailyDone)||{})[dayKey()];
   let groups="",cur=S.mode==="real"?`${S.realIdx},${S.idx}`:"";
   MEETS.forEach((m,mi)=>{groups+=`<optgroup label="${dayName(m.date)} · ${m.venue}">`+m.races.map((r,ri)=>{const k=raceKey(m,r.number),done=RS[k]&&RS[k].done;return `<option value="${mi},${ri}" ${cur===mi+","+ri?"selected":""}>R${r.number} ${timeOf(r.jump)} ${r.name}${r.feature?" ★":""}${done?" (result in)":closed(r.jump)?" (closed)":""}</option>`}).join("")+`</optgroup>`});
   const pend=pendingCount();
-  $("nav").innerHTML=`<div><button data-nav="career" aria-pressed="${S.mode==="career"&&!bookOpen&&!resOpen}">Career</button><button data-nav="daily" aria-pressed="${S.mode==="daily"&&!bookOpen&&!resOpen}" ${S.mode!=="daily"&&dd!==undefined?"disabled":""}>${dd!==undefined&&S.mode!=="daily"?"Daily "+money(dd):"Daily"}</button><button data-nav="dogs" aria-pressed="${S.mode==="dogs"&&!bookOpen&&!resOpen}">Dogs</button><button data-nav="results" aria-pressed="${resOpen}">Results</button><button data-nav="book" aria-pressed="${bookOpen}">My Book${pend?` (${pend})`:""}</button>${S.mode!=="daily"?'<button class="alt" data-nav="restart">Restart meet</button>':""}</div>
-  ${[...new Set(MEETS.map(m=>m.date))].map(d=>`<div class="meets"><span>${d===REAL_TODAY?"Today":"Tomorrow"===dayRel(d)?"Tomorrow":dayName(d)}</span>${MEETS.map((m,mi)=>m.date!==d?"":`<button data-meet="${mi}" aria-pressed="${S.mode==="real"&&mi===S.realIdx&&!bookOpen&&!resOpen}">${m.venue}</button>`).join("")}</div>`).join("")}${dogNavHtml()}<label class="pick"><span>All races</span><select id="racesel" ${MEETS.length?"":"disabled"}>${cur?"":`<option value="" selected>${MEETS.length?"Pick a race":meetsFailed?"Real races only load on the public game site":"Loading races"}</option>`}${groups}</select></label>`;
+  $("nav").innerHTML=`<div><button data-nav="career" aria-pressed="${S.mode==="career"&&!bookOpen&&!resOpen}">Career</button><button data-nav="daily" aria-pressed="${S.mode==="daily"&&!bookOpen&&!resOpen}" ${S.mode!=="daily"&&dd!==undefined?"disabled":""}>${dd!==undefined&&S.mode!=="daily"?"Daily "+money(dd):"Daily"}</button><button data-nav="horses" aria-pressed="${S.mode==="real"&&!bookOpen&&!resOpen}">Horses</button><button data-nav="dogs" aria-pressed="${S.mode==="dogs"&&!bookOpen&&!resOpen}">Dogs</button><button data-nav="results" aria-pressed="${resOpen}">Results</button><button data-nav="book" aria-pressed="${bookOpen}">My Book${pend?` (${pend})`:""}</button>${S.mode!=="daily"?'<button class="alt" data-nav="restart">Restart meet</button>':""}</div>
+  ${ntgHtml()}${dogNavHtml()}${S.mode!=="real"?"":[...new Set(MEETS.map(m=>m.date))].map(d=>`<div class="meets"><span>${d===REAL_TODAY?"Today":"Tomorrow"===dayRel(d)?"Tomorrow":dayName(d)}</span>${MEETS.map((m,mi)=>m.date!==d?"":`<button data-meet="${mi}" aria-pressed="${S.mode==="real"&&mi===S.realIdx&&!bookOpen&&!resOpen}">${m.venue}</button>`).join("")}</div>`).join("")+`<label class="pick"><span>All races</span><select id="racesel" ${MEETS.length?"":"disabled"}>${cur?"":`<option value="" selected>${MEETS.length?"Pick a race":meetsFailed?"Real races only load on the public game site":"Loading races"}</option>`}${groups}</select></label>`}`;
 }
-$("nav").addEventListener("change",e=>{if(e.target.id==="dgsel"){resOpen=false;bookOpen=false;audio();return setDogRace(+e.target.value)}if(e.target.id!=="racesel"||!e.target.value)return;resOpen=false;const [m,r]=e.target.value.split(",").map(Number);audio();setReal(m,r)});
+$("nav").addEventListener("change",e=>{if(e.target.id==="ntgsel"){if(e.target.value==="")return;audio();return goSched(NTG[+e.target.value])}if(e.target.id==="dgsel"){resOpen=false;bookOpen=false;audio();return setDogRace(+e.target.value)}if(e.target.id!=="racesel"||!e.target.value)return;resOpen=false;const [m,r]=e.target.value.split(",").map(Number);audio();setReal(m,r)});
 $("nav").addEventListener("click",e=>{
   const b=e.target.closest("button");if(!b||b.disabled)return;audio();
   if(b.dataset.nav==="results"){if(resOpen){resOpen=false;resSel=null;renderNav();renderCard()}else openResults();return}
@@ -1316,7 +1383,9 @@ $("nav").addEventListener("click",e=>{
   if(b.dataset.nav==="career"){bookOpen=false;if(S.mode==="career")return renderAll();return goCareer()}
   if(b.dataset.nav==="book"){bookOpen=!bookOpen;bookMsg="";settleBook();renderNav();renderCard();if(bookOpen)$("card").scrollIntoView({block:"start"});return}
   if(b.dataset.nav==="daily"){bookOpen=false;if(S.mode==="daily")return renderAll();abortRace();if(S.mode==="real"){const c=S.career;const k={...S};delete k.career;c.realSaved=k;S=c}leaveDogs();return startDaily()}
+  if(b.dataset.nav==="horses"){bookOpen=false;if(S.mode==="real")return renderAll();return enterHorses()}
   if(b.dataset.nav==="dogs"){bookOpen=false;if(S.mode==="dogs")return renderAll();return enterDogs()}
+  if(b.dataset.ntg!==undefined){return goNextScheduled()}
   if(b.dataset.dgm!==undefined){bookOpen=false;if(S.rd&&S.rd.slug===b.dataset.dgm)return renderAll();return setRealDog(b.dataset.dgm)}
   if(b.dataset.dgame!==undefined){bookOpen=false;if(!S.rd)return renderAll();return backToGameDogs()}
   if(b.dataset.nav==="restart"){bookOpen=false;return restartMeet()}
@@ -1435,11 +1504,43 @@ function mergeResults(a,b){
 const resDay=r=>new Date(r.at).toLocaleDateString("en-AU",{weekday:"long",day:"numeric",month:"long"});
 const resTime=r=>new Date(r.jump||r.at).toLocaleTimeString("en-AU",{hour:"numeric",minute:"2-digit"});
 const silkTag=s=>(no)=>`<span class="silk" style="background:${s[0]};color:${s[1]}">${no}</span>`;
+/* official results (PuntersEdge), one day at a time */
+let resTab="mine";const OFF={date:null,data:null,loading:false,venue:null,err:""};
+function loadOfficial(date){
+  OFF.loading=true;OFF.err="";if(resOpen)renderCard();
+  fetch(`${REAL_URL}?results=1${date?"&date="+date:""}`).then(r=>r.json()).then(j=>{if(j.error||!j.meetings)throw 0;OFF.data=j;OFF.date=j.date;if(!j.meetings.some(m=>m.venue===OFF.venue))OFF.venue=(j.meetings.find(m=>m.races.some(r=>r.fin&&r.fin.length))||j.meetings[0]||{}).venue||null})
+    .catch(()=>{OFF.err="Official results couldn't load right now. Try again soon."}).finally(()=>{OFF.loading=false;if(resOpen&&resTab==="official")renderCard()});
+}
+const resTabsHtml=()=>`<div class="tabs off-days" role="tablist"><button data-res="tab:mine" aria-pressed="${resTab==="mine"}">My races</button><button data-res="tab:official" aria-pressed="${resTab==="official"}">Official results</button></div>`;
+const posTxt=p=>["1st","2nd","3rd","4th"][p-1]||p+"th";
+function offRaceHtml(r){
+  const t=Date.parse(r.t),done=r.fin&&r.fin.length;
+  const st=done?(r.st==="final"?"Final":"Interim"):Number.isFinite(t)&&t>Date.now()?`Jumps ${timeOf(r.t)}`:"Result to come";
+  return `<section class="off-race"><h3>R${r.n} ${escH(r.nm||"")}</h3><div class="off-meta">${[Number.isFinite(t)?timeOf(r.t):"",r.d?r.d+"m":"",r.tc?escH(r.tc):"",done?st:""].filter(Boolean).join(" · ")}</div>
+  ${done?`<div class="res-scroll"><table class="tbl res-tbl"><thead><tr><th>Pos</th><th>No</th><th>Horse</th><th class="n">Win</th><th class="n">Place</th></tr></thead><tbody>${r.fin.map(x=>`<tr class="${x.pos===1?"res-first":x.pos<=4?"res-placed":""}"><td><b>${posTxt(x.pos)}</b></td><td>${x.no}</td><td><b>${escH(x.name)}</b></td><td class="n">${x.win?div(x.win):""}</td><td class="n">${x.place?div(x.place):""}</td></tr>`).join("")}</tbody></table></div>`:`<div class="off-pend">${st}</div>`}
+  ${r.exo&&r.exo.length?`<div class="off-exo">${r.exo.map(e=>`<span>${escH(e.type)} <b>${escH(e.sel)}</b> ${div(e.amount)}</span>`).join("")}</div>`:""}
+  ${r.scr&&r.scr.length?`<div class="off-meta">Scratched: ${r.scr.map(x=>`${x.no} ${escH(x.name||"")}`).join(", ")}</div>`:""}</section>`;
+}
+function renderOfficial(){
+  const c=$("card"),d=OFF.data;
+  if(!d&&!OFF.loading&&!OFF.err){loadOfficial(OFF.date);return}
+  const ms=d?d.meetings:[],m=ms.find(x=>x.venue===OFF.venue)||ms[0];
+  c.innerHTML=`<h2>Results</h2>${resTabsHtml()}
+  ${d?`<div class="tabs off-days">${d.dates.map((x,i)=>`<button data-res="day:${x}" aria-pressed="${x===d.date}">${i===0?"Today":i===1?"Yesterday":dayName(x)}</button>`).join("")}</div>`:""}
+  ${OFF.loading?'<div class="tip">Loading official results…</div>':""}${OFF.err?`<div class="tip">${OFF.err}</div>`:""}
+  ${d&&!OFF.loading?(ms.length?`<div class="tabs off-meets">${ms.map(x=>`<button data-res="meet:${escH(x.venue)}" aria-pressed="${m&&x.venue===m.venue}">${escH(x.venue)}${x.races.some(r=>r.fin&&r.fin.length)?"":" ·"}</button>`).join("")}</div>
+    ${m?`<div class="conds"><span>${escH(m.venue)}${m.state?" · "+m.state:""}</span><span>${dayName(d.date)}</span><span>${m.races.filter(r=>r.fin&&r.fin.length).length}/${m.races.length} results in</span></div><div class="res-day">${m.races.map(offRaceHtml).join("")}</div>`:""}`
+    :'<div class="tip">No official results for this day yet.</div>'):""}
+  ${d?`<button class="big place" data-res="offrefresh" ${OFF.loading?"disabled":""}>Refresh results</button>`:""}
+  <div class="tip">Official thoroughbred results. Results by <a href="https://puntersedge.online" target="_blank" rel="noopener">PuntersEdge</a>.${d&&d.resAt?` Updated ${new Date(d.resAt).toLocaleTimeString("en-AU",{hour:"numeric",minute:"2-digit"})}.`:""}</div>
+  <button class="reset" data-res="close">Back to the race</button>`;
+}
 function renderResults(){
+  if(resTab==="official"&&!resSel)return renderOfficial();
   const c=$("card"),L=RESULTS.list;
   if(resSel){const r=L.find(x=>x.id===resSel);if(r)return renderResultDetail(r);resSel=null}
   const days=[];for(const r of L){const d=resDay(r);let g=days.find(x=>x.d===d);if(!g)days.push(g={d,rows:[]});g.rows.push(r)}
-  c.innerHTML=`<h2>Results</h2>
+  c.innerHTML=`<h2>Results</h2>${resTabsHtml()}
   <div class="conds"><span>${L.length?`${L.length} race${L.length>1?"s":""} ${RESULTS.more?"loaded":"saved"}`:"No races yet"}</span><span>Newest first</span>${RESULTS.pend.length&&AUTH?`<span>${RESULTS.pend.length} waiting to upload</span>`:""}</div>
   ${resFull?`<div class="tip">This device is out of storage space, so new results can't be saved here.${AUTH?" They are still saved to your account.":" Log in to keep them in your account."} Nothing has been deleted.</div>`:""}
   ${days.length?days.map(g=>`<section class="res-day"><h3>${g.d}</h3>${g.rows.map(r=>{const w=r.runners[0];return `<button class="res-row" data-res="${r.id}">
@@ -1468,6 +1569,10 @@ function renderResultDetail(r){
 $("card").addEventListener("click",e=>{
   const b=e.target.closest("[data-res]");if(!b)return;
   const v=b.dataset.res;
+  if(v.startsWith("tab:")){resTab=v.slice(4);resSel=null;renderCard();return}
+  if(v.startsWith("day:")){OFF.date=v.slice(4);OFF.data=null;loadOfficial(OFF.date);return}
+  if(v.startsWith("meet:")){OFF.venue=v.slice(5);renderCard();return}
+  if(v==="offrefresh"){loadOfficial(OFF.date);return}
   if(v==="close"){resOpen=false;resSel=null;renderNav();renderCard();return}
   if(v==="older"){loadOlderResults();return}
   if(v==="list"){resSel=null;renderCard();$("card").scrollIntoView({block:"start"});return}
@@ -2081,7 +2186,8 @@ function start(data){
   renderAll();
   say(S.phase==="bet"?`Betting open on the <b>${S.race.title}</b>. Read the form, pick a runner, then jump.`:"");
   requestAnimationFrame(frame);
-  loadMeets();
+  loadMeets();loadDogMeets();
+  setInterval(()=>{if(S&&S.phase!=="race"&&document.activeElement?.tagName!=="SELECT")renderNav()},60e3);
   bootAccount();
 }
 window.claude?.hot?.snapshot?.(()=>S);
