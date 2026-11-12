@@ -144,6 +144,14 @@ details.follow p{margin:0 12px 8px;font-size:15px;color:#d9c9a3}
 .mrow{display:inline-flex;gap:5px;align-items:center;margin:3px 8px 3px 0;font-weight:700}.mrow select{min-height:36px;font-size:15px;max-width:220px}
 .ffload[disabled]{opacity:.5;cursor:not-allowed}
 body{padding-bottom:60px}
+.nan-loan{border-top-color:var(--red)}
+.nan-loan .calc-l{width:auto;margin-right:4px}
+.calc-row .ffload{background:var(--amber);color:var(--tote);border:0}
+.loan-top{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:6px}
+.loan-top small{display:block;color:var(--ink2);font-size:13px}.loan-top b{display:block;font:700 24px/1.1 var(--led)}
+#loanClock{font-weight:700;color:var(--ink)}
+.loanmsg{font-weight:700;margin:6px 0}
+.nanpay{color:#8e3a2c!important}
 @media (max-width:560px){
   .scrrow{grid-template-columns:36px 28px minmax(0,1fr)}
   details.run>summary{grid-template-columns:36px 28px minmax(0,1fr) 52px 54px;font-size:15px}
@@ -572,7 +580,23 @@ function renderRecord(){
 // (the official balance); a result typed in by hand settles them early at an estimated dividend (the running balance),
 // and the official result replaces it when it comes in.
 const BK_KEY="nanbets1",BT={win:["Win",1],place:["Place",1],ew:["Each way",1],quinella:["Quinella",2],exacta:["Exacta",2],trifecta:["Trifecta",3],first4:["First 4",4]};
-let BK=(()=>{try{const b=JSON.parse(localStorage.getItem(BK_KEY));if(b&&Array.isArray(b.tickets))return {start:1000,topups:0,slip:[],manual:{},off:{},...b}}catch(e){}return {start:1000,topups:0,tickets:[],slip:[],manual:{},off:{}}})();
+let BK=(()=>{try{const b=JSON.parse(localStorage.getItem(BK_KEY));if(b&&Array.isArray(b.tickets))return {start:1000,topups:0,slip:[],manual:{},manualAt:{},off:{},loans:[],...b}}catch(e){}return {start:1000,topups:0,tickets:[],slip:[],manual:{},manualAt:{},off:{},loans:[]}})();
+/* Borrowing from Nan: up to $1,000 in any 24 hours. The clock starts with the first amount borrowed; the rest of the $1,000
+   can be taken any time before it runs out. What's owed comes out of the next winnings (the whole payout of a winning bet)
+   until Nan is paid back. Refunds from scratchings aren't winnings. */
+const LOAN_MAX=1000,LOAN_DAY=24*3600e3;
+function loanWindow(now=Date.now()){let start=null,used=0;
+  for(const l of BK.loans.slice().sort((a,b)=>a.at-b.at)){if(start===null||l.at>=start+LOAN_DAY){start=l.at;used=0}used+=l.amount}
+  const live=start!==null&&now<start+LOAN_DAY;return {left:live?r2(Math.max(0,LOAN_MAX-used)):LOAN_MAX,resets:live?start+LOAN_DAY:null,used:live?r2(used):0}}
+// repayments in time order: each winning payout pays off what's owed at that moment
+function ledger(running){
+  const ev=BK.loans.map(l=>({t:l.at,loan:l.amount})),per={};
+  for(const t of BK.tickets){if(t.status==="cancelled")continue;const o=settleOf(t);
+    if(o.state==="won"&&o.pay>0&&(o.src==="official"||running&&o.src==="manual"))ev.push({t:o.src==="official"?((BK.off[t.rk]||{}).at||0):((BK.manualAt||{})[t.rk]||0),win:o.pay,id:t.id})}
+  ev.sort((a,b)=>a.t-b.t||(a.loan?-1:1));let debt=0,repaid=0,borrowed=0;
+  for(const e of ev){if(e.loan){debt+=e.loan;borrowed+=e.loan}else{const r=Math.min(debt,e.win);debt=r2(debt-r);repaid+=r;if(r>0)per[e.id]=r2(r)}}
+  return {debt:r2(debt),repaid:r2(repaid),borrowed:r2(borrowed),per};
+}
 function saveBK(){try{localStorage.setItem(BK_KEY,JSON.stringify(BK))}catch(e){}}
 const BUILD={id:null,type:"win",sel:[],stake:10};
 const rkey=r=>`${r.code}|${r.date}|${vkey(r.venue)}|${r.no}`;
@@ -621,8 +645,10 @@ function balances(){
   const live=BK.tickets.filter(t=>t.status!=="cancelled"),staked=live.reduce((a,t)=>a+costOf(t),0);
   let offRet=0,manRet=0,waitSt=0,openSt=0;
   for(const t of live){const o=settleOf(t);if(o.src==="official"&&o.pay!=null)offRet+=o.pay;else if(o.src==="manual")manRet+=o.pay;if(o.state==="open")openSt+=costOf(t);if(o.state==="waiting"||o.state==="div"||o.src==="manual")waitSt+=costOf(t)}
-  const official=r2(BK.start+BK.topups-staked+offRet);
-  return {official,running:r2(official+manRet),openSt,waitSt,profit:r2(official-BK.start-BK.topups+openSt+waitSt)};
+  const lo=ledger(false),lr=ledger(true),base=BK.start+BK.topups+lo.borrowed-staked;
+  const official=r2(base+offRet-lo.repaid);
+  return {official,running:r2(base+offRet+manRet-lr.repaid),openSt,waitSt,owed:lo.debt,owedRun:lr.debt,borrowed:lo.borrowed,repaid:lo.repaid,
+    profit:r2(offRet-BK.tickets.filter(t=>t.status!=="cancelled"&&settleOf(t).src==="official").reduce((a,t)=>a+costOf(t),0))};
 }
 function builderHtml(r){
   if(BUILD.id!==r.id)return `<button class="betbtn" data-bopen="${escH(r.id)}">Bet on this race</button>`;
@@ -641,6 +667,7 @@ function tkHtml(t){
   return `<div class="rec tk"><div><div class="rmeta">${timeOf(t.jump)} · ${escH(t.venue)} R${t.no} · ${CODE[t.code]}</div>
     <div class="line"><b>${BT[t.type][0]}</b> ${t.sel.map(x=>cloth(x.no,t.code,x.box)).join(" ")} ${escH(BT[t.type][1]===1?t.sel[0].name:"")} · ${money(c)}${t.type==="ew"?` (${money(t.stake)} each way)`:""}</div></div>
     <span class="tag ${tag[1]}">${tag[0]}${o.src==="manual"?" · your result":""}</span>
+    ${(LEDGER.per[t.id]||0)>0?`<div class="order nanpay">${money(LEDGER.per[t.id])} of it paid back to Nan</div>`:""}
     ${o.src==="manual"?`<div class="order">Your result: ${man.map((n,i)=>`${ord(i+1)} ${n}`).join(" · ")}. Estimated dividend until the official result comes in.</div>`:""}
     ${o.src==="official"&&BK.off[t.rk]?`<div class="order">Official: ${BK.off[t.rk].fin.slice().sort((a,b)=>a.pos-b.pos).slice(0,4).map(x=>`${ord(x.pos)} ${x.no!=null?cloth(x.no,t.code)+" ":""}${escH(x.name)}`).join(" · ")}</div>`:""}
     <div class="tkbtns">${o.state==="open"?`<button data-bcancel="${t.id}">Cancel bet</button>`:""}${afterJump&&o.src!=="official"&&t.status!=="cancelled"?`<button data-bman="${escH(t.rk)}">${man?"Change my result":"Enter result"}</button>${man?`<button data-bmanclr="${escH(t.rk)}">Clear my result</button>`:""}`:""}</div>
@@ -650,19 +677,31 @@ let MANUAL=null,BKMSG="";
 function manualForm(t){const f=t.field||[],cur=BK.manual[t.rk]||[];
   return `<div class="builder">${[0,1,2,3].map(i=>`<label class="mrow">${ord(i+1)} <select data-mpos="${i}"><option value="">–</option>${f.map(u=>`<option value="${u.no}" ${cur[i]===u.no?"selected":""}>${u.no}. ${escH(u.name)}</option>`).join("")}</select></label>`).join("")}
     <div class="calc-row"><button class="ffload" data-msave="${escH(t.rk)}">Save my result</button><button data-mclose>Close</button></div><p class="calc-out"><small>Applies to every bet on this race. The official result replaces it.</small></p></div>`}
+let LEDGER={per:{}},LOANMSG="",LOANAMT=100;
+const hms=ms=>{ms=Math.max(0,ms);const h=Math.floor(ms/36e5),m=Math.floor(ms%36e5/6e4),s=Math.floor(ms%6e4/1e3);return `${h}h ${String(m).padStart(2,"0")}m ${String(s).padStart(2,"0")}s`};
+function loanHtml(b){const w=loanWindow();
+  return `<div class="calc nan-loan"><h3>Borrow from Nan</h3>
+    <div class="loan-top"><div><small>You owe Nan</small><b class="${b.owed>0?"minus":""}">${money(b.owed)}</b>${b.owedRun!==b.owed?`<small>${money(b.owedRun)} counting results you entered</small>`:""}</div>
+      <div><small>Borrowed in all</small><b>${money(b.borrowed)}</b></div><div><small>Paid back</small><b>${money(b.repaid)}</b></div>
+      <div><small>You can borrow now</small><b>${money(w.left)}</b>${w.resets?`<small>Resets in <span id="loanClock" data-at="${w.resets}">${hms(w.resets-Date.now())}</span></small>`:""}</div></div>
+    <div class="calc-row"><span class="calc-l">Borrow</span>${[100,250,500,1000].map(v=>`<button data-lamt="${v}" aria-pressed="${LOANAMT===v}">$${v}</button>`).join("")}<label class="calc-own">$<input id="loanIn" type="number" min="1" step="1" inputmode="decimal" value="${LOANAMT}"></label>
+      <button class="ffload" data-lborrow>Borrow ${money(Math.min(LOANAMT,w.left)||LOANAMT)} from Nan</button></div>
+    ${LOANMSG?`<p class="loanmsg">${LOANMSG}</p>`:""}
+    <p class="calc-out"><small>Nan lends up to ${money(LOAN_MAX)} in any 24 hours, in any amounts you like. The 24-hour clock starts the moment you borrow; until it runs out you can only borrow what's left of the ${money(LOAN_MAX)}. Then it resets. Whatever you owe comes out of your next winnings, the whole payout of a winning bet, until Nan is paid back. Refunds for scratchings aren't winnings.</small></p></div>`}
 function renderBets(){
-  const b=balances(),el=$("betsView");if(!el)return;
+  const b=balances(),el=$("betsView");if(!el)return;LEDGER=ledger(true);
   const live=BK.tickets.slice().sort((a,b)=>Date.parse(b.jump)-Date.parse(a.jump)),slipCost=BK.slip.reduce((a,t)=>a+costOf(t),0),closedSlip=BK.slip.some(t=>Date.now()>=Date.parse(t.jump));
   const groups=[["Before the jump",t=>settleOf(t).state==="open"],["Run: waiting on official results",t=>["waiting","div"].includes(settleOf(t).state)||settleOf(t).src==="manual"],["Settled",t=>settleOf(t).src==="official"],["Cancelled",t=>t.status==="cancelled"]];
   el.innerHTML=`<div class="sumgrid"><div class="sum all"><h3>Running balance</h3><div class="big">${money(b.running)}</div><p>Includes results you've entered yourself. This is what you can bet with.</p></div>
     <div class="sum"><h3>Official balance</h3><div class="big">${money(b.official)}</div><p>Only official results. Changes when they come in.</p></div>
     <div class="sum"><h3>Bets out</h3><div class="big">${money(b.openSt+b.waitSt)}</div><p>${money(b.openSt)} still to run · ${money(b.waitSt)} run, waiting on official results</p></div>
-    <div class="sum"><h3>Official profit</h3><div class="big ${b.profit>=0?"plus":"minus"}">${b.profit>=0?"+":""}${money(b.profit)}</div><p>Started with ${money(BK.start)}${BK.topups?` + ${money(BK.topups)} added`:""}.</p></div></div>
+    <div class="sum"><h3>Official profit</h3><div class="big ${b.profit>=0?"plus":"minus"}">${b.profit>=0?"+":""}${money(b.profit)}</div><p>From settled bets. Started with ${money(BK.start)}${BK.topups?` + ${money(BK.topups)} added`:""}${b.owed>0?` · owe Nan ${money(b.owed)}`:""}.</p></div></div>
     ${BKMSG?`<div class="note">${BKMSG}</div>`:""}
     <div class="calc"><h3>Bet slip</h3>${BK.slip.length?BK.slip.map((t,i)=>`<div class="slipline"><span>${timeOf(t.jump)} · ${escH(t.venue)} R${t.no} · <b>${BT[t.type][0]}</b> ${escH(selText(t))} · ${money(costOf(t))}${Date.now()>=Date.parse(t.jump)?' <b class="minus">jumped</b>':""}</span><button data-bslipdel="${i}">Remove</button></div>`).join("")+
       `<div class="calc-row"><button class="ffload" data-bconfirm ${slipCost>b.running||closedSlip?"disabled":""}>Confirm ${BK.slip.length} bet${BK.slip.length>1?"s":""} · ${money(slipCost)}</button><button data-bslipclr>Clear slip</button></div>${slipCost>b.running?'<p class="minus">Not enough in your running balance.</p>':""}${closedSlip?'<p class="minus">Remove bets on races that have jumped.</p>':""}`
       :`<p>Your slip is empty. On Today's tips, open a race and press <b>Bet on this race</b>.</p>`}</div>
-    <div class="calc-row"><button data-bcheck>Check official results</button>${b.running<5?'<button data-btop>Add $1,000</button>':""}</div>
+    <div class="calc-row"><button data-bcheck>Check official results</button></div>
+    ${loanHtml(b)}
     ${groups.map(([h,f])=>{const ts=live.filter(t=>f(t)&&(h==="Cancelled"||t.status!=="cancelled"));return ts.length?`<h3 class="bgrp">${h} (${ts.length})</h3><div class="races">${ts.map(tkHtml).join("")}</div>`:""}).join("")}
     <p class="note">Play money only. Bets are saved in this browser on this device. Win and place pay the official tote dividend; exotics pay the official dividend for that bet. Scratched selections are refunded.</p>`;
   slipBar();
@@ -705,10 +744,18 @@ document.addEventListener("click",e=>{
   if(b=g("[data-bmanclr]")){delete BK.manual[b.dataset.bmanclr];saveBK();return renderBets()}
   if(b=g("[data-msave]")){const v=[...document.querySelectorAll("[data-mpos]")].map(s=>+s.value||null);const picks=v.filter(Boolean);
     if(!v[0]){BKMSG="Pick at least the winner.";return renderBets()}if(new Set(picks).size!==picks.length){BKMSG="Each runner can only finish once.";return renderBets()}
-    BK.manual[b.dataset.msave]=v.slice(0,v.findIndex(x=>!x)<0?4:v.findIndex(x=>!x));MANUAL=null;BKMSG="Your result is saved. The running balance includes it until the official result comes in.";saveBK();return renderBets()}
+    BK.manual[b.dataset.msave]=v.slice(0,v.findIndex(x=>!x)<0?4:v.findIndex(x=>!x));(BK.manualAt=BK.manualAt||{})[b.dataset.msave]=Date.now();MANUAL=null;BKMSG="Your result is saved. The running balance includes it until the official result comes in.";saveBK();return renderBets()}
   if(g("[data-bcheck]"))return checkOfficial(true);
-  if(g("[data-btop]")){BK.topups+=1000;saveBK();return renderBets()}
+  if(b=g("[data-lamt]")){LOANAMT=+b.dataset.lamt;LOANMSG="";return renderBets()}
+  if(g("[data-lborrow]")){const w=loanWindow(),amt=r2(LOANAMT);
+    if(w.left<=0){LOANMSG=`Nan says no: you've had your ${money(LOAN_MAX)} for now. Come back in ${hms(w.resets-Date.now())}.`;return renderBets()}
+    if(!(amt>0)){LOANMSG="Enter an amount to borrow.";return renderBets()}
+    if(amt>w.left){LOANMSG=`Nan will only lend you ${money(w.left)} more until the clock runs out (${hms(w.resets-Date.now())}).`;return renderBets()}
+    BK.loans.push({at:Date.now(),amount:amt});saveBK();const w2=loanWindow();
+    LOANMSG=`Nan lent you ${money(amt)}. ${w2.left>0?`You can borrow ${money(w2.left)} more before the clock runs out.`:"That's your lot until the clock runs out."}`;return renderBets()}
 });
+document.addEventListener("change",e=>{if(e.target.id==="loanIn"){LOANAMT=Math.max(0,Math.round((+e.target.value||0)*100)/100);LOANMSG="";return renderBets()}});
+setInterval(()=>{const c=document.getElementById("loanClock");if(!c)return;const left=+c.dataset.at-Date.now();if(left<=0)return renderBets();c.textContent=hms(left)},1000);
 document.addEventListener("change",e=>{if(e.target.id==="bStake"){BUILD.stake=Math.max(1,Math.round((+e.target.value||1)*100)/100);render()}});
 setInterval(()=>{if(ST.view==="bets"){checkOfficial(false);renderBets()}},5*60e3);
 function setView(v){
