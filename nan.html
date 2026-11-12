@@ -55,6 +55,10 @@ details.run>summary{list-style:none;cursor:pointer;display:grid;grid-template-co
 details.run>summary::-webkit-details-marker{display:none}
 details.run[open]>summary{background:var(--paper2)}
 .rk{font:700 18px/1 var(--led);color:var(--ink2)}
+.sc.x{filter:grayscale(1);opacity:.5}
+.scrrow{display:grid;grid-template-columns:42px 30px minmax(0,1fr);align-items:center;gap:6px;padding:7px 6px;font-size:16px;color:var(--ink2)}
+.scrrow s{display:block;font-weight:700;text-decoration-thickness:2px}.scrrow small{display:block}
+.scrsum{font-size:15px;color:var(--ink2)}
 .sc{display:inline-grid;place-items:center;min-width:26px;height:26px;padding:0 5px;border-radius:6px;font:700 16px/1 var(--led);vertical-align:1px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.28),inset 0 8px 8px -6px rgba(255,255,255,.45),0 1px 2px rgba(0,0,0,.35)}
 .no{display:inline-grid;place-items:center}.sc.no{min-width:28px;height:28px;font-size:17px}
 .nm b{display:block;font-size:17px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -96,6 +100,7 @@ details.run[open]>summary{background:var(--paper2)}
 .rec .order{font-size:15px;color:var(--ink2);grid-column:1/-1}
 .rec .order i{font-style:normal;font-weight:700;color:var(--good)}
 @media (max-width:560px){
+  .scrrow{grid-template-columns:36px 28px minmax(0,1fr)}
   details.run>summary{grid-template-columns:36px 28px minmax(0,1fr) 52px 54px;font-size:15px}
   details.run>summary .pr.mk{display:none}
   .field th.mk{display:none}
@@ -221,14 +226,14 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null};
-let RACES=[];const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
+let RACES=[],RESULTS={};const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
 async function loadAll(){
   const [pe,dl,hl]=await Promise.allSettled([getJSON(PE_URL),getJSON(DG_URL+"?list=1"),getJSON(HN_URL+"&list=1")]);
-  if(pe.status==="fulfilled"){const j=pe.value;ST.today=ST.today||j.today;
+  if(pe.status==="fulfilled"){const j=pe.value;ST.today=ST.today||j.today;RESULTS=j.results||{};
     for(const d of j.days||[])if(d.date===j.today)for(const m of d.meetings)for(const r of m.races)
-      addRace({id:`H|${m.key}|${r.number}`,code:"H",venue:m.venue,state:m.state,date:m.date,no:r.number,name:r.name,dist:r.distance,cls:r.cls,cond:r.track,jump:r.jump,est:r.est,race:r})}
+      addRace({id:`H|${m.key}|${r.number}`,key:`${m.key}_T_${r.number}`,code:"H",venue:m.venue,state:m.state,date:m.date,no:r.number,name:r.name,dist:r.distance,cls:r.cls,cond:r.track,jump:r.jump,est:r.est,race:r})}
   for(const [res,code] of [[dl,"D"],[hl,"N"]])if(res.status==="fulfilled"){const j=res.value;ST.today=ST.today||j.today;
     const d=(j.days||[]).find(x=>x.date===j.today);for(const m of d?d.meetings:[])for(const r of m.races)
       addRace({id:`${code}|${m.slug}|${r.number}`,code,venue:m.track,slug:m.slug,date:m.date,no:r.number,name:r.name,dist:r.distance,cls:r.cls,jump:r.jump})}
@@ -249,11 +254,14 @@ function pump(){
   }
 }
 function ranked(r){
-  if(r.code==="H")return r.rk||(r.rk=horseBreak(r.race));
+  // scratched runners stay on show (struck out) but never get a chance from Nan
+  if(r.code==="H"){if(r.rk)return r.rk;const late=((RESULTS[r.key]||{}).scr||[]).map(Number),run=r.race.runners.filter(u=>!late.includes(+u.no));
+    const sc=new Map((r.race.scr||[]).map(u=>[+u.no,u.name]));for(const u of r.race.runners)if(late.includes(+u.no))sc.set(+u.no,u.name);
+    r.scr=[...sc].sort((a,b)=>a[0]-b[0]).map(([no,name])=>({no,name}));return r.rk=run.length>=2?horseBreak({...r.race,runners:run}):null}
   const cards=CARDS[r.code+r.slug];if(!cards)return undefined;
   if(r.rk)return r.rk;const c=cards.find(c=>c.race===r.no);if(!c)return LIMIT[r.code+r.slug]?null:r.rk=null;
   const rs=r.code==="D"?dogLineup(c):hnLineup(c);if(rs.length<4)return r.rk=null;
-  r.card=c;return r.rk=r.code==="D"?dogBreak(rs):hnBreak(rs);
+  r.card=c;r.scr=c.runners.filter(u=>u.scr).sort((a,b)=>a.no-b.no).map(u=>({no:u.no,name:u.name,box:u.box}));return r.rk=r.code==="D"?dogBreak(rs):hnBreak(rs);
 }
 function loadForm(r){
   if(FORM[r.id])return;FORM[r.id]={state:"loading"};
@@ -321,6 +329,7 @@ function raceBody(r){
     <span class="pct">${pct(x.p)}</span><span class="pr">${div(x.price)}<small>${r.code==="H"?"market":"Nan's"}</small></span>${r.code==="H"?`<span class="pr mk">${div(ladder(1/(x.p*1.13)))}<small>Nan's</small></span>`:"<span></span>"}
     <span class="meter"><i style="width:${Math.round(100*x.p/maxP)}%"></i></span></summary>
     <div class="why">${whyHtml(r,x,i,n)}${fullForm(r,x)}</div></details></td></tr>`).join("")}
+  ${(r.scr||[]).map(u=>`<tr><td><div class="scrrow"><span class="rk">SCR</span>${cloth(u.no,r.code,u.box,"no x")}<span class="nm"><s>${escH(u.name)}</s><small>Scratched: no chance from Nan</small></span></div></td></tr>`).join("")}
   </tbody></table>`;
 }
 function visible(){
@@ -347,7 +356,7 @@ function render(){
   $("races").innerHTML=list.length?list.map(r=>{const rk=ranked(r),t=Date.parse(r.jump),gone=t<=Date.now();
     return `<details class="race${gone?" jumped":""}" data-id="${escH(r.id)}" ${open.has(r.id)?"open":""}><summary>
       <div><div class="rmeta">${tag(r)}${gone?" · jumped":""}</div><div class="rtitle">${escH(r.venue)} R${r.no}${r.dist?" · "+r.dist+"m":""}</div>
-      <div class="rpick">${rk===undefined?"Nan is reading the form…":!rk?noField(r,true):`Nan: 1st ${cloth(rk[0].u.no,r.code,rk[0].u.box)} <b>${escH(rk[0].u.name)}</b> ${pct(rk[0].p)} · ${rk.slice(1,3).map((x,i)=>`${["2nd","3rd"][i]} ${cloth(x.u.no,r.code,x.u.box)} ${escH(x.u.name)}`).join(" · ")}`}</div></div>
+      <div class="rpick">${rk===undefined?"Nan is reading the form…":!rk?noField(r,true):`Nan: 1st ${cloth(rk[0].u.no,r.code,rk[0].u.box)} <b>${escH(rk[0].u.name)}</b> ${pct(rk[0].p)} · ${rk.slice(1,3).map((x,i)=>`${["2nd","3rd"][i]} ${cloth(x.u.no,r.code,x.u.box)} ${escH(x.u.name)}`).join(" · ")}${r.scr&&r.scr.length?` <span class="scrsum">· Scr ${r.scr.map(u=>cloth(u.no,r.code,u.box,"x")).join(" ")}</span>`:""}`}</div></div>
       <span class="rchev">&#9656;</span></summary><div class="rbody">${open.has(r.id)?raceBody(r):""}</div></details>`}).join("")
     :`<div class="empty">${RACES.length?"No races to show. Tick \"Show jumped races\" or pick another code.":"No real races found for today yet."}</div>`;
   for(const k of openRun){const [id,no]=k.split("#");const d=[...document.querySelectorAll(`details.race[data-id="${CSS.escape(id)}"] details.run`)].find(x=>x.querySelector(".no").textContent===no);if(d)d.open=true}
