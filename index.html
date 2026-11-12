@@ -213,6 +213,11 @@ canvas{width:100%;height:auto;display:block}
 .allow-l{text-transform:uppercase;letter-spacing:.5px;color:var(--amber)}.allow-bar{height:12px;background:#3b3120;border-radius:6px;overflow:hidden}.allow-bar i{display:block;height:100%;border-radius:6px}
 .allow-n b{font-size:18px}
 @media (max-width:560px){.allow{grid-template-columns:auto 1fr}.allow-n{grid-column:1/-1}}
+.allow.credits{display:block;padding:8px 12px}
+.crow{display:grid;grid-template-columns:100px minmax(80px,1fr) auto;gap:10px;align-items:center;margin:3px 0}
+@media (max-width:560px){.crow{grid-template-columns:auto 1fr}.crow .allow-n{grid-column:1/-1}}
+.qtag{background:#2a62c9;color:#fff;padding:1px 6px;font-weight:700;font-size:13px}
+.nt-q{font-size:14px;color:#6b6352;margin-top:3px}
 .tk-load{background:var(--amber);color:var(--tote);border:0;min-height:34px;padding:0 10px;font-weight:700;margin-left:4px}
 .nt-scr{font-size:14px;color:#6b6352;margin-top:2px}.nt-scr s{text-decoration-thickness:2px}
 .nt-pick{font-size:18px;color:var(--ink)}.nt-pick small{color:#4a4336;margin-left:4px;font-weight:700}
@@ -312,7 +317,7 @@ canvas{width:100%;height:auto;display:block}
 <script>
 "use strict";
 /* ---------- helpers ---------- */
-const APP_VERSION="2.10.0"; // bump on every release; shown after the title
+const APP_VERSION="2.11.0"; // bump on every release; shown after the title
 const $=id=>document.getElementById(id);
 let RNG=Math.random;
 const mulberry=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
@@ -1586,15 +1591,27 @@ function enterHorses(){
 /* ---------- Nan's Tips: her picks for every real race today, horses, dogs and harness ---------- */
 let tipsOpen=false,TIPF="all",TIPL=[];const TIPQ={};
 // Dog and harness meetings Nan follows (chosen on her full tips page) load by themselves; others load when asked, to save the form allowance
-const NAN_URL="https://nkkhbtrrytctpfwjenrz.supabase.co/functions/v1/otr-nan";let FOLLOW=null,ALLOW=null;const TIPWANT={};
+const NAN_URL="https://nkkhbtrrytctpfwjenrz.supabase.co/functions/v1/otr-nan";let FOLLOW=null,ALLOW=null,CREDITS=null;const TIPWANT={};
+// PuntersEdge quick form: Nan's backup for dog and harness meetings whose FormFav form isn't loaded (market and recent form)
+const QUICKG={D:null,N:null};let quickAsked=0;
+function loadQuick(){if(Date.now()-quickAsked<10*60e3)return;quickAsked=Date.now();
+  for(const [c,cat] of [["D","greyhound"],["N","harness"]])fetch(`${REAL_URL}?quick=${cat}`).then(r=>r.json()).then(j=>{if(j&&j.races)QUICKG[c]=j}).catch(()=>{}).finally(()=>{if(tipsOpen&&!resOpen&&!bookOpen)renderCard()})}
+const qkey=v=>String(v||"").toLowerCase().replace(/[^a-z]+/g," ").trim().split(" ")[0];
+function quickOf(x){const q=QUICKG[x.code];return q&&q.races.find(y=>+y.n===+x.no&&qkey(y.venue)===qkey(x.venue)&&Math.abs(Date.parse(y.jump)-x.t)<30*60e3)}
 // the form allowance meter: FormFav's free 1,000 dog and harness form lookups a day (rolling 24 hours)
+function creditsHtml(c){
+  if(!c)return meterHtml(ALLOW);
+  const row=(lab,a,per,note)=>{if(!a)return "";const left=Math.max(0,Math.min(a.limit,a.left)),f=left/a.limit,col=f>.4?"#2f8a4a":f>.15?"#d99a1e":"#c8321f";
+    return `<div class="crow"><span class="allow-l">${lab}</span><span class="allow-bar"><i style="width:${Math.round(f*100)}%;background:${col}"></i></span><span class="allow-n"><b>${left.toLocaleString()}</b> of ${a.limit.toLocaleString()} ${per}${note?` · ${note}`:""}</span></div>`};
+  return `<div class="allow credits">${row("FormFav",c.ff,"left today",c.ff&&c.ff.left<60?"quick form in use":"")}${row("PuntersEdge",c.pe,"left this month","")}${row("Krok",c.krok,"left this month","")}</div>`;
+}
 function meterHtml(a){
   if(!a)return "";const left=Math.max(0,Math.min(a.limit,a.left)),f=left/a.limit,col=f>.4?"#2f8a4a":f>.15?"#d99a1e":"#c8321f";
   const when=a.at?new Date(a.at).toLocaleTimeString("en-AU",{hour:"numeric",minute:"2-digit"}).replace(/\s?([ap])\.?m\.?/i,(m,x)=>" "+x.toLowerCase()+"m"):"";
   return `<div class="allow" title="Dog and harness form comes from FormFav's free allowance. It frees up gradually over 24 hours."><span class="allow-l">Form allowance</span><span class="allow-bar"><i style="width:${Math.round(f*100)}%;background:${col}"></i></span><span class="allow-n"><b>${left.toLocaleString()}</b> of ${a.limit.toLocaleString()} left${left===0?" · frees up through the day":""}${when?` · as of ${when}`:""}</span></div>`;
 }
 
-function loadFollow(){if(FOLLOW)return;FOLLOW={D:[],N:[],loading:true};fetch(`${NAN_URL}?follow=1`).then(r=>r.json()).then(j=>{FOLLOW={D:(j.tracks&&j.tracks.D)||[],N:(j.tracks&&j.tracks.N)||[]};ALLOW=j.allowance||null}).catch(()=>{FOLLOW={D:[],N:[]}}).finally(()=>{if(tipsOpen&&!resOpen&&!bookOpen)renderCard()})}
+function loadFollow(){if(FOLLOW)return;FOLLOW={D:[],N:[],loading:true};fetch(`${NAN_URL}?follow=1`).then(r=>r.json()).then(j=>{FOLLOW={D:(j.tracks&&j.tracks.D)||[],N:(j.tracks&&j.tracks.N)||[]};ALLOW=j.allowance||null;CREDITS=j.credits||null}).catch(()=>{FOLLOW={D:[],N:[]}}).finally(()=>{if(tipsOpen&&!resOpen&&!bookOpen)renderCard()})}
 const followed=x=>FOLLOW&&!FOLLOW.loading&&(FOLLOW[x.code]||[]).includes(x.slug);
 // horses: the market, nudged by recent form; dogs and harness: the same form ratings their odds come from
 function horseRank(r){
@@ -1622,7 +1639,7 @@ function loadTipCards(code,slug){
     .finally(()=>{if(tipsOpen&&!resOpen&&!bookOpen)renderCard();refreshAllow()});
 }
 // the allowance meter catches up a moment after form loads
-function refreshAllow(){clearTimeout(refreshAllow.t);refreshAllow.t=setTimeout(()=>fetch(`${NAN_URL}?follow=1`).then(r=>r.json()).then(j=>{ALLOW=j.allowance||ALLOW;if(tipsOpen&&!resOpen&&!bookOpen)renderCard()}).catch(()=>{}),1500)}
+function refreshAllow(){clearTimeout(refreshAllow.t);refreshAllow.t=setTimeout(()=>fetch(`${NAN_URL}?follow=1`).then(r=>r.json()).then(j=>{ALLOW=j.allowance||ALLOW;CREDITS=j.credits||CREDITS;if(tipsOpen&&!resOpen&&!bookOpen)renderCard()}).catch(()=>{}),1500)}
 function nanPicks(x){
   // scratched runners stay on show (struck out) but never get a chance from Nan
   if(x.code==="H"){const r=MEETS[x.mi]&&MEETS[x.mi].races[x.ri];if(!r)return null;
@@ -1630,8 +1647,11 @@ function nanPicks(x){
     const out=horseRank({...r,runners:run}),scr=new Map((r.scr||[]).map(u=>[u.no,u.name]));
     for(const u of r.runners)if(late.includes(u.no))scr.set(u.no,u.name);
     out.scr=[...scr].sort((a,b)=>a[0]-b[0]).map(([no,name])=>({no,name}));return out}
-  const cards=tipCards(x.code,x.slug);if(!cards){if(!FOLLOW||FOLLOW.loading)return undefined;if(!followed(x)&&!TIPWANT[x.code+x.slug])return "off";loadTipCards(x.code,x.slug);return undefined}
-  const c=cards.find(c=>c.race===x.no);if(!c)return null;
+  const cards=tipCards(x.code,x.slug),c=cards&&cards.find(c=>c.race===x.no);
+  if(!c){const q=quickOf(x);
+    if(!cards&&FOLLOW&&!FOLLOW.loading&&(followed(x)||TIPWANT[x.code+x.slug]))loadTipCards(x.code,x.slug);
+    if(q&&q.runners.length>=2){const out=horseRank({runners:q.runners});for(const u of out)u.box=(q.runners.find(y=>y.no===u.no)||{}).box;out.scr=q.scr;out.quick=true;return out}
+    if(cards)return null;if(!FOLLOW||FOLLOW.loading)return undefined;return followed(x)||TIPWANT[x.code+x.slug]?undefined:"off"}
   const rs=x.code==="D"?dogLineup(c):hnLineup(c);if(rs.length<4)return null;
   const out=cardRank(rs,x.code==="D"?dogChances(rs):hnChances(rs));
   out.scr=c.runners.filter(u=>u.scr).sort((a,b)=>a.no-b.no).map(u=>({no:u.no,name:u.name,box:u.box}));return out;
@@ -1647,11 +1667,11 @@ function renderTips(){
   const tag=x=>`${timeOf(new Date(x.t).toISOString())} · ${escH(x.venue)} R${x.no} · ${CODE_NAME[x.code]}`;
   const row=(x,i)=>{const p=x.picks;
     return `<div class="nt-row"><div><div class="off-meta">${tag(x)}${x.t<=now?" (jumped)":""}</div>
-      ${p===undefined?'<div class="off-pend">Nan is reading the form…</div>':p==="off"?`<div class="off-pend">Nan isn't following this meeting. <button class="tk-load" data-tipload="${x.code}|${escH(x.slug)}">Load Nan's pick</button></div>`:!p||!p.length?'<div class="off-pend">No field yet</div>':`<div class="nt-pick">1st ${cloth(p[0].no,x.code,p[0].box)} <b>${escH(p[0].name)}</b> <small>${div(p[0].price)}</small></div><div class="off-meta">${p.slice(1,4).map((u,i)=>`${["2nd","3rd","4th"][i]} ${cloth(u.no,x.code,u.box)} ${escH(u.name)}`).join(" · ")}</div>${p.scr&&p.scr.length?`<div class="nt-scr">Scratched: ${p.scr.map(u=>`${cloth(u.no,x.code,u.box,"x")} <s>${escH(u.name)}</s>`).join(" · ")}</div>`:""}`}</div>
+      ${p===undefined?'<div class="off-pend">Nan is reading the form…</div>':p==="off"?`<div class="off-pend">Nan isn't following this meeting. <button class="tk-load" data-tipload="${x.code}|${escH(x.slug)}">Load Nan's pick</button></div>`:!p||!p.length?'<div class="off-pend">No field yet</div>':`<div class="nt-pick">1st ${cloth(p[0].no,x.code,p[0].box)} <b>${escH(p[0].name)}</b> <small>${div(p[0].price)}</small></div><div class="off-meta">${p.slice(1,4).map((u,i)=>`${["2nd","3rd","4th"][i]} ${cloth(u.no,x.code,u.box)} ${escH(u.name)}`).join(" · ")}</div>${p.quick?`<div class="nt-q"><span class="qtag">Quick form</span> market and recent form from PuntersEdge ${TIPWANT[x.code+x.slug]||followed(x)?"":`<button class="tk-load" data-tipload="${x.code}|${escH(x.slug)}">Load full form</button>`}</div>`:""}${p.scr&&p.scr.length?`<div class="nt-scr">Scratched: ${p.scr.map(u=>`${cloth(u.no,x.code,u.box,"x")} <s>${escH(u.name)}</s>`).join(" · ")}</div>`:""}`}</div>
       <button class="tk-act" data-tipgo="${i}">Bet</button></div>`};
   c.innerHTML=`<h2>Nan's Tips</h2><div class="conds"><span>Today's real races, in start order</span></div>
   
-  ${meterHtml(ALLOW)}
+  ${creditsHtml(CREDITS)}
   <div class="tabs off-days">${[["all","All"],["H","Horses"],["D","Dogs"],["N","Harness"]].map(([k,l])=>`<button data-tipf="${k}" aria-pressed="${TIPF===k}">${l}</button>`).join("")}</div>
   ${best?`<div class="tip"><b>Nan's Best Bet:</b> ${tag(best)} · ${cloth(best.picks[0].no,best.code,best.picks[0].box)} <b>${escH(best.picks[0].name)}</b> ${div(best.picks[0].price)}</div>`:""}
   ${rough?`<div class="tip"><b>Nan's Roughie:</b> ${tag(rough.x)} · ${cloth(rough.u.no,rough.x.code,rough.u.box)} <b>${escH(rough.u.name)}</b> ${div(rough.u.price)}</div>`:""}
@@ -1660,7 +1680,7 @@ function renderTips(){
   <div class="tip">Nan's picks come from the market and recent form for horses, and from form and the draw for dogs and harness. Dog and harness meetings Nan follows load by themselves: choose them on Nan's Full Tips. For fun only.</div>
   <button class="reset" data-tipclose="1">Back to the race</button>`;
 }
-function openTips(){tipsOpen=true;resOpen=false;resSel=null;bookOpen=false;loadFollow();loadDogMeets();loadHarnessMeets();renderNav();renderCard();$("card").scrollIntoView({block:"start"})}
+function openTips(){tipsOpen=true;resOpen=false;resSel=null;bookOpen=false;loadFollow();loadQuick();loadDogMeets();loadHarnessMeets();renderNav();renderCard();$("card").scrollIntoView({block:"start"})}
 $("card").addEventListener("click",e=>{
   const b=e.target.closest("[data-tipf],[data-tipgo],[data-tipclose],[data-tipload]");if(!b)return;
   if(b.dataset.tipload){const [code,slug]=b.dataset.tipload.split("|");TIPWANT[code+slug]=1;delete TIPQ[code+slug];loadTipCards(code,slug);return renderCard()}
