@@ -121,6 +121,16 @@ details.follow p{margin:0 12px 8px;font-size:15px;color:#d9c9a3}
 .qnote{background:var(--paper2);padding:8px 10px;font-size:15px}.qnote small{color:var(--ink2)}
 .ffload{background:var(--amber);color:var(--tote);border:0;min-height:38px;padding:0 12px;font-weight:700;font-size:15px;cursor:pointer}
 @media (max-width:560px){.crow{grid-template-columns:auto 1fr}.crow .allow-n{grid-column:1/-1}}
+.calc{background:var(--paper);color:var(--ink);padding:10px 12px;margin-top:8px;border-top:5px solid var(--good)}
+.calc h3{margin:0 0 6px;font:400 20px/1 var(--display);letter-spacing:.4px;text-transform:uppercase}
+.calc-row{display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin:5px 0}
+.calc-row button{background:var(--paper2);color:var(--ink);border:1px solid var(--line);min-height:38px;padding:0 10px;font:700 15px/1 var(--led);cursor:pointer}
+.calc-row button[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.calc-l{width:46px;font-weight:700;color:var(--ink2)}
+.calc-own{display:inline-flex;align-items:center;gap:2px;font-weight:700}.calc-own input{width:72px;min-height:38px;font:700 16px/1 var(--led);padding:0 6px;border:1px solid var(--line)}
+.calc-out{margin-top:6px;font-size:16px}.calc-out small{display:block;color:var(--ink2);margin-top:3px}
+.betline{grid-column:1/-1;font-size:15px;color:var(--ink2)}.betline.win{color:var(--good)}.betline.lose{color:#8e3a2c}
+#recRes{margin-top:6px}
 @media (max-width:560px){
   .scrrow{grid-template-columns:36px 28px minmax(0,1fr)}
   details.run>summary{grid-template-columns:36px 28px minmax(0,1fr) 52px 54px;font-size:15px}
@@ -149,7 +159,8 @@ details.follow p{margin:0 12px 8px;font-size:15px;color:#d9c9a3}
     <div class="note" id="recNote">Loading Nan's record…</div>
     <div class="sumgrid" id="recSum"></div>
     <div class="bar"><div class="tabs days" id="recDays"></div></div>
-    <div class="bar"><div class="tabs" id="recCodes"></div></div>
+    <div class="bar"><div class="tabs" id="recCodes"></div><div class="tabs" id="recRes"></div></div>
+    <div class="calc" id="recCalc"></div>
     <div class="note" id="recDay"></div>
     <div class="races" id="recList"></div>
   </section>
@@ -442,7 +453,31 @@ document.addEventListener("toggle",e=>{const d=e.target;if(d.matches&&d.matches(
 
 /* ---------- Nan's record ---------- */
 const NAN_URL=SB+"/otr-nan";
-const REC={sum:null,date:null,day:{},code:"all"};
+const REC={sum:null,date:null,day:{},code:"all",res:"all",bet:"win",stake:5};
+/* ---------- backing Nan after the fact: what a bet on her picks would have returned (tote dividends, per $1) ---------- */
+const BETS=[["win","Win","her top pick to win"],["place","Place","her top pick to place"],["ew","Each way","her top pick, win and place (2 bets)"],["quinella","Quinella","her top 2, either order"],["exacta","Exacta","her top 2 in order"],["trifecta","Trifecta","her top 3 in order"],["tribox","Trifecta box","her top 3, any order (6 bets)"],["first4","First 4","her top 4 in order"]];
+const nkey=v=>String(v||"").toLowerCase().replace(/[^a-z0-9]/g,"");
+function betOut(r,type,st){
+  if(!r.settled_at||!r.result||r.result.status==="abandoned"||r.won===null)return null;
+  const R0=r.result,fin=(R0.fin||[]).slice().sort((a,b)=>a.pos-b.pos),order=fin.map(x=>nkey(x.name)),picks=r.picks.map(x=>nkey(x.name)),exo=R0.exo||{},scr=(R0.scr||[]).map(nkey);
+  const need=n=>picks.length>=n&&!picks.slice(0,n).some(x=>scr.includes(x));
+  const pay=(hit,d,cost)=>({cost,back:hit?(d?st*d:null):0,hit});
+  const winD=fin[0]&&fin[0].win,mine=R0.mine,pp=R0.pp||3,placed=!!mine&&mine.pos<=pp;
+  switch(type){
+    case "win":return pay(!!r.won,winD,st);
+    case "place":return pay(placed,mine&&mine.place,st);
+    case "ew":{const w=pay(!!r.won,winD,st),p=pay(placed,mine&&mine.place,st);return {cost:2*st,back:w.back===null||p.back===null?null:w.back+p.back,hit:w.hit||p.hit}}
+    case "quinella":if(!need(2)||order.length<2)return null;return pay(new Set(picks.slice(0,2)).size===2&&picks.slice(0,2).every(x=>order.slice(0,2).includes(x)),exo.quinella,st);
+    case "exacta":if(!need(2)||order.length<2)return null;return pay(picks[0]===order[0]&&picks[1]===order[1],exo.exacta,st);
+    case "trifecta":if(!need(3)||order.length<3)return null;return pay(picks.slice(0,3).every((x,i)=>x===order[i]),exo.trifecta,st);
+    case "tribox":if(!need(3)||order.length<3)return null;return pay(picks.slice(0,3).every(x=>order.slice(0,3).includes(x)),exo.trifecta,6*st);
+    case "first4":if(!need(4)||order.length<4)return null;return pay(picks.slice(0,4).every((x,i)=>x===order[i]),exo.first4,st);
+  }
+  return null;
+}
+const RESF=[["all","All results"],["1","Winners"],["2","2nd"],["3","3rd"],["p","Placed (top 3)"],["u","Unplaced"]];
+function resOk(r){const f=REC.res;if(f==="all")return true;if(!r.settled_at||r.won===null)return false;const p=r.top_pos||99;
+  return f==="1"?p===1:f==="2"?p===2:f==="3"?p===3:f==="p"?p<=3:p>3}
 const money=v=>(v<0?"-$":"$")+Math.abs(v).toFixed(2);
 function tally(list){const t={races:0,settled:0,bets:0,won:0,placed:0,staked:0,back:0};for(const c of list)for(const k in t)t[k]+=c[k]||0;return t}
 function sumCard(label,t,cls){
@@ -460,9 +495,11 @@ async function loadRecord(){
   renderRecord();loadDay(REC.date);
 }
 function loadDay(date,force){
+  if(date==="week"){const ds=weekDates();ds.forEach(d=>{if(REC.day[d]===undefined||force&&d===REC.sum.today)loadDay(d,force)});return renderRecord()}
   if(REC.day[date]&&!force)return renderRecord();
   getJSON(`${NAN_URL}?date=${date}`).then(j=>{REC.day[date]=j.races||[]}).catch(()=>{REC.day[date]=null}).finally(renderRecord);
 }
+const weekDates=()=>((REC.sum&&REC.sum.days)||[]).map(d=>d.date).filter(d=>d>=new Date(Date.parse(REC.sum.today+"T12:00:00")-6*864e5).toISOString().slice(0,10));
 function recRow(r){
   const top=r.picks[0]||{},fin=(r.result&&r.result.fin)||[],codeName=CODE[r.code];
   let tag,cls="";
@@ -477,23 +514,40 @@ function recRow(r){
     <div class="line">Nan: ${cloth(top.no,r.code,top.box)} <b>${escH(top.name)}</b> ${pct(top.p)} · ${r.code==="H"&&top.mk?`market ${div(top.mk)}`:`her price ${div(top.price)}`}</div></div>
     <span class="tag ${cls}">${tag}</span>
     ${fin.length?`<div class="order">Result: ${fin.slice(0,3).map(x=>`${ord(x.pos)} ${x.no!=null?cloth(x.no,r.code)+" ":""}${escH(x.name)}${x.pos===1&&x.win?` (${div(x.win)})`:""}`).join(" · ")}</div>`:""}
-    <div class="order">Nan's order: ${r.picks.slice(0,4).map((x,i)=>{const p=pos[String(x.name).toLowerCase()];return `${ord(i+1)} ${cloth(x.no,r.code,x.box)} ${escH(x.name)} ${pct(x.p)}${p&&p<=3?` <i>→ ${ord(p)}</i>`:""}`}).join(" · ")}</div></div>`;
+    <div class="order">Nan's order: ${r.picks.slice(0,4).map((x,i)=>{const p=pos[String(x.name).toLowerCase()];return `${ord(i+1)} ${cloth(x.no,r.code,x.box)} ${escH(x.name)} ${pct(x.p)}${p&&p<=3?` <i>→ ${ord(p)}</i>`:""}`}).join(" · ")}</div>${betLine(r)}</div>`;
+}
+function betLine(r){
+  const o=betOut(r,REC.bet,REC.stake),name=BETS.find(b=>b[0]===REC.bet)[1];if(!o)return "";
+  return `<div class="betline ${o.hit?(o.back===null?"":"win"):"lose"}">${money(o.cost)} ${name.toLowerCase()}: ${o.hit?(o.back===null?"won, but no dividend recorded":`back <b>${money(o.back)}</b> (${o.back-o.cost>=0?"+":""}${money(o.back-o.cost)})`):`lost ${money(o.cost)}`}</div>`;
+}
+function renderCalc(rows){
+  let cost=0,back=0,n=0,hits=0,unk=0;for(const r of rows){const o=betOut(r,REC.bet,REC.stake);if(!o)continue;if(o.hit&&o.back===null){unk++;continue}n++;cost+=o.cost;back+=o.back;if(o.hit)hits++}
+  const b=BETS.find(x=>x[0]===REC.bet),prof=back-cost;
+  $("recCalc").innerHTML=`<h3>If you'd backed Nan</h3>
+    <div class="calc-row"><span class="calc-l">Stake</span>${[1,5,10,20,50].map(v=>`<button data-stake="${v}" aria-pressed="${REC.stake===v}">$${v}</button>`).join("")}<label class="calc-own">$<input id="stakeIn" type="number" min="0.5" step="0.5" inputmode="decimal" value="${REC.stake}"></label></div>
+    <div class="calc-row"><span class="calc-l">Bet</span>${BETS.map(([k,l])=>`<button data-bet="${k}" aria-pressed="${REC.bet===k}">${l}</button>`).join("")}</div>
+    <div class="calc-out">${n?`<b>${money(REC.stake)} ${b[1].toLowerCase()}</b> on ${b[2]}, in the ${n} race${n>1?"s":""} below: staked <b>${money(cost)}</b>, back <b>${money(back)}</b>, <b class="${prof>=0?"plus":"minus"}">${prof>=0?"+":""}${money(prof)}</b> (${hits} collect${hits===1?"":"s"}).`:"No settled races to bet on with these filters yet."}${unk?` ${unk} winning bet${unk>1?"s":""} left out: no dividend recorded.`:""}
+      <small>Official tote dividends per $1, after the fact. Scratched picks are refunds and don't count. ${REC.res!=="all"?"A results filter is on, so this only counts those races.":""}</small></div>`;
 }
 function renderRecord(){
   const s=REC.sum;if(!s)return;
   const days=s.days||[],all=days.flatMap(d=>Object.values(d.codes)),byCode=k=>days.map(d=>d.codes[k]).filter(Boolean);
   $("recSum").innerHTML=sumCard("All codes",tally(all),"all")+sumCard("Horses",tally(byCode("H")))+sumCard("Dogs",tally(byCode("D")))+sumCard("Harness",tally(byCode("N")));
-  const dl=days.slice(0,14);if(!dl.some(d=>d.date===REC.date))dl.unshift({date:REC.date});
+  const dl=days.slice(0,14);if(REC.date!=="week"&&!dl.some(d=>d.date===REC.date))dl.unshift({date:REC.date});
   $("recDays").innerHTML=dl.map(d=>`<button data-rday="${d.date}" aria-pressed="${d.date===REC.date}">${d.date===s.today?"Today":new Date(d.date+"T12:00:00").toLocaleDateString("en-AU",{weekday:"short",day:"numeric",month:"short"})}</button>`).join("");
+  $("recDays").innerHTML+=`<button data-rday="week" aria-pressed="${REC.date==="week"}">Last 7 days</button>`;
   $("recCodes").innerHTML=[["all","All"],["H","Horses"],["D","Dogs"],["N","Harness"]].map(([k,l])=>`<button data-rcode="${k}" aria-pressed="${REC.code===k}">${l}</button>`).join("");
-  const list=REC.day[REC.date];
+  $("recRes").innerHTML=RESF.map(([k,l])=>`<button data-rres="${k}" aria-pressed="${REC.res===k}">${l}</button>`).join("");
+  const wk=REC.date==="week",wd=wk?weekDates():[];
+  const list=wk?(wd.some(d=>REC.day[d]===undefined)?undefined:wd.flatMap(d=>REC.day[d]||[]).sort((a,b)=>Date.parse(b.jump)-Date.parse(a.jump))):REC.day[REC.date];
   if(list===undefined){$("recDay").textContent="Loading…";$("recList").innerHTML="";return}
   if(list===null){$("recDay").textContent="That day didn't load. Try again soon.";$("recList").innerHTML="";return}
-  const rows=list.filter(r=>REC.code==="all"||r.code===REC.code),d=days.find(x=>x.date===REC.date);
-  const t=tally(d?Object.entries(d.codes).filter(([k])=>REC.code==="all"||k===REC.code).map(([,v])=>v):[]);
-  $("recDay").innerHTML=t.bets?`${new Date(REC.date+"T12:00:00").toLocaleDateString("en-AU",{weekday:"long",day:"numeric",month:"long"})}: <b>${t.won} winner${t.won===1?"":"s"} from ${t.bets}</b> (${Math.round(100*t.won/t.bets)}%), ${t.placed} placed, $1 a pick ${t.back-t.staked>=0?"+":""}${money(t.back-t.staked)}.${t.settled<t.races?` ${t.races-t.settled} still waiting on results.`:""}`
+  const coded=list.filter(r=>REC.code==="all"||r.code===REC.code),rows=coded.filter(resOk);
+  const t=tally((wk?days.filter(x=>wd.includes(x.date)):days.filter(x=>x.date===REC.date)).flatMap(d=>Object.entries(d.codes).filter(([k])=>REC.code==="all"||k===REC.code).map(([,v])=>v)));
+  renderCalc(rows);
+  $("recDay").innerHTML=t.bets?`${wk?"Last 7 days":new Date(REC.date+"T12:00:00").toLocaleDateString("en-AU",{weekday:"long",day:"numeric",month:"long"})}: <b>${t.won} winner${t.won===1?"":"s"} from ${t.bets}</b> (${Math.round(100*t.won/t.bets)}%), ${t.placed} placed, $1 a pick ${t.back-t.staked>=0?"+":""}${money(t.back-t.staked)}.${t.settled<t.races?` ${t.races-t.settled} still waiting on results.`:""}`
     :rows.length?"Results aren't in yet for this day.":"";
-  $("recList").innerHTML=rows.length?rows.map(recRow).join(""):`<div class="empty">Nothing recorded for ${REC.code==="all"?"this day":CODE[REC.code].toLowerCase()+" this day"}.</div>`;
+  $("recList").innerHTML=rows.length?(REC.res!=="all"?`<div class="note">${rows.length} race${rows.length>1?"s":""}: ${RESF.find(x=>x[0]===REC.res)[1].toLowerCase()}</div>`:"")+rows.map(recRow).join(""):`<div class="empty">${coded.length&&REC.res!=="all"?"No races match that result filter.":`Nothing recorded for ${REC.code==="all"?"this day":CODE[REC.code].toLowerCase()+" this day"}.`}</div>`;
 }
 function setView(v){
   document.querySelectorAll("[data-view]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.view===v));
@@ -505,7 +559,11 @@ document.addEventListener("click",e=>{
   const v=e.target.closest("[data-view]");if(v)return setView(v.dataset.view);
   const d=e.target.closest("[data-rday]");if(d){REC.date=d.dataset.rday;renderRecord();loadDay(REC.date,REC.date===(REC.sum&&REC.sum.today))}
   const c=e.target.closest("[data-rcode]");if(c){REC.code=c.dataset.rcode;renderRecord()}
+  const rf=e.target.closest("[data-rres]");if(rf){REC.res=rf.dataset.rres;renderRecord()}
+  const sk=e.target.closest("[data-stake]");if(sk){REC.stake=+sk.dataset.stake;renderRecord()}
+  const bt=e.target.closest("[data-bet]");if(bt){REC.bet=bt.dataset.bet;renderRecord()}
 });
+document.addEventListener("change",e=>{if(e.target.id==="stakeIn"){const v=Math.round(Math.max(.5,Math.min(10000,+e.target.value||1))*2)/2;REC.stake=v;renderRecord()}});
 if(location.hash==="#record")setView("record");
 function refreshAllow(){clearTimeout(refreshAllow.t);refreshAllow.t=setTimeout(()=>getJSON(SB+"/otr-nan?follow=1").then(j=>{ALLOW=j.allowance||ALLOW;CREDITS=j.credits||CREDITS;$("allow").innerHTML=creditsHtml(CREDITS)}).catch(()=>{}),1500)}
 setInterval(refreshAllow,120e3);
