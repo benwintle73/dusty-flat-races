@@ -131,6 +131,19 @@ details.follow p{margin:0 12px 8px;font-size:15px;color:#d9c9a3}
 .calc-out{margin-top:6px;font-size:16px}.calc-out small{display:block;color:var(--ink2);margin-top:3px}
 .betline{grid-column:1/-1;font-size:15px;color:var(--ink2)}.betline.win{color:var(--good)}.betline.lose{color:#8e3a2c}
 #recRes{margin-top:6px}
+#slipBar{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;background:var(--tote);color:var(--paper);padding:8px 12px;border-top:3px solid var(--amber);font-size:16px}
+#slipBar[hidden]{display:none}
+.betbtn{background:var(--good);color:#fff;border:0;min-height:40px;padding:0 14px;font-weight:700;font-size:16px;cursor:pointer;margin:6px 0}
+.builder{background:var(--paper2);padding:8px 10px;margin:6px 0}
+.bsel{display:inline-flex;align-items:center;gap:5px}.bsel i{font-style:normal;color:var(--good);font-weight:700}
+.slipline{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line);font-size:15px}
+.slipline button,.tkbtns button,[data-bcheck],[data-btop],[data-bslipclr],[data-bclose],[data-mclose]{background:var(--paper2);color:var(--ink);border:1px solid var(--line);min-height:36px;padding:0 10px;font-weight:700;cursor:pointer}
+#betsView>.calc-row button{background:var(--paper);}
+.tkbtns{grid-column:1/-1;display:flex;gap:6px;flex-wrap:wrap}
+.bgrp{color:var(--amber);font:400 20px/1 var(--display);letter-spacing:.4px;text-transform:uppercase;margin:16px 0 6px}
+.mrow{display:inline-flex;gap:5px;align-items:center;margin:3px 8px 3px 0;font-weight:700}.mrow select{min-height:36px;font-size:15px;max-width:220px}
+.ffload[disabled]{opacity:.5;cursor:not-allowed}
+body{padding-bottom:60px}
 @media (max-width:560px){
   .scrrow{grid-template-columns:36px 28px minmax(0,1fr)}
   details.run>summary{grid-template-columns:36px 28px minmax(0,1fr) 52px 54px;font-size:15px}
@@ -142,7 +155,7 @@ details.follow p{margin:0 12px 8px;font-size:15px;color:#d9c9a3}
 <body>
 <header class="mast"><h1>Nan's Tips</h1><span class="sub" id="sub">Loading today's races…</span><a href="./">Play Off To The Races &#9656;</a></header>
 <main class="wrap">
-  <div class="view"><button data-view="tips" aria-pressed="true">Today's tips</button><button data-view="record" aria-pressed="false">Nan's record</button></div>
+  <div class="view"><button data-view="tips" aria-pressed="true">Today's tips</button><button data-view="record" aria-pressed="false">Nan's record</button><button data-view="bets" aria-pressed="false">My bets</button></div>
   <section id="tipsView">
   <div class="bar">
     <div class="tabs" id="codes"></div>
@@ -155,6 +168,7 @@ details.follow p{margin:0 12px 8px;font-size:15px;color:#d9c9a3}
   <div class="note" id="status"></div>
   <div class="races" id="races"></div>
   </section>
+  <section id="betsView" hidden></section>
   <section id="recordView" hidden>
     <div class="note" id="recNote">Loading Nan's record…</div>
     <div class="sumgrid" id="recSum"></div>
@@ -173,6 +187,7 @@ details.follow p{margin:0 12px 8px;font-size:15px;color:#d9c9a3}
     For fun only. 18+. Gamble responsibly: 1800 858 858.
   </div>
 </main>
+<div id="slipBar" hidden></div>
 <script>
 const SB="https://nkkhbtrrytctpfwjenrz.supabase.co/functions/v1";
 const PE_URL=SB+"/otr-pe",DG_URL=SB+"/otr-dogs",HN_URL=SB+"/otr-dogs?code=harness",FF_URL=SB+"/otr-form";
@@ -376,7 +391,8 @@ function raceBody(r){
   if(!rk)return `<p>${noField(r)}</p>${loadBtn}`;
   if(r.code==="H")loadForm(r);
   const n=rk.length,maxP=rk[0].p;
-  return `${loadBtn}<p class="rmeta">${[r.name,r.dist?r.dist+"m":"",r.cls,r.cond||(r.card&&r.card.cond),r.est?"No market yet: horse prices estimated":""].filter(Boolean).map(escH).join(" · ")}</p>
+  const canBet=Date.now()<Date.parse(r.jump);
+  return `${loadBtn}${canBet?builderHtml(r):""}<p class="rmeta">${[r.name,r.dist?r.dist+"m":"",r.cls,r.cond||(r.card&&r.card.cond),r.est?"No market yet: horse prices estimated":""].filter(Boolean).map(escH).join(" · ")}</p>
   <table class="field"><thead><tr><th colspan="3">Nan's order</th></tr></thead><tbody>
   ${rk.map((x,i)=>`<tr><td><details class="run${i===0?" top1":""}"><summary><span class="rk">${ord(i+1)}</span>${cloth(x.u.no,r.code,x.u.box,"no")}<span class="nm"><b>${escH(x.u.name)}</b><small>${escH(r.src==="quick"?[r.code==="D"?`Box ${x.u.box}`:`Bar ${x.u.box}`,x.u.form||"no form"].join(" · "):r.code==="H"?[x.u.jockey,x.u.barrier?"Bar "+x.u.barrier:"",x.u.weight?x.u.weight+"kg":""].filter(Boolean).join(" · "):r.code==="D"?`Box ${x.u.box}${x.u.reserve?" (reserve)":""} · ${x.u.form||"no form"}`:`${x.u.row==="second"?"Sr":"Fr"}${x.u.barrier} · ${x.u.driver||""} · ${x.u.form||""}`)}</small></span>
     <span class="pct">${pct(x.p)}</span><span class="pr">${div(x.price)}<small>${mkt(r)?"market":"Nan's"}</small></span>${mkt(r)?`<span class="pr mk">${div(ladder(1/(x.p*1.13)))}<small>Nan's</small></span>`:"<span></span>"}
@@ -415,7 +431,7 @@ function renderFollow(){
   el.open=open;
 }
 function render(){
-  renderFollow();
+  renderFollow();if(typeof slipBar==="function")slipBar();
   $("codes").innerHTML=[["all","All"],["H","Horses"],["D","Dogs"],["N","Harness"]].map(([k,l])=>`<button data-code="${k}" aria-pressed="${ST.code===k}">${l}</button>`).join("");
   const meets=[...new Map(RACES.filter(r=>ST.code==="all"||r.code===ST.code).map(r=>[`${r.code}|${r.venue}`,r])).values()].sort((a,b)=>a.venue.localeCompare(b.venue));
   if(ST.meet!=="all"&&!meets.some(r=>`${r.code}|${r.venue}`===ST.meet))ST.meet="all";
@@ -478,7 +494,7 @@ function betOut(r,type,st){
 const RESF=[["all","All results"],["1","Winners"],["2","2nd"],["3","3rd"],["p","Placed (top 3)"],["u","Unplaced"]];
 function resOk(r){const f=REC.res;if(f==="all")return true;if(!r.settled_at||r.won===null)return false;const p=r.top_pos||99;
   return f==="1"?p===1:f==="2"?p===2:f==="3"?p===3:f==="p"?p<=3:p>3}
-const money=v=>(v<0?"-$":"$")+Math.abs(v).toFixed(2);
+const money=v=>(v<0?"-$":"$")+Math.abs(v).toLocaleString("en-AU",{minimumFractionDigits:2,maximumFractionDigits:2});
 function tally(list){const t={races:0,settled:0,bets:0,won:0,placed:0,staked:0,back:0};for(const c of list)for(const k in t)t[k]+=c[k]||0;return t}
 function sumCard(label,t,cls){
   if(!t.bets)return `<div class="sum ${cls||""}"><h3>${label}</h3><div class="big">–</div><p>${t.races?`${t.races} race${t.races>1?"s":""} tipped, waiting on results.`:"Nothing recorded yet."}</p></div>`;
@@ -549,11 +565,159 @@ function renderRecord(){
     :rows.length?"Results aren't in yet for this day.":"";
   $("recList").innerHTML=rows.length?(REC.res!=="all"?`<div class="note">${rows.length} race${rows.length>1?"s":""}: ${RESF.find(x=>x[0]===REC.res)[1].toLowerCase()}</div>`:"")+rows.map(recRow).join(""):`<div class="empty">${coded.length&&REC.res!=="all"?"No races match that result filter.":`Nothing recorded for ${REC.code==="all"?"this day":CODE[REC.code].toLowerCase()+" this day"}.`}</div>`;
 }
+
+/* ---------- My bets: virtual bets on real races, $1,000 to start, paid at official tote dividends ---------- */
+// Saved on this device. A bet goes on the slip, then Confirm locks it in (stake taken from the balance).
+// Bets can be cancelled until the jump. After the jump they're locked. Official results settle them
+// (the official balance); a result typed in by hand settles them early at an estimated dividend (the running balance),
+// and the official result replaces it when it comes in.
+const BK_KEY="nanbets1",BT={win:["Win",1],place:["Place",1],ew:["Each way",1],quinella:["Quinella",2],exacta:["Exacta",2],trifecta:["Trifecta",3],first4:["First 4",4]};
+let BK=(()=>{try{const b=JSON.parse(localStorage.getItem(BK_KEY));if(b&&Array.isArray(b.tickets))return {start:1000,topups:0,slip:[],manual:{},off:{},...b}}catch(e){}return {start:1000,topups:0,tickets:[],slip:[],manual:{},off:{}}})();
+function saveBK(){try{localStorage.setItem(BK_KEY,JSON.stringify(BK))}catch(e){}}
+const BUILD={id:null,type:"win",sel:[],stake:10};
+const rkey=r=>`${r.code}|${r.date}|${vkey(r.venue)}|${r.no}`;
+const costOf=t=>t.type==="ew"?2*t.stake:t.stake;
+const r2=v=>Math.round(v*100)/100;
+const ordered=type=>["exacta","trifecta","first4"].includes(type);
+function selText(t){const n=BT[t.type][1];return n>1?t.sel.map(x=>x.no).join(ordered(t.type)?" - ":" & "):`${t.sel[0].no}. ${t.sel[0].name}`}
+// the field as it stood when the bet was made, with the price used for estimates: the market for horses and quick form, Nan's price otherwise
+function fieldOf(r){const rk=ranked(r);if(!rk)return null;return rk.map(x=>({no:x.u.no,name:x.u.name,box:x.u.box,est:mkt(r)?(x.u.win||x.price):x.price}))}
+/* estimated tote dividends from the prices (each runner's chance ~ 1/price; later places by the same shares; tote keeps ~15%) */
+function chances(field){const q=field.map(u=>1/Math.max(1.01,u.est||50)),s=q.reduce((a,b)=>a+b,0);return q.map(x=>x/s)}
+function seqP(field,seq){const p=chances(field);let left=1,out=1;for(const n of seq){const i=field.findIndex(u=>u.no===n);if(i<0)return 0;out*=p[i]/Math.max(1e-9,left);left-=p[i]}return out}
+function inTopP(field,no,k){const p=chances(field);const go=(used,k,left)=>{if(k===0)return 0;let t=0;field.forEach((u,i)=>{if(used.has(i))return;const pi=p[i]/Math.max(1e-9,left);if(u.no===no)t+=pi;else{used.add(i);t+=pi*go(used,k-1,left-p[i]);used.delete(i)}});return t};return go(new Set(),k,1)}
+const estDiv=P=>P>0?Math.max(1.04,r2(.85/P)):null;
+function estDivs(t,order){const f=t.field||[],n=t.sel.map(x=>x.no),pp=t.pp||(f.length>=8?3:f.length>=5?2:1);
+  return {win:estDiv(seqP(f,[n[0]])),place:estDiv(inTopP(f,n[0],pp)),quinella:estDiv(n.length>=2?seqP(f,[n[0],n[1]])+seqP(f,[n[1],n[0]]):0),exacta:estDiv(seqP(f,n.slice(0,2))),trifecta:estDiv(seqP(f,n.slice(0,3))),first4:estDiv(seqP(f,n.slice(0,4))),pp}}
+/* what a bet returns against a finishing order: {void|hit, pay}; pay null = it won but no dividend yet */
+function outcome(t,fin,exo,pp,scr,est){
+  const key=x=>nkey(x.name),order=fin.slice().sort((a,b)=>a.pos-b.pos),names=order.map(key),sel=t.sel.map(key);
+  const gone=(scr||[]).some(s=>t.sel.some(x=>(s.name?nkey(s.name)===nkey(x.name):+s.no===+x.no)));
+  if(gone)return {void:true,pay:costOf(t)};
+  const posOf=n=>{const i=names.indexOf(n);return i<0?99:order[i].pos},st=t.stake,need=BT[t.type][1];
+  const div=(d,e)=>d!=null?d:e!=null?e:null,P=pp||est.pp||3;
+  const win=posOf(sel[0])===1,plc=posOf(sel[0])<=P;
+  const winD=div(win&&order[0]&&order[0].win,est.win),plD=div(plc&&(order.find(x=>key(x)===sel[0])||{}).place,est.place);
+  const pay=(hit,d)=>({hit,pay:hit?(d!=null?r2(st*d):null):0});
+  switch(t.type){
+    case "win":return pay(win,winD);
+    case "place":return pay(plc,plD);
+    case "ew":{const a=pay(win,winD),b=pay(plc,plD);return {hit:a.hit||b.hit,pay:a.pay==null||b.pay==null?null:r2(a.pay+b.pay)}}
+    case "quinella":return pay(new Set(sel).size===2&&sel.every(n=>posOf(n)<=2),div(exo&&exo.quinella,est.quinella));
+    default:return pay(sel.slice(0,need).every((n,i)=>posOf(n)===i+1),div(exo&&exo[t.type],est[t.type]));
+  }
+}
+function settleOf(t){
+  if(t.status==="cancelled")return {state:"cancelled"};
+  const off=BK.off[t.rk];
+  if(off&&off.fin&&off.fin.length){const o=outcome(t,off.fin,off.exo||{},off.pp,off.scr,{});
+    if(o.void)return {state:"void",pay:o.pay,src:"official"};if(o.hit&&o.pay==null)return {state:"div",src:"official"};return {state:o.hit?"won":"lost",pay:o.pay,src:"official"}}
+  const man=BK.manual[t.rk];
+  if(man&&man.length){const fin=man.map((no,i)=>{const u=(t.field||[]).find(x=>x.no===no)||{no,name:String(no)};return {no,name:u.name,pos:i+1}});
+    const o=outcome(t,fin,{},null,[],estDivs(t));return {state:o.hit?"won":"lost",pay:o.pay||0,src:"manual"}}
+  return {state:Date.now()<Date.parse(t.jump)?"open":"waiting"};
+}
+function balances(){
+  const live=BK.tickets.filter(t=>t.status!=="cancelled"),staked=live.reduce((a,t)=>a+costOf(t),0);
+  let offRet=0,manRet=0,waitSt=0,openSt=0;
+  for(const t of live){const o=settleOf(t);if(o.src==="official"&&o.pay!=null)offRet+=o.pay;else if(o.src==="manual")manRet+=o.pay;if(o.state==="open")openSt+=costOf(t);if(o.state==="waiting"||o.state==="div"||o.src==="manual")waitSt+=costOf(t)}
+  const official=r2(BK.start+BK.topups-staked+offRet);
+  return {official,running:r2(official+manRet),openSt,waitSt,profit:r2(official-BK.start-BK.topups+openSt+waitSt)};
+}
+function builderHtml(r){
+  if(BUILD.id!==r.id)return `<button class="betbtn" data-bopen="${escH(r.id)}">Bet on this race</button>`;
+  const f=fieldOf(r)||[],need=BT[BUILD.type][1],cost=BUILD.type==="ew"?2*BUILD.stake:BUILD.stake,full=BUILD.sel.length===need;
+  return `<div class="builder"><div class="calc-row"><span class="calc-l">Bet</span>${Object.entries(BT).map(([k,[l]])=>`<button data-btype="${k}" aria-pressed="${BUILD.type===k}">${l}</button>`).join("")}</div>
+    <div class="calc-row"><span class="calc-l">Pick</span>${f.map(u=>{const i=BUILD.sel.indexOf(u.no);return `<button class="bsel" data-bsel="${u.no}" aria-pressed="${i>=0}">${cloth(u.no,r.code,u.box)} ${escH(u.name)}${i>=0&&need>1&&ordered(BUILD.type)?` <i>${ord(i+1)}</i>`:""}</button>`}).join("")}</div>
+    <div class="calc-row"><span class="calc-l">Stake</span>${[5,10,20,50].map(v=>`<button data-bstake="${v}" aria-pressed="${BUILD.stake===v}">$${v}</button>`).join("")}<label class="calc-own">$<input id="bStake" type="number" min="1" step="1" inputmode="decimal" value="${BUILD.stake}"></label></div>
+    <p class="calc-out">${need>1?`Pick ${need} runners${ordered(BUILD.type)?" in finishing order":""}. `:""}${BUILD.type==="ew"?"Each way is a win bet and a place bet. ":""}Pays the official tote dividend.</p>
+    <div class="calc-row"><button class="ffload" data-badd ${full&&BUILD.stake>=1?"":"disabled"}>Add ${money(cost)} ${BT[BUILD.type][0].toLowerCase()} to bet slip</button><button data-bclose>Close</button></div></div>`;
+}
+function slipBar(){const n=BK.slip.length,el=$("slipBar");if(!el)return;el.hidden=!n||ST.view==="bets";
+  if(n)el.innerHTML=`<span>Bet slip: <b>${n} bet${n>1?"s":""}</b> · ${money(BK.slip.reduce((a,t)=>a+costOf(t),0))}</span><button class="ffload" data-view="bets">Review &amp; confirm</button>`}
+function tkHtml(t){
+  const o=settleOf(t),c=costOf(t),man=BK.manual[t.rk],afterJump=Date.now()>=Date.parse(t.jump);
+  const tag={open:["To run",""],waiting:["Waiting on results",""],div:["Won, dividend coming",""],won:[`Won ${money(o.pay||0)}`,"won"],lost:["Lost","lost"],void:["Scratched: refunded",""],cancelled:["Cancelled",""]}[o.state];
+  return `<div class="rec tk"><div><div class="rmeta">${timeOf(t.jump)} · ${escH(t.venue)} R${t.no} · ${CODE[t.code]}</div>
+    <div class="line"><b>${BT[t.type][0]}</b> ${t.sel.map(x=>cloth(x.no,t.code,x.box)).join(" ")} ${escH(BT[t.type][1]===1?t.sel[0].name:"")} · ${money(c)}${t.type==="ew"?` (${money(t.stake)} each way)`:""}</div></div>
+    <span class="tag ${tag[1]}">${tag[0]}${o.src==="manual"?" · your result":""}</span>
+    ${o.src==="manual"?`<div class="order">Your result: ${man.map((n,i)=>`${ord(i+1)} ${n}`).join(" · ")}. Estimated dividend until the official result comes in.</div>`:""}
+    ${o.src==="official"&&BK.off[t.rk]?`<div class="order">Official: ${BK.off[t.rk].fin.slice().sort((a,b)=>a.pos-b.pos).slice(0,4).map(x=>`${ord(x.pos)} ${x.no!=null?cloth(x.no,t.code)+" ":""}${escH(x.name)}`).join(" · ")}</div>`:""}
+    <div class="tkbtns">${o.state==="open"?`<button data-bcancel="${t.id}">Cancel bet</button>`:""}${afterJump&&o.src!=="official"&&t.status!=="cancelled"?`<button data-bman="${escH(t.rk)}">${man?"Change my result":"Enter result"}</button>${man?`<button data-bmanclr="${escH(t.rk)}">Clear my result</button>`:""}`:""}</div>
+    ${MANUAL===t.rk?manualForm(t):""}</div>`;
+}
+let MANUAL=null,BKMSG="";
+function manualForm(t){const f=t.field||[],cur=BK.manual[t.rk]||[];
+  return `<div class="builder">${[0,1,2,3].map(i=>`<label class="mrow">${ord(i+1)} <select data-mpos="${i}"><option value="">–</option>${f.map(u=>`<option value="${u.no}" ${cur[i]===u.no?"selected":""}>${u.no}. ${escH(u.name)}</option>`).join("")}</select></label>`).join("")}
+    <div class="calc-row"><button class="ffload" data-msave="${escH(t.rk)}">Save my result</button><button data-mclose>Close</button></div><p class="calc-out"><small>Applies to every bet on this race. The official result replaces it.</small></p></div>`}
+function renderBets(){
+  const b=balances(),el=$("betsView");if(!el)return;
+  const live=BK.tickets.slice().sort((a,b)=>Date.parse(b.jump)-Date.parse(a.jump)),slipCost=BK.slip.reduce((a,t)=>a+costOf(t),0),closedSlip=BK.slip.some(t=>Date.now()>=Date.parse(t.jump));
+  const groups=[["Before the jump",t=>settleOf(t).state==="open"],["Run: waiting on official results",t=>["waiting","div"].includes(settleOf(t).state)||settleOf(t).src==="manual"],["Settled",t=>settleOf(t).src==="official"],["Cancelled",t=>t.status==="cancelled"]];
+  el.innerHTML=`<div class="sumgrid"><div class="sum all"><h3>Running balance</h3><div class="big">${money(b.running)}</div><p>Includes results you've entered yourself. This is what you can bet with.</p></div>
+    <div class="sum"><h3>Official balance</h3><div class="big">${money(b.official)}</div><p>Only official results. Changes when they come in.</p></div>
+    <div class="sum"><h3>Bets out</h3><div class="big">${money(b.openSt+b.waitSt)}</div><p>${money(b.openSt)} still to run · ${money(b.waitSt)} run, waiting on official results</p></div>
+    <div class="sum"><h3>Official profit</h3><div class="big ${b.profit>=0?"plus":"minus"}">${b.profit>=0?"+":""}${money(b.profit)}</div><p>Started with ${money(BK.start)}${BK.topups?` + ${money(BK.topups)} added`:""}.</p></div></div>
+    ${BKMSG?`<div class="note">${BKMSG}</div>`:""}
+    <div class="calc"><h3>Bet slip</h3>${BK.slip.length?BK.slip.map((t,i)=>`<div class="slipline"><span>${timeOf(t.jump)} · ${escH(t.venue)} R${t.no} · <b>${BT[t.type][0]}</b> ${escH(selText(t))} · ${money(costOf(t))}${Date.now()>=Date.parse(t.jump)?' <b class="minus">jumped</b>':""}</span><button data-bslipdel="${i}">Remove</button></div>`).join("")+
+      `<div class="calc-row"><button class="ffload" data-bconfirm ${slipCost>b.running||closedSlip?"disabled":""}>Confirm ${BK.slip.length} bet${BK.slip.length>1?"s":""} · ${money(slipCost)}</button><button data-bslipclr>Clear slip</button></div>${slipCost>b.running?'<p class="minus">Not enough in your running balance.</p>':""}${closedSlip?'<p class="minus">Remove bets on races that have jumped.</p>':""}`
+      :`<p>Your slip is empty. On Today's tips, open a race and press <b>Bet on this race</b>.</p>`}</div>
+    <div class="calc-row"><button data-bcheck>Check official results</button>${b.running<5?'<button data-btop>Add $1,000</button>':""}</div>
+    ${groups.map(([h,f])=>{const ts=live.filter(t=>f(t)&&(h==="Cancelled"||t.status!=="cancelled"));return ts.length?`<h3 class="bgrp">${h} (${ts.length})</h3><div class="races">${ts.map(tkHtml).join("")}</div>`:""}).join("")}
+    <p class="note">Play money only. Bets are saved in this browser on this device. Win and place pay the official tote dividend; exotics pay the official dividend for that bet. Scratched selections are refunded.</p>`;
+  slipBar();
+}
+let BKBUSY=false;
+async function checkOfficial(force){
+  if(BKBUSY)return;const today=ST.today||REC_TODAY(),need=new Map();
+  for(const t of BK.tickets){if(t.status==="cancelled"||Date.now()<Date.parse(t.jump)+5*60e3)continue;if(BK.off[t.rk]&&BK.off[t.rk].fin&&settleOf(t).state!=="div")continue;need.set(t.code+"|"+t.date,[t.code,t.date])}
+  if(!need.size){if(force){BKMSG="Nothing waiting on official results.";renderBets()}return}
+  BKBUSY=true;let got=0;
+  for(const [code,date] of need.values()){
+    try{const j=await getJSON(`${SB}/otr-nan?official=1&code=${code}&date=${date}`);
+      for(const t of BK.tickets.filter(t=>t.code===code&&t.date===date&&t.status!=="cancelled")){
+        const names=new Set((t.field||t.sel).map(x=>nkey(x.name)));
+        const m=(j.races||[]).filter(x=>+x.n===+t.no&&(x.fin||[]).length).map(x=>({x,s:x.fin.filter(u=>names.has(nkey(u.name))).length+(vkey(x.venue)===vkey(t.venue)?.5:0)})).sort((a,b)=>b.s-a.s)[0];
+        if(m&&m.s>=2&&/final|paying|official|closed/i.test(m.x.st||"final")){if(!BK.off[t.rk])got++;BK.off[t.rk]={fin:m.x.fin,exo:m.x.exo||{},pp:m.x.pp,scr:m.x.scr||[],at:Date.now()}}}
+    }catch(e){}
+  }
+  BKBUSY=false;saveBK();BKMSG=force?(got?`Official results in for ${got} race${got>1?"s":""}.`:"No new official results yet. Dogs and harness come in a few times a day."):BKMSG;renderBets();
+}
+const REC_TODAY=()=>new Intl.DateTimeFormat("en-CA",{timeZone:"Australia/Sydney"}).format(new Date());
+document.addEventListener("click",e=>{
+  const g=s=>e.target.closest(s);let b;
+  if(b=g("[data-bopen]")){BUILD.id=b.dataset.bopen;BUILD.sel=[];return render()}
+  if(g("[data-bclose]")){BUILD.id=null;return render()}
+  if(b=g("[data-btype]")){BUILD.type=b.dataset.btype;BUILD.sel=BUILD.sel.slice(0,BT[BUILD.type][1]);return render()}
+  if(b=g("[data-bsel]")){const n=+b.dataset.bsel,i=BUILD.sel.indexOf(n),need=BT[BUILD.type][1];if(i>=0)BUILD.sel.splice(i,1);else{if(BUILD.sel.length>=need)BUILD.sel.shift();BUILD.sel.push(n)}return render()}
+  if(b=g("[data-bstake]")){BUILD.stake=+b.dataset.bstake;return render()}
+  if(g("[data-badd]")){const r=RACES.find(x=>x.id===BUILD.id);if(!r||Date.now()>=Date.parse(r.jump))return;const f=fieldOf(r);if(!f)return;
+    BK.slip.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,7),rk:rkey(r),code:r.code,date:r.date,venue:r.venue,no:r.no,jump:r.jump,type:BUILD.type,stake:BUILD.stake,
+      sel:BUILD.sel.map(n=>{const u=f.find(x=>x.no===n);return {no:n,name:u.name,box:u.box}}),field:f});
+    saveBK();BUILD.sel=[];$("status").textContent="Added to your bet slip.";return render()}
+  if(b=g("[data-bslipdel]")){BK.slip.splice(+b.dataset.bslipdel,1);saveBK();return renderBets()}
+  if(g("[data-bslipclr]")){BK.slip=[];saveBK();return renderBets()}
+  if(g("[data-bconfirm]")){const cost=BK.slip.reduce((a,t)=>a+costOf(t),0);if(cost>balances().running||BK.slip.some(t=>Date.now()>=Date.parse(t.jump)))return;
+    for(const t of BK.slip)BK.tickets.push({...t,status:"placed",placedAt:new Date().toISOString()});BKMSG=`${BK.slip.length} bet${BK.slip.length>1?"s":""} confirmed and locked in: ${money(cost)}.`;BK.slip=[];saveBK();return renderBets()}
+  if(b=g("[data-bcancel]")){const t=BK.tickets.find(x=>x.id===b.dataset.bcancel);if(t&&Date.now()<Date.parse(t.jump)){t.status="cancelled";BKMSG=`Cancelled: ${money(costOf(t))} back in your balance.`;saveBK()}return renderBets()}
+  if(b=g("[data-bman]")){MANUAL=b.dataset.bman;return renderBets()}
+  if(g("[data-mclose]")){MANUAL=null;return renderBets()}
+  if(b=g("[data-bmanclr]")){delete BK.manual[b.dataset.bmanclr];saveBK();return renderBets()}
+  if(b=g("[data-msave]")){const v=[...document.querySelectorAll("[data-mpos]")].map(s=>+s.value||null);const picks=v.filter(Boolean);
+    if(!v[0]){BKMSG="Pick at least the winner.";return renderBets()}if(new Set(picks).size!==picks.length){BKMSG="Each runner can only finish once.";return renderBets()}
+    BK.manual[b.dataset.msave]=v.slice(0,v.findIndex(x=>!x)<0?4:v.findIndex(x=>!x));MANUAL=null;BKMSG="Your result is saved. The running balance includes it until the official result comes in.";saveBK();return renderBets()}
+  if(g("[data-bcheck]"))return checkOfficial(true);
+  if(g("[data-btop]")){BK.topups+=1000;saveBK();return renderBets()}
+});
+document.addEventListener("change",e=>{if(e.target.id==="bStake"){BUILD.stake=Math.max(1,Math.round((+e.target.value||1)*100)/100);render()}});
+setInterval(()=>{if(ST.view==="bets"){checkOfficial(false);renderBets()}},5*60e3);
 function setView(v){
   document.querySelectorAll("[data-view]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.view===v));
-  $("tipsView").hidden=v!=="tips";$("recordView").hidden=v!=="record";
+  ST.view=v;$("tipsView").hidden=v!=="tips";$("recordView").hidden=v!=="record";$("betsView").hidden=v!=="bets";
   if(v==="record"){if(!REC.sum)loadRecord();else renderRecord()}
-  try{history.replaceState(null,"",v==="record"?"#record":location.pathname+location.search)}catch(e){}
+  if(v==="bets"){renderBets();checkOfficial(false)}
+  slipBar();
+  try{history.replaceState(null,"",v==="tips"?location.pathname+location.search:"#"+v)}catch(e){}
 }
 document.addEventListener("click",e=>{
   const v=e.target.closest("[data-view]");if(v)return setView(v.dataset.view);
@@ -564,7 +728,7 @@ document.addEventListener("click",e=>{
   const bt=e.target.closest("[data-bet]");if(bt){REC.bet=bt.dataset.bet;renderRecord()}
 });
 document.addEventListener("change",e=>{if(e.target.id==="stakeIn"){const v=Math.round(Math.max(.5,Math.min(10000,+e.target.value||1))*2)/2;REC.stake=v;renderRecord()}});
-if(location.hash==="#record")setView("record");
+if(location.hash==="#record")setView("record");else if(location.hash==="#bets")setView("bets");else slipBar();
 function refreshAllow(){clearTimeout(refreshAllow.t);refreshAllow.t=setTimeout(()=>getJSON(SB+"/otr-nan?follow=1").then(j=>{ALLOW=j.allowance||ALLOW;CREDITS=j.credits||CREDITS;$("allow").innerHTML=creditsHtml(CREDITS)}).catch(()=>{}),1500)}
 setInterval(refreshAllow,120e3);
 loadAll();
