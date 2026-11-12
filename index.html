@@ -207,7 +207,7 @@ canvas{width:100%;height:auto;display:block}
 .nav a.navlink{display:inline-flex;align-items:center;background:var(--red);color:#fff;min-height:42px;padding:0 12px;font:700 18px/1 var(--led);text-decoration:none}
 .nt-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;background:#fff8e6;border:1px solid #bda97f;color:var(--ink);padding:8px 10px}
 .nt-row .off-meta{color:#4a4336}
-.sc{display:inline-grid;place-items:center;min-width:24px;height:24px;padding:0 4px;background:#241c10;color:#efe4c8;font:700 16px/1 var(--led);vertical-align:1px}
+.sc{display:inline-grid;place-items:center;min-width:26px;height:26px;padding:0 5px;border-radius:6px;font:700 16px/1 var(--led);vertical-align:1px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.28),inset 0 8px 8px -6px rgba(255,255,255,.45),0 1px 2px rgba(0,0,0,.35)}
 .nt-pick{font-size:18px;color:var(--ink)}.nt-pick small{color:#4a4336;margin-left:4px;font-weight:700}
 .nt-row .tk-act{background:var(--ink);color:var(--paper);border:0;min-height:40px;padding:0 14px;font-weight:700}
 .simtag{font:700 12px/1 var(--led);font-style:normal;letter-spacing:.6px;text-transform:uppercase;background:#6e6a60;color:#fff;padding:2px 5px;vertical-align:2px}
@@ -305,7 +305,7 @@ canvas{width:100%;height:auto;display:block}
 <script>
 "use strict";
 /* ---------- helpers ---------- */
-const APP_VERSION="2.9.1"; // bump on every release; shown after the title
+const APP_VERSION="2.9.2"; // bump on every release; shown after the title
 const $=id=>document.getElementById(id);
 let RNG=Math.random;
 const mulberry=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
@@ -1586,7 +1586,14 @@ function horseRank(r){
   const s=sc.reduce((a,b)=>a+b,0);
   return r.runners.map((u,i)=>({no:u.no,name:u.name,p:sc[i]/s,price:u.win})).sort((a,b)=>b.p-a.p);
 }
-const cardRank=(rs,p)=>rs.map((u,i)=>({no:u.no,name:u.name,p:p[i],price:ladder(1/(p[i]*1.13))})).sort((a,b)=>b.p-a.p);
+// Saddlecloth colours: dogs wear their box's rug (1 red, 2 black-and-white, 3 white, 4 blue, 5 yellow, 6 green, 7 black, 8 pink); horses and harness by number
+const SC_N=[["#d8342a","#fff"],["#fbfaf5","#1a1a1a"],["#2a62c9","#fff"],["#f2c92b","#1a1a1a"],["#2a9a55","#fff"],["#1d1d20","#f2c92b"],["#f07a1a","#1a1a1a"],["#ec7fb0","#1a1a1a"],["#36c0c9","#1a1a1a"],["#7b3fb5","#fff"],["#9aa0a6","#b8261a"],["#9bd13b","#1a1a1a"],["#7a4a2a","#fff"],["#7d1f2b","#f2c92b"],["#c9b98a","#1a1a1a"],["#8cc8f0","#b8261a"],["#1f2f6b","#fff"],["#3e6b2e","#f2c92b"],["#5a2a6b","#f2c92b"],["#e8e0c8","#b8261a"]];
+const SC_D=[["#d8342a","#fff"],["linear-gradient(180deg,#1d1d20 0 27%,#fbfaf5 27% 73%,#1d1d20 73%)","#1d1d20"],["#fbfaf5","#1a1a1a"],["#2a62c9","#fff"],["#f2c92b","#1a1a1a"],["#2a9a55","#fff"],["#1d1d20","#fff"],["#ec7fb0","#1a1a1a"]];
+function cloth(no,code,box,cls){
+  const d=code==="D",k=d?((box||no)-1)%8:(no-1)%20,[bg,ink]=(d?SC_D:SC_N)[k<0?0:k]||SC_N[0],stripes=bg.includes("gradient");
+  return `<span class="sc${cls?" "+cls:""}" style="background:${bg};color:${ink}${stripes?";font-size:14px":""}">${no}</span>`;
+}
+const cardRank=(rs,p)=>rs.map((u,i)=>({no:u.no,box:u.box,name:u.name,p:p[i],price:ladder(1/(p[i]*1.13))})).sort((a,b)=>b.p-a.p);
 function tipCards(code,slug){const m=(code==="D"?dgToday():hnToday()).find(x=>x.slug===slug);if(!m)return null;return (code==="D"?DGC:HNC)[`${m.date}|${m.slug}`]||null}
 function loadTipCards(code,slug){
   const k=code+slug,m=(code==="D"?dgToday():hnToday()).find(x=>x.slug===slug);if(!m||TIPQ[k])return;
@@ -1614,13 +1621,13 @@ function renderTips(){
   const tag=x=>`${timeOf(new Date(x.t).toISOString())} · ${escH(x.venue)} R${x.no} · ${CODE_NAME[x.code]}`;
   const row=(x,i)=>{const p=x.picks;
     return `<div class="nt-row"><div><div class="off-meta">${tag(x)}${x.t<=now?" (jumped)":""}</div>
-      ${p===undefined?'<div class="off-pend">Nan is reading the form…</div>':!p||!p.length?'<div class="off-pend">No field yet</div>':`<div class="nt-pick">1st <span class="sc">${p[0].no}</span> <b>${escH(p[0].name)}</b> <small>${div(p[0].price)}</small></div><div class="off-meta">${p.slice(1,4).map((u,i)=>`${["2nd","3rd","4th"][i]} <span class="sc">${u.no}</span> ${escH(u.name)}`).join(" · ")}</div>`}</div>
+      ${p===undefined?'<div class="off-pend">Nan is reading the form…</div>':!p||!p.length?'<div class="off-pend">No field yet</div>':`<div class="nt-pick">1st ${cloth(p[0].no,x.code,p[0].box)} <b>${escH(p[0].name)}</b> <small>${div(p[0].price)}</small></div><div class="off-meta">${p.slice(1,4).map((u,i)=>`${["2nd","3rd","4th"][i]} ${cloth(u.no,x.code,u.box)} ${escH(u.name)}`).join(" · ")}</div>`}</div>
       <button class="tk-act" data-tipgo="${i}">Bet</button></div>`};
   c.innerHTML=`<h2>Nan's Tips</h2><div class="conds"><span>Today's real races, in start order</span></div>
   
   <div class="tabs off-days">${[["all","All"],["H","Horses"],["D","Dogs"],["N","Harness"]].map(([k,l])=>`<button data-tipf="${k}" aria-pressed="${TIPF===k}">${l}</button>`).join("")}</div>
-  ${best?`<div class="tip"><b>Nan's Best Bet:</b> ${tag(best)} · <span class="sc">${best.picks[0].no}</span> <b>${escH(best.picks[0].name)}</b> ${div(best.picks[0].price)}</div>`:""}
-  ${rough?`<div class="tip"><b>Nan's Roughie:</b> ${tag(rough.x)} · <span class="sc">${rough.u.no}</span> <b>${escH(rough.u.name)}</b> ${div(rough.u.price)}</div>`:""}
+  ${best?`<div class="tip"><b>Nan's Best Bet:</b> ${tag(best)} · ${cloth(best.picks[0].no,best.code,best.picks[0].box)} <b>${escH(best.picks[0].name)}</b> ${div(best.picks[0].price)}</div>`:""}
+  ${rough?`<div class="tip"><b>Nan's Roughie:</b> ${tag(rough.x)} · ${cloth(rough.u.no,rough.x.code,rough.u.box)} <b>${escH(rough.u.name)}</b> ${div(rough.u.price)}</div>`:""}
   ${waiting?`<div class="off-meta">Nan is still reading the form for ${waiting} race${waiting>1?"s":""}…</div>`:""}
   ${TIPL.length?`<div class="res-day">${TIPL.map(row).join("")}</div>`:'<div class="tip">No more real races today. Nan will be back tomorrow.</div>'}
   <div class="tip">Nan's picks come from the market and recent form for horses, and from form and the draw for dogs and harness. For fun only.</div>
