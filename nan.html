@@ -75,6 +75,25 @@ details.run[open]>summary{background:var(--paper2)}
 .foot{font-size:14px;color:#cdbf9a;padding:16px 2px 30px;line-height:1.5}
 .foot a{color:#f0d9a8}
 .empty{background:var(--paper);color:var(--ink);padding:14px;font-size:17px}
+.view{display:flex;gap:6px;margin-top:10px}
+.view button{flex:1;background:var(--tote2);color:var(--paper);border:2px solid var(--amber-dim);min-height:48px;font:400 20px/1 var(--display);letter-spacing:.6px;text-transform:uppercase}
+.view button[aria-pressed="true"]{background:var(--amber);color:var(--tote);border-color:var(--amber)}
+[hidden]{display:none!important}
+.sumgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px;margin-top:10px}
+.sum{background:var(--paper);color:var(--ink);padding:10px 12px;border-top:5px solid var(--amber-dim)}
+.sum.all{border-top-color:var(--red)}
+.sum h3{margin:0 0 6px;font:400 19px/1 var(--display);letter-spacing:.4px;text-transform:uppercase}
+.sum .big{font:700 30px/1 var(--led)}.sum .big small{font:600 16px/1 var(--led);color:var(--ink2)}
+.sum p{margin:4px 0 0;font-size:15px;color:var(--ink2)}
+.plus{color:var(--good)}.minus{color:var(--red)}
+.days{display:flex;gap:4px;overflow-x:auto;padding-bottom:2px}
+.days button{flex:0 0 auto}
+.rec{background:var(--paper);color:var(--ink);border:1px solid var(--line);padding:9px 12px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px}
+.rec .tag{align-self:start;font:700 16px/1 var(--led);padding:6px 9px;text-transform:uppercase;letter-spacing:.4px;background:var(--paper2);color:var(--ink2);text-align:center;white-space:nowrap}
+.rec .tag.won{background:var(--good);color:#fff}.rec .tag.plc{background:#b98a22;color:#fff}.rec .tag.lost{background:#8e3a2c;color:#fff}
+.rec .line{font-size:16px;grid-column:1/-1}.rec .line b{font-size:17px}
+.rec .order{font-size:15px;color:var(--ink2);grid-column:1/-1}
+.rec .order i{font-style:normal;font-weight:700;color:var(--good)}
 @media (max-width:560px){
   details.run>summary{grid-template-columns:26px 28px minmax(0,1fr) 52px 54px;font-size:15px}
   details.run>summary .pr.mk{display:none}
@@ -85,6 +104,8 @@ details.run[open]>summary{background:var(--paper2)}
 <body>
 <header class="mast"><h1>Nan's Tips</h1><span class="sub" id="sub">Loading today's races…</span><a href="./">Play Off To The Races &#9656;</a></header>
 <main class="wrap">
+  <div class="view"><button data-view="tips" aria-pressed="true">Today's tips</button><button data-view="record" aria-pressed="false">Nan's record</button></div>
+  <section id="tipsView">
   <div class="bar">
     <div class="tabs" id="codes"></div>
     <select id="meet" aria-label="Meeting"></select>
@@ -93,10 +114,20 @@ details.run[open]>summary{background:var(--paper2)}
   <div id="hl"></div>
   <div class="note" id="status"></div>
   <div class="races" id="races"></div>
+  </section>
+  <section id="recordView" hidden>
+    <div class="note" id="recNote">Loading Nan's record…</div>
+    <div class="sumgrid" id="recSum"></div>
+    <div class="bar"><div class="tabs days" id="recDays"></div></div>
+    <div class="bar"><div class="tabs" id="recCodes"></div></div>
+    <div class="note" id="recDay"></div>
+    <div class="races" id="recList"></div>
+  </section>
   <div class="foot">
     Nan works every pick out herself. Horses: the bookmaker market, nudged by recent form. Dogs and harness: each runner's record, recent runs and the draw.
     Tap a race to see the field, and a runner to see how Nan got there and its full form.
     Prices for horses by <a href="https://puntersedge.online" target="_blank" rel="noopener">PuntersEdge</a>; form by FormFav. Dog and harness prices are Nan's own estimates.
+    Nan's record: her top pick in every race is saved before the jump and checked against the official results (PuntersEdge). Profit is a $1 win bet on every top pick at the official win dividend; scratched picks don't count.
     For fun only. 18+. Gamble responsibly: 1800 858 858.
   </div>
 </main>
@@ -314,6 +345,75 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-code]");if
 $("meet").addEventListener("change",e=>{ST.meet=e.target.value;render()});
 $("past").addEventListener("change",e=>{ST.past=e.target.checked;render()});
 document.addEventListener("toggle",e=>{const d=e.target;if(d.matches&&d.matches("details.race")&&d.open){const r=RACES.find(x=>x.id===d.dataset.id);if(r)d.querySelector(".rbody").innerHTML=raceBody(r)}},true);
+
+/* ---------- Nan's record ---------- */
+const NAN_URL=SB+"/otr-nan";
+const REC={sum:null,date:null,day:{},code:"all"};
+const money=v=>(v<0?"-$":"$")+Math.abs(v).toFixed(2);
+const ord=n=>n+(["th","st","nd","rd"][(n%100-20)%10]||["th","st","nd","rd"][n%100]||"th");
+function tally(list){const t={races:0,settled:0,bets:0,won:0,placed:0,staked:0,back:0};for(const c of list)for(const k in t)t[k]+=c[k]||0;return t}
+function sumCard(label,t,cls){
+  if(!t.bets)return `<div class="sum ${cls||""}"><h3>${label}</h3><div class="big">–</div><p>${t.races?`${t.races} race${t.races>1?"s":""} tipped, waiting on results.`:"Nothing recorded yet."}</p></div>`;
+  const prof=t.back-t.staked,roi=t.staked?prof/t.staked:0;
+  return `<div class="sum ${cls||""}"><h3>${label}</h3><div class="big">${Math.round(100*t.won/t.bets)}% <small>winners · ${t.won} from ${t.bets}</small></div>
+    <p>Placed ${Math.round(100*t.placed/t.bets)}% · $1 on every top pick: <b class="${prof>=0?"plus":"minus"}">${prof>=0?"+":""}${money(prof)}</b> (${roi>=0?"+":""}${Math.round(roi*100)}% back on ${t.staked} bets)</p></div>`;
+}
+async function loadRecord(){
+  try{REC.sum=await getJSON(NAN_URL)}catch(e){$("recNote").textContent="Nan's record isn't available right now. Try again soon.";return}
+  const days=REC.sum.days||[];
+  if(!days.length){$("recNote").textContent="Nan starts keeping her record today. Check back after the races for how she went.";}
+  else $("recNote").textContent="";
+  if(!REC.date){const settled=days.find(d=>Object.values(d.codes).some(c=>c.bets));REC.date=(settled||days[0]||{}).date||REC.sum.today}
+  renderRecord();loadDay(REC.date);
+}
+function loadDay(date,force){
+  if(REC.day[date]&&!force)return renderRecord();
+  getJSON(`${NAN_URL}?date=${date}`).then(j=>{REC.day[date]=j.races||[]}).catch(()=>{REC.day[date]=null}).finally(renderRecord);
+}
+function recRow(r){
+  const top=r.picks[0]||{},fin=(r.result&&r.result.fin)||[],codeName=CODE[r.code];
+  let tag,cls="";
+  if(!r.settled_at)tag=Date.parse(r.jump)>Date.now()?"To run":"Waiting";
+  else if(r.result&&r.result.status==="abandoned")tag="Abandoned";
+  else if(r.won===null)tag="Scratched";
+  else if(r.won){tag=`Won${r.ret?" "+div(r.ret):""}`;cls="won"}
+  else if(r.placed){tag=`${ord(r.top_pos)} · placed`;cls="plc"}
+  else{tag=r.top_pos?ord(r.top_pos):"Unplaced";cls="lost"}
+  const pos=Object.fromEntries(fin.map(x=>[x.name.toLowerCase(),x.pos]));
+  return `<div class="rec"><div><div class="rmeta">${timeOf(r.jump)} · ${escH(r.venue)} R${r.race} · ${codeName}${r.dist?" · "+r.dist+"m":""}</div>
+    <div class="line">Nan: <b>${top.no}. ${escH(top.name)}</b> ${pct(top.p)} · ${r.code==="H"&&top.mk?`market ${div(top.mk)}`:`her price ${div(top.price)}`}</div></div>
+    <span class="tag ${cls}">${tag}</span>
+    ${fin.length?`<div class="order">Result: ${fin.slice(0,3).map(x=>`${ord(x.pos)} ${x.no??""} ${escH(x.name)}${x.pos===1&&x.win?` (${div(x.win)})`:""}`).join(" · ")}</div>`:""}
+    <div class="order">Nan's order: ${r.picks.slice(0,4).map((x,i)=>{const p=pos[String(x.name).toLowerCase()];return `${i+1}. ${escH(x.name)} ${pct(x.p)}${p&&p<=3?` <i>→ ${ord(p)}</i>`:""}`}).join(" · ")}</div></div>`;
+}
+function renderRecord(){
+  const s=REC.sum;if(!s)return;
+  const days=s.days||[],all=days.flatMap(d=>Object.values(d.codes)),byCode=k=>days.map(d=>d.codes[k]).filter(Boolean);
+  $("recSum").innerHTML=sumCard("All codes",tally(all),"all")+sumCard("Horses",tally(byCode("H")))+sumCard("Dogs",tally(byCode("D")))+sumCard("Harness",tally(byCode("N")));
+  const dl=days.slice(0,14);if(!dl.some(d=>d.date===REC.date))dl.unshift({date:REC.date});
+  $("recDays").innerHTML=dl.map(d=>`<button data-rday="${d.date}" aria-pressed="${d.date===REC.date}">${d.date===s.today?"Today":new Date(d.date+"T12:00:00").toLocaleDateString("en-AU",{weekday:"short",day:"numeric",month:"short"})}</button>`).join("");
+  $("recCodes").innerHTML=[["all","All"],["H","Horses"],["D","Dogs"],["N","Harness"]].map(([k,l])=>`<button data-rcode="${k}" aria-pressed="${REC.code===k}">${l}</button>`).join("");
+  const list=REC.day[REC.date];
+  if(list===undefined){$("recDay").textContent="Loading…";$("recList").innerHTML="";return}
+  if(list===null){$("recDay").textContent="That day didn't load. Try again soon.";$("recList").innerHTML="";return}
+  const rows=list.filter(r=>REC.code==="all"||r.code===REC.code),d=days.find(x=>x.date===REC.date);
+  const t=tally(d?Object.entries(d.codes).filter(([k])=>REC.code==="all"||k===REC.code).map(([,v])=>v):[]);
+  $("recDay").innerHTML=t.bets?`${new Date(REC.date+"T12:00:00").toLocaleDateString("en-AU",{weekday:"long",day:"numeric",month:"long"})}: <b>${t.won} winner${t.won===1?"":"s"} from ${t.bets}</b> (${Math.round(100*t.won/t.bets)}%), ${t.placed} placed, $1 a pick ${t.back-t.staked>=0?"+":""}${money(t.back-t.staked)}.${t.settled<t.races?` ${t.races-t.settled} still waiting on results.`:""}`
+    :rows.length?"Results aren't in yet for this day.":"";
+  $("recList").innerHTML=rows.length?rows.map(recRow).join(""):`<div class="empty">Nothing recorded for ${REC.code==="all"?"this day":CODE[REC.code].toLowerCase()+" this day"}.</div>`;
+}
+function setView(v){
+  document.querySelectorAll("[data-view]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.view===v));
+  $("tipsView").hidden=v!=="tips";$("recordView").hidden=v!=="record";
+  if(v==="record"){if(!REC.sum)loadRecord();else renderRecord()}
+  try{history.replaceState(null,"",v==="record"?"#record":location.pathname+location.search)}catch(e){}
+}
+document.addEventListener("click",e=>{
+  const v=e.target.closest("[data-view]");if(v)return setView(v.dataset.view);
+  const d=e.target.closest("[data-rday]");if(d){REC.date=d.dataset.rday;renderRecord();loadDay(REC.date,REC.date===(REC.sum&&REC.sum.today))}
+  const c=e.target.closest("[data-rcode]");if(c){REC.code=c.dataset.rcode;renderRecord()}
+});
+if(location.hash==="#record")setView("record");
 loadAll();
 setInterval(()=>{if(!document.querySelector("details.run[open]"))render()},60e3);
 </script>
