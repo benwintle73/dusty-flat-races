@@ -150,6 +150,9 @@ details.follow p{margin:0 12px 8px;font-size:15px;color:#d9c9a3}
 .cdn.soon{background:#c0392b;color:#fff}.cdn.gone{background:#666;color:#fff}
 .acct b.acode{display:block;font:400 34px/1.1 var(--display);letter-spacing:3px;margin:2px 0}
 #syncIn{font-size:18px;text-transform:uppercase;width:150px;min-height:36px;padding:0 8px}
+.checkmsg{background:var(--paper);color:var(--ink);border-left:5px solid var(--amber);padding:8px 12px;margin:6px 0 10px;font-size:15px}
+.hl{cursor:pointer}.hl:hover{outline:2px solid var(--amber)}
+.hlbet{float:right;margin-left:10px}
 .slipline{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line);font-size:15px}
 .slipline button,.tkbtns button,[data-bcheck],[data-btop],[data-bslipclr],[data-bclose],[data-mclose]{background:var(--paper2);color:var(--ink);border:1px solid var(--line);min-height:36px;padding:0 10px;font-weight:700;cursor:pointer}
 #betsView>.calc-row button{background:var(--paper);}
@@ -312,7 +315,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null};
-const NAN_VERSION="2.16.1"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.16.2"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -491,8 +494,8 @@ function render(){
   const best=live.slice().sort((a,b)=>b.rk[0].p-a.rk[0].p)[0];
   let rough=null;for(const x of live)for(const y of x.rk.slice(1,4)){const pr=x.r.code==="H"?y.u.win:y.price;if(pr>=8&&(!rough||y.p*pr>rough.y.p*rough.pr))rough={x,y,pr}}
   const tag=r=>`${timeOf(r.jump)} · ${escH(r.venue)} R${r.no} · ${CODE[r.code]}`;
-  $("hl").innerHTML=(best?`<div class="hl"><b>Nan's Best Bet:</b> ${tag(best.r)} · ${cloth(best.rk[0].u.no,best.r.code,best.rk[0].u.box)} <b>${escH(best.rk[0].u.name)}</b> ${pct(best.rk[0].p)} ${div(best.rk[0].price)}<span class="nsays">${escH(nanSays(best.r.code,best.r.id+"|"+best.rk[0].u.name))}</span></div>`:"")
-    +(rough?`<div class="hl"><b>Nan's Roughie:</b> ${tag(rough.x.r)} · ${cloth(rough.y.u.no,rough.x.r.code,rough.y.u.box)} <b>${escH(rough.y.u.name)}</b> ${pct(rough.y.p)} ${div(rough.pr)}<span class="nsays">${escH(nanSays(rough.x.r.code,rough.x.r.id+"|"+rough.y.u.name))}</span></div>`:"");
+  $("hl").innerHTML=(best?`<div class="hl" data-hlbet="${escH(best.r.id)}|${best.rk[0].u.no}"><button class="betbtn hlbet">Bet on ${escH(best.rk[0].u.name)}</button><b>Nan's Best Bet:</b> ${tag(best.r)} · ${cloth(best.rk[0].u.no,best.r.code,best.rk[0].u.box)} <b>${escH(best.rk[0].u.name)}</b> ${pct(best.rk[0].p)} ${div(best.rk[0].price)}<span class="nsays">${escH(nanSays(best.r.code,best.r.id+"|"+best.rk[0].u.name))}</span></div>`:"")
+    +(rough?`<div class="hl" data-hlbet="${escH(rough.x.r.id)}|${rough.y.u.no}"><button class="betbtn hlbet">Bet on ${escH(rough.y.u.name)}</button><b>Nan's Roughie:</b> ${tag(rough.x.r)} · ${cloth(rough.y.u.no,rough.x.r.code,rough.y.u.box)} <b>${escH(rough.y.u.name)}</b> ${pct(rough.y.p)} ${div(rough.pr)}<span class="nsays">${escH(nanSays(rough.x.r.code,rough.x.r.id+"|"+rough.y.u.name))}</span></div>`:"");
   const waiting=RACES.filter(r=>r.code!=="H"&&!CARDS[r.code+r.slug]&&wanted(r)).length;
   if(waiting&&!$("status").textContent.startsWith("Nan couldn't"))$("status").textContent=`Nan is still reading the form for ${waiting} race${waiting>1?"s":""}…`;
   else if($("status").textContent.startsWith("Nan is still"))$("status").textContent="";
@@ -912,7 +915,7 @@ let MANUAL=null,BKMSG="";
 function manualForm(t){const f=t.field||[],cur=BK.manual[t.rk]||[];
   return `<div class="builder">${[0,1,2,3].map(i=>`<label class="mrow">${ord(i+1)} <select data-mpos="${i}"><option value="">–</option>${[...f].sort((a,b)=>a.no-b.no).map(u=>`<option value="${u.no}" ${cur[i]===u.no?"selected":""}>${u.no}. ${escH(u.name)}</option>`).join("")}</select></label>`).join("")}
     <div class="calc-row"><button class="ffload" data-msave="${escH(t.rk)}">Save my result</button><button data-mclose>Close</button></div><p class="mwarn"><b>Heads up:</b> your result is temporary. When the official result comes in it replaces yours automatically, and if yours was wrong, every bet on this race is re-settled on the official result and your balance changes to match.</p><p class="calc-out"><small>Applies to every bet on this race.</small></p></div>`}
-let LEDGER={per:{}},LOANMSG="",LOANAMT=100;
+let CHECKMSG="",LEDGER={per:{}},LOANMSG="",LOANAMT=100;
 const hms=ms=>{ms=Math.max(0,ms);const h=Math.floor(ms/36e5),m=Math.floor(ms%36e5/6e4),s=Math.floor(ms%6e4/1e3);return `${h}h ${String(m).padStart(2,"0")}m ${String(s).padStart(2,"0")}s`};
 function loanHtml(b){const w=loanWindow();
   return `<div class="calc nan-loan"><h3>Borrow from Nan</h3>
@@ -936,7 +939,7 @@ function renderBets(){
     <div class="sum"><h3>Official balance</h3><div class="big">${money(b.official)}</div><p>Only official results. Changes when they come in.</p></div>
     <div class="sum"><h3>Bets out</h3><div class="big">${money(b.openSt+b.waitSt)}</div><p>${money(b.openSt)} still to run · ${money(b.waitSt)} run, waiting on official results</p></div>
     <div class="sum"><h3>Official profit</h3><div class="big ${b.profit>=0?"plus":"minus"}">${b.profit>=0?"+":""}${money(b.profit)}</div><p>From settled bets. Started with ${money(BK.start)}${BK.topups?` + ${money(BK.topups)} added`:""}${b.owed>0?` · owe Nan ${money(b.owed)}`:""}.</p></div></div>
-    <div class="calc-row"><button data-bcheck>Check official results</button></div>
+    <div class="calc-row"><button data-bcheck ${BKBUSY?"disabled":""}>${BKBUSY?"Checking…":"Check official results"}</button></div>${CHECKMSG?`<p class="checkmsg">${CHECKMSG}</p>`:""}
     ${loanHtml(b)}
     ${groups.map(([h,f])=>{const ts=live.filter(t=>f(t)&&(h==="Cancelled"||t.status!=="cancelled"));return ts.length?`<h3 class="bgrp">${h} (${ts.length})</h3><div class="races">${ts.map(tkHtml).join("")}</div>`:""}).join("")}
     ${syncHtml()}
@@ -949,22 +952,35 @@ const raceRefs=t=>isMulti(t.type)?t.legs:[{rk:t.rk,code:t.code,date:t.date,no:t.
 async function checkOfficial(force){
   if(BKBUSY)return;const need=new Map(),refs=[];
   for(const t of BK.tickets){if(t.status==="cancelled")continue;
-    for(const r of raceRefs(t)){if(Date.now()<Date.parse(r.jump)+5*60e3)continue;if(BK.off[r.rk]&&BK.off[r.rk].fin&&settleOf(t).state!=="div")continue;need.set(r.code+"|"+r.date,[r.code,r.date]);refs.push(r)}}
-  if(!need.size){if(force){BKMSG="Nothing waiting on official results.";renderBets()}return}
-  BKBUSY=true;let got=0;
+    for(const r of raceRefs(t)){if(Date.now()<Date.parse(r.jump)+(force?60e3:5*60e3))continue;const o=BK.off[r.rk];if(o&&o.fin&&/final|paying|official|closed/i.test(o.st||"final")&&settleOf(t).state!=="div")continue;if(!refs.some(x=>x.rk===r.rk)){need.set(r.code+"|"+r.date,[r.code,r.date]);refs.push(r)}}}
+  if(!need.size){if(force){CHECKMSG="Nothing waiting on official results.";renderBets()}return}
+  BKBUSY=true;if(force){CHECKMSG="Checking for official results…";renderBets()}let got=0;
+  await Promise.allSettled([...need.values()].filter(([c])=>c!=="H").map(([c,d])=>fetch(`${SB}/otr-res?code=${c}&date=${d}`)));
   for(const [code,date] of need.values()){
     try{const j=await getJSON(`${SB}/otr-nan?official=1&code=${code}&date=${date}`);
       for(const r of refs.filter(r=>r.code===code&&r.date===date)){
         const names=new Set((r.field||r.sel).map(x=>nkey(x.name)));
         const m=(j.races||[]).filter(x=>+x.n===+r.no&&(x.fin||[]).length).map(x=>({x,s:x.fin.filter(u=>names.has(nkey(u.name))).length+(vkey(x.venue)===vkey(r.venue)?.5:0)})).sort((a,b)=>b.s-a.s)[0];
-        if(m&&m.s>=1.5&&/final|paying|official|closed/i.test(m.x.st||"final")){if(!BK.off[r.rk])got++;BK.off[r.rk]={fin:m.x.fin,exo:m.x.exo||{},pp:m.x.pp,scr:m.x.scr||[],at:Date.now()}}}
+        if(m&&m.s>=1.5&&/final|paying|official|closed|interim/i.test(m.x.st||"final")){if(!BK.off[r.rk])got++;BK.off[r.rk]={fin:m.x.fin,exo:m.x.exo||{},pp:m.x.pp,scr:m.x.scr||[],st:m.x.st||"final",at:(BK.off[r.rk]||{}).at||Date.now()}}}
     }catch(e){}
   }
-  BKBUSY=false;saveBK();BKMSG=force?(got?`Official results in for ${got} race${got>1?"s":""}.`:"No new official results yet. Dogs and harness come in a few times a day."):BKMSG;renderBets();
+  BKBUSY=false;saveBK();
+  if(force){const still=refs.filter(r=>!(BK.off[r.rk]&&BK.off[r.rk].fin)),interim=refs.filter(r=>BK.off[r.rk]&&!/final|paying|official|closed/i.test(BK.off[r.rk].st||"final"));
+    const ago=r=>Math.max(1,Math.round((Date.now()-Date.parse(r.jump))/6e4));
+    CHECKMSG=`Checked at ${timeOf(new Date().toISOString())}. `+(got?`Results in for ${got} race${got>1?"s":""}. `:"No new results yet. ")
+      +(still.length?`Still waiting on: ${still.map(r=>`${escH(r.venue)} R${r.no} (ran ${ago(r)} min ago)`).join(", ")}. Results usually arrive 10 to 30 minutes after a race; enter it yourself to settle sooner. `:"")
+      +(interim.length?`Interim result for ${interim.map(r=>`${escH(r.venue)} R${r.no}`).join(", ")}: settled now, and checked again in case the dividends change.`:"")}
+  renderBets();
 }
 const REC_TODAY=()=>new Intl.DateTimeFormat("en-CA",{timeZone:"Australia/Sydney"}).format(new Date());
 document.addEventListener("click",e=>{
   const g=s=>e.target.closest(s);let b;
+  if(b=g("[data-hlbet]")){const s=b.dataset.hlbet,k=s.lastIndexOf("|"),id=s.slice(0,k),no=+s.slice(k+1),r=RACES.find(x=>x.id===id);if(!r)return;
+    if(!visible().some(x=>x.id===id)){ST.code="all";ST.meet="all"}
+    Object.assign(BUILD,{id,type:"win",style:"straight",sel:[no],pos:0,legs:[[],[],[],[]]});render();
+    const d=document.querySelector(`details.race[data-id="${CSS.escape(id)}"]`);if(!d)return;if(!d.open){d.open=true;const rb=d.querySelector(".rbody");if(rb)rb.innerHTML=raceBody(r)}
+    setTimeout(()=>{const x=d.querySelector("[data-badd]")||d;try{x.scrollIntoView({block:"center",behavior:"smooth"})}catch(e){x.scrollIntoView()}},60);
+    $("status").textContent=`${r.venue} R${r.no}: ${BT.win[0]} bet on Nan's pick is ready. Pick another bet type if you like, then add it to your slip.`;return}
   if(b=g("[data-bopen]")){BUILD.id=b.dataset.bopen;BUILD.sel=[];return render()}
   if(g("[data-bclose]")){BUILD.id=null;return render()}
   if(b=g("[data-btype]")){const ty=b.dataset.btype;
