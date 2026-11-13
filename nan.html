@@ -352,6 +352,15 @@ details.race>summary.rsum .rchev{align-self:center}
 .crwhy{font-style:italic;color:var(--ink2);margin:4px 0}
 .crhead p{margin:4px 0}
 .crpast{margin-top:10px}.crpast>summary .rchev{margin-left:auto}
+/* v2.36: What's new + suggestions box */
+.view .vnews{position:relative}.view .vnews i{position:absolute;top:6px;right:8px;width:10px;height:10px;border-radius:50%;background:var(--red);box-shadow:0 0 0 2px var(--tote2)}
+@media (max-width:480px){.view .vnews{grid-column:1/-1}}
+.fbbox{border-top-color:var(--amber)}.fbbox p{margin:4px 0 8px}.fbk{margin-bottom:8px}.fbk button{font-size:14px}
+#fbMsg{width:100%;box-sizing:border-box;min-height:110px;font:400 16px/1.4 var(--body);padding:10px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);resize:vertical}
+.fbrow{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:8px}.fbrow small{color:var(--ink2)}.fbrow .ffload{min-height:46px;padding:0 18px;border-radius:8px;font-size:16px;flex:none}
+.chg{background:var(--paper);color:var(--ink);border-left:5px solid var(--amber-dim);padding:10px 12px;margin-bottom:8px}.chg.latest{border-left-color:var(--good)}
+.chg-h{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}.chg-h b{font:400 18px/1.1 var(--display);text-transform:uppercase;letter-spacing:.3px}.chg-h span{font:600 13px/1 var(--led);color:var(--ink2);white-space:nowrap}
+.chg ul{margin:6px 0 0;padding-left:18px;font-size:15px;line-height:1.4}.chg li{margin:3px 0}
 /* v2.35: settled bets fold by day */
 details.dgrp{background:var(--tote2);border:1px solid #4a3f2c;border-radius:10px;margin:0 0 8px;overflow:hidden}
 details.dgrp>summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:minmax(0,1fr) auto auto 18px;align-items:center;gap:10px;padding:12px 14px;font:600 17px/1.1 var(--led);color:var(--paper)}
@@ -441,7 +450,7 @@ details.srcs{margin-top:16px}details.srcs>.allow,details.srcs #allow>.allow{marg
 <body>
 <header class="mast"><h1>Nan's Tips</h1><span class="sub" id="sub"><span>Loading</span><span>today's races…</span></span><button class="verbtn" id="refBtn" aria-label="Refresh to get the latest version"><b id="verTxt"></b><small id="verSub">Refresh</small></button><a href="./?play=1">Play Off To The Races &#9656;</a></header>
 <main class="wrap">
-  <div class="view"><button data-view="tips" aria-pressed="true">Today's tips</button><button data-view="races" aria-pressed="false">Races</button><button data-view="record" aria-pressed="false">Tipsters</button><button data-view="punters" aria-pressed="false">Punters</button><button data-view="bets" aria-pressed="false">My bets</button><button data-view="cricket" aria-pressed="false">Cricket</button></div>
+  <div class="view"><button data-view="tips" aria-pressed="true">Today's tips</button><button data-view="races" aria-pressed="false">Races</button><button data-view="record" aria-pressed="false">Tipsters</button><button data-view="punters" aria-pressed="false">Punters</button><button data-view="bets" aria-pressed="false">My bets</button><button data-view="cricket" aria-pressed="false">Cricket</button><button data-view="news" aria-pressed="false" class="vnews">What's new<i id="newDot" hidden></i></button></div>
   <section id="tipsView">
   <div class="tabs who" id="whoc"></div>
   <div id="hl"></div>
@@ -468,6 +477,7 @@ details.srcs{margin-top:16px}details.srcs>.allow,details.srcs #allow>.allow{marg
   <section id="betsView" hidden></section>
   <section id="racesView" hidden></section>
   <section id="cricketView" hidden></section>
+  <section id="newsView" hidden></section>
   <section id="puntersView" hidden><div class="calc board players" id="players"><h3>Punters' leaderboard</h3><p>Loading…</p></div></section>
   <section id="recordView" hidden>
     <div class="note" id="recNote">Loading Nan's record…</div>
@@ -603,7 +613,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.35.0"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.36.0"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -2553,6 +2563,43 @@ function renderBets(){
   slipBar();
 }
 let BKBUSY=false;
+/* ---------- What's new: the update history, plus the suggestions box ---------- */
+const CHANGES=[
+ ["2.36.0","14 Nov","What's new and the suggestions box",["This page: every update listed in one place.","Suggestions box: send Nan an idea, a bug, or anything that's confusing."]],
+ ["2.35.0","14 Nov","Past bets fold away by day",["Settled and cancelled bets on My bets are grouped by day, newest first, with each day's bets, winners and profit. Tap a day to open it."]],
+ ["2.34.8","14 Nov","Tidier header",["The date sits in the middle of the header on two lines.","The version box in the top right is the refresh button. It glows, and flashes gold with NEW · TAP when an update is ready."]],
+ ["2.34.1","14 Nov","Tabs stay put",["Switching tabs no longer jumps down the page."]],
+ ["2.34.0","14 Nov","Forgot your PIN?",["Save an email under Your account, then reset a forgotten PIN with a code Nan emails you."]],
+ ["2.33.0","14 Nov","Sign in with your name and PIN",["Set a 4-digit PIN, then sign in on your phone, the home-screen app or a computer and see the same bets.","Account codes still work, tucked under Your account."]],
+ ["2.32.0","14 Nov","App icon",["A lucky horseshoe icon for your home screen, and the app opens full screen from there.","The header stays clear of the iPhone clock and notch."]],
+ ["2.31.0","14 Nov","Punters' banter",["Every punter on the leaderboard gets a cheeky line that changes with their balance, strike rate and streaks. No two punters share one."]],
+ ["2.30.4","14 Nov","Bet slip bar",["The bet slip sits in a compact floating bar, and Confirm and place matches it.","Bets before the jump are listed soonest first."]],
+ ["2.30.1","14 Nov","Nan's record lined up",["Tipsters page rows line up like the race cards: Nan's top four, their chance and where they finished."]],
+ ["2.30.0","14 Nov","Tips first",["Best bets at the top, with clear labels: win chance and market or Nan's price.","Find a track, Next to jump, and a star to save your meetings.","Nan's record for the last 7 days sits under the tips.","Race cards say In 23m, Jumping soon, Jumped or Result in.","Usage limits and settings moved into Data sources & settings at the bottom."]],
+ ["2.29.5","14 Nov","New bios",["Shorter, funnier who's who at Nan's table, and plainer notes on where the tips come from."]]];
+const SEEN_KEY="otr-nan-seen";
+function newsSeen(){try{localStorage.setItem(SEEN_KEY,CHANGES[0][0])}catch(e){}const d=$("newDot");if(d)d.hidden=true}
+function newsDot(){let s="";try{s=localStorage.getItem(SEEN_KEY)||""}catch(e){}const d=$("newDot");if(d)d.hidden=s===CHANGES[0][0]}
+const FB={kind:"idea",msg:"",note:"",busy:false};
+const FBK=[["idea","💡 Idea"],["bug","🐞 Bug"],["confusing","🤔 Confusing"],["other","💬 Other"]];
+function renderNews(){const el=$("newsView");if(!el)return;newsSeen();
+  el.innerHTML=`<div class="calc fbbox" id="fbBox"><h3>Suggestions box</h3>
+    <p>Got an idea, found a bug, or something's hard to follow? Tell Nan. Every message gets read.</p>
+    <div class="cg cg4 fbk">${FBK.map(([k,l])=>`<button data-fbk="${k}" aria-pressed="${FB.kind===k}">${l}</button>`).join("")}</div>
+    <textarea id="fbMsg" maxlength="1000" rows="4" placeholder="${FB.kind==="bug"?"What happened, and what were you doing?":FB.kind==="confusing"?"Which bit, and what did you expect?":"What would you like to see?"}">${escH(FB.msg)}</textarea>
+    <div class="fbrow"><small>${SYNC.name?`Sent as ${escH(SYNC.name)}`:"Sent without a name. Pick one under My bets if you'd like a reply."}</small><button class="ffload" data-fbsend ${FB.busy?"disabled":""}>${FB.busy?"Sending…":"Send to Nan"}</button></div>
+    ${FB.note?`<p class="loanmsg">${FB.note}</p>`:""}</div>
+    <h3 class="bgrp">What's new</h3>
+    ${CHANGES.map(([v,d,t,items],i)=>`<div class="chg${i===0?" latest":""}"><div class="chg-h"><b>${escH(t)}</b><span>v${v} · ${d}</span></div><ul>${items.map(x=>`<li>${escH(x)}</li>`).join("")}</ul></div>`).join("")}`}
+async function sendFeedback(){const m=(($("fbMsg")||{}).value||"").trim();FB.msg=m;
+  if(m.length<3){FB.note="Write a little more so Nan knows what you mean.";return renderNews()}
+  FB.busy=true;FB.note="";renderNews();
+  try{const r=await fetch(SB+"/otr-feedback",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({kind:FB.kind,msg:m,code:SYNC.code,version:NAN_VERSION})}).then(r=>r.json());
+    if(r.error)FB.note=r.error;else{FB.msg="";FB.note="Thanks! Nan's got it. She'll have a think over a cuppa."}}
+  catch(e){FB.note="Couldn't reach Nan. Check your connection and try again."}
+  FB.busy=false;renderNews()}
+document.addEventListener("input",e=>{if(e.target.id==="fbMsg")FB.msg=e.target.value});
+document.addEventListener("click",e=>{const k=e.target.closest("[data-fbk]");if(k){FB.msg=(($("fbMsg")||{}).value)||FB.msg;FB.kind=k.dataset.fbk;FB.note="";return renderNews()}if(e.target.closest("[data-fbsend]"))sendFeedback()});
 /* Settled and cancelled bets fold away by race day (newest first); tap a day to open it. Open days stay open while you're here. */
 const DAYOPEN=new Set();
 const betDay=t=>{try{return new Intl.DateTimeFormat("en-CA",{timeZone:"Australia/Sydney"}).format(new Date(t.jump||t.start))}catch(e){return String(t.date||"")}};
@@ -2876,7 +2923,7 @@ function toTop(id){const el=$(id)||$(ST.view+"View");if(!el)return;try{el.scroll
 function setView(v,focus){
   const was=ST.view;
   document.querySelectorAll("[data-view]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.view===v));
-  ST.view=v;$("racesView").hidden=v!=="races";$("tipsView").hidden=v!=="tips";$("recordView").hidden=v!=="record";$("betsView").hidden=v!=="bets";$("cricketView").hidden=v!=="cricket";$("puntersView").hidden=v!=="punters";
+  ST.view=v;$("racesView").hidden=v!=="races";$("tipsView").hidden=v!=="tips";$("recordView").hidden=v!=="record";$("betsView").hidden=v!=="bets";$("cricketView").hidden=v!=="cricket";$("puntersView").hidden=v!=="punters";$("newsView").hidden=v!=="news";if(v==="news")renderNews();
   if(v==="record"){if(!REC.sum)loadRecord();else renderRecord();loadBoard()}
   if(v==="punters"){renderPlayers();loadPlayers()}
   if(v==="races"){RS.id=null;renderRaces()}
@@ -2903,7 +2950,7 @@ document.addEventListener("change",e=>{if(e.target.id==="stakeIn"){const v=Math.
   pullBK()})();
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")pullBK()});
 setInterval(()=>{if(document.visibilityState==="visible")pullBK()},30e3);
-if(location.hash==="#record")setView("record");else if(location.hash==="#races")setView("races");else if(location.hash==="#punters")setView("punters");else if(location.hash==="#cricket")setView("cricket");else if(location.hash==="#bets")setView("bets",BK.slip.length?"slipBox":null);else slipBar();
+if(location.hash==="#record")setView("record");else if(location.hash==="#races")setView("races");else if(location.hash==="#punters")setView("punters");else if(location.hash==="#cricket")setView("cricket");else if(location.hash==="#news")setView("news");else if(location.hash==="#bets")setView("bets",BK.slip.length?"slipBox":null);else slipBar();
 function refreshAllow(){clearTimeout(refreshAllow.t);refreshAllow.t=setTimeout(()=>getJSON(SB+"/otr-nan?follow=1").then(j=>{ALLOW=j.allowance||ALLOW;CREDITS=j.credits||CREDITS;$("allow").innerHTML=creditsHtml(CREDITS);$("srcsN").innerHTML=srcsLine()}).catch(()=>{}),1500)}
 setInterval(refreshAllow,120e3);
 // Refresh: reload from the server, skipping any cached copy, and come back to the same tab
@@ -2914,6 +2961,7 @@ async function checkVersion(){try{const t=await fetch(location.pathname+"?vc="+D
 setInterval(checkVersion,3*60e3);document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")checkVersion()});setTimeout(checkVersion,4000);
 $("refBtn").addEventListener("click",()=>{$("verSub").textContent="Loading…";const u=new URL(location.href);u.searchParams.set("r",Date.now());if(ST.view&&ST.view!=="tips")u.hash=ST.view;location.replace(u.href)});
 try{const u=new URL(location.href);if(u.searchParams.has("r")){u.searchParams.delete("r");history.replaceState(null,"",u.pathname+u.search+u.hash)}}catch(e){}
+newsDot();
 loadAll();
 setInterval(()=>{for(const k in LIMIT)if(Date.now()-LIMIT[k]>10*60e3&&!BUSY[k])delete CARDS[k];pump();if(!document.querySelector("details.run[open]"))render()},60e3);
 </script>
