@@ -181,6 +181,11 @@ details.follow p{margin:0 12px 8px;font-size:15px;color:#d9c9a3}
 .confirmbox{border-top-color:var(--amber);outline:3px solid var(--amber);margin-bottom:10px}
 .notyet{background:#fff3cd;border-left:5px solid var(--amber);padding:8px 10px;margin:4px 0 8px;font-size:16px}
 .bigconfirm{font-size:18px;min-height:46px;padding:0 18px}
+/* v2.30.5: the confirm row matches the floating slip bar */
+.confirmbox .calc-row:has(.bigconfirm){display:flex;flex-wrap:nowrap;gap:8px;background:var(--tote);border:2px solid var(--amber);border-radius:12px;padding:8px;margin-top:10px;box-shadow:0 6px 16px rgba(0,0,0,.35)}
+.confirmbox .bigconfirm{flex:1;min-width:0;min-height:48px;border-radius:8px;font-size:17px}
+.confirmbox .calc-row:has(.bigconfirm) [data-bslipclr]{flex:none;min-height:48px;border-radius:8px;background:transparent;color:var(--paper);border:2px solid var(--amber-dim);padding:0 14px}
+.slipline [data-bslipdel]{border-radius:8px}
 .okmsg{font-weight:700}
 .cdn{display:inline-block;background:var(--tote);color:var(--paper);padding:1px 7px;border-radius:3px;font-variant-numeric:tabular-nums;white-space:nowrap}
 .cdn.soon{background:#c0392b;color:#fff}.cdn.gone{background:#666;color:#fff}
@@ -552,7 +557,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.30.4"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.30.5"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
