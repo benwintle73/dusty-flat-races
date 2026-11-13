@@ -139,6 +139,7 @@ details.follow p{margin:0 12px 8px;font-size:15px;color:#d9c9a3}
 #slipBar[hidden]{display:none}
 .betbtn{background:var(--good);color:#fff;border:0;min-height:40px;padding:0 14px;font-weight:700;font-size:16px;cursor:pointer;margin:6px 0}
 .builder{background:var(--paper2);padding:8px 10px;margin:6px 0}
+.mwarn{background:#fff3cd;border-left:4px solid #d99a1e;padding:8px 10px;margin:8px 0;font-size:15px}
 .multi{margin:10px 0}.mleg{border-top:1px solid #0002;padding:6px 0}.mleg .rmeta button{margin-left:8px}
 .bsel{display:inline-flex;align-items:center;gap:5px}.bsel i{font-style:normal;color:var(--good);font-weight:700}
 .slipline{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line);font-size:15px}
@@ -300,7 +301,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null};
-const NAN_VERSION="2.15.0"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.15.1"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -846,7 +847,7 @@ function tkHtml(t){
     <div class="line"><b>${BT[t.type][0]}${styleName(t)}</b> ${selHtml(t)} · ${money(c)}${t.type==="ew"?` (${money(t.stake)} each way)`:""}${comboLine(t)?` <small>(${comboLine(t)})</small>`:""}</div></div>
     <span class="tag ${tag[1]}">${tag[0]}${o.src==="manual"?" · your result":""}</span>
     ${(LEDGER.per[t.id]||0)>0?`<div class="order nanpay">${money(LEDGER.per[t.id])} of it paid back to Nan</div>`:""}
-    ${o.src==="manual"?`<div class="order">Your result: ${man.map((n,i)=>`${ord(i+1)} ${cloth(n,t.code,((t.field||[]).find(u=>u.no===n)||{}).box)}`).join(" · ")}. Estimated dividend until the official result comes in.</div>`:""}
+    ${o.src==="manual"?`<div class="order">Your result: ${man.map((n,i)=>`${ord(i+1)} ${cloth(n,t.code,((t.field||[]).find(u=>u.no===n)||{}).box)}`).join(" · ")}. Estimated dividend for now: the official result will replace this when it's in, and overrides it if it's different.</div>`:""}
     ${o.src==="official"&&BK.off[t.rk]?`<div class="order">Official: ${BK.off[t.rk].fin.slice().sort((a,b)=>a.pos-b.pos).slice(0,4).map(x=>`${ord(x.pos)} ${x.no!=null?cloth(x.no,t.code)+" ":""}${escH(x.name)}`).join(" · ")}</div>`:""}
     <div class="tkbtns">${o.state==="open"?`<button data-bcancel="${t.id}">Cancel bet</button>`:""}${afterJump&&o.src!=="official"&&t.status!=="cancelled"?`<button data-bman="${escH(t.rk)}">${man?"Change my result":"Enter result"}</button>${man?`<button data-bmanclr="${escH(t.rk)}">Clear my result</button>`:""}`:""}</div>
     ${MANUAL===t.rk?manualForm(t):""}</div>`;
@@ -854,7 +855,7 @@ function tkHtml(t){
 let MANUAL=null,BKMSG="";
 function manualForm(t){const f=t.field||[],cur=BK.manual[t.rk]||[];
   return `<div class="builder">${[0,1,2,3].map(i=>`<label class="mrow">${ord(i+1)} <select data-mpos="${i}"><option value="">–</option>${[...f].sort((a,b)=>a.no-b.no).map(u=>`<option value="${u.no}" ${cur[i]===u.no?"selected":""}>${u.no}. ${escH(u.name)}</option>`).join("")}</select></label>`).join("")}
-    <div class="calc-row"><button class="ffload" data-msave="${escH(t.rk)}">Save my result</button><button data-mclose>Close</button></div><p class="calc-out"><small>Applies to every bet on this race. The official result replaces it.</small></p></div>`}
+    <div class="calc-row"><button class="ffload" data-msave="${escH(t.rk)}">Save my result</button><button data-mclose>Close</button></div><p class="mwarn"><b>Heads up:</b> your result is temporary. When the official result comes in it replaces yours automatically, and if yours was wrong, every bet on this race is re-settled on the official result and your balance changes to match.</p><p class="calc-out"><small>Applies to every bet on this race.</small></p></div>`}
 let LEDGER={per:{}},LOANMSG="",LOANAMT=100;
 const hms=ms=>{ms=Math.max(0,ms);const h=Math.floor(ms/36e5),m=Math.floor(ms%36e5/6e4),s=Math.floor(ms%6e4/1e3);return `${h}h ${String(m).padStart(2,"0")}m ${String(s).padStart(2,"0")}s`};
 function loanHtml(b){const w=loanWindow();
@@ -938,7 +939,7 @@ document.addEventListener("click",e=>{
   if(b=g("[data-bmanclr]")){delete BK.manual[b.dataset.bmanclr];saveBK();return renderBets()}
   if(b=g("[data-msave]")){const v=[...document.querySelectorAll("[data-mpos]")].map(s=>+s.value||null);const picks=v.filter(Boolean);
     if(!v[0]){BKMSG="Pick at least the winner.";return renderBets()}if(new Set(picks).size!==picks.length){BKMSG="Each runner can only finish once.";return renderBets()}
-    BK.manual[b.dataset.msave]=v.slice(0,v.findIndex(x=>!x)<0?4:v.findIndex(x=>!x));(BK.manualAt=BK.manualAt||{})[b.dataset.msave]=Date.now();MANUAL=null;BKMSG="Your result is saved. The running balance includes it until the official result comes in.";saveBK();return renderBets()}
+    BK.manual[b.dataset.msave]=v.slice(0,v.findIndex(x=>!x)<0?4:v.findIndex(x=>!x));(BK.manualAt=BK.manualAt||{})[b.dataset.msave]=Date.now();MANUAL=null;BKMSG="Your result is saved. The running balance includes it for now; the official result replaces it when it comes in, and overrides it if it's different.";saveBK();return renderBets()}
   if(g("[data-bcheck]"))return checkOfficial(true);
   if(b=g("[data-lamt]")){LOANAMT=+b.dataset.lamt;LOANMSG="";return renderBets()}
   if(g("[data-lborrow]")){const w=loanWindow(),amt=r2(LOANAMT);
