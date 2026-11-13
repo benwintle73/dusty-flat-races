@@ -191,6 +191,27 @@ body{padding-bottom:60px}
 .nanpay{color:#8e3a2c!important}
 .bwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
 @media (max-width:560px){.btable{font-size:14px}.btable th,.btable td{padding:5px 3px}.btable th{font-size:12px;line-height:1.15}.board h3{font-size:22px}}
+details.race>summary.rsum{grid-template-columns:64px minmax(0,1fr) 18px;gap:0 10px;align-items:start;padding:9px 10px}
+.r-when{display:flex;flex-direction:column;align-items:flex-start;gap:3px;padding-top:2px}
+.r-when b{font:400 22px/1 var(--display);letter-spacing:.3px}.r-when small{font:600 13px/1 var(--led);color:var(--ink2);text-transform:uppercase}
+.r-when .cdn{font-size:13px;padding:2px 5px}
+.r-main{min-width:0;display:flex;flex-direction:column;gap:4px}
+.r-title{display:flex;align-items:baseline;gap:8px;min-width:0;white-space:nowrap}.r-title b{font:400 21px/1.05 var(--display);letter-spacing:.3px;text-transform:uppercase;overflow:hidden;text-overflow:ellipsis;min-width:0}.r-title small,.r-title .qtag,.r-title .r-n{flex:none}.r-title .r-n{margin-left:-3px}
+.r-title small{font:600 14px/1 var(--led);color:var(--ink2)}
+.r-top,.r-next,.r-panel{display:flex;align-items:center;gap:6px;min-width:0}
+.r-who{flex:none;width:44px;font:600 13px/1 var(--led);color:var(--ink2);text-transform:uppercase}
+.r-name{font-size:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.r-pc{margin-left:auto;font:700 17px/1 var(--led);padding-left:6px}
+.r-next .sc{margin-right:2px}.r-scr{margin-left:auto;font:600 13px/1 var(--led);color:var(--ink2)}
+.r-note{font-size:15px;color:var(--ink2)}
+.r-panel{flex-wrap:wrap;gap:4px 10px;padding-top:4px;border-top:1px dashed var(--line);font-size:13px}
+.r-t{display:inline-flex;align-items:center;gap:4px}.r-t small{font:600 12px/1 var(--led);color:var(--ink2);text-transform:uppercase}
+.r-pan small{color:var(--ink)}.r-panel .agree{margin-left:auto;font-size:12px;background:#0001;padding:2px 6px;border-radius:3px}.r-panel .agree.aall{background:var(--good);color:#fff}
+.r-panel .sc,.r-next .sc{min-width:24px;height:24px;font-size:14px}
+details.race>summary.rsum .rchev{align-self:center}
+.more{display:block;width:100%;margin:8px 0;min-height:48px;background:var(--tote2);color:var(--paper);border:2px solid var(--amber-dim);font:400 19px/1 var(--display);letter-spacing:.5px;text-transform:uppercase;cursor:pointer}
+.more small{font:500 14px/1 var(--led);text-transform:none;color:var(--amber)}
+.races{gap:6px}
 @media (max-width:560px){
   .scrrow{grid-template-columns:36px 28px minmax(0,1fr)}
   details.run>summary{grid-template-columns:36px 28px minmax(0,1fr) 52px 54px;font-size:15px}
@@ -591,6 +612,24 @@ async function pumpPop(){if(TIPS.busy)return;const now=Date.now();
   TIPS.busy=false;render();if(more)setTimeout(pumpPop,500)}
 setInterval(()=>{if(RACES.length&&Date.now()-TIPS.bobAt>20*60e3)loadBob();if(RACES.length)pumpPop()},60e3);
 setInterval(()=>{TIPS.asked.clear()},45*60e3);
+// one race, collapsed: time and countdown on the left; venue, the tipster's top pick and the next three, and the panel, lined up on the right
+function raceCard(r,open,tag){const rk=ranked(r),t=Date.parse(r.jump),gone=t<=Date.now(),[hm,ap]=timeOf(r.jump).split(" ");
+  const w=ST.who==="all"?"nan":ST.who,tp=w==="nan"?null:tipsters(r).find(x=>x.who===w);
+  let pick;
+  if(offList(r)&&rk===undefined)pick=`<div class="r-top r-note">Nan isn't following ${escH(r.venue)} · open to load her pick</div>`;
+  else if(rk===undefined)pick=`<div class="r-top r-note">Nan is reading the form…</div>`;
+  else if(!rk)pick=`<div class="r-top r-note">${noField(r,true)}</div>`;
+  else if(w!=="nan"&&!tp)pick=`<div class="r-top r-note">${WHO[w]} hasn't rated this race.</div>`;
+  else{const top=tp?topN(r,tp,4):rk.slice(0,4).map(x=>({no:x.u.no,name:x.u.name,box:x.u.box,p:x.p}));
+    pick=`<div class="r-top"><span class="r-who">${WHO[w]}</span>${cloth(top[0].no,r.code,top[0].box)}<b class="r-name">${escH(top[0].name)}</b><span class="r-pc">${pct(top[0].p)}</span></div>
+      <div class="r-next"><span class="r-who">Then</span>${top.slice(1,4).map(x=>cloth(x.no,r.code,x.box)).join("")}${r.scr&&r.scr.length?`<span class="r-scr">${r.scr.length} scr</span>`:""}</div>`}
+  const pn=rk&&!gone?panelOf(r):null,others=pn?pn.ts.filter(x=>x.who!=="nan"):[];
+  const panel=pn?`<div class="r-panel">${others.map(x=>`<span class="r-t"><small>${escH(x.label.split("'")[0])}</small>${cloth(x.pick.no,r.code,x.pick.box)}</span>`).join("")}<span class="r-t r-pan"><small>Panel</small>${cloth(pn.pick.no,r.code,pn.pick.box)}</span><span class="agree a${pn.agree===pn.ts.length?"all":""}">${pn.agree}/${pn.ts.length} agree</span></div>`:"";
+  const src=rk&&r.src==="quick"?`<span class="qtag">${QUICK[r.code]&&QUICK[r.code].priceOnly?"Price only":"Quick form"}</span>`:"";
+  return `<details class="race${gone?" jumped":""}" data-id="${escH(r.id)}" ${open.has(r.id)?"open":""}><summary class="rsum">
+    <div class="r-when"><b>${hm||""}</b><small>${ap||""}</small>${gone?'<span class="cdn gone">jumped</span>':cdn(r.jump).replace("⏱ ","")}</div>
+    <div class="r-main"><div class="r-title"><b class="r-v">${escH(r.venue)}</b><b class="r-n">R${r.no}</b><small>${CODE[r.code]}${r.dist?" · "+r.dist+"m":""}</small>${src}</div>${pick}${panel}</div>
+    <span class="rchev">&#9656;</span></summary><div class="rbody">${open.has(r.id)?raceBody(r):""}</div></details>`}
 function render(){
   renderFollow();$("multi").innerHTML=multiHtml();if(typeof slipBar==="function")slipBar();
   $("codes").innerHTML=[["all","All"],["H","Horses"],["D","Dogs"],["N","Harness"]].map(([k,l])=>`<button data-code="${k}" aria-pressed="${ST.code===k}">${l}</button>`).join("");
@@ -622,17 +661,14 @@ function render(){
   const waiting=RACES.filter(r=>r.code!=="H"&&!CARDS[r.code+r.slug]&&wanted(r)).length;
   if(waiting&&!$("status").textContent.startsWith("Nan couldn't"))$("status").textContent=`Nan is still reading the form for ${waiting} race${waiting>1?"s":""}…`;
   else if($("status").textContent.startsWith("Nan is still"))$("status").textContent="";
-  $("races").innerHTML=list.length?list.map(r=>{const rk=ranked(r),t=Date.parse(r.jump),gone=t<=Date.now();
-    return `<details class="race${gone?" jumped":""}" data-id="${escH(r.id)}" ${open.has(r.id)?"open":""}><summary>
-      <div><div class="rmeta">${tag(r)}${gone?" · jumped":cdn(r.jump)}${rk&&r.src==="quick"?` · <span class="qtag">${QUICK[r.code]&&QUICK[r.code].priceOnly?"Price only":"Quick form"}</span>`:""}</div><div class="rtitle">${escH(r.venue)} R${r.no}${r.dist?" · "+r.dist+"m":""}</div>
-      <div class="rpick">${offList(r)&&rk===undefined?`Nan isn't following ${escH(r.venue)} <span class="scrsum">· open to load her pick</span>`:rk===undefined?"Nan is reading the form…":!rk?noField(r,true):(()=>{const w=ST.who==="all"?"nan":ST.who,t=w==="nan"?null:tOf(r,w);if(w!=="nan"&&!t)return `<span class="scrsum">${WHO[w]} hasn't rated this race.</span> `;
-        const top=t?topN(r,t,4):rk.slice(0,4).map(x=>({no:x.u.no,name:x.u.name,box:x.u.box,p:x.p}));
-        return `${WHO[w]}: 1st ${cloth(top[0].no,r.code,top[0].box)} <b>${escH(top[0].name)}</b> ${pct(top[0].p)}${top.length>1?" · "+top.slice(1,4).map((x,i)=>`${["2nd","3rd","4th"][i]} ${cloth(x.no,r.code,x.box)} ${escH(x.name)}`).join(" · "):""}`})()+`${r.scr&&r.scr.length?` <span class="scrsum">· Scr ${r.scr.map(u=>cloth(u.no,r.code,u.box,"x")).join(" ")}</span>`:""}`}</div>${rk&&!gone?panelLine(r):""}</div>
-      <span class="rchev">&#9656;</span></summary><div class="rbody">${open.has(r.id)?raceBody(r):""}</div></details>`}).join("")
+  // races still to run come first; only the next few are shown until "Show more" (the full list is a long scroll)
+  const showAll=ST.more||ST.meet!=="all",cap=ST.cap||10,shown=showAll?list:list.slice(0,cap);
+  $("races").innerHTML=list.length?shown.map(r=>raceCard(r,open,tag)).join("")+(list.length>shown.length?`<button class="more" data-more>Show ${Math.min(10,list.length-shown.length)} more race${list.length-shown.length>1?"s":""} <small>(${list.length-shown.length} to go)</small></button>`:"")
     :`<div class="empty">${RACES.length?"No races to show. Tick \"Show jumped races\" or pick another code.":"No real races found for today yet."}</div>`;
   for(const k of openRun){const [id,no]=k.split("#");const d=[...document.querySelectorAll(`details.race[data-id="${CSS.escape(id)}"] details.run`)].find(x=>x.querySelector(".no").textContent===no);if(d)d.open=true}
 }
-document.addEventListener("click",e=>{const b=e.target.closest("[data-code]");if(b){ST.code=b.dataset.code;render()}});
+document.addEventListener("click",e=>{const b=e.target.closest("[data-code]");if(b){ST.code=b.dataset.code;ST.cap=10;render()}});
+document.addEventListener("click",e=>{const b=e.target.closest("[data-more]");if(!b)return;ST.cap=(ST.cap||10)+10;render()});
 document.addEventListener("click",e=>{const b=e.target.closest("[data-who]");if(b){ST.who=b.dataset.who;try{localStorage.setItem("otr-nan-who",ST.who)}catch(e){}render()}});
 document.addEventListener("change",e=>{const c=e.target.closest("[data-tipon]");if(!c)return;if(c.checked)OFF.delete(c.dataset.tipon);else OFF.add(c.dataset.tipon);try{localStorage.setItem("otr-nan-off",JSON.stringify([...OFF]))}catch(e){}render()});
 try{const w=localStorage.getItem("otr-nan-who");if(w&&WHO[w])ST.who=w}catch(e){}
