@@ -146,6 +146,8 @@ details.follow p{margin:0 12px 8px;font-size:15px;color:#d9c9a3}
 .notyet{background:#fff3cd;border-left:5px solid var(--amber);padding:8px 10px;margin:4px 0 8px;font-size:16px}
 .bigconfirm{font-size:18px;min-height:46px;padding:0 18px}
 .okmsg{font-weight:700}
+.cdn{display:inline-block;background:var(--tote);color:var(--paper);padding:1px 7px;border-radius:3px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.cdn.soon{background:#c0392b;color:#fff}.cdn.gone{background:#666;color:#fff}
 .slipline{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line);font-size:15px}
 .slipline button,.tkbtns button,[data-bcheck],[data-btop],[data-bslipclr],[data-bclose],[data-mclose]{background:var(--paper2);color:var(--ink);border:1px solid var(--line);min-height:36px;padding:0 10px;font-weight:700;cursor:pointer}
 #betsView>.calc-row button{background:var(--paper);}
@@ -216,6 +218,9 @@ const escH=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const div=v=>v?"$"+Number(v).toFixed(2):"–";
 const pct=p=>p>=.995?"99%":p<.01?"<1%":Math.round(p*100)+"%";
+const cdText=ms=>{if(ms<=0)return "jumped";const s=Math.floor(ms/1e3),h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;return h?`${h}h ${String(m).padStart(2,"0")}m`:m?`${m}m ${String(x).padStart(2,"0")}s`:`${x}s`};
+const cdn=iso=>{const ms=Date.parse(iso)-Date.now();return iso&&ms>0?` <span class="cdn${ms<120e3?" soon":""}" data-cdn="${iso}">⏱ ${cdText(ms)}</span>`:""};
+setInterval(()=>{for(const el of document.querySelectorAll("[data-cdn]")){const ms=Date.parse(el.dataset.cdn)-Date.now();el.textContent=(ms>0?"⏱ ":"")+cdText(ms);el.classList.toggle("soon",ms>0&&ms<120e3);el.classList.toggle("gone",ms<=0)}},1000);
 const timeOf=iso=>iso?new Date(iso).toLocaleTimeString("en-AU",{hour:"numeric",minute:"2-digit"}).replace(/\s?([ap])\.?m\.?/i,(m,a)=>" "+a.toLowerCase()+"m"):"";
 const CODE={H:"Horses",D:"Dogs",N:"Harness"};
 const ord=n=>n+(["th","st","nd","rd"][(n%100-20)%10]||["th","st","nd","rd"][n%100]||"th");
@@ -305,7 +310,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null};
-const NAN_VERSION="2.15.3"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.15.4"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -491,7 +496,7 @@ function render(){
   else if($("status").textContent.startsWith("Nan is still"))$("status").textContent="";
   $("races").innerHTML=list.length?list.map(r=>{const rk=ranked(r),t=Date.parse(r.jump),gone=t<=Date.now();
     return `<details class="race${gone?" jumped":""}" data-id="${escH(r.id)}" ${open.has(r.id)?"open":""}><summary>
-      <div><div class="rmeta">${tag(r)}${gone?" · jumped":""}${rk&&r.src==="quick"?` · <span class="qtag">${QUICK[r.code]&&QUICK[r.code].priceOnly?"Price only":"Quick form"}</span>`:""}</div><div class="rtitle">${escH(r.venue)} R${r.no}${r.dist?" · "+r.dist+"m":""}</div>
+      <div><div class="rmeta">${tag(r)}${gone?" · jumped":cdn(r.jump)}${rk&&r.src==="quick"?` · <span class="qtag">${QUICK[r.code]&&QUICK[r.code].priceOnly?"Price only":"Quick form"}</span>`:""}</div><div class="rtitle">${escH(r.venue)} R${r.no}${r.dist?" · "+r.dist+"m":""}</div>
       <div class="rpick">${offList(r)&&rk===undefined?`Nan isn't following ${escH(r.venue)} <span class="scrsum">· open to load her pick</span>`:rk===undefined?"Nan is reading the form…":!rk?noField(r,true):`Nan: 1st ${cloth(rk[0].u.no,r.code,rk[0].u.box)} <b>${escH(rk[0].u.name)}</b> ${pct(rk[0].p)} · ${rk.slice(1,3).map((x,i)=>`${["2nd","3rd"][i]} ${cloth(x.u.no,r.code,x.u.box)} ${escH(x.u.name)}`).join(" · ")}${r.scr&&r.scr.length?` <span class="scrsum">· Scr ${r.scr.map(u=>cloth(u.no,r.code,u.box,"x")).join(" ")}</span>`:""}`}</div></div>
       <span class="rchev">&#9656;</span></summary><div class="rbody">${open.has(r.id)?raceBody(r):""}</div></details>`}).join("")
     :`<div class="empty">${RACES.length?"No races to show. Tick \"Show jumped races\" or pick another code.":"No real races found for today yet."}</div>`;
@@ -759,8 +764,8 @@ function selHtml(t,code){code=code||t.code;
 const styleName=t=>exotic(t.type)?({box:" (boxed)",standout:" (standout)"}[t.style]||""):"";
 const comboLine=t=>exotic(t.type)||isMulti(t.type)?`${combos(t)} combination${combos(t)===1?"":"s"} · ${flexiPct(t)}% of the dividend`:"";
 function slipHtml(t){
-  if(isMulti(t.type))return `${timeOf(t.jump)} · <b>${BT[t.type][0]}</b> ${t.legs.map(l=>`${escH(l.venue)} R${l.no}: ${l.sel.map(x=>cloth(x.no,l.code,x.box)).join(" ")}`).join(" · ")} · ${money(costOf(t))} <small>(${comboLine(t)})</small>`;
-  return `${timeOf(t.jump)} · ${escH(t.venue)} R${t.no} · <b>${BT[t.type][0]}${styleName(t)}</b> ${selHtml(t)} · ${money(costOf(t))}${comboLine(t)?` <small>(${comboLine(t)})</small>`:""}`;
+  if(isMulti(t.type))return `${timeOf(t.jump)}${cdn(t.jump)} · <b>${BT[t.type][0]}</b> ${t.legs.map(l=>`${escH(l.venue)} R${l.no}: ${l.sel.map(x=>cloth(x.no,l.code,x.box)).join(" ")}`).join(" · ")} · ${money(costOf(t))} <small>(${comboLine(t)})</small>`;
+  return `${timeOf(t.jump)}${cdn(t.jump)} · ${escH(t.venue)} R${t.no} · <b>${BT[t.type][0]}${styleName(t)}</b> ${selHtml(t)} · ${money(costOf(t))}${comboLine(t)?` <small>(${comboLine(t)})</small>`:""}`;
 }
 /* the bet builder for one race */
 let MB=null; // a multi-race bet being built: {type, legs:[{id, sel:[runner numbers]}], stake}
@@ -820,7 +825,7 @@ function multiHtml(){
   return `<div class="calc multi"><h3>${BT[MB.type][0]}</h3>
     <p class="calc-out">${{rdouble:"Pick the winners of two races in a row.",ddouble:"Pick the winners of two races at one meeting.",treble:"Pick the winners of three races at one meeting.",quaddie:"Pick the winners of four races at one meeting.",big6:"Pick the winners of six races, at any meetings.",allup:"Win bets rolled on: every winner's dividend multiplies the next."}[MB.type]} More than one runner in a race makes more combinations.</p>
     ${MB.legs.map((l,i)=>{const r=RACES.find(x=>x.id===l.id);if(!r)return "";const f=fieldOf(r);if(!f){WANTR.add(r.id);setTimeout(pump,0)}
-      return `<div class="mleg"><div class="rmeta">Race ${i+1}: ${timeOf(r.jump)} · ${escH(r.venue)} R${r.no} · ${CODE[r.code]} <button data-mlrem="${i}">Remove</button></div>
+      return `<div class="mleg"><div class="rmeta">Race ${i+1}: ${timeOf(r.jump)}${cdn(r.jump)} · ${escH(r.venue)} R${r.no} · ${CODE[r.code]} <button data-mlrem="${i}">Remove</button></div>
         <div class="calc-row">${f?f.map(u=>`<button class="bsel" data-mlsel="${i}|${u.no}" aria-pressed="${l.sel.includes(u.no)}">${cloth(u.no,r.code,u.box)} ${escH(u.name)}</button>`).join(""):"<span>Loading the field…</span>"}</div></div>`}).join("")}
     <div class="calc-row"><span class="calc-l">Outlay</span>${[0.5,1,2,3,5,10,20,50].map(v=>`<button data-mstake="${v}" aria-pressed="${MB.stake===v}">${v<1?(v*100)+"c":"$"+v}</button>`).join("")}<label class="calc-own">$<input id="mStake" type="number" min="0.5" step="0.5" inputmode="decimal" value="${MB.stake}"></label></div>
     <p class="calc-out">${t&&combos(t)?`<b>${comboLine(t)}</b>. `:""}${prob?`<span class="minus">${prob}</span> `:""}${MB.type==="allup"?"Pays the official win dividends multiplied together.":"The tote pool for this bet isn't in the results feed, so it pays an estimate: 85% of the winners' dividends multiplied together."}</p>
@@ -831,7 +836,7 @@ function multiTicket0(){return {type:MB.type,stake:MB.stake,legs:MB.legs.map(l=>
 function tkMulti(t){
   const o=settleOf(t),c=costOf(t);
   const tag={open:["To run",""],waiting:["Waiting on results",""],won:[`Won ${money(o.pay||0)}`,"won"],lost:["Lost","lost"],void:["Scratched: refunded",""],cancelled:["Cancelled",""]}[o.state];
-  return `<div class="rec tk"><div><div class="rmeta">${timeOf(t.jump)} · ${BT[t.type][0]} · ${t.legs.length} races</div>
+  return `<div class="rec tk"><div><div class="rmeta">${timeOf(t.jump)}${t.status!=="cancelled"?cdn(t.jump):""} · ${BT[t.type][0]} · ${t.legs.length} races</div>
     <div class="line"><b>${BT[t.type][0]}</b> · ${money(c)} <small>(${comboLine(t)})</small></div></div>
     <span class="tag ${tag[1]}">${tag[0]}${o.src==="manual"&&o.state!=="open"?" · your result":""}</span>
     ${(LEDGER.per[t.id]||0)>0?`<div class="order nanpay">${money(LEDGER.per[t.id])} of it paid back to Nan</div>`:""}
@@ -847,7 +852,7 @@ function tkHtml(t){
   if(isMulti(t.type))return tkMulti(t);
   const o=settleOf(t),c=costOf(t),man=BK.manual[t.rk],afterJump=Date.now()>=Date.parse(t.jump);
   const tag={open:["To run",""],waiting:["Waiting on results",""],div:["Won, dividend coming",""],won:[`Won ${money(o.pay||0)}`,"won"],lost:["Lost","lost"],void:["Scratched: refunded",""],cancelled:["Cancelled",""]}[o.state];
-  return `<div class="rec tk"><div><div class="rmeta">${timeOf(t.jump)} · ${escH(t.venue)} R${t.no} · ${CODE[t.code]}</div>
+  return `<div class="rec tk"><div><div class="rmeta">${timeOf(t.jump)}${t.status!=="cancelled"?cdn(t.jump):""} · ${escH(t.venue)} R${t.no} · ${CODE[t.code]}</div>
     <div class="line"><b>${BT[t.type][0]}${styleName(t)}</b> ${selHtml(t)} · ${money(c)}${t.type==="ew"?` (${money(t.stake)} each way)`:""}${comboLine(t)?` <small>(${comboLine(t)})</small>`:""}</div></div>
     <span class="tag ${tag[1]}">${tag[0]}${o.src==="manual"?" · your result":""}</span>
     ${(LEDGER.per[t.id]||0)>0?`<div class="order nanpay">${money(LEDGER.per[t.id])} of it paid back to Nan</div>`:""}
