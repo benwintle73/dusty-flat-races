@@ -225,6 +225,17 @@ body{padding-bottom:60px}
 #loanClock{font-weight:700;color:var(--ink)}
 .loanmsg{font-weight:700;margin:6px 0}
 .nanpay{color:#8e3a2c!important}
+.players{border-top-color:var(--amber)}
+.pl-you{display:flex;justify-content:space-between;align-items:center;background:var(--ink);color:var(--paper);padding:8px 12px;margin:4px 0 8px;font:600 17px/1.1 var(--led)}.pl-you b{font:700 22px/1 var(--led);color:var(--amber)}
+.pl-r{display:grid;grid-template-columns:40px minmax(0,1fr) auto;align-items:center;gap:8px;padding:8px 4px;border-bottom:1px solid var(--line)}
+.pl-r.lead{background:#fff8e6}.pl-r.me{background:#fff3cd;box-shadow:inset 4px 0 0 var(--amber)}
+.pl-k{font:700 17px/1 var(--led);color:var(--ink2);text-align:center}.pl-n{min-width:0}.pl-n b{display:block;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pl-n small{display:block;font:600 13px/1.2 var(--led);color:var(--ink2);margin-top:2px}.pl-n small i{font-style:normal;color:#8e3a2c}
+.pl-m{font:700 22px/1 var(--led);font-variant-numeric:tabular-nums}.pl-sub{margin:4px 0 8px}.pltable td small{display:block;font-size:12px;color:#8e3a2c;font-weight:400;white-space:nowrap}.pltable tr.me td{background:#fff3cd}.pltable td:nth-child(2){max-width:130px;overflow:hidden;text-overflow:ellipsis}
+.pl-join{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;background:var(--paper2);padding:8px 10px;margin:6px 0 10px}
+#nameIn{min-height:44px;font:700 17px/1 var(--led);padding:0 8px;border:1px solid var(--line);min-width:0;width:100%;box-sizing:border-box}
+#acctBox .lact{grid-template-columns:minmax(0,1fr) auto}
+@media (max-width:420px){.pltable .pl-best{display:none}}
 .payrow{border-top:1px dashed var(--line);margin-top:10px;padding-top:2px}
 .nan-loan .bb-grid button{background:var(--paper2);color:var(--ink);border:1px solid var(--line);min-height:42px;font:700 16px/1 var(--led);cursor:pointer}.nan-loan .bb-grid button[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}.nan-loan .bb-grid button:disabled{opacity:.4}
 .lact{display:grid;grid-template-columns:118px minmax(0,1fr);gap:5px;margin-top:5px}.lact .ffload{min-height:44px;font:700 17px/1 var(--led)}.lact .paynan{background:var(--good);color:#fff}
@@ -299,6 +310,7 @@ details.race>summary.rsum .rchev{align-self:center}
   <section id="cricketView" hidden></section>
   <section id="recordView" hidden>
     <div class="note" id="recNote">Loading Nan's record…</div>
+    <div class="calc board players" id="players"><h3>Players' leaderboard</h3><p>Loading…</p></div>
     <div class="calc board" id="board"><h3>Tipster leaderboard</h3><p>Loading…</p></div>
     <div class="sumgrid" id="recSum"></div>
     <div class="bar"><div class="tabs days" id="recDays"></div></div>
@@ -422,7 +434,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.22.1"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.23.0"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -888,7 +900,7 @@ function saveBK(){try{localStorage.setItem(BK_KEY,JSON.stringify(BK))}catch(e){}
 /* ---------- Account sync: the same bets on any device, keyed by a sync code ---------- */
 const SYNC_KEY="otr-nan-sync",BETS_URL=SB+"/otr-bets",CODE_RE=/^[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}$/;
 let SYNC=(()=>{try{const j=JSON.parse(localStorage.getItem(SYNC_KEY));if(j&&CODE_RE.test(j.code))return {rev:0,dirty:false,...j}}catch(e){}return {code:null,rev:0,dirty:true}})(),SYNC_T=0,SYNC_ST="",SYNC_AT=0,SYNC_BUSY=false,SYNC_MSG="";
-function saveSync(){try{localStorage.setItem(SYNC_KEY,JSON.stringify({code:SYNC.code,rev:SYNC.rev,dirty:SYNC.dirty}))}catch(e){}}
+function saveSync(){try{localStorage.setItem(SYNC_KEY,JSON.stringify({code:SYNC.code,rev:SYNC.rev,dirty:SYNC.dirty,name:SYNC.name||null}))}catch(e){}}
 function newCode(){const a="ABCDEFGHJKLMNPQRSTUVWXYZ23456789",v=new Uint32Array(8);crypto.getRandomValues(v);const c=[...v].map(x=>a[x%a.length]).join("");return c.slice(0,4)+"-"+c.slice(4)}
 const bkDefaults=b=>({start:1000,topups:0,tickets:[],slip:[],manual:{},manualAt:{},off:{},loans:[],repays:[],...(b||{})});
 function mergeBK(mine,theirs){const a=bkDefaults(mine),b=bkDefaults(theirs),tk=new Map();
@@ -899,14 +911,35 @@ function mergeBK(mine,theirs){const a=bkDefaults(mine),b=bkDefaults(theirs),tk=n
   const manual={...b.manual},manualAt={...b.manualAt};for(const k in a.manual)if(!(k in manual)||(a.manualAt[k]||0)>=(manualAt[k]||0)){manual[k]=a.manual[k];manualAt[k]=a.manualAt[k]}
   return {...b,...a,start:a.start,topups:Math.max(a.topups||0,b.topups||0),tickets:[...tk.values()],slip:[...slip.values()],repays:[...repays.values()].sort((x,y)=>x.at-y.at),loans:[...loans.values()].sort((x,y)=>x.at-y.at),manual,manualAt,off:{...b.off,...a.off}}}
 function adopt(data){BK=bkDefaults(data);try{localStorage.setItem(BK_KEY,JSON.stringify(BK))}catch(e){}LEDGER={per:{}};try{render()}catch(e){}if(ST.view==="bets")renderBets();slipBar()}
+/* The players' leaderboard: what's yours (official balance less what you owe Nan), worked out here and saved with your bets */
+function myStats(){const b=balances(),done=BK.tickets.filter(t=>t.status!=="cancelled").map(settleOf).filter(o=>(o.src==="official"||o.src==="entered")&&["won","lost"].includes(o.state));
+  const net=r2(b.official-b.owed);return {net,profit:r2(net-BK.start-(BK.topups||0)),bets:done.length,won:done.filter(o=>o.state==="won").length,best:r2(Math.max(0,...done.map(o=>o.state==="won"?o.pay:0))),owed:b.owed}}
+let PB={players:null,busy:false,err:"",msg:"",nameIn:null};
+async function loadPlayers(){if(PB.busy)return;PB.busy=true;try{const j=await getJSON(BETS_URL+"?board=1");PB.players=j.players||[];PB.err=""}catch(e){PB.err="Couldn't load the players' board."}PB.busy=false;renderPlayers()}
+function renderPlayers(){const el=$("players");if(!el)return;const me=SYNC.name,ps=PB.players;
+  const nm=n=>escH(n);
+  el.innerHTML=`<h3>Players' leaderboard</h3>
+    <p class="pl-sub">Ranked by the money in each account, less anything owed to Nan. Everyone starts with $1,000.</p>
+    ${!me?`<div class="pl-join"><span>${SYNC.code?"Pick a name to get on the board.":"Place a bet to start your account, then pick a name."}</span><button class="ffload" data-gotoname>Pick my name</button></div>`:""}
+    ${PB.err?`<p class="minus">${PB.err}</p>`:!ps?`<p>Loading…</p>`:!ps.length?`<p>No one's on the board yet. Pick a name and settle a bet to be first.</p>`:(()=>{const mi=me?ps.findIndex(p=>p.name===me):-1;
+      return `${mi>=0?`<div class="pl-you"><span>You're <b>${ord(mi+1)}</b> of ${ps.length}</span><b>${money(Math.round(ps[mi].net)).replace(".00","")}</b></div>`:""}
+      <div class="pl-list">${ps.map((p,i)=>{const pc=p.bets?Math.round(p.won/p.bets*100):0;
+        return `<div class="pl-r${i===0?" lead":""}${me&&p.name===me?" me":""}"><span class="pl-k">${i===0?"👑":ord(i+1)}</span><span class="pl-n"><b>${nm(p.name)}</b><small>${pc}% wins · ${p.bets} bet${p.bets===1?"":"s"}${p.owed>0?` · <i>owes Nan ${money(Math.round(p.owed)).replace(".00","")}</i>`:""}</small></span><span class="pl-m">${money(Math.round(p.net)).replace(".00","")}</span></div>`}).join("")}</div>`})()}
+    <p class="calc-out"><small>Updates when bets are placed and results come in. Play money only.</small></p>`}
+async function saveName(){const v=(($("nameIn")||{}).value||"").trim();PB.nameIn=v;
+  if(!SYNC.code){PB.msg="Place a bet first to start your account.";return renderBets()}
+  try{const r=await fetch(BETS_URL+"?name=1",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({code:SYNC.code,name:v})}).then(r=>r.json());
+    if(r.error){PB.msg=r.error;return renderBets()}SYNC.name=r.name;saveSync();PB.msg=`You're on the board as ${escH(r.name)}.`;PB.nameIn=null;SYNC.dirty=true;pushBK();loadPlayers()}
+  catch(e){PB.msg="Couldn't reach the server. Try again."}renderBets()}
 async function pushBK(){if(!SYNC.code||SYNC_BUSY)return;SYNC_BUSY=true;SYNC_ST="saving";paintSync();
-  try{for(let i=0;i<3;i++){const r=await fetch(BETS_URL,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({code:SYNC.code,data:BK,base:SYNC.rev})}).then(r=>r.json());
+  try{for(let i=0;i<3;i++){const r=await fetch(BETS_URL,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({code:SYNC.code,data:BK,base:SYNC.rev,stats:myStats()})}).then(r=>r.json());
       if(r.ok){SYNC.rev=r.rev;SYNC.dirty=false;saveSync();SYNC_ST="ok";SYNC_AT=Date.now();break}
       if(r.conflict){SYNC.rev=r.rev;if(r.data){BK=mergeBK(BK,r.data);try{localStorage.setItem(BK_KEY,JSON.stringify(BK))}catch(e){}}continue}
       throw new Error(r.error||"sync")}}
   catch(e){SYNC_ST="offline"}SYNC_BUSY=false;paintSync();if(ST.view==="bets")renderBets();else slipBar()}
 async function pullBK(){if(!SYNC.code||SYNC_BUSY)return;
   try{const r=await fetch(BETS_URL+"?code="+SYNC.code).then(r=>r.json());if(r.error)throw new Error(r.error);
+    if((r.name||null)!==(SYNC.name||null)){SYNC.name=r.name||null;saveSync()}
     if(!r.data){SYNC.rev=0;return pushBK()}
     if(r.rev!==SYNC.rev){if(SYNC.dirty){SYNC.rev=r.rev;BK=mergeBK(BK,r.data);return pushBK()}SYNC.rev=r.rev;saveSync();adopt(r.data)}
     else if(SYNC.dirty)return pushBK();
@@ -916,7 +949,7 @@ async function linkCode(code,{keepMine=true}={}){code=String(code||"").toUpperCa
   if(code===SYNC.code){SYNC_MSG="That's already your code.";return renderBets()}
   try{const r=await fetch(BETS_URL+"?code="+code).then(r=>r.json());if(r.error)throw new Error(r.error);
     if(!r.data){SYNC_MSG="No account found with that code. Check it and try again.";return renderBets()}
-    const mine=BK.tickets.length||BK.slip.length||BK.loans.length;SYNC.code=code;SYNC.rev=r.rev;
+    const mine=BK.tickets.length||BK.slip.length||BK.loans.length;SYNC.code=code;SYNC.rev=r.rev;SYNC.name=r.name||null;
     if(keepMine&&mine){BK=mergeBK(BK,r.data);SYNC.dirty=true;saveSync();adopt(BK);await pushBK()}else{SYNC.dirty=false;saveSync();adopt(r.data)}
     SYNC_MSG=`Linked. This device now uses account ${code}${keepMine&&mine?", and the bets that were on this device have been added to it":""}.`}
   catch(e){SYNC_MSG="Couldn't reach the server. Check your connection and try again."}renderBets()}
@@ -926,6 +959,9 @@ function paintSync(){const el=document.getElementById("syncSt");if(el)el.textCon
 function syncHtml(){return `<div class="calc" id="acctBox"><h3>Your account</h3>
   <p>Your bets, balance and loans are saved to your account, so you can pick them up on your phone or any computer.</p>
   <div class="acct"><div><small>Your account code</small><b class="acode">${SYNC.code||"…"}</b><small id="syncSt">${syncLine()}</small></div></div>
+  <div class="bb-h" id="nameBox">Your name on the players' leaderboard</div>
+  <div class="lact"><input id="nameIn" maxlength="16" placeholder="e.g. Ben W" autocomplete="nickname" value="${escH(PB.nameIn!=null?PB.nameIn:SYNC.name||"")}"><button class="ffload" data-sname>${SYNC.name?"Change name":"Save name"}</button></div>
+  ${PB.msg?`<p class="loanmsg">${PB.msg}</p>`:""}
   <p class="calc-out"><small><b>On another device:</b> open this link, or open Nan's Tips, go to My bets, and enter your code below. Keep your code to yourself: anyone with it can see and place bets on this account.</small></p>
   <div class="calc-row"><button data-scopy>Copy my link</button><button data-scode>Copy my code</button></div>
   <div class="calc-row syncin"><span class="calc-l">Use a code</span><input id="syncIn" placeholder="ABCD-2345" maxlength="9" autocapitalize="characters" autocomplete="off"><button class="ffload" data-slink>Link this device</button></div>
@@ -1271,6 +1307,8 @@ document.addEventListener("click",e=>{
   if(b=g("[data-msave]")){const v=[...document.querySelectorAll("[data-mpos]")].map(s=>+s.value||null);const picks=v.filter(Boolean);
     if(!v[0]){BKMSG="Pick at least the winner.";return renderBets()}if(new Set(picks).size!==picks.length){BKMSG="Each runner can only finish once.";return renderBets()}
     BK.manual[b.dataset.msave]=v.slice(0,v.findIndex(x=>!x)<0?4:v.findIndex(x=>!x));(BK.manualAt=BK.manualAt||{})[b.dataset.msave]=Date.now();MANUAL=null;BKMSG="Your result is saved. The running balance includes it for now; the official result replaces it when it comes in, and overrides it if it's different.";saveBK();return renderBets()}
+  if(g("[data-sname]"))return saveName();
+  if(g("[data-gotoname]")){setView("bets","nameBox");setTimeout(()=>{const i=$("nameIn");if(i)i.focus()},100);return}
   if(g("[data-scopy]"))return copyText(syncLink(),"Link copied. Open it on your phone or other computer.");
   if(g("[data-scode]"))return copyText(SYNC.code,"Code copied.");
   if(g("[data-slink]")){const v=($("syncIn")||{}).value;return linkCode(v)}
@@ -1437,7 +1475,7 @@ function setView(v,focus){
   const was=ST.view;
   document.querySelectorAll("[data-view]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.view===v));
   ST.view=v;$("tipsView").hidden=v!=="tips";$("recordView").hidden=v!=="record";$("betsView").hidden=v!=="bets";$("cricketView").hidden=v!=="cricket";
-  if(v==="record"){if(!REC.sum)loadRecord();else renderRecord();loadBoard()}
+  if(v==="record"){if(!REC.sum)loadRecord();else renderRecord();loadBoard();renderPlayers();loadPlayers()}
   if(v==="bets"){renderBets();checkOfficial(false);crCheck()}
   if(v==="cricket"){renderCricket();loadCricket(false).then(crCheck)}
   slipBar();
