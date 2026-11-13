@@ -337,6 +337,15 @@ details.race>summary.rsum .rchev{align-self:center}
 .crwhy{font-style:italic;color:var(--ink2);margin:4px 0}
 .crhead p{margin:4px 0}
 .crpast{margin-top:10px}.crpast>summary .rchev{margin-left:auto}
+/* v2.33: sign in with name + PIN */
+.signin{border-top-color:var(--amber)}.signin p{margin:4px 0 8px}
+.si-row{display:grid;grid-template-columns:minmax(0,1fr) 84px auto;gap:6px}.si-row input{min-height:46px;min-width:0;font:700 17px/1 var(--led);padding:0 10px;border:1px solid var(--line);border-radius:6px;background:#fff}
+.si-row .ffload{min-height:46px;padding:0 16px;border-radius:8px;font-size:16px}
+#acctBox .lact input#pinIn{min-height:44px;font:700 18px/1 var(--led);padding:0 8px;border:1px solid var(--line);min-width:0;letter-spacing:3px}
+.sobtn{background:transparent;color:var(--paper);border:2px solid var(--amber-dim);border-radius:8px;min-height:36px;padding:0 12px;font:700 15px/1 var(--led);cursor:pointer}
+.linkbtn{background:none;border:0;padding:0;color:var(--ink);text-decoration:underline;font:inherit;font-weight:700;cursor:pointer}#puntersView .linkbtn{color:var(--ink)}
+details.codebox{margin-top:10px;border-top:1px dashed var(--line);padding-top:6px}details.codebox>summary{cursor:pointer;font:600 15px/1.3 var(--led);color:var(--ink2)}
+@media (max-width:420px){.si-row{grid-template-columns:minmax(0,1fr) 70px}.si-row .ffload{grid-column:1/-1}}
 /* v2.30.1: Nan's record lined up like the race cards */
 .rec.rc{display:block;padding:9px 12px;min-width:0}.races>*{min-width:0}
 .rc-h{display:flex;align-items:center;gap:8px;min-width:0;white-space:nowrap;padding-bottom:5px;border-bottom:1px solid var(--line)}
@@ -569,7 +578,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.32.2"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.33.0"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -2053,7 +2062,7 @@ function saveBK(){try{localStorage.setItem(BK_KEY,JSON.stringify(BK))}catch(e){}
 /* ---------- Account sync: the same bets on any device, keyed by a sync code ---------- */
 const SYNC_KEY="otr-nan-sync",BETS_URL=SB+"/otr-bets",CODE_RE=/^[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}$/;
 let SYNC=(()=>{try{const j=JSON.parse(localStorage.getItem(SYNC_KEY));if(j&&CODE_RE.test(j.code))return {rev:0,dirty:false,...j}}catch(e){}return {code:null,rev:0,dirty:true}})(),SYNC_T=0,SYNC_ST="",SYNC_AT=0,SYNC_BUSY=false,SYNC_MSG="";
-function saveSync(){try{localStorage.setItem(SYNC_KEY,JSON.stringify({code:SYNC.code,rev:SYNC.rev,dirty:SYNC.dirty,name:SYNC.name||null}))}catch(e){}}
+function saveSync(){try{localStorage.setItem(SYNC_KEY,JSON.stringify({code:SYNC.code,rev:SYNC.rev,dirty:SYNC.dirty,name:SYNC.name||null,pin:!!SYNC.pin}))}catch(e){}}
 function newCode(){const a="ABCDEFGHJKLMNPQRSTUVWXYZ23456789",v=new Uint32Array(8);crypto.getRandomValues(v);const c=[...v].map(x=>a[x%a.length]).join("");return c.slice(0,4)+"-"+c.slice(4)}
 const bkDefaults=b=>({start:1000,topups:0,tickets:[],slip:[],manual:{},manualAt:{},off:{},loans:[],repays:[],...(b||{})});
 function mergeBK(mine,theirs){const a=bkDefaults(mine),b=bkDefaults(theirs),tk=new Map();
@@ -2125,7 +2134,7 @@ function renderPlayers(){const el=$("players");if(!el)return;const me=SYNC.name,
   const nm=n=>escH(n);
   el.innerHTML=`<h3>Punters' leaderboard</h3>
     <p class="pl-sub">Ranked by the money in each account, less anything owed to Nan. Everyone starts with $1,000.</p>
-    ${!me?`<div class="pl-join"><span>${SYNC.code?"Pick a name to get on the board.":"Place a bet to start your account, then pick a name."}</span><button class="ffload" data-gotoname>Pick my name</button></div>`:""}
+    ${!me?`<div class="pl-join"><span>${SYNC.code?"Pick a name to get on the board.":"Place a bet to start your account, then pick a name."}</span><button class="ffload" data-gotoname>Pick my name</button></div><p class="pl-sub">Already on the board? <button class="linkbtn" data-gosignin>Sign in</button></p>`:""}
     ${PB.err?`<p class="minus">${PB.err}</p>`:!ps?`<p>Loading…</p>`:!ps.length?`<p>No one's on the board yet. Pick a name and settle a bet to be first.</p>`:(()=>{const mi=me?ps.findIndex(p=>p.name===me):-1;
       return `${mi>=0?`<div class="pl-you"><span>You're <b>${ord(mi+1)}</b> of ${ps.length}</span><b>${money(Math.round(ps[mi].net)).replace(".00","")}</b></div>`:""}
       <div class="pl-list">${(()=>{const Q=boardQuips(ps);return ps.map((p,i)=>{const pc=p.bets?Math.round(p.won/p.bets*100):0;
@@ -2144,33 +2153,58 @@ async function pushBK(){if(!SYNC.code||SYNC_BUSY)return;SYNC_BUSY=true;SYNC_ST="
   catch(e){SYNC_ST="offline"}SYNC_BUSY=false;paintSync();if(ST.view==="bets")renderBets();else slipBar()}
 async function pullBK(){if(!SYNC.code||SYNC_BUSY)return;
   try{const r=await fetch(BETS_URL+"?code="+SYNC.code).then(r=>r.json());if(r.error)throw new Error(r.error);
-    if((r.name||null)!==(SYNC.name||null)){SYNC.name=r.name||null;saveSync()}
+    if((r.name||null)!==(SYNC.name||null)||!!r.has_pin!==!!SYNC.pin){SYNC.name=r.name||null;SYNC.pin=!!r.has_pin;saveSync()}
     if(!r.data){SYNC.rev=0;return pushBK()}
     if(r.rev!==SYNC.rev){if(SYNC.dirty){SYNC.rev=r.rev;BK=mergeBK(BK,r.data);return pushBK()}SYNC.rev=r.rev;saveSync();adopt(r.data)}
     else if(SYNC.dirty)return pushBK();
     SYNC_ST="ok";SYNC_AT=Date.now()}catch(e){SYNC_ST="offline"}paintSync()}
-async function linkCode(code,{keepMine=true}={}){code=String(code||"").toUpperCase().replace(/[^A-Z0-9]/g,"");code=code.slice(0,4)+"-"+code.slice(4,8);
+async function linkCode(code,{keepMine=true,done=null}={}){code=String(code||"").toUpperCase().replace(/[^A-Z0-9]/g,"");code=code.slice(0,4)+"-"+code.slice(4,8);
   if(!CODE_RE.test(code)){SYNC_MSG="That code doesn't look right. It's 8 letters and numbers, like ABCD-2345.";return renderBets()}
   if(code===SYNC.code){SYNC_MSG="That's already your code.";return renderBets()}
   try{const r=await fetch(BETS_URL+"?code="+code).then(r=>r.json());if(r.error)throw new Error(r.error);
     if(!r.data){SYNC_MSG="No account found with that code. Check it and try again.";return renderBets()}
-    const mine=BK.tickets.length||BK.slip.length||BK.loans.length;SYNC.code=code;SYNC.rev=r.rev;SYNC.name=r.name||null;
+    const mine=BK.tickets.length||BK.slip.length||BK.loans.length;SYNC.code=code;SYNC.rev=r.rev;SYNC.name=r.name||null;SYNC.pin=!!r.has_pin;
     if(keepMine&&mine){BK=mergeBK(BK,r.data);SYNC.dirty=true;saveSync();adopt(BK);await pushBK()}else{SYNC.dirty=false;saveSync();adopt(r.data)}
-    SYNC_MSG=`Linked. This device now uses account ${code}${keepMine&&mine?", and the bets that were on this device have been added to it":""}.`}
+    SYNC_MSG=done?done+(keepMine&&mine?" The bets that were on this device have been added to your account.":""):`Linked. This device now uses account ${code}${keepMine&&mine?", and the bets that were on this device have been added to it":""}.`}
   catch(e){SYNC_MSG="Couldn't reach the server. Check your connection and try again."}renderBets()}
 function syncLink(){return location.origin+location.pathname+"?sync="+SYNC.code+"#bets"}
 function syncLine(){return SYNC_ST==="saving"?"Saving…":SYNC_ST==="offline"?"Offline: saved on this device and will sync when you're back online.":SYNC_AT?`Synced ${timeOf(new Date(SYNC_AT).toISOString())}`:"Connecting…"}
 function paintSync(){const el=document.getElementById("syncSt");if(el)el.textContent=syncLine()}
-function syncHtml(){return `<div class="calc" id="acctBox"><h3>Your account</h3>
-  <p>Your bets, balance and loans are saved to your account, so you can pick them up on your phone or any computer.</p>
-  <div class="acct"><div><small>Your account code</small><b class="acode">${SYNC.code||"…"}</b><small id="syncSt">${syncLine()}</small></div></div>
+function syncHtml(){const pinBox=SYNC.name&&(!SYNC.pin||SYNC.pinEdit)?`<div class="bb-h">${SYNC.pin?"Change your PIN":"Set a PIN to sign in anywhere"}</div>
+  <div class="lact"><input id="pinIn" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="4 numbers" autocomplete="new-password"><button class="ffload" data-spin>Save PIN</button></div>
+  ${SYNC.pin?"":`<p class="calc-out"><small>With a PIN, you can sign in on your phone, the home-screen app or a computer using <b>${escH(SYNC.name)}</b> and your PIN.</small></p>`}`:"";
+  return `<div class="calc" id="acctBox"><h3>Your account</h3>
+  ${signedIn()?`<div class="pl-you"><span>Signed in as <b>${escH(SYNC.name)}</b></span><button class="sobtn" data-signout>Sign out</button></div>`:`<p>Your bets, balance and loans are saved to your account.${SYNC.name?"":" Pick a name and a PIN so you can sign in on any device."}</p>`}
   <div class="bb-h" id="nameBox">Your name on the Punters' leaderboard</div>
   <div class="lact"><input id="nameIn" maxlength="16" placeholder="e.g. Ben W" autocomplete="nickname" value="${escH(PB.nameIn!=null?PB.nameIn:SYNC.name||"")}"><button class="ffload" data-sname>${SYNC.name?"Change name":"Save name"}</button></div>
   ${PB.msg?`<p class="loanmsg">${PB.msg}</p>`:""}
-  <p class="calc-out"><small><b>On another device:</b> open this link, or open Nan's Tips, go to My bets, and enter your code below. Keep your code to yourself: anyone with it can see and place bets on this account.</small></p>
+  ${pinBox}${signedIn()&&!SYNC.pinEdit?`<p class="calc-out"><small>Sign in on any device with your name and PIN. <button class="linkbtn" data-pinedit>Change PIN</button></small></p>`:""}
+  ${SYNC_MSG&&signedIn()?`<p class="loanmsg">${SYNC_MSG}</p>`:""}
+  <details class="codebox"><summary>Use an account code instead</summary>
+  <div class="acct"><div><small>Your account code</small><b class="acode">${SYNC.code||"…"}</b><small id="syncSt">${syncLine()}</small></div></div>
+  <p class="calc-out"><small>Keep your code to yourself: anyone with it can see and place bets on this account.</small></p>
   <div class="calc-row"><button data-scopy>Copy my link</button><button data-scode>Copy my code</button></div>
-  <div class="calc-row syncin"><span class="calc-l">Use a code</span><input id="syncIn" placeholder="ABCD-2345" maxlength="9" autocapitalize="characters" autocomplete="off"><button class="ffload" data-slink>Link this device</button></div>
-  ${SYNC_MSG?`<p class="loanmsg">${SYNC_MSG}</p>`:""}</div>`}
+  <div class="calc-row syncin"><span class="calc-l">Use a code</span><input id="syncIn" placeholder="ABCD-2345" maxlength="9" autocapitalize="characters" autocomplete="off"><button class="ffload" data-slink>Link this device</button></div></details></div>`}
+/* Sign-in: leaderboard name + 4-digit PIN. Signing in fetches the account's code and links this device to it. */
+const signedIn=()=>!!(SYNC.name&&SYNC.pin);
+async function signIn(){const n=(($("siName")||{}).value||"").trim(),pin=(($("siPin")||{}).value||"").trim();
+  if(!n||!/^\d{4}$/.test(pin)){SYNC_MSG="Enter your name and your 4-digit PIN.";return renderBets()}
+  SYNC_MSG="Signing in…";renderBets();
+  try{const r=await fetch(BETS_URL+"?login=1",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({name:n,pin})}).then(r=>r.json());
+    if(r.error){SYNC_MSG=r.error;return renderBets()}
+    if(r.code===SYNC.code){SYNC.name=r.name;SYNC.pin=true;saveSync();SYNC_MSG=`Signed in as ${escH(r.name)}.`;renderBets();return loadPlayers()}
+    await linkCode(r.code,{keepMine:!SYNC.name,done:`Signed in as ${escH(r.name)}.`});loadPlayers()}
+  catch(e){SYNC_MSG="Couldn't reach the server. Check your connection and try again.";renderBets()}}
+async function savePin(){const pin=(($("pinIn")||{}).value||"").trim();
+  if(!/^\d{4}$/.test(pin)){SYNC_MSG="Your PIN is 4 numbers.";return renderBets()}
+  try{const r=await fetch(BETS_URL+"?pin=1",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({code:SYNC.code,pin})}).then(r=>r.json());
+    if(r.error){SYNC_MSG=r.error;return renderBets()}SYNC.pin=true;saveSync();SYNC_MSG=`PIN saved. Sign in anywhere with ${escH(SYNC.name)} and your PIN.`;SYNC.pinEdit=false}
+  catch(e){SYNC_MSG="Couldn't reach the server. Try again."}renderBets()}
+function signOut(){if(!confirm("Sign out on this device? Your bets stay safe in your account. Sign back in with your name and PIN."))return;
+  SYNC={code:newCode(),rev:0,dirty:true,name:null,pin:false};saveSync();adopt({tickets:[]});SYNC_MSG="Signed out. Sign in with your name and PIN to get your bets back.";PB.nameIn=null;renderBets();pushBK()}
+function signInHtml(){return `<div class="calc signin" id="signIn"><h3>Sign in</h3><p>Already have an account? Sign in with your leaderboard name and PIN to see your bets on this device.</p>
+  <div class="si-row"><input id="siName" maxlength="16" placeholder="Your name" autocomplete="username" autocapitalize="words"><input id="siPin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="PIN" autocomplete="current-password"><button class="ffload" data-signin>Sign in</button></div>
+  ${SYNC_MSG&&!signedIn()?`<p class="loanmsg">${SYNC_MSG}</p>`:""}<p class="calc-out"><small>New here? Just place a bet, then pick a name and a PIN under Your account.</small></p></div>`}
 async function copyText(t,msg){try{await navigator.clipboard.writeText(t);SYNC_MSG=msg}catch(e){SYNC_MSG="Copy this: "+t}renderBets()}
 const BUILD={id:null,type:"win",sel:[],stake:10,style:"straight",pos:0,legs:[[],[],[],[]],mt:"none",myst:null};
 /* Mystery bet: random runners for the bet type, optionally with one tipster's pick locked in (or a random tipster's) */
@@ -2454,7 +2488,7 @@ function renderBets(){
       ${BK.slip.map((t,i)=>`<div class="slipline"><span>${slipHtml(t)}${Date.now()>=Date.parse(t.jump)?' <b class="minus">jumped</b>':""}</span><button data-bslipdel="${i}">Remove</button></div>`).join("")}
       <div class="calc-row"><button class="ffload bigconfirm" data-bconfirm ${slipCost>b.running||closedSlip?"disabled":""}>Confirm and place ${BK.slip.length} bet${BK.slip.length>1?"s":""} · ${money(slipCost)}</button><button data-bslipclr>Clear slip</button></div>${slipCost>b.running?'<p class="minus">Not enough in your running balance.</p>':""}${closedSlip?'<p class="minus">Remove bets on races that have jumped.</p>':""}</div>`
     :`<div class="calc" id="slipBox"><h3>Bet slip</h3><p>Your slip is empty. On Today's tips, open a race and press <b>Bet on this race</b>.</p></div>`;
-  el.innerHTML=`${BKMSG?`<div class="note okmsg" id="bkMsg">${BKMSG}</div>`:""}${slipBox}<div class="sumgrid"><div class="sum all"><h3>Running balance</h3><div class="big">${money(b.running)}</div><p>Includes results you've entered yourself. This is what you can bet with.</p></div>
+  el.innerHTML=`${signedIn()?"":signInHtml()}${BKMSG?`<div class="note okmsg" id="bkMsg">${BKMSG}</div>`:""}${slipBox}<div class="sumgrid"><div class="sum all"><h3>Running balance</h3><div class="big">${money(b.running)}</div><p>Includes results you've entered yourself. This is what you can bet with.</p></div>
     <div class="sum"><h3>Official balance</h3><div class="big">${money(b.official)}</div><p>Only official results. Changes when they come in.</p></div>
     <div class="sum"><h3>Bets out</h3><div class="big">${money(b.openSt+b.waitSt)}</div><p>${money(b.openSt)} still to run · ${money(b.waitSt)} run, waiting on official results</p></div>
     <div class="sum"><h3>Official profit</h3><div class="big ${b.profit>=0?"plus":"minus"}">${b.profit>=0?"+":""}${money(b.profit)}</div><p>From settled bets. Started with ${money(BK.start)}${BK.topups?` + ${money(BK.topups)} added`:""}${b.owed>0?` · owe Nan ${money(b.owed)}`:""}.</p></div></div>
@@ -2543,6 +2577,11 @@ document.addEventListener("click",e=>{
     if(!v[0]){BKMSG="Pick at least the winner.";return renderBets()}if(new Set(picks).size!==picks.length){BKMSG="Each runner can only finish once.";return renderBets()}
     BK.manual[b.dataset.msave]=v.slice(0,v.findIndex(x=>!x)<0?4:v.findIndex(x=>!x));(BK.manualAt=BK.manualAt||{})[b.dataset.msave]=Date.now();MANUAL=null;BKMSG="Your result is saved. The running balance includes it for now; the official result replaces it when it comes in, and overrides it if it's different.";saveBK();return renderBets()}
   if(g("[data-sname]"))return saveName();
+  if(g("[data-signin]"))return signIn();
+  if(g("[data-spin]"))return savePin();
+  if(g("[data-signout]"))return signOut();
+  if(g("[data-pinedit]")){SYNC.pinEdit=true;SYNC_MSG="";return renderBets()}
+  if(g("[data-gosignin]")){setView("bets","signIn");setTimeout(()=>{const i=$("siName");if(i)i.focus()},100);return}
   if(g("[data-gotoname]")){setView("bets","nameBox");setTimeout(()=>{const i=$("nameIn");if(i)i.focus()},100);return}
   if(g("[data-scopy]"))return copyText(syncLink(),"Link copied. Open it on your phone or other computer.");
   if(g("[data-scode]"))return copyText(SYNC.code,"Code copied.");
@@ -2785,6 +2824,7 @@ document.addEventListener("click",e=>{
   const sk=e.target.closest("[data-stake]");if(sk){REC.stake=+sk.dataset.stake;renderRecord()}
   const bt=e.target.closest("[data-bet]");if(bt){REC.bet=bt.dataset.bet;renderRecord()}
 });
+document.addEventListener("keydown",e=>{if(e.key!=="Enter")return;if(e.target.id==="siPin"||e.target.id==="siName")signIn();else if(e.target.id==="pinIn")savePin()});
 document.addEventListener("change",e=>{if(e.target.id==="stakeIn"){const v=Math.round(Math.max(.5,Math.min(10000,+e.target.value||1))*2)/2;REC.stake=v;renderRecord()}});
 (async()=>{const q=new URLSearchParams(location.search).get("sync");
   if(q){try{history.replaceState(null,"",location.pathname+location.hash)}catch(e){}if(q.toUpperCase()!==SYNC.code){if(!SYNC.code){SYNC.code=newCode();saveSync()}return linkCode(q)}}
