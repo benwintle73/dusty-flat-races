@@ -151,6 +151,11 @@ details.follow p{margin:0 12px 8px;font-size:15px;color:#d9c9a3}
 .acct b.acode{display:block;font:400 34px/1.1 var(--display);letter-spacing:3px;margin:2px 0}
 #syncIn{font-size:18px;text-transform:uppercase;width:150px;min-height:36px;padding:0 8px}
 .checkmsg{background:var(--paper);color:var(--ink);border-left:5px solid var(--amber);padding:8px 12px;margin:6px 0 10px;font-size:15px}
+.panel{background:#f3ead2;border:1px solid var(--line);padding:6px 10px;margin:4px 0 10px}.panel h4{margin:2px 0 4px;font:400 18px/1 var(--display);text-transform:uppercase;letter-spacing:.4px}
+.tip{display:block;padding:5px 4px;border-bottom:1px dashed #0002;cursor:pointer;font-size:16px}.tip:hover{background:#fff6}.tip small{display:block;font-style:italic;color:#5b4520;font-size:13px}
+.tip .tw{display:inline-block;min-width:118px;font-weight:700}.tip.ptop{background:#fff3cd;border-bottom:0;margin-top:3px}.tnote{font-size:13px;color:#5b4520;margin:4px 0 0}
+.panelline{font-size:14px;color:var(--ink2);margin-top:3px}.panelline .agree{font-size:12px;background:#0001;padding:0 5px;border-radius:3px}.panelline .agree.aall{background:var(--good);color:#fff}
+.hl.hlpanel{border-left-color:var(--good)}
 .hl{cursor:pointer}.hl:hover{outline:2px solid var(--amber)}
 .hlbet{float:right;margin-left:10px}
 .slipline{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line);font-size:15px}
@@ -206,7 +211,7 @@ body{padding-bottom:60px}
     <div class="races" id="recList"></div>
   </section>
   <div class="foot">
-    Nan works every pick out herself. Horses: the bookmaker market, nudged by recent form. Dogs and harness: each runner's record, recent runs and the draw.
+    Nan works every pick out herself. Beside her sit Pop (FormFav's prediction model), Bob (Krok's KrokBot model) and Gran (the bookmaker market); the Panel's pick averages all of their chances. Horses: the bookmaker market, nudged by recent form. Dogs and harness: each runner's record, recent runs and the draw.
     Tap a race to see the field, and a runner to see how Nan got there and its full form.
     Prices for horses by <a href="https://puntersedge.online" target="_blank" rel="noopener">PuntersEdge</a>; form by FormFav. Dog and harness prices are Nan's own estimates.
     Quick form for dogs and harness comes from PuntersEdge when FormFav's form isn't loaded: Nan then uses the market and recent form. If PuntersEdge can't refresh either, Krok's cards stand in, marked Price only: they have no form, so Nan goes on the market alone.
@@ -315,7 +320,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null};
-const NAN_VERSION="2.16.2"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.17.0"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -338,7 +343,7 @@ async function loadAll(){
   $("dayc").innerHTML=`<button data-day="today" aria-pressed="${!TOMORROW}">Today</button><button data-day="tomorrow" aria-pressed="${TOMORROW}">Tomorrow</button><button data-day="past">Past days</button>`;
   if(TOMORROW&&!RACES.length)$("status").textContent="Tomorrow's races aren't out yet. Horse fields usually arrive mid-afternoon.";
   $("status").textContent=bad===3?"Nan couldn't load today's races. Try again soon.":bad?"Some codes didn't load, so they're missing for now.":"";
-  render();pump();
+  render();pump();loadBob();pumpPop();
 }
 // dog and harness fields: only meetings Nan follows load by themselves (to save the daily form allowance); others when asked
 const ticked=r=>(FOLLOW[r.code]||[]).includes(r.slug),follows=r=>!!FOLLOW.auto||ticked(r),wanted=r=>follows(r)||WANT.has(r.code+r.slug);
@@ -442,7 +447,7 @@ function raceBody(r){
   if(r.code==="H")loadForm(r);
   const n=rk.length,maxP=rk[0].p;
   const canBet=Date.now()<Date.parse(r.jump);
-  return `<p class="nsays">${escH(nanSays(r.code,r.id+"|"+rk[0].u.name))}</p>${loadBtn}${canBet?builderHtml(r):""}<p class="rmeta">${[r.name,r.dist?r.dist+"m":"",r.cls,r.cond||(r.card&&r.card.cond),r.est?"No market yet: horse prices estimated":""].filter(Boolean).map(escH).join(" · ")}</p>
+  return `<p class="nsays">${escH(nanSays(r.code,r.id+"|"+rk[0].u.name))}</p>${panelHtml(r)}${loadBtn}${canBet?builderHtml(r):""}<p class="rmeta">${[r.name,r.dist?r.dist+"m":"",r.cls,r.cond||(r.card&&r.card.cond),r.est?"No market yet: horse prices estimated":""].filter(Boolean).map(escH).join(" · ")}</p>
   <table class="field"><thead><tr><th colspan="3">Nan's order</th></tr></thead><tbody>
   ${rk.map((x,i)=>`<tr><td><details class="run${i===0?" top1":""}"><summary><span class="rk">${ord(i+1)}</span>${cloth(x.u.no,r.code,x.u.box,"no")}<span class="nm"><b>${escH(x.u.name)}</b><small>${escH(r.src==="quick"?[r.code==="D"?`Box ${x.u.box}`:`Bar ${x.u.box}`,x.u.form||"no form"].join(" · "):r.code==="H"?[x.u.jockey,x.u.barrier?"Bar "+x.u.barrier:"",x.u.weight?x.u.weight+"kg":""].filter(Boolean).join(" · "):r.code==="D"?`Box ${x.u.box}${x.u.reserve?" (reserve)":""} · ${x.u.form||"no form"}`:`${x.u.row==="second"?"Sr":"Fr"}${x.u.barrier} · ${x.u.driver||""} · ${x.u.form||""}`)}</small></span>
     <span class="pct">${pct(x.p)}</span><span class="pr">${div(x.price)}<small>${mkt(r)?"market":"Nan's"}</small></span>${mkt(r)?`<span class="pr mk">${div(ladder(1/(x.p*1.13)))}<small>Nan's</small></span>`:"<span></span>"}
@@ -481,6 +486,52 @@ function renderFollow(){
     <div class="fgrid">${group("D")}${group("N")}${(()=>{const hs=[...new Map(RACES.filter(r=>r.code==="H").map(r=>[r.venue,r])).keys()].sort();return hs.length?`<div class="fgrp"><h4>Horses</h4><p class="hnote">All ${hs.length} meetings, always on: PuntersEdge loads every horse race in one call, so they never use FormFav credits.</p><p class="hnote">${hs.map(escH).join(" · ")}</p></div>`:""})()}</div>`;
   el.open=open;
 }
+/* ---------- The panel: other tipsters beside Nan ----------
+   Pop's Tips: FormFav's prediction model. Bob's Tips: Krok's KrokBot model. Gran's Tips: the bookmaker market (Gran follows the money).
+   The Panel's pick averages every tipster's chance for each runner, so all the feeds' data has a say. */
+const TIPS_URL=SB+"/otr-tips",TIPS={bob:{},bobAt:0,pop:{},asked:new Set(),busy:false};
+const fkey=v=>String(v||"").toLowerCase().replace(/[^a-z0-9]/g,"");
+const POP_SAYS=["Pop's been studying the form since 5am. With his tea.","Pop says this one's the goods, and he's never wrong. Ask him.","Pop reckons it's a lay-down misère.","Pop had a word with the trainer. Well, he waved at him.","Pop's model says so, and Pop trusts his model more than Nan.","Pop: 'I've seen this before. In 1987.'","Pop circled this one in pen, not pencil.","Pop reckons the numbers add up. He used a calculator this time."];
+const BOB_SAYS=["Bob's robot says this one. Bob doesn't know how it works either.","Bob from down the pub swears by this one.","Bob's computer crunched it. Bob had a pie.","Bob reckons it's money for jam.","Bob's tipping it, so it's either a certainty or a disaster.","Bob ran the numbers twice and got the same answer. A first.","Bob says the algorithm loves it. Bob loves the algorithm.","Bob's gone all in. Don't tell his missus."];
+const GRAN_SAYS=["Gran follows the money. The money's here.","Gran says the bookies don't make mistakes. Often.","Gran just backs the favourite and knits.","Gran's watched the prices all morning. This is the one they're backing.","Gran says: never argue with the market, dear.","Gran's had the same system since 1962. It's the favourite."];
+const says=(L,seed)=>L[sayHash(seed)%L.length];
+function bobFor(r){const b=TIPS.bob[r.date];if(!b)return null;const k=`${r.code}|${fkey(r.venue)}|${r.no}`;if(b[k])return b[k];
+  const w=vkey(r.venue);for(const kk in b){const [c,v,n]=kk.split("|");if(c===r.code&&+n===+r.no&&v.startsWith(w.replace(/[^a-z0-9]/g,"")))return b[kk]}return null}
+const popKey=r=>`${r.date}|${r.code}|${fkey(r.venue)}|${r.no}`;
+// each tipster's view of a race: [{who, label, says, pick:{no,name,box,p}, chance: Map(nameKey -> p)}]
+function tipsters(r){const rk=ranked(r);if(!rk||!rk.length)return [];const field=rk.map(x=>x.u),byName=new Map(field.map(u=>[nkey(u.name),u])),out=[];
+  const mk=(who,label,list,seedL)=>{const ch=new Map();for(const x of list){const u=(x.no!=null&&r.code!=="H"?field.find(f=>f.no===x.no&&nkey(f.name)===nkey(x.name)):null)||byName.get(nkey(x.name));if(u)ch.set(nkey(u.name),(ch.get(nkey(u.name))||0)+x.p)}
+    let s=0;for(const v of ch.values())s+=v;if(!ch.size||s<=0)return;for(const [k,v] of ch)ch.set(k,v/s);
+    const top=[...ch.entries()].sort((a,b)=>b[1]-a[1])[0],u=byName.get(top[0]);out.push({who,label,says:says(seedL,r.id+who+u.name),pick:{no:u.no,name:u.name,box:u.box,p:top[1]},chance:ch})};
+  mk("nan","Nan's Tips",rk.map(x=>({name:x.u.name,p:x.p})),[nanSays(r.code,r.id+"|"+rk[0].u.name)]);
+  const pp=TIPS.pop[popKey(r)];if(pp&&pp.runners)mk("pop","Pop's Tips",pp.runners,POP_SAYS);
+  const bb=bobFor(r);if(bb)mk("bob","Bob's Tips",bb,BOB_SAYS);
+  if(mkt(r)){const live=field.filter(u=>u.win>1);if(live.length>=3)mk("gran","Gran's Tips",live.map(u=>({name:u.name,p:1/u.win})),GRAN_SAYS)}
+  return out}
+function panelOf(r){const ts=tipsters(r);if(ts.length<2)return null;const rk=ranked(r),tot=new Map();
+  for(const u of rk.map(x=>x.u)){let s=0;for(const t of ts)s+=t.chance.get(nkey(u.name))||0;tot.set(nkey(u.name),s/ts.length)}
+  const best=[...tot.entries()].sort((a,b)=>b[1]-a[1])[0],u=rk.map(x=>x.u).find(x=>nkey(x.name)===best[0]);
+  return {ts,pick:{no:u.no,name:u.name,box:u.box,p:best[1]},agree:ts.filter(t=>nkey(t.pick.name)===best[0]).length}}
+function panelLine(r){const pn=panelOf(r);if(!pn)return "";const o=pn.ts.filter(t=>t.who!=="nan");
+  return `<div class="panelline">${o.map(t=>`${t.label.split("'")[0]} ${cloth(t.pick.no,r.code,t.pick.box)}`).join(" · ")} · <b>Panel:</b> ${cloth(pn.pick.no,r.code,pn.pick.box)} ${escH(pn.pick.name)} <span class="agree a${pn.agree===pn.ts.length?"all":""}">${pn.agree} of ${pn.ts.length} agree</span></div>`}
+function panelHtml(r){const pn=panelOf(r),ts=pn?pn.ts:tipsters(r);if(!ts.length)return "";
+  const row=t=>`<div class="tip" data-hlbet="${escH(r.id)}|${t.pick.no}"><span class="tw">${t.label}</span>${cloth(t.pick.no,r.code,t.pick.box)} <b>${escH(t.pick.name)}</b> ${pct(t.pick.p)}<small>${escH(t.says)}</small></div>`;
+  return `<div class="panel"><h4>The tipsters</h4>${ts.map(row).join("")}${pn?`<div class="tip ptop" data-hlbet="${escH(r.id)}|${pn.pick.no}"><span class="tw">The Panel's pick</span>${cloth(pn.pick.no,r.code,pn.pick.box)} <b>${escH(pn.pick.name)}</b> ${pct(pn.pick.p)}<small>${pn.agree} of ${pn.ts.length} tipsters have it on top. The Panel averages everyone's chances.</small></div>`:""}
+    ${ts.length<4?`<p class="tnote">${[!TIPS.pop[popKey(r)]?"Pop's still thinking":"",!bobFor(r)?"Bob hasn't rated this race":"",!mkt(r)?"Gran's waiting for prices":""].filter(Boolean).join(" · ")}</p>`:""}<p class="tnote">Tap a tip to bet on it.</p></div>`}
+async function loadBob(){const ds=[...new Set(RACES.map(r=>r.date))].slice(0,2);let changed=false;
+  for(const d of ds){try{const j=await getJSON(TIPS_URL+"?date="+d);if(j.bob){TIPS.bob[d]=j.bob;changed=true}}catch(e){}}
+  TIPS.bobAt=Date.now();if(changed)render()}
+async function pumpPop(){if(TIPS.busy)return;const now=Date.now();
+  const want=RACES.filter(r=>Date.parse(r.jump)>now-60e3&&!TIPS.asked.has(popKey(r))).sort((a,b)=>{const oa=document.querySelector(`details.race[data-id="${CSS.escape(a.id)}"][open]`)?0:1,ob=document.querySelector(`details.race[data-id="${CSS.escape(b.id)}"][open]`)?0:1;return oa-ob||Date.parse(a.jump)-Date.parse(b.jump)}).slice(0,36);
+  if(!want.length)return;TIPS.busy=true;
+  for(let i=0;i<want.length;i+=12){const part=want.slice(i,i+12),byDate={};for(const r of part)(byDate[r.date]=byDate[r.date]||[]).push(r);
+    for(const d in byDate){const rs=byDate[d];rs.forEach(r=>TIPS.asked.add(popKey(r)));
+      try{const j=await getJSON(`${TIPS_URL}?date=${d}&pop=${encodeURIComponent(rs.map(r=>`${r.code}|${r.venue.replace(/[^A-Za-z0-9 '\-]/g,"")}|${r.no}`).join(","))}`);
+        for(const r of rs){const v=j.pop&&j.pop[`${r.code}|${fkey(r.venue.replace(/[^A-Za-z0-9 '\-]/g,""))}|${r.no}`];if(v)TIPS.pop[popKey(r)]=v}}
+      catch(e){rs.forEach(r=>TIPS.asked.delete(popKey(r)))}}}
+  TIPS.busy=false;render()}
+setInterval(()=>{if(RACES.length&&Date.now()-TIPS.bobAt>20*60e3)loadBob();if(RACES.length)pumpPop()},60e3);
+setInterval(()=>{TIPS.asked.clear()},45*60e3);
 function render(){
   renderFollow();$("multi").innerHTML=multiHtml();if(typeof slipBar==="function")slipBar();
   $("codes").innerHTML=[["all","All"],["H","Horses"],["D","Dogs"],["N","Harness"]].map(([k,l])=>`<button data-code="${k}" aria-pressed="${ST.code===k}">${l}</button>`).join("");
@@ -494,7 +545,8 @@ function render(){
   const best=live.slice().sort((a,b)=>b.rk[0].p-a.rk[0].p)[0];
   let rough=null;for(const x of live)for(const y of x.rk.slice(1,4)){const pr=x.r.code==="H"?y.u.win:y.price;if(pr>=8&&(!rough||y.p*pr>rough.y.p*rough.pr))rough={x,y,pr}}
   const tag=r=>`${timeOf(r.jump)} · ${escH(r.venue)} R${r.no} · ${CODE[r.code]}`;
-  $("hl").innerHTML=(best?`<div class="hl" data-hlbet="${escH(best.r.id)}|${best.rk[0].u.no}"><button class="betbtn hlbet">Bet on ${escH(best.rk[0].u.name)}</button><b>Nan's Best Bet:</b> ${tag(best.r)} · ${cloth(best.rk[0].u.no,best.r.code,best.rk[0].u.box)} <b>${escH(best.rk[0].u.name)}</b> ${pct(best.rk[0].p)} ${div(best.rk[0].price)}<span class="nsays">${escH(nanSays(best.r.code,best.r.id+"|"+best.rk[0].u.name))}</span></div>`:"")
+  let pbest=null;for(const x of live){const pn=panelOf(x.r);if(pn&&pn.ts.length>=3&&pn.agree>=3&&(!pbest||pn.pick.p>pbest.pn.pick.p))pbest={r:x.r,pn}}
+  $("hl").innerHTML=(pbest?`<div class="hl hlpanel" data-hlbet="${escH(pbest.r.id)}|${pbest.pn.pick.no}"><button class="betbtn hlbet">Bet on ${escH(pbest.pn.pick.name)}</button><b>The Panel's Best Bet:</b> ${tag(pbest.r)} · ${cloth(pbest.pn.pick.no,pbest.r.code,pbest.pn.pick.box)} <b>${escH(pbest.pn.pick.name)}</b> ${pct(pbest.pn.pick.p)}<span class="nsays">${pbest.pn.agree} of ${pbest.pn.ts.length} tipsters agree: ${pbest.pn.ts.map(t=>t.label.split("'")[0]).join(", ")}.</span></div>`:"")+(best?`<div class="hl" data-hlbet="${escH(best.r.id)}|${best.rk[0].u.no}"><button class="betbtn hlbet">Bet on ${escH(best.rk[0].u.name)}</button><b>Nan's Best Bet:</b> ${tag(best.r)} · ${cloth(best.rk[0].u.no,best.r.code,best.rk[0].u.box)} <b>${escH(best.rk[0].u.name)}</b> ${pct(best.rk[0].p)} ${div(best.rk[0].price)}<span class="nsays">${escH(nanSays(best.r.code,best.r.id+"|"+best.rk[0].u.name))}</span></div>`:"")
     +(rough?`<div class="hl" data-hlbet="${escH(rough.x.r.id)}|${rough.y.u.no}"><button class="betbtn hlbet">Bet on ${escH(rough.y.u.name)}</button><b>Nan's Roughie:</b> ${tag(rough.x.r)} · ${cloth(rough.y.u.no,rough.x.r.code,rough.y.u.box)} <b>${escH(rough.y.u.name)}</b> ${pct(rough.y.p)} ${div(rough.pr)}<span class="nsays">${escH(nanSays(rough.x.r.code,rough.x.r.id+"|"+rough.y.u.name))}</span></div>`:"");
   const waiting=RACES.filter(r=>r.code!=="H"&&!CARDS[r.code+r.slug]&&wanted(r)).length;
   if(waiting&&!$("status").textContent.startsWith("Nan couldn't"))$("status").textContent=`Nan is still reading the form for ${waiting} race${waiting>1?"s":""}…`;
@@ -502,7 +554,7 @@ function render(){
   $("races").innerHTML=list.length?list.map(r=>{const rk=ranked(r),t=Date.parse(r.jump),gone=t<=Date.now();
     return `<details class="race${gone?" jumped":""}" data-id="${escH(r.id)}" ${open.has(r.id)?"open":""}><summary>
       <div><div class="rmeta">${tag(r)}${gone?" · jumped":cdn(r.jump)}${rk&&r.src==="quick"?` · <span class="qtag">${QUICK[r.code]&&QUICK[r.code].priceOnly?"Price only":"Quick form"}</span>`:""}</div><div class="rtitle">${escH(r.venue)} R${r.no}${r.dist?" · "+r.dist+"m":""}</div>
-      <div class="rpick">${offList(r)&&rk===undefined?`Nan isn't following ${escH(r.venue)} <span class="scrsum">· open to load her pick</span>`:rk===undefined?"Nan is reading the form…":!rk?noField(r,true):`Nan: 1st ${cloth(rk[0].u.no,r.code,rk[0].u.box)} <b>${escH(rk[0].u.name)}</b> ${pct(rk[0].p)} · ${rk.slice(1,3).map((x,i)=>`${["2nd","3rd"][i]} ${cloth(x.u.no,r.code,x.u.box)} ${escH(x.u.name)}`).join(" · ")}${r.scr&&r.scr.length?` <span class="scrsum">· Scr ${r.scr.map(u=>cloth(u.no,r.code,u.box,"x")).join(" ")}</span>`:""}`}</div></div>
+      <div class="rpick">${offList(r)&&rk===undefined?`Nan isn't following ${escH(r.venue)} <span class="scrsum">· open to load her pick</span>`:rk===undefined?"Nan is reading the form…":!rk?noField(r,true):`Nan: 1st ${cloth(rk[0].u.no,r.code,rk[0].u.box)} <b>${escH(rk[0].u.name)}</b> ${pct(rk[0].p)} · ${rk.slice(1,3).map((x,i)=>`${["2nd","3rd"][i]} ${cloth(x.u.no,r.code,x.u.box)} ${escH(x.u.name)}`).join(" · ")}${r.scr&&r.scr.length?` <span class="scrsum">· Scr ${r.scr.map(u=>cloth(u.no,r.code,u.box,"x")).join(" ")}</span>`:""}`}</div>${rk&&!gone?panelLine(r):""}</div>
       <span class="rchev">&#9656;</span></summary><div class="rbody">${open.has(r.id)?raceBody(r):""}</div></details>`}).join("")
     :`<div class="empty">${RACES.length?"No races to show. Tick \"Show jumped races\" or pick another code.":"No real races found for today yet."}</div>`;
   for(const k of openRun){const [id,no]=k.split("#");const d=[...document.querySelectorAll(`details.race[data-id="${CSS.escape(id)}"] details.run`)].find(x=>x.querySelector(".no").textContent===no);if(d)d.open=true}
