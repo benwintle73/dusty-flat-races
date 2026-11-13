@@ -194,14 +194,14 @@ body{padding-bottom:60px}
 details.race>summary.rsum{grid-template-columns:64px minmax(0,1fr) 18px;gap:0 10px;align-items:start;padding:9px 10px}
 .r-when{display:flex;flex-direction:column;align-items:flex-start;gap:3px;padding-top:2px}
 .r-when b{font:400 22px/1 var(--display);letter-spacing:.3px}.r-when small{font:600 13px/1 var(--led);color:var(--ink2);text-transform:uppercase}
-.r-when .cdn{font-size:13px;padding:2px 5px}
+.r-when .cdn{font-size:13px;padding:2px 5px}.r-meta{font:600 12px/1.25 var(--led);color:var(--ink2);font-style:normal;margin-top:2px}
 .r-main{min-width:0;display:flex;flex-direction:column;gap:4px}
-.r-title{display:flex;align-items:baseline;gap:8px;min-width:0;white-space:nowrap}.r-title b{font:400 21px/1.05 var(--display);letter-spacing:.3px;text-transform:uppercase;overflow:hidden;text-overflow:ellipsis;min-width:0}.r-title small,.r-title .qtag,.r-title .r-n{flex:none}.r-title .r-n{margin-left:-3px}
+.r-title{display:flex;align-items:baseline;gap:8px;min-width:0;white-space:nowrap}.r-title b{font:400 20px/1.05 var(--display);letter-spacing:.3px;text-transform:uppercase;overflow:hidden;text-overflow:ellipsis;min-width:0}.r-title small,.r-title .qtag,.r-title .r-n{flex:none}.r-title .r-n{margin-left:-3px}
 .r-title small{font:600 14px/1 var(--led);color:var(--ink2)}
 .r-top,.r-next,.r-panel{display:flex;align-items:center;gap:6px;min-width:0}
-.r-who{flex:none;width:44px;font:600 13px/1 var(--led);color:var(--ink2);text-transform:uppercase}
-.r-name{font-size:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
-.r-pc{margin-left:auto;font:700 17px/1 var(--led);padding-left:6px}
+.r-who{flex:none;width:36px;font:600 12px/1 var(--led);color:var(--ink2);text-transform:uppercase}
+.r-name{font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.r-pc{margin-left:auto;font:700 16px/1 var(--led);padding-left:4px}
 .r-next .sc{margin-right:2px}.r-scr{margin-left:auto;font:600 13px/1 var(--led);color:var(--ink2)}
 .r-note{font-size:15px;color:var(--ink2)}
 .r-panel{flex-wrap:wrap;gap:4px 10px;padding-top:4px;border-top:1px dashed var(--line);font-size:13px}
@@ -627,8 +627,8 @@ function raceCard(r,open,tag){const rk=ranked(r),t=Date.parse(r.jump),gone=t<=Da
   const panel=pn?`<div class="r-panel">${others.map(x=>`<span class="r-t"><small>${escH(x.label.split("'")[0])}</small>${cloth(x.pick.no,r.code,x.pick.box)}</span>`).join("")}<span class="r-t r-pan"><small>Panel</small>${cloth(pn.pick.no,r.code,pn.pick.box)}</span><span class="agree a${pn.agree===pn.ts.length?"all":""}">${pn.agree}/${pn.ts.length} agree</span></div>`:"";
   const src=rk&&r.src==="quick"?`<span class="qtag">${QUICK[r.code]&&QUICK[r.code].priceOnly?"Price only":"Quick form"}</span>`:"";
   return `<details class="race${gone?" jumped":""}" data-id="${escH(r.id)}" ${open.has(r.id)?"open":""}><summary class="rsum">
-    <div class="r-when"><b>${hm||""}</b><small>${ap||""}</small>${gone?'<span class="cdn gone">jumped</span>':cdn(r.jump).replace("⏱ ","")}</div>
-    <div class="r-main"><div class="r-title"><b class="r-v">${escH(r.venue)}</b><b class="r-n">R${r.no}</b><small>${CODE[r.code]}${r.dist?" · "+r.dist+"m":""}</small>${src}</div>${pick}${panel}</div>
+    <div class="r-when"><b>${hm||""}</b><small>${ap||""}</small>${gone?'<span class="cdn gone">jumped</span>':cdn(r.jump).replace("⏱ ","")}<i class="r-meta">${CODE[r.code]}${r.dist?"<br>"+r.dist+"m":""}</i></div>
+    <div class="r-main"><div class="r-title"><b class="r-v">${escH(r.venue)}</b><b class="r-n">R${r.no}</b>${src}</div>${pick}${panel}</div>
     <span class="rchev">&#9656;</span></summary><div class="rbody">${open.has(r.id)?raceBody(r):""}</div></details>`}
 function render(){
   renderFollow();$("multi").innerHTML=multiHtml();if(typeof slipBar==="function")slipBar();
