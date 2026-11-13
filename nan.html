@@ -86,7 +86,7 @@ details.run[open]>summary{background:var(--paper2)}
 .empty{background:var(--paper);color:var(--ink);padding:14px;font-size:17px}
 .view{display:flex;gap:6px;margin-top:10px}
 .view button{flex:1;min-width:0;background:var(--tote2);color:var(--paper);border:2px solid var(--amber-dim);min-height:48px;font:400 20px/1 var(--display);letter-spacing:.6px;text-transform:uppercase}
-@media (max-width:480px){.view{flex-wrap:wrap}.view button{flex:1 1 40%;min-height:42px;font-size:18px}}
+@media (max-width:480px){.view{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.view button{min-height:42px;font-size:18px}.view button:first-child{grid-column:1/-1}}
 .view button[aria-pressed="true"]{background:var(--amber);color:var(--tote);border-color:var(--amber)}
 [hidden]{display:none!important}
 .sumgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px;margin-top:10px}
@@ -290,7 +290,7 @@ details.race>summary.rsum .rchev{align-self:center}
 <body>
 <header class="mast"><h1>Nan's Tips</h1><span class="sub" id="sub">Loading today's races…</span><a href="./?play=1">Play Off To The Races &#9656;</a></header>
 <main class="wrap">
-  <div class="view"><button data-view="tips" aria-pressed="true">Today's tips</button><button data-view="record" aria-pressed="false">Leaderboard</button><button data-view="bets" aria-pressed="false">My bets</button><button data-view="cricket" aria-pressed="false">Cricket</button></div>
+  <div class="view"><button data-view="tips" aria-pressed="true">Today's tips</button><button data-view="record" aria-pressed="false">Tipsters</button><button data-view="punters" aria-pressed="false">Punters</button><button data-view="bets" aria-pressed="false">My bets</button><button data-view="cricket" aria-pressed="false">Cricket</button></div>
   <section id="tipsView">
   <div class="bar">
     <div class="tabs dayc" id="dayc"></div>
@@ -308,9 +308,9 @@ details.race>summary.rsum .rchev{align-self:center}
   </section>
   <section id="betsView" hidden></section>
   <section id="cricketView" hidden></section>
+  <section id="puntersView" hidden><div class="calc board players" id="players"><h3>Punters' leaderboard</h3><p>Loading…</p></div></section>
   <section id="recordView" hidden>
     <div class="note" id="recNote">Loading Nan's record…</div>
-    <div class="calc board players" id="players"><h3>Players' leaderboard</h3><p>Loading…</p></div>
     <div class="calc board" id="board"><h3>Tipster leaderboard</h3><p>Loading…</p></div>
     <div class="sumgrid" id="recSum"></div>
     <div class="bar"><div class="tabs days" id="recDays"></div></div>
@@ -434,7 +434,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.23.0"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.23.1"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -918,7 +918,7 @@ let PB={players:null,busy:false,err:"",msg:"",nameIn:null};
 async function loadPlayers(){if(PB.busy)return;PB.busy=true;try{const j=await getJSON(BETS_URL+"?board=1");PB.players=j.players||[];PB.err=""}catch(e){PB.err="Couldn't load the players' board."}PB.busy=false;renderPlayers()}
 function renderPlayers(){const el=$("players");if(!el)return;const me=SYNC.name,ps=PB.players;
   const nm=n=>escH(n);
-  el.innerHTML=`<h3>Players' leaderboard</h3>
+  el.innerHTML=`<h3>Punters' leaderboard</h3>
     <p class="pl-sub">Ranked by the money in each account, less anything owed to Nan. Everyone starts with $1,000.</p>
     ${!me?`<div class="pl-join"><span>${SYNC.code?"Pick a name to get on the board.":"Place a bet to start your account, then pick a name."}</span><button class="ffload" data-gotoname>Pick my name</button></div>`:""}
     ${PB.err?`<p class="minus">${PB.err}</p>`:!ps?`<p>Loading…</p>`:!ps.length?`<p>No one's on the board yet. Pick a name and settle a bet to be first.</p>`:(()=>{const mi=me?ps.findIndex(p=>p.name===me):-1;
@@ -959,7 +959,7 @@ function paintSync(){const el=document.getElementById("syncSt");if(el)el.textCon
 function syncHtml(){return `<div class="calc" id="acctBox"><h3>Your account</h3>
   <p>Your bets, balance and loans are saved to your account, so you can pick them up on your phone or any computer.</p>
   <div class="acct"><div><small>Your account code</small><b class="acode">${SYNC.code||"…"}</b><small id="syncSt">${syncLine()}</small></div></div>
-  <div class="bb-h" id="nameBox">Your name on the players' leaderboard</div>
+  <div class="bb-h" id="nameBox">Your name on the Punters' leaderboard</div>
   <div class="lact"><input id="nameIn" maxlength="16" placeholder="e.g. Ben W" autocomplete="nickname" value="${escH(PB.nameIn!=null?PB.nameIn:SYNC.name||"")}"><button class="ffload" data-sname>${SYNC.name?"Change name":"Save name"}</button></div>
   ${PB.msg?`<p class="loanmsg">${PB.msg}</p>`:""}
   <p class="calc-out"><small><b>On another device:</b> open this link, or open Nan's Tips, go to My bets, and enter your code below. Keep your code to yourself: anyone with it can see and place bets on this account.</small></p>
@@ -1474,8 +1474,9 @@ function toTop(id){const el=$(id)||$(ST.view+"View");if(!el)return;try{el.scroll
 function setView(v,focus){
   const was=ST.view;
   document.querySelectorAll("[data-view]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.view===v));
-  ST.view=v;$("tipsView").hidden=v!=="tips";$("recordView").hidden=v!=="record";$("betsView").hidden=v!=="bets";$("cricketView").hidden=v!=="cricket";
-  if(v==="record"){if(!REC.sum)loadRecord();else renderRecord();loadBoard();renderPlayers();loadPlayers()}
+  ST.view=v;$("tipsView").hidden=v!=="tips";$("recordView").hidden=v!=="record";$("betsView").hidden=v!=="bets";$("cricketView").hidden=v!=="cricket";$("puntersView").hidden=v!=="punters";
+  if(v==="record"){if(!REC.sum)loadRecord();else renderRecord();loadBoard()}
+  if(v==="punters"){renderPlayers();loadPlayers()}
   if(v==="bets"){renderBets();checkOfficial(false);crCheck()}
   if(v==="cricket"){renderCricket();loadCricket(false).then(crCheck)}
   slipBar();
@@ -1498,7 +1499,7 @@ document.addEventListener("change",e=>{if(e.target.id==="stakeIn"){const v=Math.
   pullBK()})();
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")pullBK()});
 setInterval(()=>{if(document.visibilityState==="visible")pullBK()},30e3);
-if(location.hash==="#record")setView("record");else if(location.hash==="#cricket")setView("cricket");else if(location.hash==="#bets")setView("bets",BK.slip.length?"slipBox":null);else slipBar();
+if(location.hash==="#record")setView("record");else if(location.hash==="#punters")setView("punters");else if(location.hash==="#cricket")setView("cricket");else if(location.hash==="#bets")setView("bets",BK.slip.length?"slipBox":null);else slipBar();
 function refreshAllow(){clearTimeout(refreshAllow.t);refreshAllow.t=setTimeout(()=>getJSON(SB+"/otr-nan?follow=1").then(j=>{ALLOW=j.allowance||ALLOW;CREDITS=j.credits||CREDITS;$("allow").innerHTML=creditsHtml(CREDITS)}).catch(()=>{}),1500)}
 setInterval(refreshAllow,120e3);
 loadAll();
