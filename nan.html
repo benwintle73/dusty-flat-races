@@ -548,7 +548,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.30.2"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.30.3"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -2387,7 +2387,7 @@ function renderBets(){
     <div class="sum"><h3>Official profit</h3><div class="big ${b.profit>=0?"plus":"minus"}">${b.profit>=0?"+":""}${money(b.profit)}</div><p>From settled bets. Started with ${money(BK.start)}${BK.topups?` + ${money(BK.topups)} added`:""}${b.owed>0?` · owe Nan ${money(b.owed)}`:""}.</p></div></div>
     <div class="calc-row"><button data-bcheck ${BKBUSY?"disabled":""}>${BKBUSY?"Checking…":"Check official results"}</button></div>${CHECKMSG?`<p class="checkmsg">${CHECKMSG}</p>`:""}
     ${loanHtml(b)}
-    ${groups.map(([h,f])=>{const ts=live.filter(t=>f(t)&&(h==="Cancelled"||t.status!=="cancelled"));return ts.length?`<h3 class="bgrp">${h} (${ts.length})</h3><div class="races">${ts.map(tkHtml).join("")}</div>`:""}).join("")}
+    ${groups.map(([h,f])=>{const ts=live.filter(t=>f(t)&&(h==="Cancelled"||t.status!=="cancelled"));if(h==="Before the jump")ts.sort((a,b)=>Date.parse(a.jump||a.start)-Date.parse(b.jump||b.start));return ts.length?`<h3 class="bgrp">${h} (${ts.length})</h3><div class="races">${ts.map(tkHtml).join("")}</div>`:""}).join("")}
     ${syncHtml()}
     <p class="note">Play money only. Bets are saved to your account (see Your account) and on this device. Cricket bets pay the price you took and settle on the official result from ESPN. Win and place pay the official tote dividend; exotics pay the official dividend for that bet, scaled by your flexi percentage (outlay ÷ combinations). Duet, doubles, trebles, quaddies and Big 6s are estimated, because the results feed doesn't carry those pools; All Up pays the official win dividends multiplied together. Scratched selections are refunded (in a box or standout, just their combinations).</p>`;
   slipBar();
