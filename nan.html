@@ -422,7 +422,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.22.0"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.22.1"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -1232,6 +1232,8 @@ document.addEventListener("click",e=>{
   const g=s=>e.target.closest(s);let b;
   if(b=g("[data-hlbet]")){const s=b.dataset.hlbet,k=s.lastIndexOf("|"),id=s.slice(0,k),no=+s.slice(k+1),r=RACES.find(x=>x.id===id);if(!r)return;
     if(!visible().some(x=>x.id===id)){ST.code="all";ST.meet="all"}
+    // make sure the race is on the page: past the first 10, show enough races to include it
+    {const ix=visible().findIndex(x=>x.id===id);if(ix>=(ST.cap||10))ST.cap=ix+1}
     Object.assign(BUILD,{id,type:"win",style:"straight",sel:[no],pos:0,legs:[[],[],[],[]]});render();
     const d=document.querySelector(`details.race[data-id="${CSS.escape(id)}"]`);if(!d)return;if(!d.open){d.open=true;const rb=d.querySelector(".rbody");if(rb)rb.innerHTML=raceBody(r)}
     setTimeout(()=>{const x=d.querySelector("[data-badd]")||d;try{x.scrollIntoView({block:"center",behavior:"smooth"})}catch(e){x.scrollIntoView()}},60);
