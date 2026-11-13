@@ -145,6 +145,19 @@ details.follow p{margin:0 12px 8px;font-size:15px;color:#d9c9a3}
 .builder{background:var(--paper2);padding:8px 10px;margin:6px 0}
 .mwarn{background:#fff3cd;border-left:4px solid #d99a1e;padding:8px 10px;margin:8px 0;font-size:15px}
 .multi{margin:10px 0}.mleg{border-top:1px solid #0002;padding:6px 0}.mleg .rmeta button{margin-left:8px}
+.bb{padding:10px}
+.bb-h{font:600 12px/1 var(--led);color:var(--ink2);text-transform:uppercase;letter-spacing:.5px;margin:12px 0 6px}.bb>.bb-h:first-child{margin-top:2px}
+.bb-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}.bb-g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.bb-grid button,.bb-act button,.bb-run{background:var(--paper);color:var(--ink);border:1px solid var(--line);min-height:42px;padding:4px 6px;font:700 15px/1.1 var(--led);cursor:pointer}
+.bb-grid button[aria-pressed="true"],.bb-run[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.bb-own{display:flex;align-items:center;gap:3px;font:700 16px/1 var(--led)}.bb-own input{width:100%;min-width:0;min-height:42px;font:700 16px/1 var(--led);padding:0 6px;border:1px solid var(--line);box-sizing:border-box}
+.bb-runners{display:grid;grid-template-columns:1fr;gap:4px}
+@media (min-width:700px){.bb-runners{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.bb-run{display:flex;align-items:center;gap:9px;text-align:left;width:100%;min-height:46px;padding:0 10px}
+.bb-nm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:16px}
+.bb-run i{font-style:normal;color:var(--good);font-weight:700}.bb-run[aria-pressed="true"] i{color:var(--amber)}
+.bb-px{font:600 14px/1 var(--led);color:var(--ink2);flex:none}.bb-run[aria-pressed="true"] .bb-px{color:var(--paper)}
+.bb-act{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px;margin-top:8px}.bb-act .ffload{background:var(--amber);color:var(--tote);border:0;min-height:48px;font-size:16px}.bb-act .ffload:disabled{opacity:.55}.bb-act [data-bclose]{padding:0 16px}
 .bsel{display:inline-flex;align-items:center;gap:5px}.bsel i{font-style:normal;color:var(--good);font-weight:700}
 .confirmbox{border-top-color:var(--amber);outline:3px solid var(--amber);margin-bottom:10px}
 .notyet{background:#fff3cd;border-left:5px solid var(--amber);padding:8px 10px;margin:4px 0 8px;font-size:16px}
@@ -1037,15 +1050,20 @@ function builderHtml(r){
     :BUILD.style==="box"?`Pick ${k} or more runners: any ${k} of them can fill the first ${k===2?"two":k===3?"three":"four"} in any order${t==="duet"?" (Duet: any two of them in the first three)":""}. `
     :BUILD.style==="standout"?`Pick runners for each place in turn: choose a place below, then tap its runners. `
     :`Pick ${k} runners${ordered(t)?" in finishing order":""}${t==="duet"?" to both run in the first three":""}. `;
-  return `<div class="builder">
-    <div class="calc-row"><span class="calc-l">This race</span>${SINGLE.map(x=>`<button data-btype="${x}" aria-pressed="${t===x}">${BT[x][0]}</button>`).join("")}</div>
-    <div class="calc-row"><span class="calc-l">Over several races</span>${MULTI.map(x=>`<button data-btype="${x}">${BT[x][0]}</button>`).join("")}</div>
-    ${styles.length?`<div class="calc-row"><span class="calc-l">Style</span>${styles.map(([s,l])=>`<button data-bstyle="${s}" aria-pressed="${BUILD.style===s}">${l}</button>`).join("")}</div>`:""}
-    ${BUILD.style==="standout"&&ex?`<div class="calc-row"><span class="calc-l">Place</span>${Array.from({length:k},(_,i)=>`<button data-bpos="${i}" aria-pressed="${BUILD.pos===i}">${ord(i+1)} (${(BUILD.legs[i]||[]).length})</button>`).join("")}</div>`:""}
-    <div class="calc-row"><span class="calc-l">Pick</span>${f.map(u=>`<button class="bsel" data-bsel="${u.no}" aria-pressed="${on(u.no)}">${cloth(u.no,r.code,u.box)} ${escH(u.name)}${marks(u.no)?` <i>${marks(u.no)}</i>`:""}</button>`).join("")}</div>
-    <div class="calc-row"><span class="calc-l">${ex?"Outlay":"Stake"}</span>${[0.5,1,2,3,5,10,20,50].map(v=>`<button data-bstake="${v}" aria-pressed="${BUILD.stake===v}">${v<1?(v*100)+"c":"$"+v}</button>`).join("")}<label class="calc-own">$<input id="bStake" type="number" min="0.5" step="0.5" inputmode="decimal" value="${BUILD.stake}"></label></div>
+  const px=u=>u.est&&u.est<500?`<small class="bb-px">$${u.est.toFixed(2)}</small>`:"";
+  return `<div class="builder bb">
+    <div class="bb-h">Bet type · this race</div>
+    <div class="bb-grid">${SINGLE.map(x=>`<button data-btype="${x}" aria-pressed="${t===x}">${BT[x][0]}</button>`).join("")}</div>
+    <div class="bb-h">Over several races</div>
+    <div class="bb-grid bb-g3">${MULTI.map(x=>`<button data-btype="${x}">${BT[x][0]}</button>`).join("")}</div>
+    ${styles.length?`<div class="bb-h">Style</div><div class="bb-grid bb-g3">${styles.map(([s,l])=>`<button data-bstyle="${s}" aria-pressed="${BUILD.style===s}">${l}</button>`).join("")}</div>`:""}
+    ${BUILD.style==="standout"&&ex?`<div class="bb-h">Place</div><div class="bb-grid">${Array.from({length:k},(_,i)=>`<button data-bpos="${i}" aria-pressed="${BUILD.pos===i}">${ord(i+1)} (${(BUILD.legs[i]||[]).length})</button>`).join("")}</div>`:""}
+    <div class="bb-h">${k>1||ex?"Pick runners":"Pick a runner"}</div>
+    <div class="bb-runners">${[...f].sort((a,b)=>a.no-b.no).map(u=>`<button class="bsel bb-run" data-bsel="${u.no}" aria-pressed="${on(u.no)}">${cloth(u.no,r.code,u.box)}<span class="bb-nm">${escH(u.name)}</span>${marks(u.no)?`<i>${marks(u.no)}</i>`:""}${px(u)}</button>`).join("")}</div>
+    <div class="bb-h">${ex?"Outlay":"Stake"}</div>
+    <div class="bb-grid">${[0.5,1,2,5,10,20,50].map(v=>`<button data-bstake="${v}" aria-pressed="${BUILD.stake===v}">${v<1?(v*100)+"c":"$"+v}</button>`).join("")}<label class="bb-own">$<input id="bStake" type="number" min="0.5" step="0.5" inputmode="decimal" value="${BUILD.stake}"></label></div>
     <p class="calc-out">${help}${ex&&combos(tk)?`<b>${comboLine(tk)}</b> (flexi: a ${money(BUILD.stake)} outlay over ${combos(tk)} combination${combos(tk)===1?"":"s"}). `:""}Pays the official tote dividend.</p>
-    <div class="calc-row"><button class="ffload" data-badd ${ok&&BUILD.stake>=0.5?"":"disabled"}>Add ${money(cost)} ${BT[t][0].toLowerCase()}${styleName(tk)} to bet slip</button><button data-bclose>Close</button></div></div>`;
+    <div class="bb-act"><button class="ffload" data-badd ${ok&&BUILD.stake>=0.5?"":"disabled"}>Add ${money(cost)} ${BT[t][0].toLowerCase()}${styleName(tk)} to bet slip</button><button data-bclose>Close</button></div></div>`;
 }
 /* multi-race bets: the panel at the top of Today's tips */
 function autoLegs(r,type){const k=BT[type][1]||2,later=RACES.filter(x=>x.code===r.code&&x.venue===r.venue&&x.no>=r.no&&Date.now()<Date.parse(x.jump)).sort((a,b)=>a.no-b.no);
