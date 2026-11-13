@@ -86,7 +86,7 @@ details.run[open]>summary{background:var(--paper2)}
 .empty{background:var(--paper);color:var(--ink);padding:14px;font-size:17px}
 .view{display:flex;gap:6px;margin-top:10px}
 .view button{flex:1;min-width:0;background:var(--tote2);color:var(--paper);border:2px solid var(--amber-dim);min-height:48px;font:400 20px/1 var(--display);letter-spacing:.6px;text-transform:uppercase}
-@media (max-width:480px){.view{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.view button{min-height:42px;font-size:18px}.view button:first-child{grid-column:1/-1}}
+@media (max-width:480px){.view{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.view button{min-height:42px;font-size:18px}}
 .view button[aria-pressed="true"]{background:var(--amber);color:var(--tote);border-color:var(--amber)}
 [hidden]{display:none!important}
 .sumgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px;margin-top:10px}
@@ -278,6 +278,15 @@ details.race>summary.rsum .rchev{align-self:center}
 .cro{display:inline-flex;align-items:center;gap:3px;flex:none}.cro b{font:700 14px/1 var(--led)}
 .crm .r-top .tm{height:26px;min-width:40px;font-size:13px}
 .crsides button{display:inline-flex;align-items:center;gap:6px}.crsides button b{font-family:var(--led)}
+.rs{padding:10px}.rs-codes{margin-bottom:8px}
+.rs-codes button{background:var(--paper2);color:var(--ink);border:1px solid var(--line);min-height:38px;font:700 15px/1 var(--led);cursor:pointer}.rs-codes button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.rs-nav{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:6px;align-items:center}
+.rs-nav button{background:var(--amber);color:var(--tote);border:0;min-height:44px;padding:0 12px;font:700 17px/1 var(--led);cursor:pointer}.rs-nav button:disabled{opacity:.35}
+.rs-nav select{min-height:44px;min-width:0;width:100%;font:700 16px/1 var(--led);padding:0 6px;border:1px solid var(--line);background:var(--paper)}
+.rs-head{display:flex;align-items:center;gap:8px;margin:12px 0 2px;min-width:0;white-space:nowrap}.rs-v{font:400 24px/1.05 var(--display);text-transform:uppercase;letter-spacing:.3px;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.rs-meta{margin:2px 0 4px;color:var(--ink2);font:600 14px/1.3 var(--led)}.rs-tips{margin:6px 0 0;display:flex;align-items:center;gap:5px;font:600 14px/1 var(--led);color:var(--ink2)}.rs-tips .sc{min-width:22px;height:22px;font-size:13px}
+.rs-i{margin:6px 0 0;font:600 12px/1 var(--led);text-transform:uppercase;letter-spacing:.4px;color:var(--ink2)}
+#racesView [data-bclose],#racesView .bb-multi{display:none}#racesView .bb-act{grid-template-columns:1fr}
 .crcomp{overflow:hidden;text-overflow:ellipsis;min-width:0}
 .crwhy{font-style:italic;color:var(--ink2);margin:4px 0}
 .crhead p{margin:4px 0}
@@ -293,7 +302,7 @@ details.race>summary.rsum .rchev{align-self:center}
 <body>
 <header class="mast"><h1>Nan's Tips</h1><span class="sub" id="sub">Loading today's races…</span><a href="./?play=1">Play Off To The Races &#9656;</a></header>
 <main class="wrap">
-  <div class="view"><button data-view="tips" aria-pressed="true">Today's tips</button><button data-view="record" aria-pressed="false">Tipsters</button><button data-view="punters" aria-pressed="false">Punters</button><button data-view="bets" aria-pressed="false">My bets</button><button data-view="cricket" aria-pressed="false">Cricket</button></div>
+  <div class="view"><button data-view="tips" aria-pressed="true">Today's tips</button><button data-view="races" aria-pressed="false">Races</button><button data-view="record" aria-pressed="false">Tipsters</button><button data-view="punters" aria-pressed="false">Punters</button><button data-view="bets" aria-pressed="false">My bets</button><button data-view="cricket" aria-pressed="false">Cricket</button></div>
   <section id="tipsView">
   <div class="bar">
     <div class="tabs dayc" id="dayc"></div>
@@ -310,6 +319,7 @@ details.race>summary.rsum .rchev{align-self:center}
   <div class="races" id="races"></div>
   </section>
   <section id="betsView" hidden></section>
+  <section id="racesView" hidden></section>
   <section id="cricketView" hidden></section>
   <section id="puntersView" hidden><div class="calc board players" id="players"><h3>Punters' leaderboard</h3><p>Loading…</p></div></section>
   <section id="recordView" hidden>
@@ -437,7 +447,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.24.0"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.25.0"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -703,6 +713,7 @@ function raceCard(r,open,tag){const rk=ranked(r),t=Date.parse(r.jump),gone=t<=Da
     <div class="r-main"><div class="r-title"><span class="r-time">${hm||""}<small>${ap||""}</small></span><b class="r-v">${escH(r.venue)}</b><b class="r-n">R${r.no}</b>${src}<span class="r-cd">${gone?'<span class="cdn gone">jumped</span>':cdn(r.jump).replace("⏱ ","")}</span></div>${pick}${panel}</div>
     <span class="rchev">&#9656;</span></summary><div class="rbody">${open.has(r.id)?raceBody(r):""}</div></details>`}
 function render(){
+  if(ST.view==="races")renderRaces();
   renderFollow();$("multi").innerHTML=multiHtml();if(typeof slipBar==="function")slipBar();
   $("codes").innerHTML=[["all","All"],["H","Horses"],["D","Dogs"],["N","Harness"]].map(([k,l])=>`<button data-code="${k}" aria-pressed="${ST.code===k}">${l}</button>`).join("");
   const meets=[...new Map(RACES.filter(r=>ST.code==="all"||r.code===ST.code).map(r=>[`${r.code}|${r.venue}`,r])).values()].sort((a,b)=>a.venue.localeCompare(b.venue));
@@ -1127,8 +1138,8 @@ function builderHtml(r){
   return `<div class="builder bb">
     <div class="bb-h">Bet type · this race</div>
     <div class="bb-grid">${SINGLE.map(x=>`<button data-btype="${x}" aria-pressed="${t===x}">${BT[x][0]}</button>`).join("")}</div>
-    <div class="bb-h">Over several races</div>
-    <div class="bb-grid bb-g3">${MULTI.map(x=>`<button data-btype="${x}">${BT[x][0]}</button>`).join("")}</div>
+    <div class="bb-h bb-multi">Over several races</div>
+    <div class="bb-grid bb-g3 bb-multi">${MULTI.map(x=>`<button data-btype="${x}">${BT[x][0]}</button>`).join("")}</div>
     ${styles.length?`<div class="bb-h">Style</div><div class="bb-grid bb-g3">${styles.map(([s,l])=>`<button data-bstyle="${s}" aria-pressed="${BUILD.style===s}">${l}</button>`).join("")}</div>`:""}
     ${BUILD.style==="standout"&&ex?`<div class="bb-h">Place</div><div class="bb-grid">${Array.from({length:k},(_,i)=>`<button data-bpos="${i}" aria-pressed="${BUILD.pos===i}">${ord(i+1)} (${(BUILD.legs[i]||[]).length})</button>`).join("")}</div>`:""}
     <div class="bb-h">${k>1||ex?"Pick runners":"Pick a runner"}${(BUILD.style==="standout"?(BUILD.legs[BUILD.pos]||[]).length:BUILD.sel.length)?` <span class="bb-cnt">· ${BUILD.style==="standout"?(BUILD.legs[BUILD.pos]||[]).length:BUILD.sel.length} picked</span>`:""}</div>
@@ -1477,13 +1488,37 @@ document.addEventListener("change",e=>{if(e.target.id==="crStake"){CR.stake=Math
 setInterval(()=>{if(ST.view==="cricket"&&!document.activeElement?.matches?.("#crStake"))renderCricket()},60e3);
 setInterval(()=>{if(ST.view==="cricket")loadCricket(false)},15*60e3);
 setInterval(()=>{if(ST.view==="cricket"||ST.view==="bets")crCheck()},5*60e3);
+/* ---------- Races: one race at a time, the full field with its form, and the bet builder. Prev / Next race. ---------- */
+const RS={id:null,code:"all"};
+function raceList(){const now=Date.now();return RACES.filter(r=>(RS.code==="all"||r.code===RS.code)&&Date.parse(r.jump)>now-60e3).sort((a,b)=>Date.parse(a.jump)-Date.parse(b.jump))}
+function renderRaces(){const el=$("racesView");if(!el)return;const list=raceList();
+  let r=list.find(x=>x.id===RS.id);if(!r){r=list[0];RS.id=r?r.id:null}
+  const codes=[["all","All"],["H","Horses"],["D","Dogs"],["N","Harness"]].map(([k,l])=>`<button data-rscode="${k}" aria-pressed="${RS.code===k}">${l}</button>`).join("");
+  if(!r){el.innerHTML=`<div class="calc rs"><div class="bb-grid rs-codes">${codes}</div><p>No more races today${RS.code!=="all"?" for "+CODE[RS.code].toLowerCase():""}. Check back tomorrow.</p></div>`;return}
+  const i=list.indexOf(r),[hm,ap]=timeOf(r.jump).split(" "),f=fieldOf(r),rk=f?ranked(r):null,pn=f?panelOf(r):null,nan=rk&&rk[0];
+  if(BUILD.id!==r.id){BUILD.id=r.id;BUILD.sel=[];BUILD.form=null}
+  el.innerHTML=`<div class="calc rs">
+    <div class="bb-grid rs-codes">${codes}</div>
+    <div class="rs-nav"><button data-rsgo="-1" ${i>0?"":"disabled"}>◀ Prev</button><select id="rsPick" aria-label="Pick a race">${list.map(x=>`<option value="${escH(x.id)}" ${x.id===r.id?"selected":""}>${timeOf(x.jump)} · ${escH(x.venue)} R${x.no}</option>`).join("")}</select><button data-rsgo="1" ${i<list.length-1?"":"disabled"}>Next ▶</button></div>
+    <div class="rs-head"><span class="r-time">${hm||""}<small>${ap||""}</small></span><b class="rs-v">${escH(r.venue)} R${r.no}</b><span class="r-cd">${Date.now()>=Date.parse(r.jump)?'<span class="cdn gone">jumped</span>':cdn(r.jump).replace("⏱ ","")}</span></div>
+    <p class="rs-meta">${[CODE[r.code],r.dist?r.dist+"m":"",escH(r.name||""),r.scr&&r.scr.length?`Scratched: ${r.scr.map(u=>u.no).join(", ")}`:""].filter(Boolean).join(" · ")}</p>
+    ${nan?`<p class="rs-tips">Tips if you want them: Nan ${cloth(nan.u.no,r.code,nan.u.box)}${pn?` · Panel ${cloth(pn.pick.no,r.code,pn.pick.box)}`:""}</p>`:""}
+    <p class="rs-i">Race ${i+1} of ${list.length}${RS.code==="all"?"":" "+CODE[RS.code].toLowerCase()} still to run today</p>
+  </div>
+  ${f?builderHtml(r):`<p class="note">${noField(r)}</p>`}`;
+}
+function rsGo(d){const list=raceList(),i=list.findIndex(x=>x.id===RS.id),n=list[i+d];if(!n)return;RS.id=n.id;renderRaces();toTop("racesView")}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-rsgo],[data-rscode]");if(!b)return;
+  if(b.dataset.rscode){RS.code=b.dataset.rscode;RS.id=null;return renderRaces()}rsGo(+b.dataset.rsgo)});
+document.addEventListener("change",e=>{if(e.target.id==="rsPick"){RS.id=e.target.value;renderRaces()}});
 function toTop(id){const el=$(id)||$(ST.view+"View");if(!el)return;try{el.scrollIntoView({block:"start",behavior:"instant"})}catch(e){try{el.scrollIntoView(true)}catch(_){}}try{window.scrollBy(0,-10)}catch(e){}}
 function setView(v,focus){
   const was=ST.view;
   document.querySelectorAll("[data-view]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.view===v));
-  ST.view=v;$("tipsView").hidden=v!=="tips";$("recordView").hidden=v!=="record";$("betsView").hidden=v!=="bets";$("cricketView").hidden=v!=="cricket";$("puntersView").hidden=v!=="punters";
+  ST.view=v;$("racesView").hidden=v!=="races";$("tipsView").hidden=v!=="tips";$("recordView").hidden=v!=="record";$("betsView").hidden=v!=="bets";$("cricketView").hidden=v!=="cricket";$("puntersView").hidden=v!=="punters";
   if(v==="record"){if(!REC.sum)loadRecord();else renderRecord();loadBoard()}
   if(v==="punters"){renderPlayers();loadPlayers()}
+  if(v==="races"){RS.id=null;renderRaces()}
   if(v==="bets"){renderBets();checkOfficial(false);crCheck()}
   if(v==="cricket"){renderCricket();loadCricket(false).then(crCheck)}
   slipBar();
@@ -1506,7 +1541,7 @@ document.addEventListener("change",e=>{if(e.target.id==="stakeIn"){const v=Math.
   pullBK()})();
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")pullBK()});
 setInterval(()=>{if(document.visibilityState==="visible")pullBK()},30e3);
-if(location.hash==="#record")setView("record");else if(location.hash==="#punters")setView("punters");else if(location.hash==="#cricket")setView("cricket");else if(location.hash==="#bets")setView("bets",BK.slip.length?"slipBox":null);else slipBar();
+if(location.hash==="#record")setView("record");else if(location.hash==="#races")setView("races");else if(location.hash==="#punters")setView("punters");else if(location.hash==="#cricket")setView("cricket");else if(location.hash==="#bets")setView("bets",BK.slip.length?"slipBox":null);else slipBar();
 function refreshAllow(){clearTimeout(refreshAllow.t);refreshAllow.t=setTimeout(()=>getJSON(SB+"/otr-nan?follow=1").then(j=>{ALLOW=j.allowance||ALLOW;CREDITS=j.credits||CREDITS;$("allow").innerHTML=creditsHtml(CREDITS)}).catch(()=>{}),1500)}
 setInterval(refreshAllow,120e3);
 loadAll();
