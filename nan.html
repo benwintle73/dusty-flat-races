@@ -225,6 +225,9 @@ body{padding-bottom:60px}
 #loanClock{font-weight:700;color:var(--ink)}
 .loanmsg{font-weight:700;margin:6px 0}
 .nanpay{color:#8e3a2c!important}
+.payrow{border-top:1px dashed var(--line);margin-top:10px;padding-top:2px}
+.nan-loan .bb-grid button{background:var(--paper2);color:var(--ink);border:1px solid var(--line);min-height:42px;font:700 16px/1 var(--led);cursor:pointer}.nan-loan .bb-grid button[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}.nan-loan .bb-grid button:disabled{opacity:.4}
+.lact{display:grid;grid-template-columns:118px minmax(0,1fr);gap:5px;margin-top:5px}.lact .ffload{min-height:44px;font:700 17px/1 var(--led)}.lact .paynan{background:var(--good);color:#fff}
 .bwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
 @media (max-width:560px){.btable{font-size:14px}.btable th,.btable td{padding:5px 3px}.btable th{font-size:12px;line-height:1.15}.board h3{font-size:22px}}
 details.race>summary.rsum{grid-template-columns:minmax(0,1fr) 14px;gap:0 8px;align-items:center;padding:8px 10px}
@@ -419,7 +422,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.21.1"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.22.0"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -874,11 +877,11 @@ function loanWindow(now=Date.now()){let start=null,used=0;
   const live=start!==null&&now<start+LOAN_DAY;return {left:live?r2(Math.max(0,LOAN_MAX-used)):LOAN_MAX,resets:live?start+LOAN_DAY:null,used:live?r2(used):0}}
 // repayments in time order: each winning payout pays off what's owed at that moment
 function ledger(running){
-  const ev=BK.loans.map(l=>({t:l.at,loan:l.amount})),per={};
+  const ev=BK.loans.map(l=>({t:l.at,loan:l.amount})).concat((BK.repays||[]).map(x=>({t:x.at,pay:x.amount}))),per={};
   for(const t of BK.tickets){if(t.status==="cancelled")continue;const o=settleOf(t);
     if(o.state==="won"&&o.pay>0&&(o.src==="official"||o.src==="entered"||running&&o.src==="manual"))ev.push({t:o.src==="official"?((BK.off[t.rk]||{}).at||0):((BK.manualAt||{})[t.rk]||0),win:o.pay,id:t.id})}
-  ev.sort((a,b)=>a.t-b.t||(a.loan?-1:1));let debt=0,repaid=0,borrowed=0;
-  for(const e of ev){if(e.loan){debt+=e.loan;borrowed+=e.loan}else{const r=Math.min(debt,e.win);debt=r2(debt-r);repaid+=r;if(r>0)per[e.id]=r2(r)}}
+  ev.sort((a,b)=>a.t-b.t||(a.loan?-1:b.loan?1:0));let debt=0,repaid=0,borrowed=0;
+  for(const e of ev){if(e.loan){debt+=e.loan;borrowed+=e.loan}else if(e.pay){const r=Math.min(debt,e.pay);debt=r2(debt-r);repaid+=r}else{const r=Math.min(debt,e.win);debt=r2(debt-r);repaid+=r;if(r>0)per[e.id]=r2(r)}}
   return {debt:r2(debt),repaid:r2(repaid),borrowed:r2(borrowed),per};
 }
 function saveBK(){try{localStorage.setItem(BK_KEY,JSON.stringify(BK))}catch(e){}SYNC.dirty=true;saveSync();clearTimeout(SYNC_T);SYNC_T=setTimeout(pushBK,700)}
@@ -887,13 +890,14 @@ const SYNC_KEY="otr-nan-sync",BETS_URL=SB+"/otr-bets",CODE_RE=/^[A-HJ-NP-Z2-9]{4
 let SYNC=(()=>{try{const j=JSON.parse(localStorage.getItem(SYNC_KEY));if(j&&CODE_RE.test(j.code))return {rev:0,dirty:false,...j}}catch(e){}return {code:null,rev:0,dirty:true}})(),SYNC_T=0,SYNC_ST="",SYNC_AT=0,SYNC_BUSY=false,SYNC_MSG="";
 function saveSync(){try{localStorage.setItem(SYNC_KEY,JSON.stringify({code:SYNC.code,rev:SYNC.rev,dirty:SYNC.dirty}))}catch(e){}}
 function newCode(){const a="ABCDEFGHJKLMNPQRSTUVWXYZ23456789",v=new Uint32Array(8);crypto.getRandomValues(v);const c=[...v].map(x=>a[x%a.length]).join("");return c.slice(0,4)+"-"+c.slice(4)}
-const bkDefaults=b=>({start:1000,topups:0,tickets:[],slip:[],manual:{},manualAt:{},off:{},loans:[],...(b||{})});
+const bkDefaults=b=>({start:1000,topups:0,tickets:[],slip:[],manual:{},manualAt:{},off:{},loans:[],repays:[],...(b||{})});
 function mergeBK(mine,theirs){const a=bkDefaults(mine),b=bkDefaults(theirs),tk=new Map();
   for(const t of [...b.tickets,...a.tickets]){const o=tk.get(t.id);tk.set(t.id,!o?t:(t.status==="cancelled"||o.status==="cancelled")?{...t,status:"cancelled"}:t)}
   const ids=new Set(tk.keys()),slip=new Map();for(const t of [...b.slip,...a.slip])if(!ids.has(t.id))slip.set(t.id,t);
   const loans=new Map();for(const l of [...b.loans,...a.loans])loans.set(l.at+"|"+l.amount,l);
+  const repays=new Map();for(const x of [...(b.repays||[]),...(a.repays||[])])repays.set(x.at+"|"+x.amount,x);
   const manual={...b.manual},manualAt={...b.manualAt};for(const k in a.manual)if(!(k in manual)||(a.manualAt[k]||0)>=(manualAt[k]||0)){manual[k]=a.manual[k];manualAt[k]=a.manualAt[k]}
-  return {...b,...a,start:a.start,topups:Math.max(a.topups||0,b.topups||0),tickets:[...tk.values()],slip:[...slip.values()],loans:[...loans.values()].sort((x,y)=>x.at-y.at),manual,manualAt,off:{...b.off,...a.off}}}
+  return {...b,...a,start:a.start,topups:Math.max(a.topups||0,b.topups||0),tickets:[...tk.values()],slip:[...slip.values()],repays:[...repays.values()].sort((x,y)=>x.at-y.at),loans:[...loans.values()].sort((x,y)=>x.at-y.at),manual,manualAt,off:{...b.off,...a.off}}}
 function adopt(data){BK=bkDefaults(data);try{localStorage.setItem(BK_KEY,JSON.stringify(BK))}catch(e){}LEDGER={per:{}};try{render()}catch(e){}if(ST.view==="bets")renderBets();slipBar()}
 async function pushBK(){if(!SYNC.code||SYNC_BUSY)return;SYNC_BUSY=true;SYNC_ST="saving";paintSync();
   try{for(let i=0;i<3;i++){const r=await fetch(BETS_URL,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({code:SYNC.code,data:BK,base:SYNC.rev})}).then(r=>r.json());
@@ -1163,17 +1167,20 @@ let MANUAL=null,BKMSG="";
 function manualForm(t){const f=t.field||[],cur=BK.manual[t.rk]||[];
   return `<div class="builder">${[0,1,2,3].map(i=>`<label class="mrow">${ord(i+1)} <select data-mpos="${i}"><option value="">–</option>${[...f].sort((a,b)=>a.no-b.no).map(u=>`<option value="${u.no}" ${cur[i]===u.no?"selected":""}>${u.no}. ${escH(u.name)}</option>`).join("")}</select></label>`).join("")}
     <div class="calc-row"><button class="ffload" data-msave="${escH(t.rk)}">Save my result</button><button data-mclose>Close</button></div><p class="mwarn"><b>Heads up:</b> your result is temporary. When the official result comes in it replaces yours automatically, and if yours was wrong, every bet on this race is re-settled on the official result and your balance changes to match.</p><p class="calc-out"><small>Applies to every bet on this race.</small></p></div>`}
-let CHECKMSG="",LEDGER={per:{}},LOANMSG="",LOANAMT=100;
+let CHECKMSG="",LEDGER={per:{}},LOANMSG="",LOANAMT=100,PAYAMT=null;
 const hms=ms=>{ms=Math.max(0,ms);const h=Math.floor(ms/36e5),m=Math.floor(ms%36e5/6e4),s=Math.floor(ms%6e4/1e3);return `${h}h ${String(m).padStart(2,"0")}m ${String(s).padStart(2,"0")}s`};
 function loanHtml(b){const w=loanWindow();
   return `<div class="calc nan-loan"><h3>Borrow from Nan</h3>
     <div class="loan-top"><div><small>You owe Nan</small><b class="${b.owed>0?"minus":""}">${money(b.owed)}</b>${b.owedRun!==b.owed?`<small>${money(b.owedRun)} counting results you entered</small>`:""}</div>
       <div><small>Borrowed in all</small><b>${money(b.borrowed)}</b></div><div><small>Paid back</small><b>${money(b.repaid)}</b></div>
       <div><small>You can borrow now</small><b>${money(w.left)}</b>${w.resets?`<small>Resets in <span id="loanClock" data-at="${w.resets}">${hms(w.resets-Date.now())}</span></small>`:""}</div></div>
-    <div class="calc-row"><span class="calc-l">Borrow</span>${[100,250,500,1000].map(v=>`<button data-lamt="${v}" aria-pressed="${LOANAMT===v}">$${v}</button>`).join("")}<label class="calc-own">$<input id="loanIn" type="number" min="1" step="1" inputmode="decimal" value="${LOANAMT}"></label>
-      <button class="ffload" data-lborrow>Borrow ${money(Math.min(LOANAMT,w.left)||LOANAMT)} from Nan</button></div>
+    <div class="bb-h">Borrow</div><div class="bb-grid">${[100,250,500,1000].map(v=>`<button data-lamt="${v}" aria-pressed="${LOANAMT===v}">$${v}</button>`).join("")}</div>
+    <div class="lact"><label class="bb-own">$<input id="loanIn" type="number" min="1" step="1" inputmode="decimal" value="${LOANAMT}"></label><button class="ffload" data-lborrow>Borrow ${money(Math.min(LOANAMT,w.left)||LOANAMT)} from Nan</button></div>
+    ${(()=>{const owe=Math.max(b.owed,b.owedRun);if(!(owe>0))return "";const most=r2(Math.min(owe,Math.max(0,b.running))),amt=PAYAMT==null?most:Math.min(PAYAMT,most);
+      return `<div class="payrow"><div class="bb-h">Pay Nan back</div><div class="bb-grid">${[50,100,250].map(v=>`<button data-pamt="${v}" aria-pressed="${PAYAMT===v}" ${v>=most?"disabled":""}>$${v}</button>`).join("")}<button data-pamt="all" aria-pressed="${PAYAMT==null}">All</button></div>
+        <div class="lact"><label class="bb-own">$<input id="payIn" type="number" min="1" step="1" inputmode="decimal" value="${amt}"></label><button class="ffload paynan" data-lpay ${amt>0?"":"disabled"}>Pay Nan ${money(amt)} now</button></div></div>`})()}
     ${LOANMSG?`<p class="loanmsg">${LOANMSG}</p>`:""}
-    <p class="calc-out"><small>Nan lends up to ${money(LOAN_MAX)} in any 24 hours, in any amounts you like. The 24-hour clock starts the moment you borrow; until it runs out you can only borrow what's left of the ${money(LOAN_MAX)}. Then it resets. Whatever you owe comes out of your next winnings, the whole payout of a winning bet, until Nan is paid back. Refunds for scratchings aren't winnings.</small></p></div>`}
+    <p class="calc-out"><small>Nan lends up to ${money(LOAN_MAX)} in any 24 hours, in any amounts you like. The 24-hour clock starts the moment you borrow; until it runs out you can only borrow what's left of the ${money(LOAN_MAX)}. Then it resets. Whatever you owe comes out of your next winnings, the whole payout of a winning bet, until Nan is paid back. Refunds for scratchings aren't winnings. You can also pay her back sooner from your balance, any amount, any time.</small></p></div>`}
 function renderBets(){
   const b=balances(),el=$("betsView");if(!el)return;LEDGER=ledger(true);
   const live=BK.tickets.slice().sort((a,b)=>Date.parse(b.jump)-Date.parse(a.jump)),slipCost=BK.slip.reduce((a,t)=>a+costOf(t),0),closedSlip=BK.slip.some(t=>Date.now()>=Date.parse(t.jump));
@@ -1267,6 +1274,11 @@ document.addEventListener("click",e=>{
   if(g("[data-slink]")){const v=($("syncIn")||{}).value;return linkCode(v)}
   if(g("[data-bcheck]"))return checkOfficial(true);
   if(b=g("[data-lamt]")){LOANAMT=+b.dataset.lamt;LOANMSG="";return renderBets()}
+  if(b=g("[data-pamt]")){PAYAMT=b.dataset.pamt==="all"?null:+b.dataset.pamt;LOANMSG="";return renderBets()}
+  if(g("[data-lpay]")){const bb=balances(),owe=Math.max(bb.owed,bb.owedRun),most=r2(Math.min(owe,Math.max(0,bb.running))),amt=r2(PAYAMT==null?most:Math.min(PAYAMT,most));
+    if(!(amt>0)){LOANMSG=owe>0?"Not enough in your running balance to pay Nan back right now.":"You don't owe Nan anything.";return renderBets()}
+    (BK.repays=BK.repays||[]).push({at:Date.now(),amount:amt});PAYAMT=null;saveBK();const left=Math.max(balances().owed,balances().owedRun);
+    LOANMSG=left>0?`Paid Nan ${money(amt)}. You still owe her ${money(left)}.`:`Paid Nan ${money(amt)}. All square: Nan's very pleased.`;return renderBets()}
   if(g("[data-lborrow]")){const w=loanWindow(),amt=r2(LOANAMT);
     if(w.left<=0){LOANMSG=`Nan says no: you've had your ${money(LOAN_MAX)} for now. Come back in ${hms(w.resets-Date.now())}.`;return renderBets()}
     if(!(amt>0)){LOANMSG="Enter an amount to borrow.";return renderBets()}
@@ -1274,7 +1286,7 @@ document.addEventListener("click",e=>{
     BK.loans.push({at:Date.now(),amount:amt});saveBK();const w2=loanWindow();
     LOANMSG=`Nan lent you ${money(amt)}. ${w2.left>0?`You can borrow ${money(w2.left)} more before the clock runs out.`:"That's your lot until the clock runs out."}`;return renderBets()}
 });
-document.addEventListener("change",e=>{if(e.target.id==="loanIn"){LOANAMT=Math.max(0,Math.round((+e.target.value||0)*100)/100);LOANMSG="";return renderBets()}});
+document.addEventListener("change",e=>{if(e.target.id==="payIn"){PAYAMT=Math.max(0,Math.round((+e.target.value||0)*100)/100);LOANMSG="";return renderBets()}if(e.target.id==="loanIn"){LOANAMT=Math.max(0,Math.round((+e.target.value||0)*100)/100);LOANMSG="";return renderBets()}});
 setInterval(()=>{const c=document.getElementById("loanClock");if(!c)return;const left=+c.dataset.at-Date.now();if(left<=0)return renderBets();c.textContent=hms(left)},1000);
 document.addEventListener("change",e=>{if(e.target.id==="bStake"){BUILD.stake=Math.max(0.5,Math.round((+e.target.value||0.5)*100)/100);render()}if(e.target.id==="mStake"&&MB){MB.stake=Math.max(0.5,Math.round((+e.target.value||0.5)*100)/100);render()}});
 setInterval(()=>{if(ST.view==="bets"){checkOfficial(false);renderBets()}},5*60e3);
