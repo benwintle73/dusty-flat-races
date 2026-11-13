@@ -104,6 +104,14 @@ details.run[open]>summary{background:var(--paper2)}
 .rec .tag.won{background:var(--good);color:#fff}.rec .tag.plc{background:#b98a22;color:#fff}.rec .tag.lost{background:#8e3a2c;color:#fff}
 .rec .line{font-size:16px;grid-column:1/-1}.rec .line b{font-size:17px}
 .rec .order{font-size:15px;color:var(--ink2);grid-column:1/-1}
+.rlist{grid-column:1/-1;margin-top:4px;border-top:1px dashed var(--line);padding-top:6px}
+.rl-h{font:600 12px/1 var(--led);text-transform:uppercase;letter-spacing:.5px;color:var(--ink2);margin-bottom:4px}
+.rl-r{display:grid;grid-template-columns:34px 28px minmax(0,1fr) auto;align-items:center;column-gap:6px;min-height:30px;font-size:15px}
+.rl-p{font:700 15px/1 var(--led);color:var(--ink2)}.rl-n{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rl-r.mine .rl-n{font-weight:700;color:var(--ink)}.rl-r i{font:600 11px/1 var(--led);text-transform:uppercase;letter-spacing:.4px;color:var(--ink2);font-style:normal}.lg-w i{font-style:normal;font-weight:700;color:var(--good)}.lg-w i.n{color:#8e3a2c}
+.rl-note{margin:4px 0 0;font-size:13px;color:var(--ink2)}
+.lg-r{display:grid;grid-template-columns:34px minmax(0,1fr) auto;grid-template-areas:"p v w" ". s s" ". b b";column-gap:6px;row-gap:3px;align-items:center;padding:4px 0;border-bottom:1px solid #0001;font-size:15px}
+.lg-r .rl-p{grid-area:p}.lg-v{grid-area:v;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}.lg-w{grid-area:w;display:flex;align-items:center;gap:4px}.lg-s{grid-area:s}.lg-b{grid-area:b}
 .rec .order i{font-style:normal;font-weight:700;color:var(--good)}
 details.follow{background:var(--tote2);color:var(--paper);margin-top:8px}
 details.follow>summary{list-style:none;cursor:pointer;padding:11px 12px;font:600 18px/1.2 var(--led);display:flex;gap:6px;align-items:center}
@@ -411,7 +419,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.21.0"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.21.1"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -1116,17 +1124,22 @@ function multiHtml(){
 }
 function multiTicket0(){return {type:MB.type,stake:MB.stake,legs:MB.legs.map(l=>({sel:l.sel.map(n=>({no:n}))}))}}
 /* a placed multi-race bet */
+function resList(title,rows,code,mine,note){
+  return `<div class="rlist"><div class="rl-h">${title}</div>${rows.map(x=>{const me=x.no!=null&&mine.has(x.no);
+    return `<div class="rl-r${me?" mine":""}"><span class="rl-p">${ord(x.pos)}</span>${x.no!=null?cloth(x.no,code,x.box):"<span></span>"}<span class="rl-n">${escH(x.name||"")}</span><i>${me?"yours":""}</i></div>`}).join("")}${note?`<p class="rl-note">${note}</p>`:""}</div>`}
+const myNos=t=>new Set([...(t.sel||[]).map(x=>x.no),...(t.style==="standout"&&t.legs?t.legs.flat():[])]);
 function tkMulti(t){
   const o=settleOf(t),c=costOf(t);
-  const tag={open:["To run",""],waiting:["Waiting on results",""],won:[`Won ${money(o.pay||0)}`,"won"],lost:["Lost","lost"],void:["Scratched: refunded",""],cancelled:["Cancelled",""]}[o.state];
+  const tag={open:["To run",""],waiting:["Waiting on results",""],won:[`Won ${money(o.pay||0)}`,"won"],lost:["Lost","lost"],void:["Refunded",""],cancelled:["Cancelled",""]}[o.state];
   return `<div class="rec tk"><div><div class="rmeta">${timeOf(t.jump)}${t.status!=="cancelled"?cdn(t.jump):""} · ${BT[t.type][0]} · ${t.legs.length} races</div>
     <div class="line"><b>${BT[t.type][0]}</b> · ${money(c)} <small>(${comboLine(t)})</small></div></div>
     <span class="tag ${tag[1]}">${tag[0]}${o.src==="manual"&&o.state!=="open"?" · your result":""}</span>
     ${(LEDGER.per[t.id]||0)>0?`<div class="order nanpay">${money(LEDGER.per[t.id])} of it paid back to Nan</div>`:""}
-    ${t.legs.map((l,i)=>{const r=legResult(l),run=Date.now()>=Date.parse(l.jump);
-      return `<div class="order">Race ${i+1}: ${escH(l.venue)} R${l.no} ${timeOf(l.jump)} · ${l.sel.map(x=>cloth(x.no,l.code,x.box)).join(" ")}${r?` · won by ${r.no!=null?cloth(r.no,l.code,((l.field||[]).find(u=>u.no===r.no)||{}).box):"?"}${r.src==="manual"?" (your result)":""}`:""}
-        ${run&&!(BK.off[l.rk]&&BK.off[l.rk].fin)&&t.status!=="cancelled"?` <button data-bman="${escH(l.rk)}">${BK.manual[l.rk]?"Change my result":"Enter result"}</button>${BK.manual[l.rk]?` <button data-bmanclr="${escH(l.rk)}">Clear my result</button>`:""}`:""}</div>
-        ${MANUAL===l.rk?manualForm({field:l.field,rk:l.rk}):""}`}).join("")}
+    <div class="rlist"><div class="rl-h">Legs</div>${t.legs.map((l,i)=>{const r=legResult(l),run=Date.now()>=Date.parse(l.jump),hit=r&&r.no!=null&&l.sel.some(x=>x.no===r.no);
+      return `<div class="lg-r"><span class="rl-p">${i+1}</span><span class="lg-v">${escH(l.venue)} R${l.no} · ${timeOf(l.jump)}</span><span class="lg-w">${r?`${r.no!=null?cloth(r.no,l.code,((l.field||[]).find(u=>u.no===r.no)||{}).box):"?"} <i class="${hit?"y":"n"}">${hit?"✓":"✗"}</i>`:""}</span>
+        <span class="lg-s">${l.sel.map(x=>cloth(x.no,l.code,x.box)).join(" ")}${r&&r.src==="manual"?" <small>your result</small>":""}</span>
+        ${run&&!(BK.off[l.rk]&&BK.off[l.rk].fin)&&t.status!=="cancelled"?`<span class="lg-b"><button data-bman="${escH(l.rk)}">${BK.manual[l.rk]?"Change my result":"Enter result"}</button>${BK.manual[l.rk]?` <button data-bmanclr="${escH(l.rk)}">Clear</button>`:""}</span>`:""}</div>
+        ${MANUAL===l.rk?manualForm({field:l.field,rk:l.rk}):""}`}).join("")}</div>
     <div class="tkbtns">${o.state==="open"?`<button data-bcancel="${t.id}">Cancel bet</button>`:""}</div></div>`;
 }
 function slipBar(){const n=BK.slip.length,el=$("slipBar");if(!el)return;el.hidden=!n||ST.view==="bets";
@@ -1135,14 +1148,14 @@ function tkHtml(t){
   if(t.sport==="cricket")return crTk(t);
   if(isMulti(t.type))return tkMulti(t);
   const o=settleOf(t),c=costOf(t),man=BK.manual[t.rk],afterJump=Date.now()>=Date.parse(t.jump);
-  const tag={open:["To run",""],waiting:["Waiting on results",""],div:["Won, dividend coming",""],won:[`Won ${money(o.pay||0)}`,"won"],lost:["Lost","lost"],void:["Scratched: refunded",""],cancelled:["Cancelled",""]}[o.state];
+  const tag={open:["To run",""],waiting:["Waiting on results",""],div:["Won, dividend coming",""],won:[`Won ${money(o.pay||0)}`,"won"],lost:["Lost","lost"],void:["Refunded",""],cancelled:["Cancelled",""]}[o.state];
   return `<div class="rec tk"><div class="rmeta">${timeOf(t.jump)}${t.status!=="cancelled"?cdn(t.jump):""} · ${escH(t.venue)} R${t.no} · ${CODE[t.code]}</div>
     <span class="tag ${tag[1]}">${tag[0]}${o.src==="manual"?" · your result":""}</span>
     <div class="line"><b>${BT[t.type][0]}${styleName(t)}</b> ${selHtml(t)} · ${money(c)}</div>
     ${t.type==="ew"||comboLine(t)?`<div class="order">${t.type==="ew"?`${money(t.stake)} each way`:comboLine(t)}</div>`:""}
     ${(LEDGER.per[t.id]||0)>0?`<div class="order nanpay">${money(LEDGER.per[t.id])} of it paid back to Nan</div>`:""}
-    ${o.src==="manual"?`<div class="order">Your result: ${man.map((n,i)=>`${ord(i+1)} ${cloth(n,t.code,((t.field||[]).find(u=>u.no===n)||{}).box)}`).join(" · ")}. Estimated dividend for now: the official result will replace this when it's in, and overrides it if it's different.</div>`:""}
-    ${o.src==="official"&&BK.off[t.rk]?`<div class="order">Official: ${BK.off[t.rk].fin.slice().sort((a,b)=>a.pos-b.pos).slice(0,4).map(x=>`${ord(x.pos)} ${x.no!=null?cloth(x.no,t.code)+" ":""}${escH(x.name)}`).join(" · ")}</div>`:""}
+    ${o.src==="manual"?resList("Your result",man.map((n,i)=>{const u=(t.field||[]).find(x=>x.no===n)||{};return {pos:i+1,no:n,name:u.name,box:u.box}}),t.code,myNos(t),"Estimated dividend for now. The official result replaces this when it's in."):""}
+    ${o.src==="official"&&BK.off[t.rk]?resList("Official result",BK.off[t.rk].fin.slice().sort((a,b)=>a.pos-b.pos).slice(0,4).map(x=>({...x,box:((t.field||[]).find(u=>u.no===x.no)||{}).box})),t.code,myNos(t),o.state==="void"?"A runner you picked was scratched, so the stake came back.":""):""}
     <div class="tkbtns">${o.state==="open"?`<button data-bcancel="${t.id}">Cancel bet</button>`:""}${afterJump&&o.src!=="official"&&t.status!=="cancelled"?`<button data-bman="${escH(t.rk)}">${man?"Change my result":"Enter result"}</button>${man?`<button data-bmanclr="${escH(t.rk)}">Clear my result</button>`:""}`:""}</div>
     ${MANUAL===t.rk?manualForm(t):""}</div>`;
 }
