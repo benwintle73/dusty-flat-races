@@ -411,7 +411,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.20.1"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.21.0"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -1178,7 +1178,7 @@ function renderBets(){
     ${loanHtml(b)}
     ${groups.map(([h,f])=>{const ts=live.filter(t=>f(t)&&(h==="Cancelled"||t.status!=="cancelled"));return ts.length?`<h3 class="bgrp">${h} (${ts.length})</h3><div class="races">${ts.map(tkHtml).join("")}</div>`:""}).join("")}
     ${syncHtml()}
-    <p class="note">Play money only. Bets are saved to your account (see Your account) and on this device. Cricket bets pay the price you took, and settle on the result you enter (there's no official cricket results feed). Win and place pay the official tote dividend; exotics pay the official dividend for that bet, scaled by your flexi percentage (outlay ÷ combinations). Duet, doubles, trebles, quaddies and Big 6s are estimated, because the results feed doesn't carry those pools; All Up pays the official win dividends multiplied together. Scratched selections are refunded (in a box or standout, just their combinations).</p>`;
+    <p class="note">Play money only. Bets are saved to your account (see Your account) and on this device. Cricket bets pay the price you took and settle on the official result from ESPN. Win and place pay the official tote dividend; exotics pay the official dividend for that bet, scaled by your flexi percentage (outlay ÷ combinations). Duet, doubles, trebles, quaddies and Big 6s are estimated, because the results feed doesn't carry those pools; All Up pays the official win dividends multiplied together. Scratched selections are refunded (in a box or standout, just their combinations).</p>`;
   slipBar();
 }
 let BKBUSY=false;
@@ -1266,20 +1266,33 @@ setInterval(()=>{const c=document.getElementById("loanClock");if(!c)return;const
 document.addEventListener("change",e=>{if(e.target.id==="bStake"){BUILD.stake=Math.max(0.5,Math.round((+e.target.value||0.5)*100)/100);render()}if(e.target.id==="mStake"&&MB){MB.stake=Math.max(0.5,Math.round((+e.target.value||0.5)*100)/100);render()}});
 setInterval(()=>{if(ST.view==="bets"){checkOfficial(false);renderBets()}},5*60e3);
 /* ---------- Cricket: Nan and the panel tip every match; bets come out of the same balance as the races ---------- */
-// Head to head (and the draw in Tests) at the bookies' price from PuntersEdge. Betting closes at the first ball.
-// There's no official cricket results feed, so the result you enter settles the bet for good (you can change it).
+// Winner, line and total runs at the bookies' prices from PuntersEdge, and the toss at Nan's price. Betting closes at the first ball
+// (the toss 35 minutes before). Results come from ESPN through otr-cricket.
 const CR_URL=SB+"/otr-cricket";
 // only the cricket people here follow: Australian competitions, the big leagues, and internationals between the major nations
 const CR_COMPS=/big bash|\bbbl\b|wbbl|sheffield shield|marsh (one-day )?cup|\bipl\b|indian premier|the hundred/i;
 const CR_NATIONS=/^(australia|england|india|new zealand|south africa|pakistan|sri lanka|west indies|bangladesh|afghanistan|ireland|zimbabwe)( women| w)?$/i;
 const crMajor=m=>CR_COMPS.test(m.comp||"")||CR_NATIONS.test(String(m.home||"").trim())&&CR_NATIONS.test(String(m.away||"").trim());
-const CR={matches:[],locked:false,loaded:false,busy:false,err:"",open:null,side:null,stake:10,paused:false,man:null,msg:""};
+const CR={matches:[],locked:false,loaded:false,busy:false,err:"",open:null,side:null,mkt:"h2h",stake:10,paused:false,man:null,msg:""},CRR={};
+/* Markets: Winner (head to head), Line (runs handicap) and Total runs at the bookies' prices where PuntersEdge has them,
+   and the Toss at Nan's price. All settle on ESPN's official result: the winner, each side's runs, and who won the toss. */
+const CR_TOSS=1.9,CR_TOSS_CLOSE=35*60e3,CR_MKT={h2h:"Winner",line:"Line",total:"Total runs",toss:"Toss"};
+const crMkts=m=>["h2h",m.line&&"line",m.total&&"total","toss"].filter(Boolean);
+const crCloses=(m,mk)=>Date.parse(m.start)-(mk==="toss"?CR_TOSS_CLOSE:0);
+const crPt=x=>(x>0?"+":"")+x;
+function crOpts(m,mk){
+  if(mk==="line"&&m.line)return ["home","away"].map(k=>({k,price:m.line[k].price,point:m.line[k].point,label:`${m[k]} ${crPt(m.line[k].point)}`}));
+  if(mk==="total"&&m.total)return [{k:"over",price:m.total.over,point:m.total.point,label:`Over ${m.total.point} runs`},{k:"under",price:m.total.under,point:m.total.point,label:`Under ${m.total.point} runs`}];
+  if(mk==="toss")return ["home","away"].map(k=>({k,price:CR_TOSS,label:`${m[k]} win the toss`}));
+  return Object.keys(crProbs(m)).map(k=>({k,price:m.odds[k],label:crName(m,k)}))}
+function crLabel(t){const mk=t.type||"h2h";
+  return mk==="line"?`${t[t.sel]} ${crPt(t.point)}`:mk==="total"?`${t.sel==="over"?"Over":"Under"} ${t.point} runs`:mk==="toss"?`${t[t.sel]} win the toss`:crName(t,t.sel)}
 function crProbs(m){const o=m.odds,ks=["home","away"].concat(m.test&&o.draw?["draw"]:[]);let s=0;const p={};for(const k of ks){p[k]=1/o[k];s+=p[k]}for(const k of ks)p[k]/=s;return p}
 const crName=(m,k)=>k==="draw"?"Draw":k==="tie"?"Tie":k==="nr"?"No result":m[k];
 const crHash=s=>{let h=2166136261;for(const c of String(s))h=Math.imul(h^c.charCodeAt(0),16777619);return (h>>>0)/4294967296};
 const crAbbr=n=>{const w=String(n||"").replace(/[^A-Za-z ]/g,"").trim().split(/\s+/).filter(Boolean);return (w.length>1?w.map(x=>x[0]).join("").slice(0,3):(w[0]||"?").slice(0,3)).toUpperCase()};
-function crChip(m,k){if(k==="draw"||k==="tie"||k==="nr")return `<span class="tm tmd">${k==="draw"?"DRW":k==="tie"?"TIE":"N/R"}</span>`;
-  const n=m[k],h=Math.floor(crHash(n)*360);return `<span class="tm" style="background:hsl(${h},52%,34%)">${escH(crAbbr(n))}</span>`}
+function crChip(m,k){if(["draw","tie","nr","over","under"].includes(k))return `<span class="tm tmd">${({draw:"DRW",tie:"TIE",nr:"N/R",over:"OVR",under:"UND"})[k]}</span>`;
+  const n=m[k],hh=Math.floor(crHash(m.home)*360),ha=Math.floor(crHash(m.away)*360),far=Math.abs(((ha-hh)%360+540)%360-180)<70?(hh+180)%360:ha,h=k==="home"?hh:far;return `<span class="tm" style="background:hsl(${h},52%,34%)">${escH(crAbbr(n))}</span>`}
 /* Nan always backs Australia; otherwise the bookies' favourite, and in a Test she takes the draw at 30% or better.
    Pop loves a roughie (the outsider whenever it's a 35% chance or better), Bob goes on a hunch, Gran follows the bookies. */
 function crTips(m){const p=crProbs(m),ks=Object.keys(p),fav=["home","away"].sort((a,b)=>p[b]-p[a])[0],dog=fav==="home"?"away":"home";
@@ -1304,16 +1317,23 @@ function crCard(m){const started=Date.now()>=Date.parse(m.start),tp=crTips(m),[h
   const others=tp.ts.filter(x=>x[0]!=="nan");
   const panel=`<div class="r-panel"><span class="r-who">Panel</span>${crChip(m,tp.panel)}${others.map(x=>`<span class="r-t"><small>${x[1]}</small>${crChip(m,x[2])}</span>`).join("")}<span class="agree a${tp.agree===tp.ts.length?"all":""}">${tp.agree}/${tp.ts.length}<span class="agw"> agree</span></span></div>`;
   let body="";
-  if(open){if(started)body=`<p class="qnote">Underway. Betting closed at the first ball.</p>`;
-    else{const side=sides.includes(CR.side)?CR.side:null,ret=side?r2(CR.stake*m.odds[side]):0;
-      body=`<p class="crwhy">${tp.why}</p><div class="builder"><div class="calc-row crsides">${sides.map(k=>`<button data-crside="${k}" aria-pressed="${side===k}">${crChip(m,k)} ${escH(crName(m,k))} <b>${m.odds[k].toFixed(2)}</b></button>`).join("")}</div>
-        <div class="calc-row"><span class="calc-l">Stake</span>${[5,10,20,50].map(v=>`<button data-crstake="${v}" aria-pressed="${CR.stake===v}">$${v}</button>`).join("")}<label class="calc-own">$<input id="crStake" type="number" min="0.5" step="0.5" inputmode="decimal" value="${CR.stake}"></label></div>
-        <div class="calc-row"><button class="ffload" data-cradd ${side?"":"disabled"}>${side?`Add to bet slip: ${money(CR.stake)} on ${escH(crName(m,side))} · returns ${money(ret)}`:"Pick a side first"}</button></div>
-        <p class="calc-out"><small>Head to head at the bookies' price (the middle of ${m.books} bookmaker${m.books===1?"":"s"}). ${m.test?"A Test can be drawn: back the draw, or a draw loses both sides. ":"A tie or no result is refunded. "}Betting closes at the first ball.</small></p></div>`}}
+  const res=CRR[m.id];
+  if(open){if(started)body=`<p class="qnote">${res&&res.text?escH(res.text):"Underway."} Betting closed at the first ball.</p>`;
+    else{const mks=crMkts(m),mk=mks.includes(CR.mkt)?CR.mkt:"h2h",opts=crOpts(m,mk),shut=Date.now()>=crCloses(m,mk),o=opts.find(x=>x.k===CR.side),ret=o?r2(CR.stake*o.price):0;
+      const help={h2h:`Who wins, at the bookies' price (the middle of ${m.books} bookmaker${m.books===1?"":"s"}). ${m.test?"A Test can be drawn: back the draw, or a draw loses both teams. ":"A tie or no result is refunded. "}`,
+        line:"The runs shown are added to (or taken off) that team's total. It wins if it's still ahead. Every innings counts. No result: refunded. ",
+        total:"Both teams' runs added together, every innings. No result: refunded. ",
+        toss:`Who wins the coin toss, at Nan's price of $${CR_TOSS.toFixed(2)} either side. Closes 35 minutes before the start. `}[mk];
+      body=`<p class="crwhy">${tp.why}</p><div class="builder bb">
+        <div class="bb-h">Bet type</div><div class="bb-grid">${mks.map(x=>`<button data-crmkt="${x}" aria-pressed="${mk===x}">${CR_MKT[x]}</button>`).join("")}</div>
+        <div class="bb-h">Pick one</div><div class="bb-runners">${opts.map(x=>`<button class="bb-run" data-crside="${x.k}" aria-pressed="${CR.side===x.k}">${crChip(m,x.k)}<span class="bb-nm">${escH(x.label)}</span>${CR.side===x.k?"<i>✓</i>":""}<small class="bb-px">$${x.price.toFixed(2)}</small></button>`).join("")}</div>
+        <div class="bb-h">Stake</div><div class="bb-grid">${[2,5,10,20,50,100,200].map(v=>`<button data-crstake="${v}" aria-pressed="${CR.stake===v}">$${v}</button>`).join("")}<label class="bb-own">$<input id="crStake" type="number" min="0.5" step="0.5" inputmode="decimal" value="${CR.stake}"></label></div>
+        <p class="calc-out"><small>${help}Settled automatically on the official result from ESPN.</small></p>
+        <div class="bb-act"><button class="ffload" data-cradd ${o&&!shut?"":"disabled"}>${shut?"Toss betting has closed":o?`Add ${money(CR.stake)} on ${escH(o.label)} · returns ${money(ret)}`:"Pick one first"}</button></div></div>`}}
   return `<details class="race crm${started?" jumped":""}" data-crid="${escH(m.id)}" ${open?"open":""}><summary class="rsum"><div class="r-main">
     <div class="r-title"><span class="r-time">${hm||""}<small>${ap||""}</small></span><b class="r-v">${escH(m.home)} v ${escH(m.away)}</b><span class="r-cd">${started?'<span class="cdn gone">underway</span>':cdn(m.start).replace("⏱ ","")}</span></div>
     <div class="r-top"><span class="r-who">Nan</span>${crChip(m,tp.nan)}<b class="r-name">${escH(crName(m,tp.nan))}</b><span class="r-pc">${pct(nanP)}</span></div>
-    <div class="r-next"><span class="r-who">Odds</span>${odds}<span class="r-scr crcomp">${escH(m.test&&/test/i.test(m.comp)?"Test":m.comp)}</span></div>
+    <div class="r-next"><span class="r-who">Odds</span>${odds}<span class="r-scr crcomp">${started&&res&&res.text?escH(res.text):escH(m.test&&/test/i.test(m.comp)?"Test":m.comp)}</span></div>
     ${panel}</div><span class="rchev">&#9656;</span></summary><div class="rbody">${body}</div></details>`}
 function renderCricket(){const el=$("cricketView");if(!el)return;
   const now=Date.now(),up=CR.matches.filter(m=>Date.parse(m.start)>now),gone=CR.matches.filter(m=>Date.parse(m.start)<=now).reverse();
@@ -1326,34 +1346,57 @@ function renderCricket(){const el=$("cricketView");if(!el)return;
   else if(!up.length)main=`<p class="note">No upcoming matches with prices right now.${CR.paused?" PuntersEdge credits are running low, so cricket is paused to keep the horses going.":""}</p>`;
   else main=days.map(([d,ms])=>`<h3 class="bgrp">${d}</h3><div class="races">${ms.map(crCard).join("")}</div>`).join("");
   const past=gone.length?`<details class="follow crpast"><summary>Underway and finished <b>(${gone.length})</b><span class="rchev">&#9656;</span></summary><div class="races">${gone.map(crCard).join("")}</div><p class="note">Enter results for your bets under My bets.</p></details>`:"";
-  el.innerHTML=head+main+past+`<p class="note">Play money only. Prices are the middle of the Australian bookmakers' head-to-head prices from PuntersEdge, refreshed every few hours before the match. There's no official results feed for cricket, so you enter the result under My bets: it settles the bet for good, and you can change it if you got it wrong.</p>`;
+  el.innerHTML=head+main+past+`<p class="note">Play money only. Prices are the middle of the Australian bookmakers' head-to-head prices from PuntersEdge, refreshed every few hours before the match. Bets settle automatically on the official result from ESPN: the winner, each side's runs (every innings) and who won the toss. If ESPN never has a result, a head to head bet can be settled by hand after 8 hours, and anything still unsettled after 7 days is refunded.</p>`;
   slipBar()}
 function crSettle(t){if(t.status==="cancelled")return {state:"cancelled"};
-  const res=(BK.manual[t.rk]||[])[0];
+  const mk=t.type||"h2h",r=(BK.off[t.rk]||{}).cr,w=r&&r.winner;
+  const out=st=>st==="won"?{state:"won",pay:r2(t.stake*t.price),src:"official"}:st==="void"?{state:"void",pay:t.stake,src:"official"}:{state:"lost",pay:0,src:"official"};
+  if(r){if(mk==="toss"){if(r.toss)return out(t.sel===r.toss?"won":"lost");if(r.final)return out("void")}
+    else if(r.final){
+      if(mk==="h2h")return w==="nr"||w==="tie"&&t.sel!=="tie"?out("void"):out(t.sel===w?"won":"lost");
+      if(w==="nr")return out("void");
+      if(mk==="total"){const n=r.runs.home+r.runs.away;return out(n===t.point?"void":(n>t.point)===(t.sel==="over")?"won":"lost")}
+      if(mk==="line"){const d=r.runs[t.sel]+t.point-r.runs[t.sel==="home"?"away":"home"];return out(d===0?"void":d>0?"won":"lost")}}}
+  // head to head only: a result typed in by hand if ESPN never has one
+  const res=mk==="h2h"&&(BK.manual[t.rk]||[])[0];
   if(res){if(res==="nr"||res==="tie"&&t.sel!=="tie")return {state:"void",pay:t.stake,src:"entered"};
     return t.sel===res?{state:"won",pay:r2(t.stake*t.price),src:"entered"}:{state:"lost",pay:0,src:"entered"}}
+  if(Date.now()>Date.parse(t.start||t.jump)+7*864e5)return {state:"void",pay:t.stake,src:"official"};
   return {state:Date.now()<Date.parse(t.jump)?"open":"waiting"}}
+// ESPN results for the matches we've bet on or that are under way
+async function crCheck(){const ids=new Set(),now=Date.now();
+  for(const t of BK.tickets)if(t.sport==="cricket"&&t.status!=="cancelled"&&!(BK.off[t.rk]||{}).cr?.final)ids.add(t.mid);
+  for(const m of CR.matches)if(Date.parse(m.start)<=now+40*60e3&&Date.parse(m.start)>now-5*864e5)ids.add(m.id);
+  if(!ids.size)return;
+  try{const j=await getJSON(CR_URL+"?results=1&ids="+encodeURIComponent([...ids].join(",")));let ch=false;
+    for(const [id,r] of Object.entries(j.results||{})){CRR[id]=r;const rk="C:"+id,prev=BK.off[rk];
+      if((r.final||r.toss)&&JSON.stringify(prev&&prev.cr)!==JSON.stringify(r)){BK.off[rk]={cr:r,at:r.final&&!(prev&&prev.cr&&prev.cr.final)?Date.now():(prev&&prev.at)||Date.now()};ch=true}}
+    if(ch)saveBK();if(ST.view==="bets")renderBets();if(ST.view==="cricket")renderCricket()}catch(e){}}
 const crWhen=iso=>`${crDay(iso)==="Today"?"":crDay(iso).split(" ").slice(0,3).join(" ").replace(/,$/,"")+" "}${timeOf(iso)}`;
-function crSlip(t){return `${crWhen(t.jump)}${cdn(t.jump)} · ${escH(t.home)} v ${escH(t.away)} · <b>Head to head</b> ${crChip(t,t.sel)} ${escH(crName(t,t.sel))} @ ${t.price.toFixed(2)} · ${money(t.stake)}`}
-function crTk(t){const o=settleOf(t),res=(BK.manual[t.rk]||[])[0],started=Date.now()>=Date.parse(t.jump);
-  const tag={open:["To play",""],waiting:["Enter the result",""],won:[`Won ${money(o.pay||0)}`,"won"],lost:["Lost","lost"],void:["Refunded",""],cancelled:["Cancelled",""]}[o.state];
+function crSlip(t){return `${crWhen(t.start||t.jump)}${cdn(t.jump)} · ${escH(t.home)} v ${escH(t.away)} · <b>${CR_MKT[t.type||"h2h"]}</b> ${crChip(t,t.sel)} ${escH(crLabel(t))} @ ${t.price.toFixed(2)} · ${money(t.stake)}`}
+function crTk(t){const o=settleOf(t),mk=t.type||"h2h",r=(BK.off[t.rk]||{}).cr,res=mk==="h2h"&&!(r&&r.final)?(BK.manual[t.rk]||[])[0]:null,started=Date.now()>=Date.parse(t.jump);
+  const late=mk==="h2h"&&!(r&&r.final)&&Date.now()>Date.parse(t.start||t.jump)+8*3600e3;
+  const tag={open:["To play",""],waiting:[r&&r.state==="in"?"Under way":"Waiting on result",""],won:[`Won ${money(o.pay||0)}`,"won"],lost:["Lost","lost"],void:["Refunded",""],cancelled:["Cancelled",""]}[o.state];
   const opts=t.test?["home","away","draw","nr"]:["home","away","tie","nr"];
-  return `<div class="rec tk"><div class="rmeta">${crWhen(t.jump)}${t.status!=="cancelled"?cdn(t.jump):""} · Cricket · ${escH(t.comp)}</div>
+  return `<div class="rec tk"><div class="rmeta">${crWhen(t.start||t.jump)}${t.status!=="cancelled"?cdn(t.jump):""} · Cricket · ${escH(t.comp)}</div>
     <span class="tag ${tag[1]}">${tag[0]}</span>
-    <div class="line"><b>Head to head</b> ${crChip(t,t.sel)} ${escH(crName(t,t.sel))} @ ${t.price.toFixed(2)} · ${money(t.stake)}</div>
-    <div class="order">${escH(t.home)} v ${escH(t.away)} · returns ${money(r2(t.stake*t.price))}</div>
+    <div class="line"><b>${CR_MKT[t.type||"h2h"]}</b> ${crChip(t,t.sel)} ${escH(crLabel(t))} @ ${t.price.toFixed(2)} · ${money(t.stake)}</div>
+    <div class="order">${escH(t.home)} v ${escH(t.away)}${["open","waiting"].includes(o.state)?` · returns ${money(r2(t.stake*t.price))}`:""}</div>
     ${(LEDGER.per[t.id]||0)>0?`<div class="order nanpay">${money(LEDGER.per[t.id])} of it paid back to Nan</div>`:""}
+    ${r?`<div class="order">${r.final?"Result":"Live"}: ${escH(r.text||"")}${r.runs&&(r.runs.home||r.runs.away)?` · ${r.runs.home}–${r.runs.away}`:""}${r.toss&&mk==="toss"?` · toss: ${escH(t[r.toss])}`:""}</div>`:""}
     ${res?`<div class="order">Result you entered: ${crChip(t,res)} ${escH(res==="home"||res==="away"?t[res]+" won":crName(t,res))}${res==="nr"||res==="tie"&&t.sel!=="tie"?" (stake refunded)":""}</div>`:""}
-    <div class="tkbtns">${o.state==="open"?`<button data-bcancel="${t.id}">Cancel bet</button>`:""}${started&&t.status!=="cancelled"?`<button data-crman="${escH(t.rk)}">${res?"Change result":"Enter result"}</button>`:""}</div>
-    ${CR.man===t.rk?`<div class="builder"><p><b>Who won ${escH(t.home)} v ${escH(t.away)}?</b></p><div class="calc-row">${opts.map(k=>`<button data-crres="${k}" data-rk="${escH(t.rk)}" aria-pressed="${res===k}">${crChip(t,k)} ${escH(k==="home"||k==="away"?t[k]:k==="nr"?"No result / abandoned":crName(t,k))}</button>`).join("")}<button data-mclose>Close</button></div><p class="calc-out"><small>There's no official cricket results feed, so this settles every bet on this match for good, in both balances. Change it any time if you got it wrong.</small></p></div>`:""}</div>`}
+    <div class="tkbtns">${o.state==="open"?`<button data-bcancel="${t.id}">Cancel bet</button>`:""}${late&&t.status!=="cancelled"?`<button data-crman="${escH(t.rk)}">${res?"Change result":"ESPN has no result: enter it"}</button>`:""}</div>
+    ${CR.man===t.rk?`<div class="builder"><p><b>Who won ${escH(t.home)} v ${escH(t.away)}?</b></p><div class="calc-row">${opts.map(k=>`<button data-crres="${k}" data-rk="${escH(t.rk)}" aria-pressed="${res===k}">${crChip(t,k)} ${escH(k==="home"||k==="away"?t[k]:k==="nr"?"No result / abandoned":crName(t,k))}</button>`).join("")}<button data-mclose>Close</button></div><p class="calc-out"><small>ESPN hasn't got a result for this match, so this settles your head to head bets on it. If ESPN's result comes in later, it takes over.</small></p></div>`:""}</div>`}
 document.addEventListener("click",e=>{const g=s=>e.target.closest(s);let b;
   if(g("[data-crrecheck]"))return loadCricket(true);
-  if(b=g("details.crm>summary")){e.preventDefault();const id=b.parentElement.dataset.crid;CR.open=CR.open===id?null:id;CR.side=null;return renderCricket()}
+  if(b=g("details.crm>summary")){e.preventDefault();const id=b.parentElement.dataset.crid;CR.open=CR.open===id?null:id;CR.side=null;CR.mkt="h2h";return renderCricket()}
+  if(b=g("[data-crmkt]")){CR.mkt=b.dataset.crmkt;CR.side=null;return renderCricket()}
   if(b=g("[data-crside]")){CR.side=b.dataset.crside;return renderCricket()}
   if(b=g("[data-crstake]")){CR.stake=+b.dataset.crstake;return renderCricket()}
-  if(g("[data-cradd]")){const m=CR.matches.find(x=>x.id===CR.open);if(!m||!CR.side||Date.now()>=Date.parse(m.start)||!(CR.stake>0))return;
-    BK.slip.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,7),sport:"cricket",type:"h2h",rk:"C:"+m.id,mid:m.id,comp:m.comp,test:!!m.test,home:m.home,away:m.away,venue:`${m.home} v ${m.away}`,jump:m.start,sel:CR.side,price:m.odds[CR.side],stake:CR.stake});
-    saveBK();CR.msg=`Added to your bet slip: ${money(CR.stake)} on ${escH(crName(m,CR.side))}. Not placed yet: press Review &amp; confirm at the bottom to place it.`;CR.side=null;CR.open=null;renderCricket();return toTop("cricketView")}
+  if(g("[data-cradd]")){const m=CR.matches.find(x=>x.id===CR.open);if(!m)return;const mk=crMkts(m).includes(CR.mkt)?CR.mkt:"h2h",o=crOpts(m,mk).find(x=>x.k===CR.side);
+    if(!o||Date.now()>=crCloses(m,mk)||!(CR.stake>0))return;
+    BK.slip.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,7),sport:"cricket",type:mk,rk:"C:"+m.id,mid:m.id,comp:m.comp,test:!!m.test,home:m.home,away:m.away,venue:`${m.home} v ${m.away}`,start:m.start,jump:new Date(crCloses(m,mk)).toISOString(),sel:o.k,price:o.price,...(o.point!=null?{point:o.point}:{}),stake:CR.stake});
+    saveBK();CR.msg=`Added to your bet slip: ${money(CR.stake)} on ${escH(o.label)}. Not placed yet: press Review &amp; confirm at the bottom to place it.`;CR.side=null;CR.open=null;renderCricket();return toTop("cricketView")}
   if(b=g("[data-crman]")){CR.man=CR.man===b.dataset.crman?null:b.dataset.crman;return renderBets()}
   if(b=g("[data-crres]")){BK.manual[b.dataset.rk]=[b.dataset.crres];(BK.manualAt=BK.manualAt||{})[b.dataset.rk]=Date.now();CR.man=null;BKMSG="Result saved. Every bet on that match is settled.";saveBK();renderBets();return toTop("bkMsg")}
   if(g("[data-mclose]")&&CR.man){CR.man=null;return renderBets()}
@@ -1361,14 +1404,15 @@ document.addEventListener("click",e=>{const g=s=>e.target.closest(s);let b;
 document.addEventListener("change",e=>{if(e.target.id==="crStake"){CR.stake=Math.max(.5,Math.round((+e.target.value||.5)*100)/100);renderCricket()}});
 setInterval(()=>{if(ST.view==="cricket"&&!document.activeElement?.matches?.("#crStake"))renderCricket()},60e3);
 setInterval(()=>{if(ST.view==="cricket")loadCricket(false)},15*60e3);
+setInterval(()=>{if(ST.view==="cricket"||ST.view==="bets")crCheck()},5*60e3);
 function toTop(id){const el=$(id)||$(ST.view+"View");if(!el)return;try{el.scrollIntoView({block:"start",behavior:"instant"})}catch(e){try{el.scrollIntoView(true)}catch(_){}}try{window.scrollBy(0,-10)}catch(e){}}
 function setView(v,focus){
   const was=ST.view;
   document.querySelectorAll("[data-view]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.view===v));
   ST.view=v;$("tipsView").hidden=v!=="tips";$("recordView").hidden=v!=="record";$("betsView").hidden=v!=="bets";$("cricketView").hidden=v!=="cricket";
   if(v==="record"){if(!REC.sum)loadRecord();else renderRecord();loadBoard()}
-  if(v==="bets"){renderBets();checkOfficial(false)}
-  if(v==="cricket"){renderCricket();loadCricket(false)}
+  if(v==="bets"){renderBets();checkOfficial(false);crCheck()}
+  if(v==="cricket"){renderCricket();loadCricket(false).then(crCheck)}
   slipBar();
   if(focus)toTop(focus);else if(was!==v&&v!=="tips")toTop(v+"View");
   try{history.replaceState(null,"",v==="tips"?location.pathname+location.search:"#"+v)}catch(e){}
