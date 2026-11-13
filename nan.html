@@ -36,7 +36,8 @@ html{background:var(--tote)}body{padding-left:env(safe-area-inset-left);padding-
 @media (display-mode:standalone){.mast{padding-top:calc(46px + env(safe-area-inset-top))!important}}
 html.app .mast{padding-top:calc(46px + env(safe-area-inset-top))!important}
 /* version badge, top right: doubles as the refresh button. A gentle glow invites a tap; it turns solid gold when a newer version is out */
-.mast{position:relative;padding-right:118px}
+.mast{position:relative}.mast.mast{padding-right:118px}
+.mast .sub{display:flex;flex-direction:column;gap:3px;flex:0 1 auto;line-height:1}
 .verbtn{position:absolute;right:12px;top:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:92px;background:var(--tote2);color:var(--amber);border:2px solid var(--amber);border-radius:10px;padding:7px 10px 6px;cursor:pointer;animation:vglow 2.4s ease-in-out infinite}
 .verbtn b{font:700 19px/1 var(--led);letter-spacing:.3px}.verbtn small{font:600 11px/1 var(--led);text-transform:uppercase;letter-spacing:1px;color:var(--paper)}
 @keyframes vglow{0%,100%{box-shadow:0 0 0 0 #ffb52e00;border-color:var(--amber-dim)}50%{box-shadow:0 0 12px 2px #ffb52e66;border-color:var(--amber)}}
@@ -590,7 +591,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.34.5"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.34.6"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -609,7 +610,7 @@ async function loadAll(){
       addRace({id:`${code}|${m.slug}|${r.number}`,code,venue:m.track,slug:m.slug,date:m.date,no:r.number,name:r.name,dist:r.distance,cls:r.cls,jump:r.jump})}
   RACES.sort((a,b)=>Date.parse(a.jump)-Date.parse(b.jump)||a.venue.localeCompare(b.venue));
   const bad=[pe,dl,hl].filter(x=>x.status!=="fulfilled").length;
-  const shown=ST.day||ST.today;$("sub").textContent=(shown?new Date(shown+"T12:00:00").toLocaleDateString("en-AU",{weekday:"long",day:"numeric",month:"long"}):"Today")+(TOMORROW?" (tomorrow)":"");
+  const shown=ST.day||ST.today,sd=shown?new Date(shown+"T12:00:00"):null;$("sub").innerHTML=sd?`<span>${sd.toLocaleDateString("en-AU",{weekday:"long"})}${TOMORROW?" (tomorrow)":""}</span><span>${ord(sd.getDate())} ${sd.toLocaleDateString("en-AU",{month:"long"})}</span>`:"Today";
   $("dayc").innerHTML=`<button data-day="today" aria-pressed="${!TOMORROW}">Today</button><button data-day="tomorrow" aria-pressed="${TOMORROW}">Tomorrow</button><button data-day="past">Past days</button>`;
   if(TOMORROW&&!RACES.length)$("status").textContent="Tomorrow's races aren't out yet. Horse fields usually arrive mid-afternoon.";
   $("status").textContent=bad===3?"Nan couldn't load today's races. Try again soon.":bad?"Some codes didn't load, so they're missing for now.":"";
