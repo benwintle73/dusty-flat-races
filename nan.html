@@ -35,11 +35,14 @@ html{background:var(--tote)}body{padding-left:env(safe-area-inset-left);padding-
 /* iOS blurs and fades a band under the status bar in home-screen apps; start the header below that band */
 @media (display-mode:standalone){.mast{padding-top:calc(46px + env(safe-area-inset-top))!important}}
 html.app .mast{padding-top:calc(46px + env(safe-area-inset-top))!important}
-/* version badge doubles as the refresh button; it turns amber when a newer version is out */
-.verbtn{display:inline-flex;align-items:center;gap:6px;flex:none;background:var(--tote2);color:var(--amber);border:2px solid var(--amber-dim);border-radius:8px;padding:6px 10px;font:700 17px/1 var(--led);cursor:pointer;white-space:nowrap}
-.verbtn i{font-style:normal;font-size:19px}.verbtn.spin i{display:inline-block;animation:rspin .8s linear infinite}
-.verbtn.new{background:var(--amber);color:var(--tote);border-color:var(--amber);box-shadow:0 0 0 3px #ffb52e55;animation:vpulse 1.6s ease-in-out infinite}
-@keyframes vpulse{50%{box-shadow:0 0 0 7px #ffb52e22}}
+/* version badge, top right: doubles as the refresh button. A gentle glow invites a tap; it turns solid gold when a newer version is out */
+.mast{position:relative;padding-right:118px}
+.verbtn{position:absolute;right:12px;top:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:92px;background:var(--tote2);color:var(--amber);border:2px solid var(--amber);border-radius:10px;padding:7px 10px 6px;cursor:pointer;animation:vglow 2.4s ease-in-out infinite}
+.verbtn b{font:700 19px/1 var(--led);letter-spacing:.3px}.verbtn small{font:600 11px/1 var(--led);text-transform:uppercase;letter-spacing:1px;color:var(--paper)}
+@keyframes vglow{0%,100%{box-shadow:0 0 0 0 #ffb52e00;border-color:var(--amber-dim)}50%{box-shadow:0 0 12px 2px #ffb52e66;border-color:var(--amber)}}
+.verbtn.new{background:var(--amber);color:var(--tote);border-color:#fff3cd;animation:vflash 1s ease-in-out infinite}.verbtn.new small{color:var(--tote)}
+@keyframes vflash{50%{background:#ffd27a;box-shadow:0 0 16px 4px #ffb52e99}}
+html.app .verbtn{top:calc(40px + env(safe-area-inset-top))}@media (display-mode:standalone){.verbtn{top:calc(40px + env(safe-area-inset-top))}}
 @keyframes rspin{to{transform:rotate(360deg)}}
 .mast{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 16px;background:var(--tote);padding:12px 14px;border-bottom:3px solid var(--amber)}
 .mast h1{margin:0;font:400 clamp(28px,5vw,42px)/1 var(--display);color:var(--amber);letter-spacing:.8px;text-transform:uppercase}
@@ -423,7 +426,7 @@ details.srcs{margin-top:16px}details.srcs>.allow,details.srcs #allow>.allow{marg
 </style>
 </head>
 <body>
-<header class="mast"><h1>Nan's Tips</h1><span class="sub" id="sub">Loading today's races…</span><button class="verbtn" id="refBtn" aria-label="Refresh to get the latest version"><span id="verTxt"></span><i>&#8635;</i></button><a href="./?play=1">Play Off To The Races &#9656;</a></header>
+<header class="mast"><h1>Nan's Tips</h1><span class="sub" id="sub">Loading today's races…</span><button class="verbtn" id="refBtn" aria-label="Refresh to get the latest version"><b id="verTxt"></b><small id="verSub">Refresh</small></button><a href="./?play=1">Play Off To The Races &#9656;</a></header>
 <main class="wrap">
   <div class="view"><button data-view="tips" aria-pressed="true">Today's tips</button><button data-view="races" aria-pressed="false">Races</button><button data-view="record" aria-pressed="false">Tipsters</button><button data-view="punters" aria-pressed="false">Punters</button><button data-view="bets" aria-pressed="false">My bets</button><button data-view="cricket" aria-pressed="false">Cricket</button></div>
   <section id="tipsView">
@@ -587,7 +590,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.34.4"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.34.5"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -2881,9 +2884,9 @@ setInterval(refreshAllow,120e3);
 $("verTxt").textContent="v"+NAN_VERSION;
 // a newer version on the server lights the badge up: checked every 3 minutes and whenever the app comes back to the front
 async function checkVersion(){try{const t=await fetch(location.pathname+"?vc="+Date.now(),{cache:"no-store"}).then(r=>r.text()),m=t.match(/NAN_VERSION="([^"]+)"/);
-  if(m&&m[1]!==NAN_VERSION){$("refBtn").classList.add("new");$("verTxt").textContent="Update to v"+m[1]}}catch(e){}}
+  if(m&&m[1]!==NAN_VERSION){$("refBtn").classList.add("new");$("verTxt").textContent="v"+m[1];$("verSub").textContent="New · tap"}}catch(e){}}
 setInterval(checkVersion,3*60e3);document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")checkVersion()});setTimeout(checkVersion,4000);
-$("refBtn").addEventListener("click",()=>{const b=$("refBtn");b.classList.add("spin");const u=new URL(location.href);u.searchParams.set("r",Date.now());if(ST.view&&ST.view!=="tips")u.hash=ST.view;location.replace(u.href)});
+$("refBtn").addEventListener("click",()=>{$("verSub").textContent="Loading…";const u=new URL(location.href);u.searchParams.set("r",Date.now());if(ST.view&&ST.view!=="tips")u.hash=ST.view;location.replace(u.href)});
 try{const u=new URL(location.href);if(u.searchParams.has("r")){u.searchParams.delete("r");history.replaceState(null,"",u.pathname+u.search+u.hash)}}catch(e){}
 loadAll();
 setInterval(()=>{for(const k in LIMIT)if(Date.now()-LIMIT[k]>10*60e3&&!BUSY[k])delete CARDS[k];pump();if(!document.querySelector("details.run[open]"))render()},60e3);
