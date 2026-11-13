@@ -340,12 +340,13 @@ details.race>summary.rsum .rchev{align-self:center}
 /* v2.33: sign in with name + PIN */
 .signin{border-top-color:var(--amber)}.signin p{margin:4px 0 8px}
 .si-row{display:grid;grid-template-columns:minmax(0,1fr) 84px auto;gap:6px}.si-row input{min-height:46px;min-width:0;font:700 17px/1 var(--led);padding:0 10px;border:1px solid var(--line);border-radius:6px;background:#fff}
+.si-row.rs1{grid-template-columns:minmax(0,1fr) auto}.rsbox p{margin:4px 0 8px}#acctBox #emIn{min-height:44px;font:600 16px/1 var(--body);padding:0 8px;border:1px solid var(--line);min-width:0}
 .si-row .ffload{min-height:46px;padding:0 16px;border-radius:8px;font-size:16px}
 #acctBox .lact input#pinIn{min-height:44px;font:700 18px/1 var(--led);padding:0 8px;border:1px solid var(--line);min-width:0;letter-spacing:3px}
 .sobtn{background:transparent;color:var(--paper);border:2px solid var(--amber-dim);border-radius:8px;min-height:36px;padding:0 12px;font:700 15px/1 var(--led);cursor:pointer}
 .linkbtn{background:none;border:0;padding:0;color:var(--ink);text-decoration:underline;font:inherit;font-weight:700;cursor:pointer}#puntersView .linkbtn{color:var(--ink)}
 details.codebox{margin-top:10px;border-top:1px dashed var(--line);padding-top:6px}details.codebox>summary{cursor:pointer;font:600 15px/1.3 var(--led);color:var(--ink2)}
-@media (max-width:420px){.si-row{grid-template-columns:minmax(0,1fr) 70px}.si-row .ffload{grid-column:1/-1}}
+@media (max-width:420px){.si-row{grid-template-columns:minmax(0,1fr) 70px}.si-row .ffload{grid-column:1/-1}.si-row.rs1{grid-template-columns:1fr}}
 /* v2.30.1: Nan's record lined up like the race cards */
 .rec.rc{display:block;padding:9px 12px;min-width:0}.races>*{min-width:0}
 .rc-h{display:flex;align-items:center;gap:8px;min-width:0;white-space:nowrap;padding-bottom:5px;border-bottom:1px solid var(--line)}
@@ -578,7 +579,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.33.0"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.34.0"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -2062,7 +2063,7 @@ function saveBK(){try{localStorage.setItem(BK_KEY,JSON.stringify(BK))}catch(e){}
 /* ---------- Account sync: the same bets on any device, keyed by a sync code ---------- */
 const SYNC_KEY="otr-nan-sync",BETS_URL=SB+"/otr-bets",CODE_RE=/^[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}$/;
 let SYNC=(()=>{try{const j=JSON.parse(localStorage.getItem(SYNC_KEY));if(j&&CODE_RE.test(j.code))return {rev:0,dirty:false,...j}}catch(e){}return {code:null,rev:0,dirty:true}})(),SYNC_T=0,SYNC_ST="",SYNC_AT=0,SYNC_BUSY=false,SYNC_MSG="";
-function saveSync(){try{localStorage.setItem(SYNC_KEY,JSON.stringify({code:SYNC.code,rev:SYNC.rev,dirty:SYNC.dirty,name:SYNC.name||null,pin:!!SYNC.pin}))}catch(e){}}
+function saveSync(){try{localStorage.setItem(SYNC_KEY,JSON.stringify({code:SYNC.code,rev:SYNC.rev,dirty:SYNC.dirty,name:SYNC.name||null,pin:!!SYNC.pin,email:SYNC.email||null}))}catch(e){}}
 function newCode(){const a="ABCDEFGHJKLMNPQRSTUVWXYZ23456789",v=new Uint32Array(8);crypto.getRandomValues(v);const c=[...v].map(x=>a[x%a.length]).join("");return c.slice(0,4)+"-"+c.slice(4)}
 const bkDefaults=b=>({start:1000,topups:0,tickets:[],slip:[],manual:{},manualAt:{},off:{},loans:[],repays:[],...(b||{})});
 function mergeBK(mine,theirs){const a=bkDefaults(mine),b=bkDefaults(theirs),tk=new Map();
@@ -2153,7 +2154,7 @@ async function pushBK(){if(!SYNC.code||SYNC_BUSY)return;SYNC_BUSY=true;SYNC_ST="
   catch(e){SYNC_ST="offline"}SYNC_BUSY=false;paintSync();if(ST.view==="bets")renderBets();else slipBar()}
 async function pullBK(){if(!SYNC.code||SYNC_BUSY)return;
   try{const r=await fetch(BETS_URL+"?code="+SYNC.code).then(r=>r.json());if(r.error)throw new Error(r.error);
-    if((r.name||null)!==(SYNC.name||null)||!!r.has_pin!==!!SYNC.pin){SYNC.name=r.name||null;SYNC.pin=!!r.has_pin;saveSync()}
+    if((r.name||null)!==(SYNC.name||null)||!!r.has_pin!==!!SYNC.pin||(r.email||null)!==(SYNC.email||null)){SYNC.name=r.name||null;SYNC.pin=!!r.has_pin;SYNC.email=r.email||null;saveSync()}
     if(!r.data){SYNC.rev=0;return pushBK()}
     if(r.rev!==SYNC.rev){if(SYNC.dirty){SYNC.rev=r.rev;BK=mergeBK(BK,r.data);return pushBK()}SYNC.rev=r.rev;saveSync();adopt(r.data)}
     else if(SYNC.dirty)return pushBK();
@@ -2163,7 +2164,7 @@ async function linkCode(code,{keepMine=true,done=null}={}){code=String(code||"")
   if(code===SYNC.code){SYNC_MSG="That's already your code.";return renderBets()}
   try{const r=await fetch(BETS_URL+"?code="+code).then(r=>r.json());if(r.error)throw new Error(r.error);
     if(!r.data){SYNC_MSG="No account found with that code. Check it and try again.";return renderBets()}
-    const mine=BK.tickets.length||BK.slip.length||BK.loans.length;SYNC.code=code;SYNC.rev=r.rev;SYNC.name=r.name||null;SYNC.pin=!!r.has_pin;
+    const mine=BK.tickets.length||BK.slip.length||BK.loans.length;SYNC.code=code;SYNC.rev=r.rev;SYNC.name=r.name||null;SYNC.pin=!!r.has_pin;SYNC.email=r.email||null;
     if(keepMine&&mine){BK=mergeBK(BK,r.data);SYNC.dirty=true;saveSync();adopt(BK);await pushBK()}else{SYNC.dirty=false;saveSync();adopt(r.data)}
     SYNC_MSG=done?done+(keepMine&&mine?" The bets that were on this device have been added to your account.":""):`Linked. This device now uses account ${code}${keepMine&&mine?", and the bets that were on this device have been added to it":""}.`}
   catch(e){SYNC_MSG="Couldn't reach the server. Check your connection and try again."}renderBets()}
@@ -2178,7 +2179,8 @@ function syncHtml(){const pinBox=SYNC.name&&(!SYNC.pin||SYNC.pinEdit)?`<div clas
   <div class="bb-h" id="nameBox">Your name on the Punters' leaderboard</div>
   <div class="lact"><input id="nameIn" maxlength="16" placeholder="e.g. Ben W" autocomplete="nickname" value="${escH(PB.nameIn!=null?PB.nameIn:SYNC.name||"")}"><button class="ffload" data-sname>${SYNC.name?"Change name":"Save name"}</button></div>
   ${PB.msg?`<p class="loanmsg">${PB.msg}</p>`:""}
-  ${pinBox}${signedIn()&&!SYNC.pinEdit?`<p class="calc-out"><small>Sign in on any device with your name and PIN. <button class="linkbtn" data-pinedit>Change PIN</button></small></p>`:""}
+  ${pinBox}${SYNC.name?`<div class="bb-h">Email for PIN resets${SYNC.email?"":" (so you can never get locked out)"}</div>
+  <div class="lact"><input id="emIn" type="email" inputmode="email" maxlength="120" placeholder="you@example.com" autocomplete="email" value="${escH(SYNC.email||"")}"><button class="ffload" data-semail>${SYNC.email?"Update":"Save email"}</button></div>`:""}${signedIn()&&!SYNC.pinEdit?`<p class="calc-out"><small>Sign in on any device with your name and PIN. <button class="linkbtn" data-pinedit>Change PIN</button></small></p>`:""}
   ${SYNC_MSG&&signedIn()?`<p class="loanmsg">${SYNC_MSG}</p>`:""}
   <details class="codebox"><summary>Use an account code instead</summary>
   <div class="acct"><div><small>Your account code</small><b class="acode">${SYNC.code||"…"}</b><small id="syncSt">${syncLine()}</small></div></div>
@@ -2201,9 +2203,36 @@ async function savePin(){const pin=(($("pinIn")||{}).value||"").trim();
     if(r.error){SYNC_MSG=r.error;return renderBets()}SYNC.pin=true;saveSync();SYNC_MSG=`PIN saved. Sign in anywhere with ${escH(SYNC.name)} and your PIN.`;SYNC.pinEdit=false}
   catch(e){SYNC_MSG="Couldn't reach the server. Try again."}renderBets()}
 function signOut(){if(!confirm("Sign out on this device? Your bets stay safe in your account. Sign back in with your name and PIN."))return;
-  SYNC={code:newCode(),rev:0,dirty:true,name:null,pin:false};saveSync();adopt({tickets:[]});SYNC_MSG="Signed out. Sign in with your name and PIN to get your bets back.";PB.nameIn=null;renderBets();pushBK()}
-function signInHtml(){return `<div class="calc signin" id="signIn"><h3>Sign in</h3><p>Already have an account? Sign in with your leaderboard name and PIN to see your bets on this device.</p>
+  SYNC={code:newCode(),rev:0,dirty:true,name:null,pin:false,email:null};saveSync();adopt({tickets:[]});SYNC_MSG="Signed out. Sign in with your name and PIN to get your bets back.";PB.nameIn=null;renderBets();pushBK()}
+/* Forgotten PIN: a 6-digit code goes to the account's recovery email; the code plus a new PIN signs this device in */
+const RESET={open:false,sent:false,to:"",name:""};
+const post=(q,body)=>fetch(BETS_URL+"?"+q,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(body)}).then(r=>r.json());
+async function forgotPin(){const n=(($("rsName")||{}).value||RESET.name||"").trim();RESET.name=n;
+  if(!n){SYNC_MSG="Enter your name first.";return renderBets()}
+  SYNC_MSG="Sending…";renderBets();
+  try{const r=await post("forgot=1",{name:n});if(r.error){SYNC_MSG=r.error;return renderBets()}
+    RESET.sent=true;RESET.to=r.to;SYNC_MSG=r.again?`A code went to ${escH(r.to)} a moment ago. Check your inbox (and junk).`:`Nan's emailed a 6-digit code to ${escH(r.to)}. Check your inbox (and junk).`}
+  catch(e){SYNC_MSG="Couldn't reach the server. Try again."}renderBets()}
+async function resetPin(){const rcode=(($("rsCode")||{}).value||"").replace(/\D/g,""),pin=(($("rsPin")||{}).value||"").trim();
+  if(rcode.length!==6){SYNC_MSG="Enter the 6-digit code from the email.";return renderBets()}
+  if(!/^\d{4}$/.test(pin)){SYNC_MSG="Your new PIN is 4 numbers.";return renderBets()}
+  try{const r=await post("reset=1",{name:RESET.name,rcode,pin});if(r.error){SYNC_MSG=r.error;return renderBets()}
+    Object.assign(RESET,{open:false,sent:false,to:""});
+    if(r.code===SYNC.code){SYNC.name=r.name;SYNC.pin=true;saveSync();SYNC_MSG=`New PIN saved. Signed in as ${escH(r.name)}.`;return renderBets()}
+    await linkCode(r.code,{keepMine:!SYNC.name,done:`New PIN saved. Signed in as ${escH(r.name)}.`});loadPlayers()}
+  catch(e){SYNC_MSG="Couldn't reach the server. Try again.";renderBets()}}
+async function saveEmail(){const em=(($("emIn")||{}).value||"").trim();
+  try{const r=await post("email=1",{code:SYNC.code,email:em});if(r.error){SYNC_MSG=r.error;return renderBets()}
+    SYNC.email=r.email;saveSync();SYNC_MSG=r.email?`Saved. If you forget your PIN, Nan will email a code to ${escH(r.email)}.`:"Email removed."}
+  catch(e){SYNC_MSG="Couldn't reach the server. Try again."}renderBets()}
+function resetHtml(){return `<div class="rsbox">
+  ${RESET.sent?`<p>Enter the code from the email and pick a new PIN.</p><div class="si-row"><input id="rsCode" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="6-digit code" autocomplete="one-time-code"><input id="rsPin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="PIN" autocomplete="new-password"><button class="ffload" data-rsdo>Reset PIN</button></div>
+    <p class="calc-out"><small>No email? <button class="linkbtn" data-rssend>Send it again</button></small></p>`
+  :`<p>Nan will email a reset code to the address saved on your account.</p><div class="si-row rs1"><input id="rsName" maxlength="16" placeholder="Your name" autocomplete="username" value="${escH(RESET.name)}"><button class="ffload" data-rssend>Email me a code</button></div>`}
+  <p class="calc-out"><small><button class="linkbtn" data-rsclose>Back to sign in</button></small></p></div>`}
+function signInHtml(){if(RESET.open)return `<div class="calc signin" id="signIn"><h3>Reset your PIN</h3>${resetHtml()}${SYNC_MSG?`<p class="loanmsg">${SYNC_MSG}</p>`:""}</div>`;return `<div class="calc signin" id="signIn"><h3>Sign in</h3><p>Already have an account? Sign in with your leaderboard name and PIN to see your bets on this device.</p>
   <div class="si-row"><input id="siName" maxlength="16" placeholder="Your name" autocomplete="username" autocapitalize="words"><input id="siPin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="PIN" autocomplete="current-password"><button class="ffload" data-signin>Sign in</button></div>
+  <p class="calc-out"><small><button class="linkbtn" data-rsopen>Forgot your PIN?</button></small></p>
   ${SYNC_MSG&&!signedIn()?`<p class="loanmsg">${SYNC_MSG}</p>`:""}<p class="calc-out"><small>New here? Just place a bet, then pick a name and a PIN under Your account.</small></p></div>`}
 async function copyText(t,msg){try{await navigator.clipboard.writeText(t);SYNC_MSG=msg}catch(e){SYNC_MSG="Copy this: "+t}renderBets()}
 const BUILD={id:null,type:"win",sel:[],stake:10,style:"straight",pos:0,legs:[[],[],[],[]],mt:"none",myst:null};
@@ -2578,6 +2607,11 @@ document.addEventListener("click",e=>{
     BK.manual[b.dataset.msave]=v.slice(0,v.findIndex(x=>!x)<0?4:v.findIndex(x=>!x));(BK.manualAt=BK.manualAt||{})[b.dataset.msave]=Date.now();MANUAL=null;BKMSG="Your result is saved. The running balance includes it for now; the official result replaces it when it comes in, and overrides it if it's different.";saveBK();return renderBets()}
   if(g("[data-sname]"))return saveName();
   if(g("[data-signin]"))return signIn();
+  if(g("[data-rsopen]")){RESET.open=true;RESET.sent=false;RESET.name=(($("siName")||{}).value||RESET.name||"").trim();SYNC_MSG="";return renderBets()}
+  if(g("[data-rsclose]")){RESET.open=false;SYNC_MSG="";return renderBets()}
+  if(g("[data-rssend]"))return forgotPin();
+  if(g("[data-rsdo]"))return resetPin();
+  if(g("[data-semail]"))return saveEmail();
   if(g("[data-spin]"))return savePin();
   if(g("[data-signout]"))return signOut();
   if(g("[data-pinedit]")){SYNC.pinEdit=true;SYNC_MSG="";return renderBets()}
@@ -2824,7 +2858,7 @@ document.addEventListener("click",e=>{
   const sk=e.target.closest("[data-stake]");if(sk){REC.stake=+sk.dataset.stake;renderRecord()}
   const bt=e.target.closest("[data-bet]");if(bt){REC.bet=bt.dataset.bet;renderRecord()}
 });
-document.addEventListener("keydown",e=>{if(e.key!=="Enter")return;if(e.target.id==="siPin"||e.target.id==="siName")signIn();else if(e.target.id==="pinIn")savePin()});
+document.addEventListener("keydown",e=>{if(e.key!=="Enter")return;if(e.target.id==="siPin"||e.target.id==="siName")signIn();else if(e.target.id==="pinIn")savePin();else if(e.target.id==="rsName")forgotPin();else if(e.target.id==="rsPin"||e.target.id==="rsCode")resetPin();else if(e.target.id==="emIn")saveEmail()});
 document.addEventListener("change",e=>{if(e.target.id==="stakeIn"){const v=Math.round(Math.max(.5,Math.min(10000,+e.target.value||1))*2)/2;REC.stake=v;renderRecord()}});
 (async()=>{const q=new URLSearchParams(location.search).get("sync");
   if(q){try{history.replaceState(null,"",location.pathname+location.hash)}catch(e){}if(q.toUpperCase()!==SYNC.code){if(!SYNC.code){SYNC.code=newCode();saveSync()}return linkCode(q)}}
