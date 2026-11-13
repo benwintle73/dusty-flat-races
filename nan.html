@@ -326,7 +326,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.19.3"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.19.4"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -550,7 +550,7 @@ async function loadBob(){const ds=[...new Set(RACES.map(r=>r.date))].slice(0,2);
   for(const d of ds){try{const j=await getJSON(TIPS_URL+"?date="+d);if(j.bob){TIPS.bob[d]=j.bob;changed=true}}catch(e){}}
   TIPS.bobAt=Date.now();if(changed)render()}
 async function pumpPop(){if(TIPS.busy)return;const now=Date.now();
-  const want=RACES.filter(r=>Date.parse(r.jump)>now-60e3&&(!TIPS.asked.has(popKey(r))||Date.parse(r.jump)<now+3*3600e3&&!TIPS.askedMap.has(popKey(r)))).sort((a,b)=>{const oa=document.querySelector(`details.race[data-id="${CSS.escape(a.id)}"][open]`)?0:1,ob=document.querySelector(`details.race[data-id="${CSS.escape(b.id)}"][open]`)?0:1;return oa-ob||Date.parse(a.jump)-Date.parse(b.jump)}).slice(0,36);
+  const want=RACES.filter(r=>Date.parse(r.jump)>now-60e3&&(!TIPS.asked.has(popKey(r))||Date.parse(r.jump)<now+3*3600e3&&!TIPS.askedMap.has(popKey(r)))).sort((a,b)=>{const oa=document.querySelector(`details.race[data-id="${CSS.escape(a.id)}"][open]`)?0:1,ob=document.querySelector(`details.race[data-id="${CSS.escape(b.id)}"][open]`)?0:1;return oa-ob||Date.parse(a.jump)-Date.parse(b.jump)}),more=want.length>48;want.length=Math.min(want.length,48);
   if(!want.length)return;TIPS.busy=true;
   for(let i=0;i<want.length;i+=12){const part=want.slice(i,i+12),byDate={};for(const r of part)(byDate[r.date]=byDate[r.date]||[]).push(r);
     for(const d in byDate){const rs=byDate[d];const fresh=rs.filter(r=>!TIPS.asked.has(popKey(r)));rs.forEach(r=>TIPS.asked.add(popKey(r)));
@@ -562,8 +562,9 @@ async function pumpPop(){if(TIPS.busy)return;const now=Date.now();
       if(ms.length){ms.forEach(r=>TIPS.askedMap.add(popKey(r)));
         try{const j=await getJSON(`${TIPS_URL}?date=${d}&map=${encodeURIComponent(ms.map(r=>`${r.code}|${r.venue.replace(/[^A-Za-z0-9 '\-]/g,"")}|${r.no}`).join(","))}`);
           for(const r of ms){const v=j.map&&j.map[`${r.code}|${fkey(r.venue.replace(/[^A-Za-z0-9 '\-]/g,""))}|${r.no}`];if(v)TIPS.map[popKey(r)]=v}}
-        catch(e){ms.forEach(r=>TIPS.askedMap.delete(popKey(r)))}}}}
-  TIPS.busy=false;render()}
+        catch(e){ms.forEach(r=>TIPS.askedMap.delete(popKey(r)))}}}
+    render()}
+  TIPS.busy=false;render();if(more)setTimeout(pumpPop,500)}
 setInterval(()=>{if(RACES.length&&Date.now()-TIPS.bobAt>20*60e3)loadBob();if(RACES.length)pumpPop()},60e3);
 setInterval(()=>{TIPS.asked.clear()},45*60e3);
 function render(){
