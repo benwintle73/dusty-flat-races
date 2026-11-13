@@ -120,6 +120,7 @@ details.follow p{margin:0 12px 8px;font-size:15px;color:#d9c9a3}
 .qtag{background:#2a62c9;color:#fff;padding:1px 6px;font-weight:700}
 .qnote{background:var(--paper2);padding:8px 10px;font-size:15px}
 .nsays{font-style:italic;margin:6px 0 8px;color:#5b4520}.hl .nsays{display:block;margin:2px 0 0;font-size:14px}
+.hnote{margin:4px 0;font-size:14px}
 .fmode{display:flex;flex-wrap:wrap;gap:6px 18px;margin:8px 0}.fmode label{display:flex;gap:6px;align-items:center}
 .dayc{display:flex;gap:4px}.dayc button{padding:6px 12px}.qnote small{color:var(--ink2)}
 .ffload{background:var(--amber);color:var(--tote);border:0;min-height:38px;padding:0 12px;font-weight:700;font-size:15px;cursor:pointer}
@@ -297,7 +298,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null};
-const NAN_VERSION="2.14.0"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.14.1"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -456,11 +457,11 @@ function renderFollow(){
   const el=$("follow"),open=el.open,n=meets.filter(ticked).length;
   const group=code=>{const ms=meets.filter(m=>m.code===code).map(m=>({m,rs:RACES.filter(r=>r.code===code&&r.slug===m.slug)})).sort((a,b)=>a.m.venue.localeCompare(b.m.venue));
     return ms.length?`<div class="fgrp"><h4>${CODE[code]}</h4>${ms.map(({m,rs})=>{const left=rs.filter(r=>Date.parse(r.jump)>now);
-      return `<label class="fopt"><input type="checkbox" data-follow="${code}|${escH(m.slug)}" ${ticked(m)?"checked":""}><span><b>${escH(m.venue)}</b><small>${left.length?`${left.length} race${left.length>1?"s":""} to run · next ${timeOf(left[0].jump)}`:"all run"}</small></span></label>`}).join("")}</div>`:""};
+      return `<label class="fopt"><input type="checkbox" data-follow="${code}|${escH(m.slug)}" ${FOLLOW.auto||ticked(m)?"checked":""} ${FOLLOW.auto?"disabled title=\"Automatic mode follows every meeting\"":""}><span><b>${escH(m.venue)}</b><small>${left.length?`${left.length} race${left.length>1?"s":""} to run · next ${timeOf(left[0].jump)}`:"all run"}</small></span></label>`}).join("")}</div>`:""};
   el.innerHTML=`<summary>Meetings Nan follows: ${FOLLOW.auto?`<b>all ${meets.length}</b> dog and harness meetings today (automatic)`:`<b>${n}</b> of ${meets.length} dog and harness meetings today${FOLLOW.mode==="manual"?" (only what you pick)":""}`} <span class="rchev">&#9656;</span></summary>
     <div class="fmode"><label><input type="radio" name="fmode" value="auto" ${FOLLOW.mode!=="manual"?"checked":""}> Automatic: every meeting while credits allow</label><label><input type="radio" name="fmode" value="manual" ${FOLLOW.mode==="manual"?"checked":""}> Only what I pick: ticked meetings, or single races with "Load this race only"</label></div>
     <p>Dog and harness form comes from FormFav's free allowance of 1,000 lookups a day (about one per race). Nan loads the meetings you tick by herself and keeps them in her record; any other meeting loads only when you open one of its races. Horses don't use the allowance, so they're always on. Ticked tracks stay ticked for future days. On Automatic, Nan follows every meeting while FormFav and Krok have enough credits for every race left today, and your ticks take over when credits run short. On Only what I pick, nothing loads unless you tick a meeting or open a race and choose Load this race only (about 1 credit).</p>
-    <div class="fgrid">${group("D")}${group("N")}</div>`;
+    <div class="fgrid">${group("D")}${group("N")}${(()=>{const hs=[...new Map(RACES.filter(r=>r.code==="H").map(r=>[r.venue,r])).keys()].sort();return hs.length?`<div class="fgrp"><h4>Horses</h4><p class="hnote">All ${hs.length} meetings, always on: PuntersEdge loads every horse race in one call, so they never use FormFav credits.</p><p class="hnote">${hs.map(escH).join(" · ")}</p></div>`:""})()}</div>`;
   el.open=open;
 }
 function render(){
