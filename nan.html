@@ -186,6 +186,8 @@ body{padding-bottom:60px}
 #loanClock{font-weight:700;color:var(--ink)}
 .loanmsg{font-weight:700;margin:6px 0}
 .nanpay{color:#8e3a2c!important}
+.bwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
+@media (max-width:560px){.btable{font-size:14px}.btable th,.btable td{padding:5px 3px}.btable th{font-size:12px;line-height:1.15}.board h3{font-size:22px}}
 @media (max-width:560px){
   .scrrow{grid-template-columns:36px 28px minmax(0,1fr)}
   details.run>summary{grid-template-columns:36px 28px minmax(0,1fr) 52px 54px;font-size:15px}
@@ -733,8 +735,8 @@ function renderBoard(){const el=$("board");if(!el)return;if(!BOARD.rows){el.inne
   el.innerHTML=`<h3>Tipster leaderboard</h3>
     <div class="calc-row">${chip("per","since","Since the panel started",BOARD.per)}${chip("per","week","Last 7 days",BOARD.per)}${chip("per","today","Today",BOARD.per)}</div>
     <div class="calc-row">${chip("code","all","All codes",BOARD.code)}${chip("code","H","Horses",BOARD.code)}${chip("code","D","Dogs",BOARD.code)}${chip("code","N","Harness",BOARD.code)}</div>
-    ${agg.some(a=>a.b)||BOARD.per!=="week"?`<table class="btable"><thead><tr><th></th><th>Tipster</th><th>Bets</th><th>Won</th><th>Strike</th><th>Placed</th><th>Return per $1</th><th>Profit at $10 a bet</th></tr></thead><tbody>
-      ${agg.map((a,i)=>!a.b?`<tr><td>${i+1}</td><td><b>${W[a.w]}</b></td><td colspan="6"><small>Tips are in. Waiting on the first official results.</small></td></tr>`:`<tr class="${i===0?"lead":""}"><td>${i===0?"👑":i+1}</td><td><b>${W[a.w]}</b></td><td>${a.b}</td><td>${a.won}</td><td>${pct(a.won/a.b)}</td><td>${pct(a.pl/a.b)}</td><td>${div(a.back/a.b)}</td><td class="${a.profit>=0?"plus":"minus"}">${a.profit>=0?"+":"-"}${money(Math.abs(a.profit)).replace("-","")}</td></tr>`).join("")}</tbody></table>
+    ${agg.some(a=>a.b)||BOARD.per!=="week"?`<div class="bwrap"><table class="btable"><thead><tr><th></th><th>Tipster</th><th>Bets</th><th>Won</th><th>Win %</th><th>Place %</th><th title="Average return for every $1 bet">$1 back</th><th title="Profit or loss betting $10 on every top pick">$10 bets</th></tr></thead><tbody>
+      ${agg.map((a,i)=>!a.b?`<tr><td>${i+1}</td><td><b>${W[a.w]}</b></td><td colspan="6"><small>Tips are in. Waiting on the first official results.</small></td></tr>`:`<tr class="${i===0?"lead":""}"><td>${i===0?"👑":i+1}</td><td><b>${W[a.w]}</b></td><td>${a.b}</td><td>${a.won}</td><td>${a.won?pct(a.won/a.b):"0%"}</td><td>${a.pl===a.b?"100%":a.pl?pct(a.pl/a.b):"0%"}</td><td>${div(a.back/a.b)}</td><td class="${a.profit>=0?"plus":"minus"}">${a.profit>=0?"+":"-"}${money(Math.abs(a.profit)).replace("-","")}</td></tr>`).join("")}</tbody></table></div>
       <p class="calc-out"><small>${agg[0]&&agg[0].b?`${W[agg[0].w]} is in front. `:""}${wait.length?`${wait.join(", ")} started tipping at midday on Friday 13 November, so ${wait.length>1?"their rows fill":"that row fills"} in as those races get official results (10 to 30 minutes after each race). `:""}Each tipster's top pick in every race they rate, settled on the official result and win dividend. Pop and Bob rate most races; Gran follows the bookies' favourite, wherever prices are up. Nan's tips go back further, so "Since the panel started" is the fair comparison.</small></p>`
       :`<p>No settled races for the tipsters in this period yet. Results come in through the day.</p>`}`}
 document.addEventListener("click",e=>{const p=e.target.closest("[data-boardper]"),c=e.target.closest("[data-boardcode]");if(p){BOARD.per=p.dataset.boardper;renderBoard()}if(c){BOARD.code=c.dataset.boardcode;renderBoard()}});
