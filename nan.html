@@ -31,6 +31,8 @@ a{color:inherit}
 /* home-screen app: keep the header clear of the iPhone status bar and notch */
 html{background:var(--tote)}body{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
 .mast{padding-top:calc(12px + env(safe-area-inset-top))!important}
+/* iOS blurs and fades a band under the status bar in home-screen apps; start the header below that band */
+@media (display-mode:standalone){.mast{padding-top:calc(46px + env(safe-area-inset-top))!important}}
 .mast{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 16px;background:var(--tote);padding:12px 14px;border-bottom:3px solid var(--amber)}
 .mast h1{margin:0;font:400 clamp(28px,5vw,42px)/1 var(--display);color:var(--amber);letter-spacing:.8px;text-transform:uppercase}
 .mast .sub{font:600 19px/1.1 var(--led);color:var(--amber-dim);flex:1 1 200px}
@@ -567,7 +569,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.32.1"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.32.2"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
