@@ -25,7 +25,6 @@ a{color:inherit}
 .mast{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 16px;background:var(--tote);padding:12px 14px;border-bottom:3px solid var(--amber)}
 .mast h1{margin:0;font:400 clamp(28px,5vw,42px)/1 var(--display);color:var(--amber);letter-spacing:.8px;text-transform:uppercase}
 .mast .sub{font:600 19px/1.1 var(--led);color:var(--amber-dim);flex:1 1 200px}
-.usebtn{display:inline-flex;align-items:center;gap:7px;font:700 17px/1 var(--led);color:var(--paper);background:none;border:2px solid var(--amber-dim);border-radius:8px;padding:8px 12px;cursor:pointer;white-space:nowrap}.usebtn i{width:10px;height:10px;border-radius:50%;background:#777;box-shadow:0 0 0 2px #0006}
 .mast a{font:700 17px/1 var(--led);color:var(--paper);text-decoration:none;border:2px solid var(--amber-dim);padding:8px 12px;white-space:nowrap}
 .bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:var(--tote2);padding:10px 12px;margin-top:10px}
 .bar .tabs{display:flex;gap:4px;flex-wrap:wrap}
@@ -395,7 +394,7 @@ details.srcs{margin-top:16px}details.srcs>.allow,details.srcs #allow>.allow{marg
 </style>
 </head>
 <body>
-<header class="mast"><h1>Nan's Tips</h1><span class="sub" id="sub">Loading today's races…</span><button class="usebtn" id="useBtn" aria-label="Usage limits for FormFav, PuntersEdge and Krok"><i id="useDot"></i>Usage</button><a href="./?play=1">Play Off To The Races &#9656;</a></header>
+<header class="mast"><h1>Nan's Tips</h1><span class="sub" id="sub">Loading today's races…</span><a href="./?play=1">Play Off To The Races &#9656;</a></header>
 <main class="wrap">
   <div class="view"><button data-view="tips" aria-pressed="true">Today's tips</button><button data-view="races" aria-pressed="false">Races</button><button data-view="record" aria-pressed="false">Tipsters</button><button data-view="punters" aria-pressed="false">Punters</button><button data-view="bets" aria-pressed="false">My bets</button><button data-view="cricket" aria-pressed="false">Cricket</button></div>
   <section id="tipsView">
@@ -415,7 +414,7 @@ details.srcs{margin-top:16px}details.srcs>.allow,details.srcs #allow>.allow{marg
   <div class="note" id="status"></div>
   <div id="multi"></div>
   <div class="races" id="races"></div>
-  <details class="follow srcs" id="srcs"><summary><span class="fs-l">Usage limits &amp; settings</span><span class="fs-n" id="srcsN"></span><span class="rchev">&#9656;</span></summary>
+  <details class="follow srcs" id="srcs"><summary><span class="fs-l">Data sources &amp; settings</span><span class="fs-n" id="srcsN"></span><span class="rchev">&#9656;</span></summary>
     <div id="allow"></div>
     <div class="tabs who" id="tipson"></div>
     <details class="follow" id="follow"></details>
@@ -559,7 +558,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.31.1"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.31.2"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -737,10 +736,8 @@ function meterHtml(a){
 function srcsLine(){const c=CREDITS,low=[];if(c){for(const [k,l] of [["ff","FormFav"],["pe","PuntersEdge"],["krok","Krok"]]){const a=c[k];if(a&&a.limit&&a.left/a.limit<=.15)low.push(l)}}
   else if(ALLOW&&ALLOW.limit&&ALLOW.left/ALLOW.limit<=.15)low.push("FormFav");
   return low.length?`<b class="minus">${low.join(", ")} running low</b>`:c||ALLOW?"All sources OK":""}
-function useDot(){const d=$("useDot");if(!d)return;const c=CREDITS;let f=1;if(c){for(const k of ["ff","pe","krok"]){const a=c[k];if(a&&a.limit)f=Math.min(f,a.left/a.limit)}}else if(ALLOW&&ALLOW.limit)f=ALLOW.left/ALLOW.limit;else{d.style.background="#777";return}
-  d.style.background=f>.4?"#2f8a4a":f>.15?"#d99a1e":"#c8321f"}
 function renderFollow(){
-  $("allow").innerHTML=creditsHtml(CREDITS);$("srcsN").innerHTML=srcsLine();useDot();
+  $("allow").innerHTML=creditsHtml(CREDITS);$("srcsN").innerHTML=srcsLine();
   const now=Date.now(),meets=[...new Map(RACES.filter(r=>r.code!=="H").map(r=>[r.code+r.slug,r])).values()];
   const el=$("follow"),open=el.open,n=meets.filter(ticked).length;
   const group=code=>{const ms=meets.filter(m=>m.code===code).map(m=>({m,rs:RACES.filter(r=>r.code===code&&r.slug===m.slug)})).sort((a,b)=>a.m.venue.localeCompare(b.m.venue));
@@ -1889,8 +1886,6 @@ document.addEventListener("change",e=>{const c=e.target.closest&&e.target.closes
     .catch(()=>{$("status").textContent="Couldn't save that. Try again."})});
 $("meet").addEventListener("change",e=>{ST.meet=e.target.value;for(const r of RACES)if(`${r.code}|${r.venue}`===ST.meet)want(r);render()});
 $("past").addEventListener("change",e=>{ST.past=e.target.checked;render()});
-// Usage button: jump to the usage meters (Today's tips, Data sources & settings), open, and refresh them
-$("useBtn").addEventListener("click",()=>{if(ST.view!=="tips")setView("tips");const d=$("srcs");d.open=true;refreshAllow();try{d.scrollIntoView({block:"start",behavior:"smooth"})}catch(e){d.scrollIntoView()}});
 $("q").addEventListener("input",e=>{ST.q=e.target.value;ST.cap=10;clearTimeout(ST.qt);ST.qt=setTimeout(render,150)});
 $("favBtn").addEventListener("click",()=>{if(ST.meet==="all")return;FAV.has(ST.meet)?FAV.delete(ST.meet):FAV.add(ST.meet);saveFav();render()});
 $("favOnly").addEventListener("click",()=>{ST.fav=!ST.fav;ST.cap=10;render()});
@@ -2787,7 +2782,7 @@ document.addEventListener("change",e=>{if(e.target.id==="stakeIn"){const v=Math.
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")pullBK()});
 setInterval(()=>{if(document.visibilityState==="visible")pullBK()},30e3);
 if(location.hash==="#record")setView("record");else if(location.hash==="#races")setView("races");else if(location.hash==="#punters")setView("punters");else if(location.hash==="#cricket")setView("cricket");else if(location.hash==="#bets")setView("bets",BK.slip.length?"slipBox":null);else slipBar();
-function refreshAllow(){clearTimeout(refreshAllow.t);refreshAllow.t=setTimeout(()=>getJSON(SB+"/otr-nan?follow=1").then(j=>{ALLOW=j.allowance||ALLOW;CREDITS=j.credits||CREDITS;$("allow").innerHTML=creditsHtml(CREDITS);$("srcsN").innerHTML=srcsLine();useDot()}).catch(()=>{}),1500)}
+function refreshAllow(){clearTimeout(refreshAllow.t);refreshAllow.t=setTimeout(()=>getJSON(SB+"/otr-nan?follow=1").then(j=>{ALLOW=j.allowance||ALLOW;CREDITS=j.credits||CREDITS;$("allow").innerHTML=creditsHtml(CREDITS);$("srcsN").innerHTML=srcsLine()}).catch(()=>{}),1500)}
 setInterval(refreshAllow,120e3);
 loadAll();
 setInterval(()=>{for(const k in LIMIT)if(Date.now()-LIMIT[k]>10*60e3&&!BUSY[k])delete CARDS[k];pump();if(!document.querySelector("details.run[open]"))render()},60e3);
