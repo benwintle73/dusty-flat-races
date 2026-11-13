@@ -32,7 +32,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--amber);outline-
 .led small{font:600 14px/1 var(--led);letter-spacing:1px;color:var(--amber-dim)}
 .led b{font:700 36px/1 var(--led);color:var(--amber);font-variant-numeric:tabular-nums}
 .led b.up{color:#7dff9b}.led b.down{color:#ff7a66}
-.grid{display:grid;gap:12px;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);grid-template-areas:"stage card" "slip card";grid-template-rows:auto 1fr;align-items:start}
+.grid{display:grid;gap:12px;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);grid-template-areas:"stage card" "slip card";grid-template-rows:auto 1fr;align-items:start;min-height:100vh} /* never shorter than the screen, so a shorter tab can't pull the page up */
 .stage{grid-area:stage;background:var(--tote);border:3px solid var(--tote2)}
 .canvas-wrap{position:relative;line-height:0}
 canvas{width:100%;height:auto;display:block}
@@ -317,7 +317,7 @@ canvas{width:100%;height:auto;display:block}
 <script>
 "use strict";
 /* ---------- helpers ---------- */
-const APP_VERSION="2.11.0"; // bump on every release; shown after the title
+const APP_VERSION="2.13.0"; // bump on every release; shown after the title
 const $=id=>document.getElementById(id);
 let RNG=Math.random;
 const mulberry=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
@@ -717,7 +717,7 @@ function buildRealDog(){
   const race={title:card.name||`Race ${card.race}`,realNo:card.race,dist:card.distance||400,rating:4,trackLabel:"Good",field,placeN:field.length>=8?3:2,no:S.idx+1,cls:card.cls,dogs:true,realDogs:true,jump:card.jump};
   if(field.length>=2)calibrate(race);
   const best=field.slice().sort((a,b)=>a.win-b.win)[0];
-  race.tip=best?{name:best.name,no:best.no,why:"Best of the form. Nan reckons the numbers don't lie."}:null;
+  race.tip=best?{name:best.name,no:best.no,why:"Best of the form. "+nanSays("D",`${S.rd.slug}|${card.race}|${best.name}`)}:null;
   S.race=race;S.bets=[];S.sel=[];S.phase="bet";S.result=null;save();
 }
 const slim=c=>({...c,runners:c.runners.map(({sire,dam,...u})=>({...u,last20:String(u.last20||"").slice(-12),blood:sire?`${sire} × ${dam||"?"}`:""}))});
@@ -774,6 +774,13 @@ const HN_TRAINERS=["E. Stewart","A. Tritton","D. Aiken","K. Gath","B. Cole","G. 
 const HN_TRACKS=["Dusty Flat Paceway","Goat Creek Trots","Wattle Gully Harness","Bullock Bend Paceway","Mount Misery Trots"];
 // [name, distance, mobile start, trotters]
 const HN_RACES=[["Maiden Mobile Pace",1609,1,0],["Servo Pie Pace",1720,1,0],["Bush Telegraph Trot",2150,1,1],["Tin Shed Handicap",2240,0,0],["Ute Muster Pace",1780,1,0],["Road Train Pace",2190,1,0],["Shearers' Standing Start",2650,0,0],["The Golden Sulky",2575,1,0]];
+/* Nan's sayings: a different line for each race (picked from the race and runner, so it doesn't change on a re-render) */
+const NAN_SAYS={
+  all:["Nan's been doing the form since the wireless days. Trust her.","Nan put the coin jar on this one.","Nan's knitting needles pointed straight at this one.","Nan reckons you could throw a blanket over the rest.","Nan read the form twice and had a biscuit. Decision made.","Nan's not one to brag, but she had the last three.","Nan says get on before the bookies wake up.","Nan wouldn't put her teeth in for anything else in this race.","The crossword answer this morning was this one's name. Nan says that's no coincidence.","Nan says the numbers don't lie, and neither does Nan.","Nan's lucky cardigan is on. You've been warned.","The whole bridge club is on this one. Don't tell them Nan told you.","Nan's had a cuppa and a long hard look. This is the one.","Nan says if this one loses, she's taking up lawn bowls.","Nan watched the replays in her dressing gown. Worth it.","Nan doesn't do favourites. Except this one. And you, love.","Nan says it'd have to fall over to lose. Touch wood.","Nan reckons the rest are running for second.","Nan's been right before. Don't ask how often she's been wrong.","Nan says she's got a feeling in her waters about this one.","Nan's hip has been twinging all morning. That's always a good sign.","Nan says back it, and if it loses, blame Pop.","Nan's already planning what to do with the winnings. Mostly bingo.","Nan says this one's been flying under the radar. Not any more."],
+  H:["Nan likes the way the money's coming for this one.","Jockey's in form and so is the horse. Nan's smiling.","Nan's seen the barrier draw and she's very happy with it.","Nan says this one's been trained to the minute.","Nan reckons it's been set for this race since the winter."],
+  D:["Nan says this dog jumps like it's late for its tea.","Nan likes a dog that knows the way to the rail.","Nan says the box draw's a gift. Don't waste it.","Nan reckons this one would chase the lure to Sydney and back.","Nan says this pup's got more early speed than Pop on pension day."],
+  N:["Nan says this driver could steer a shopping trolley through a car park.","Nan likes a pacer that can fire off the gate.","Nan reckons this one's got a sit and a finish in it.","Nan says no gallops, no worries. Steady as she goes.","Nan's mate in the stewards' tower rates the driver."]};
+function nanSays(code,seed){const L=[...(NAN_SAYS[code]||[]),...NAN_SAYS.all];return L[strHash(String(seed))%L.length]}
 const HN_NAN=["Drawn to sit on the leader's back. Can't lose from there.","Nan likes a pacer that can fire off the gate.","Two-time winner on this track. Nan never bets against the track.","Drawn wide, but the mobile won't trouble this one.","Nan's mate in the stewards' tower rates the driver.","Trotter that's never galloped. Nan loves a steady trotter."];
 const HN_STYLE={front:"Leads",mid:"Sits in the trail",back:"Comes from behind"};
 const isHarness=()=>S&&S.mode==="harness";
@@ -861,7 +868,7 @@ function buildRealHarness(){
   const race={title:card.name||`Race ${card.race}`,realNo:card.race,dist:card.distance||1609,rating,trackLabel:card.cond||"Good",field,placeN:field.length>=8?3:2,no:S.idx+1,cls:card.cls,harness:true,realHarness:true,mobile,trot,jump:card.jump};
   if(field.length>=2)calibrate(race);
   const best=field.slice().sort((a,b)=>a.win-b.win)[0];
-  race.tip=best?{name:best.name,no:best.no,why:"Best of the form and the draw. Nan backs the numbers."}:null;
+  race.tip=best?{name:best.name,no:best.no,why:"Best of the form and the draw. "+nanSays("N",`${S.rh.slug}|${card.race}|${best.name}`)}:null;
   S.race=race;S.bets=[];S.sel=[];S.phase="bet";S.result=null;save();
 }
 const hnSlim=c=>({...c,runners:c.runners.map(({sire,dam,...u})=>({...u,last20:String(u.last20||"").slice(-12),blood:sire?`${sire} × ${dam||"?"}`:""}))});
@@ -1466,7 +1473,7 @@ function buildReal(){
   const race={title:src.name,realNo:src.number,dist:src.distance||1400,rating:trackRating(src.track),trackLabel:src.track?ratingLabel(src.track):"Track TBC",field,placeN:n>=8?3:2,no:S.idx+1,cls:src.cls,feature:!!src.feature};
   calibrate(race);
   const best=field.slice().sort((a,b)=>a.win-b.win)[0];
-  race.tip={name:best.name,no:best.no,why:"Market favourite. Nan says the money knows."};
+  race.tip={name:best.name,no:best.no,why:"Market favourite. "+nanSays("H",`${src.name}|${src.number}|${best.name}`)};
   S.race=race;S.bets=[];S.sel=[];S.phase="bet";S.result=null;save();
 }
 const ratingLabel=t=>String(t).toLowerCase().replace(/\b[a-z]/g,c=>c.toUpperCase());
@@ -1611,8 +1618,8 @@ function meterHtml(a){
   return `<div class="allow" title="Dog and harness form comes from FormFav's free allowance. It frees up gradually over 24 hours."><span class="allow-l">Form allowance</span><span class="allow-bar"><i style="width:${Math.round(f*100)}%;background:${col}"></i></span><span class="allow-n"><b>${left.toLocaleString()}</b> of ${a.limit.toLocaleString()} left${left===0?" · frees up through the day":""}${when?` · as of ${when}`:""}</span></div>`;
 }
 
-function loadFollow(){if(FOLLOW)return;FOLLOW={D:[],N:[],loading:true};fetch(`${NAN_URL}?follow=1`).then(r=>r.json()).then(j=>{FOLLOW={D:(j.tracks&&j.tracks.D)||[],N:(j.tracks&&j.tracks.N)||[]};ALLOW=j.allowance||null;CREDITS=j.credits||null}).catch(()=>{FOLLOW={D:[],N:[]}}).finally(()=>{if(tipsOpen&&!resOpen&&!bookOpen)renderCard()})}
-const followed=x=>FOLLOW&&!FOLLOW.loading&&(FOLLOW[x.code]||[]).includes(x.slug);
+function loadFollow(){if(FOLLOW)return;FOLLOW={D:[],N:[],loading:true};fetch(`${NAN_URL}?follow=1`).then(r=>r.json()).then(j=>{FOLLOW={D:(j.tracks&&j.tracks.D)||[],N:(j.tracks&&j.tracks.N)||[],auto:!!j.auto};ALLOW=j.allowance||null;CREDITS=j.credits||null}).catch(()=>{FOLLOW={D:[],N:[]}}).finally(()=>{if(tipsOpen&&!resOpen&&!bookOpen)renderCard()})}
+const followed=x=>FOLLOW&&!FOLLOW.loading&&(!!FOLLOW.auto||(FOLLOW[x.code]||[]).includes(x.slug));
 // horses: the market, nudged by recent form; dogs and harness: the same form ratings their odds come from
 function horseRank(r){
   const POS={1:1,2:.7,3:.5,4:.36,5:.27,6:.2,7:.15,8:.12,9:.1,0:.08};
@@ -1667,7 +1674,7 @@ function renderTips(){
   const tag=x=>`${timeOf(new Date(x.t).toISOString())} · ${escH(x.venue)} R${x.no} · ${CODE_NAME[x.code]}`;
   const row=(x,i)=>{const p=x.picks;
     return `<div class="nt-row"><div><div class="off-meta">${tag(x)}${x.t<=now?" (jumped)":""}</div>
-      ${p===undefined?'<div class="off-pend">Nan is reading the form…</div>':p==="off"?`<div class="off-pend">Nan isn't following this meeting. <button class="tk-load" data-tipload="${x.code}|${escH(x.slug)}">Load Nan's pick</button></div>`:!p||!p.length?'<div class="off-pend">No field yet</div>':`<div class="nt-pick">1st ${cloth(p[0].no,x.code,p[0].box)} <b>${escH(p[0].name)}</b> <small>${div(p[0].price)}</small></div><div class="off-meta">${p.slice(1,4).map((u,i)=>`${["2nd","3rd","4th"][i]} ${cloth(u.no,x.code,u.box)} ${escH(u.name)}`).join(" · ")}</div>${p.quick?`<div class="nt-q"><span class="qtag">Quick form</span> market and recent form from PuntersEdge ${TIPWANT[x.code+x.slug]||followed(x)?"":`<button class="tk-load" data-tipload="${x.code}|${escH(x.slug)}">Load full form</button>`}</div>`:""}${p.scr&&p.scr.length?`<div class="nt-scr">Scratched: ${p.scr.map(u=>`${cloth(u.no,x.code,u.box,"x")} <s>${escH(u.name)}</s>`).join(" · ")}</div>`:""}`}</div>
+      ${p===undefined?'<div class="off-pend">Nan is reading the form…</div>':p==="off"?`<div class="off-pend">Nan isn't following this meeting. <button class="tk-load" data-tipload="${x.code}|${escH(x.slug)}">Load Nan's pick</button></div>`:!p||!p.length?'<div class="off-pend">No field yet</div>':`<div class="nt-pick">1st ${cloth(p[0].no,x.code,p[0].box)} <b>${escH(p[0].name)}</b> <small>${div(p[0].price)}</small></div><div class="off-meta">${p.slice(1,4).map((u,i)=>`${["2nd","3rd","4th"][i]} ${cloth(u.no,x.code,u.box)} ${escH(u.name)}`).join(" · ")}</div>${p.quick?`<div class="nt-q">${QUICKG[x.code]&&QUICKG[x.code].priceOnly?'<span class="qtag">Price only</span> market prices from Krok (no form) ':'<span class="qtag">Quick form</span> market and recent form from PuntersEdge '}${TIPWANT[x.code+x.slug]||followed(x)?"":`<button class="tk-load" data-tipload="${x.code}|${escH(x.slug)}">Load full form</button>`}</div>`:""}${p.scr&&p.scr.length?`<div class="nt-scr">Scratched: ${p.scr.map(u=>`${cloth(u.no,x.code,u.box,"x")} <s>${escH(u.name)}</s>`).join(" · ")}</div>`:""}`}</div>
       <button class="tk-act" data-tipgo="${i}">Bet</button></div>`};
   c.innerHTML=`<h2>Nan's Tips</h2><div class="conds"><span>Today's real races, in start order</span></div>
   
@@ -1677,7 +1684,7 @@ function renderTips(){
   ${rough?`<div class="tip"><b>Nan's Roughie:</b> ${tag(rough.x)} · ${cloth(rough.u.no,rough.x.code,rough.u.box)} <b>${escH(rough.u.name)}</b> ${div(rough.u.price)}</div>`:""}
   ${waiting?`<div class="off-meta">Nan is still reading the form for ${waiting} race${waiting>1?"s":""}…</div>`:""}
   ${TIPL.length?`<div class="res-day">${TIPL.map(row).join("")}</div>`:'<div class="tip">No more real races today. Nan will be back tomorrow.</div>'}
-  <div class="tip">Nan's picks come from the market and recent form for horses, and from form and the draw for dogs and harness. Dog and harness meetings Nan follows load by themselves: choose them on Nan's Full Tips. For fun only.</div>
+  <div class="tip">Nan's picks come from the market and recent form for horses, and from form and the draw for dogs and harness. Dog and harness meetings Nan follows load by themselves: every meeting while credits allow, otherwise the ones you choose on Nan's Full Tips. For fun only.</div>
   <button class="reset" data-tipclose="1">Back to the race</button>`;
 }
 function openTips(){tipsOpen=true;resOpen=false;resSel=null;bookOpen=false;loadFollow();loadQuick();loadDogMeets();loadHarnessMeets();renderNav();renderCard();$("card").scrollIntoView({block:"start"})}
@@ -1699,6 +1706,14 @@ function renderNav(){
   $("nav").innerHTML=`<div><button data-nav="career" aria-pressed="${S.mode==="career"&&!bookOpen&&!resOpen}">Career</button><button data-nav="daily" aria-pressed="${S.mode==="daily"&&!bookOpen&&!resOpen}" ${S.mode!=="daily"&&dd!==undefined?"disabled":""}>${dd!==undefined&&S.mode!=="daily"?"Daily "+money(dd):"Daily"}</button><button data-nav="horses" aria-pressed="${S.mode==="real"&&!bookOpen&&!resOpen}">Horses</button><button data-nav="dogs" aria-pressed="${S.mode==="dogs"&&!bookOpen&&!resOpen}">Dogs</button><button data-nav="harness" aria-pressed="${S.mode==="harness"&&!bookOpen&&!resOpen}">Harness</button><button data-nav="tips" aria-pressed="${tipsOpen&&!resOpen&&!bookOpen}">Nan's Tips</button><a class="navlink" href="nan.html?v=${APP_VERSION}" target="_blank" rel="noopener">Nan's Full Tips &#9656;</a><button data-nav="results" aria-pressed="${resOpen}">Results</button><button data-nav="book" aria-pressed="${bookOpen}">My Book${pend?` (${pend})`:""}</button>${S.mode!=="daily"?'<button class="alt" data-nav="restart">Restart meet</button>':""}</div>
   ${ntgHtml()}${dogNavHtml()}${harnessNavHtml()}${S.mode!=="real"?"":[...new Set(MEETS.map(m=>m.date))].map(d=>`<div class="meets"><span>${d===REAL_TODAY?"Today":"Tomorrow"===dayRel(d)?"Tomorrow":dayName(d)}</span>${MEETS.map((m,mi)=>m.date!==d?"":`<button data-meet="${mi}" aria-pressed="${S.mode==="real"&&mi===S.realIdx&&!bookOpen&&!resOpen}">${m.venue}</button>`).join("")}</div>`).join("")+`<label class="pick"><span>All races</span><select id="racesel" ${MEETS.length?"":"disabled"}>${cur?"":`<option value="" selected>${MEETS.length?"Pick a race":meetsFailed?"Real races only load on the public game site":"Loading races"}</option>`}${groups}</select></label>`}`;
 }
+/* Tabs stay put. A click in the tab bar used to scroll the page to the track or the card, and the bar itself changes
+   height from mode to mode, so the screen jumped about. For a few seconds after a tab click (long enough for meetings to
+   load) those scrolls are skipped and the tab bar is put back where it was on screen. Any click elsewhere ends that. */
+let NAV_HOLD=0,NAV_TOP=0;
+{const siv=Element.prototype.scrollIntoView;Element.prototype.scrollIntoView=function(...a){if(Date.now()<NAV_HOLD&&(this.id==="card"||this.classList.contains("stage")))return keepNav();return siv.apply(this,a)}}
+function keepNav(){const d=$("nav").getBoundingClientRect().top-NAV_TOP;if(Math.abs(d)>1)window.scrollBy(0,d)}
+document.addEventListener("click",e=>{if(!e.target.closest("#nav"))NAV_HOLD=0},true);
+$("nav").addEventListener("click",e=>{const b=e.target.closest("button");if(!b||b.disabled)return;NAV_TOP=$("nav").getBoundingClientRect().top;NAV_HOLD=Date.now()+4000;requestAnimationFrame(()=>requestAnimationFrame(keepNav))},true);
 $("nav").addEventListener("change",e=>{tipsOpen=false;if(e.target.id==="hnsel"){resOpen=false;bookOpen=false;audio();return setHarnessRace(+e.target.value)}if(e.target.id==="ntgsel"){if(e.target.value==="")return;audio();return goSched(NTG[+e.target.value])}if(e.target.id==="dgsel"){resOpen=false;bookOpen=false;audio();return setDogRace(+e.target.value)}if(e.target.id!=="racesel"||!e.target.value)return;resOpen=false;const [m,r]=e.target.value.split(",").map(Number);audio();setReal(m,r)});
 $("nav").addEventListener("click",e=>{
   const b=e.target.closest("button");if(!b||b.disabled)return;audio();

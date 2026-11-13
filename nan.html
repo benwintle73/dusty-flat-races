@@ -190,7 +190,7 @@ body{padding-bottom:60px}
     Nan works every pick out herself. Horses: the bookmaker market, nudged by recent form. Dogs and harness: each runner's record, recent runs and the draw.
     Tap a race to see the field, and a runner to see how Nan got there and its full form.
     Prices for horses by <a href="https://puntersedge.online" target="_blank" rel="noopener">PuntersEdge</a>; form by FormFav. Dog and harness prices are Nan's own estimates.
-    Quick form for dogs and harness comes from PuntersEdge when FormFav's form isn't loaded: Nan then uses the market and recent form.
+    Quick form for dogs and harness comes from PuntersEdge when FormFav's form isn't loaded: Nan then uses the market and recent form. If PuntersEdge can't refresh either, Krok's cards stand in, marked Price only: they have no form, so Nan goes on the market alone.
     Nan's record: her top pick in every horse race, and every race at the dog and harness meetings she follows, is saved before the jump and checked against the official results (PuntersEdge). Profit is a $1 win bet on every top pick at the official win dividend; scratched picks don't count.
     For fun only. 18+. Gamble responsibly: 1800 858 858.
   </div>
@@ -285,13 +285,14 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null};
+const NAN_VERSION="2.13.0"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
 async function loadAll(){
   const [pe,dl,hl,fo,qd,qh]=await Promise.allSettled([getJSON(PE_URL),getJSON(DG_URL+"?list=1"),getJSON(HN_URL+"&list=1"),getJSON(SB+"/otr-nan?follow=1"),getJSON(PE_URL+"?quick=greyhound"),getJSON(PE_URL+"?quick=harness")]);
   if(qd.status==="fulfilled")QUICK.D=qd.value;if(qh.status==="fulfilled")QUICK.N=qh.value;
-  if(fo.status==="fulfilled"&&fo.value.tracks){FOLLOW={D:fo.value.tracks.D||[],N:fo.value.tracks.N||[]};ALLOW=fo.value.allowance||null;CREDITS=fo.value.credits||null}
+  if(fo.status==="fulfilled"&&fo.value.tracks){FOLLOW={D:fo.value.tracks.D||[],N:fo.value.tracks.N||[],auto:!!fo.value.auto};ALLOW=fo.value.allowance||null;CREDITS=fo.value.credits||null}
   if(pe.status==="fulfilled"){const j=pe.value;ST.today=ST.today||j.today;RESULTS=j.results||{};
     for(const d of j.days||[])if(d.date===j.today)for(const m of d.meetings)for(const r of m.races)
       addRace({id:`H|${m.key}|${r.number}`,key:`${m.key}_T_${r.number}`,code:"H",venue:m.venue,state:m.state,date:m.date,no:r.number,name:r.name,dist:r.distance,cls:r.cls,cond:r.track,jump:r.jump,est:r.est,race:r})}
@@ -300,12 +301,12 @@ async function loadAll(){
       addRace({id:`${code}|${m.slug}|${r.number}`,code,venue:m.track,slug:m.slug,date:m.date,no:r.number,name:r.name,dist:r.distance,cls:r.cls,jump:r.jump})}
   RACES.sort((a,b)=>Date.parse(a.jump)-Date.parse(b.jump)||a.venue.localeCompare(b.venue));
   const bad=[pe,dl,hl].filter(x=>x.status!=="fulfilled").length;
-  $("sub").textContent=ST.today?new Date(ST.today+"T12:00:00").toLocaleDateString("en-AU",{weekday:"long",day:"numeric",month:"long"}):"Today";
+  $("sub").textContent=(ST.today?new Date(ST.today+"T12:00:00").toLocaleDateString("en-AU",{weekday:"long",day:"numeric",month:"long"}):"Today")+" · v"+NAN_VERSION;
   $("status").textContent=bad===3?"Nan couldn't load today's races. Try again soon.":bad?"Some codes didn't load, so they're missing for now.":"";
   render();pump();
 }
 // dog and harness fields: only meetings Nan follows load by themselves (to save the daily form allowance); others when asked
-const follows=r=>(FOLLOW[r.code]||[]).includes(r.slug),wanted=r=>follows(r)||WANT.has(r.code+r.slug);
+const ticked=r=>(FOLLOW[r.code]||[]).includes(r.slug),follows=r=>!!FOLLOW.auto||ticked(r),wanted=r=>follows(r)||WANT.has(r.code+r.slug);
 const offList=r=>r.code!=="H"&&!CARDS[r.code+r.slug]&&!wanted(r);
 function want(r){if(r.code==="H"||WANT.has(r.code+r.slug))return;WANT.add(r.code+r.slug);pump()}
 // dog and harness fields come one meeting at a time, a few at once
@@ -349,7 +350,7 @@ const recTxt=x=>x&&x.s?`${x.s}: ${x.w}-${x[2]}-${x[3]}`:"–";
 function formTable(rows){return `<table class="form"><tbody>${rows.filter(([,v])=>v!==undefined).map(([l,v])=>`<tr><td>${l}</td><td class="n">${v}</td></tr>`).join("")}</tbody></table>`}
 function fullForm(r,x){
   const u=x.u;
-  if(r.src==="quick")return `<h4>Quick form</h4><p>${[r.code==="D"?`Box ${u.box}`:`Barrier ${u.box}`,u.trainer?`Trainer ${escH(u.trainer)}`:""].filter(Boolean).join(" · ")}</p>
+  if(r.src==="quick")return `<h4>${QUICK[r.code]&&QUICK[r.code].priceOnly?"Price only (Krok)":"Quick form"}</h4><p>${[u.box==null?"":r.code==="D"?`Box ${u.box}`:`Barrier ${u.box}`,u.trainer?`Trainer ${escH(u.trainer)}`:""].filter(Boolean).join(" · ")}</p>
     ${u.form?`<div><small>Last ${String(u.form).length} starts (latest last)</small><div class="l20">${escH(u.form)}</div></div>`:""}
     <p>From PuntersEdge. Career, track and box records come with FormFav's full form.</p>`;
   if(r.code!=="H"){
@@ -394,7 +395,7 @@ function whyHtml(r,x,rank,n){
 }
 function raceBody(r){
   const rk=ranked(r),k=r.code+r.slug,n0=RACES.filter(x=>x.code+x.slug===k&&Date.parse(x.jump)>Date.now()).length;
-  const loadBtn=r.code!=="H"&&!CARDS[k]&&!BUSY[k]?`<p class="qnote">${r.src==="quick"?"Quick form from PuntersEdge: Nan is using the market and recent form. ":""}<button class="ffload" data-loadmeet="${escH(k)}">Load FormFav full form for ${escH(r.venue)}</button> <small>uses about ${n0||1} of today's FormFav allowance</small></p>`:"";
+  const loadBtn=r.code!=="H"&&!CARDS[k]&&!BUSY[k]?`<p class="qnote">${r.src==="quick"?(QUICK[r.code]&&QUICK[r.code].priceOnly?"Price only from Krok: no form is available, so Nan is going on the market alone. ":"Quick form from PuntersEdge: Nan is using the market and recent form. "):""}<button class="ffload" data-loadmeet="${escH(k)}">Load FormFav full form for ${escH(r.venue)}</button> <small>uses about ${n0||1} of today's FormFav allowance</small></p>`:"";
   if(rk===undefined)return offList(r)?loadBtn||`<p>Nan is reading the form…</p>`:'<p>Nan is reading the form…</p>';
   if(!rk)return `<p>${noField(r)}</p>${loadBtn}`;
   if(r.code==="H")loadForm(r);
@@ -419,7 +420,7 @@ function creditsHtml(c){
   const row=(lab,a,per,note)=>{if(!a)return "";const left=Math.max(0,Math.min(a.limit,a.left)),f=left/a.limit,col=f>.4?"#2f8a4a":f>.15?"#d99a1e":"#c8321f";
     return `<div class="crow"><span class="allow-l">${lab}</span><span class="allow-bar"><i style="width:${Math.round(f*100)}%;background:${col}"></i></span><span class="allow-n"><b>${left.toLocaleString()}</b> of ${a.limit.toLocaleString()} ${per}${note?` · ${note}`:""}</span></div>`};
   const ff=c.ff,ffNote=ff&&ff.left<60?"Nan uses PuntersEdge quick form instead":"";
-  return `<div class="allow credits">${row("FormFav",ff,"left today",ffNote)}${row("PuntersEdge",c.pe,"left this month","")}${row("Krok",c.krok,"left this month","")}<small class="cnote">FormFav gives full dog and harness form (frees up over 24 hours). PuntersEdge gives horse races, results and quick dog and harness form, keeping about 45 credits a day back for horses. Krok is the horse back-up.</small></div>`;
+  return `<div class="allow credits">${row("FormFav",ff,"left today",ffNote)}${row("PuntersEdge",c.pe,"left this month","")}${row("Krok",c.krok,"left this month","")}<small class="cnote">FormFav gives full dog and harness form (frees up over 24 hours). PuntersEdge gives horse races, results and quick dog and harness form, keeping about 45 credits a day back for horses. Krok fills in dog and harness form when FormFav runs short (5 credits a race, paced to last until its reset), gives price-only cards as a last resort, and backs up horses.</small></div>`;
 }
 function meterHtml(a){
   if(!a)return "";const left=Math.max(0,Math.min(a.limit,a.left)),f=left/a.limit,col=f>.4?"#2f8a4a":f>.15?"#d99a1e":"#c8321f";
@@ -429,12 +430,12 @@ function meterHtml(a){
 function renderFollow(){
   $("allow").innerHTML=creditsHtml(CREDITS);
   const now=Date.now(),meets=[...new Map(RACES.filter(r=>r.code!=="H").map(r=>[r.code+r.slug,r])).values()];
-  const el=$("follow"),open=el.open,n=meets.filter(follows).length;
+  const el=$("follow"),open=el.open,n=meets.filter(ticked).length;
   const group=code=>{const ms=meets.filter(m=>m.code===code).map(m=>({m,rs:RACES.filter(r=>r.code===code&&r.slug===m.slug)})).sort((a,b)=>a.m.venue.localeCompare(b.m.venue));
     return ms.length?`<div class="fgrp"><h4>${CODE[code]}</h4>${ms.map(({m,rs})=>{const left=rs.filter(r=>Date.parse(r.jump)>now);
-      return `<label class="fopt"><input type="checkbox" data-follow="${code}|${escH(m.slug)}" ${follows(m)?"checked":""}><span><b>${escH(m.venue)}</b><small>${left.length?`${left.length} race${left.length>1?"s":""} to run · next ${timeOf(left[0].jump)}`:"all run"}</small></span></label>`}).join("")}</div>`:""};
-  el.innerHTML=`<summary>Meetings Nan follows: <b>${n}</b> of ${meets.length} dog and harness meetings today <span class="rchev">&#9656;</span></summary>
-    <p>Dog and harness form comes from FormFav's free allowance of 1,000 lookups a day (about one per race). Nan loads the meetings you tick by herself and keeps them in her record; any other meeting loads only when you open one of its races. Horses don't use the allowance, so they're always on. Ticked tracks stay ticked for future days.</p>
+      return `<label class="fopt"><input type="checkbox" data-follow="${code}|${escH(m.slug)}" ${ticked(m)?"checked":""}><span><b>${escH(m.venue)}</b><small>${left.length?`${left.length} race${left.length>1?"s":""} to run · next ${timeOf(left[0].jump)}`:"all run"}</small></span></label>`}).join("")}</div>`:""};
+  el.innerHTML=`<summary>Meetings Nan follows: ${FOLLOW.auto?`<b>all ${meets.length}</b> dog and harness meetings today (automatic)`:`<b>${n}</b> of ${meets.length} dog and harness meetings today`} <span class="rchev">&#9656;</span></summary>
+    <p>Dog and harness form comes from FormFav's free allowance of 1,000 lookups a day (about one per race). Nan loads the meetings you tick by herself and keeps them in her record; any other meeting loads only when you open one of its races. Horses don't use the allowance, so they're always on. Ticked tracks stay ticked for future days. While FormFav and Krok have enough credits for every race left today, Nan follows every meeting automatically; your ticks take over when credits run short.</p>
     <div class="fgrid">${group("D")}${group("N")}</div>`;
   el.open=open;
 }
@@ -458,7 +459,7 @@ function render(){
   else if($("status").textContent.startsWith("Nan is still"))$("status").textContent="";
   $("races").innerHTML=list.length?list.map(r=>{const rk=ranked(r),t=Date.parse(r.jump),gone=t<=Date.now();
     return `<details class="race${gone?" jumped":""}" data-id="${escH(r.id)}" ${open.has(r.id)?"open":""}><summary>
-      <div><div class="rmeta">${tag(r)}${gone?" · jumped":""}${rk&&r.src==="quick"?' · <span class="qtag">Quick form</span>':""}</div><div class="rtitle">${escH(r.venue)} R${r.no}${r.dist?" · "+r.dist+"m":""}</div>
+      <div><div class="rmeta">${tag(r)}${gone?" · jumped":""}${rk&&r.src==="quick"?` · <span class="qtag">${QUICK[r.code]&&QUICK[r.code].priceOnly?"Price only":"Quick form"}</span>`:""}</div><div class="rtitle">${escH(r.venue)} R${r.no}${r.dist?" · "+r.dist+"m":""}</div>
       <div class="rpick">${offList(r)&&rk===undefined?`Nan isn't following ${escH(r.venue)} <span class="scrsum">· open to load her pick</span>`:rk===undefined?"Nan is reading the form…":!rk?noField(r,true):`Nan: 1st ${cloth(rk[0].u.no,r.code,rk[0].u.box)} <b>${escH(rk[0].u.name)}</b> ${pct(rk[0].p)} · ${rk.slice(1,3).map((x,i)=>`${["2nd","3rd"][i]} ${cloth(x.u.no,r.code,x.u.box)} ${escH(x.u.name)}`).join(" · ")}${r.scr&&r.scr.length?` <span class="scrsum">· Scr ${r.scr.map(u=>cloth(u.no,r.code,u.box,"x")).join(" ")}</span>`:""}`}</div></div>
       <span class="rchev">&#9656;</span></summary><div class="rbody">${open.has(r.id)?raceBody(r):""}</div></details>`}).join("")
     :`<div class="empty">${RACES.length?"No races to show. Tick \"Show jumped races\" or pick another code.":"No real races found for today yet."}</div>`;
@@ -469,7 +470,7 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-loadmeet]"
 document.addEventListener("change",e=>{const c=e.target.closest&&e.target.closest("[data-follow]");if(!c)return;
   const [code,slug]=c.dataset.follow.split("|"),on=c.checked,list=new Set(FOLLOW[code]);on?list.add(slug):list.delete(slug);FOLLOW[code]=[...list];
   if(on)WANT.add(code+slug);pump();render();
-  fetch(SB+"/otr-nan?follow=1",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({code,slug,on})}).then(r=>r.json()).then(j=>{if(j.tracks){FOLLOW={D:j.tracks.D||[],N:j.tracks.N||[]};ALLOW=j.allowance||ALLOW;CREDITS=j.credits||CREDITS;render()}})
+  fetch(SB+"/otr-nan?follow=1",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({code,slug,on})}).then(r=>r.json()).then(j=>{if(j.tracks){FOLLOW={D:j.tracks.D||[],N:j.tracks.N||[],auto:!!j.auto};ALLOW=j.allowance||ALLOW;CREDITS=j.credits||CREDITS;render()}})
     .catch(()=>{$("status").textContent="Couldn't save that. Try again."})});
 $("meet").addEventListener("change",e=>{ST.meet=e.target.value;for(const r of RACES)if(`${r.code}|${r.venue}`===ST.meet)want(r);render()});
 $("past").addEventListener("change",e=>{ST.past=e.target.checked;render()});
