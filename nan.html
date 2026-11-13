@@ -225,7 +225,13 @@ body{padding-bottom:60px}
 #loanClock{font-weight:700;color:var(--ink)}
 .loanmsg{font-weight:700;margin:6px 0}
 .nanpay{color:#8e3a2c!important}
-.players{border-top-color:var(--amber)}.pl-sub{margin:4px 0 8px}.pltable td small{display:block;font-size:12px;color:#8e3a2c;font-weight:400;white-space:nowrap}.pltable tr.me td{background:#fff3cd}.pltable td:nth-child(2){max-width:130px;overflow:hidden;text-overflow:ellipsis}
+.players{border-top-color:var(--amber)}
+.pl-you{display:flex;justify-content:space-between;align-items:center;background:var(--ink);color:var(--paper);padding:8px 12px;margin:4px 0 8px;font:600 17px/1.1 var(--led)}.pl-you b{font:700 22px/1 var(--led);color:var(--amber)}
+.pl-r{display:grid;grid-template-columns:40px minmax(0,1fr) auto;align-items:center;gap:8px;padding:8px 4px;border-bottom:1px solid var(--line)}
+.pl-r.lead{background:#fff8e6}.pl-r.me{background:#fff3cd;box-shadow:inset 4px 0 0 var(--amber)}
+.pl-k{font:700 17px/1 var(--led);color:var(--ink2);text-align:center}.pl-n{min-width:0}.pl-n b{display:block;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pl-n small{display:block;font:600 13px/1.2 var(--led);color:var(--ink2);margin-top:2px}.pl-n small i{font-style:normal;color:#8e3a2c}
+.pl-m{font:700 22px/1 var(--led);font-variant-numeric:tabular-nums}.pl-sub{margin:4px 0 8px}.pltable td small{display:block;font-size:12px;color:#8e3a2c;font-weight:400;white-space:nowrap}.pltable tr.me td{background:#fff3cd}.pltable td:nth-child(2){max-width:130px;overflow:hidden;text-overflow:ellipsis}
 .pl-join{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;background:var(--paper2);padding:8px 10px;margin:6px 0 10px}
 #nameIn{min-height:44px;font:700 17px/1 var(--led);padding:0 8px;border:1px solid var(--line);min-width:0;width:100%;box-sizing:border-box}
 #acctBox .lact{grid-template-columns:minmax(0,1fr) auto}
@@ -913,10 +919,12 @@ async function loadPlayers(){if(PB.busy)return;PB.busy=true;try{const j=await ge
 function renderPlayers(){const el=$("players");if(!el)return;const me=SYNC.name,ps=PB.players;
   const nm=n=>escH(n);
   el.innerHTML=`<h3>Players' leaderboard</h3>
-    <p class="pl-sub">Ranked by <b>Net</b>: your official balance less what you owe Nan. Everyone starts with ${money(1000)}, and borrowing from Nan doesn't count.</p>
+    <p class="pl-sub">Ranked by the money in each account, less anything owed to Nan. Everyone starts with $1,000.</p>
     ${!me?`<div class="pl-join"><span>${SYNC.code?"Pick a name to get on the board.":"Place a bet to start your account, then pick a name."}</span><button class="ffload" data-gotoname>Pick my name</button></div>`:""}
-    ${PB.err?`<p class="minus">${PB.err}</p>`:!ps?`<p>Loading…</p>`:!ps.length?`<p>No one's on the board yet. Pick a name and settle a bet to be first.</p>`:`<div class="bwrap"><table class="btable pltable"><thead><tr><th></th><th>Player</th><th class="n">Net</th><th class="n">Profit</th><th class="n">Bets</th><th class="n">Won</th><th class="n pl-best">Best win</th></tr></thead><tbody>
-      ${ps.map((p,i)=>`<tr class="${i===0?"lead":""}${me&&p.name===me?" me":""}"><td>${i===0?"👑":i+1}</td><td><b>${nm(p.name)}</b>${p.owed>0?`<small>owes Nan ${money(Math.round(p.owed)).replace(".00","")}</small>`:""}</td><td class="n"><b>${money(p.net)}</b></td><td class="n ${p.profit>=0?"plus":"minus"}">${p.profit>=0?"+":"-"}${money(Math.round(Math.abs(p.profit))).replace(".00","")}</td><td class="n">${p.bets}</td><td class="n">${p.bets?Math.round(p.won/p.bets*100):0}%</td><td class="n pl-best">${money(Math.round(p.best)).replace(".00","")}</td></tr>`).join("")}</tbody></table></div>`}
+    ${PB.err?`<p class="minus">${PB.err}</p>`:!ps?`<p>Loading…</p>`:!ps.length?`<p>No one's on the board yet. Pick a name and settle a bet to be first.</p>`:(()=>{const mi=me?ps.findIndex(p=>p.name===me):-1;
+      return `${mi>=0?`<div class="pl-you"><span>You're <b>${ord(mi+1)}</b> of ${ps.length}</span><b>${money(Math.round(ps[mi].net)).replace(".00","")}</b></div>`:""}
+      <div class="pl-list">${ps.map((p,i)=>{const pc=p.bets?Math.round(p.won/p.bets*100):0;
+        return `<div class="pl-r${i===0?" lead":""}${me&&p.name===me?" me":""}"><span class="pl-k">${i===0?"👑":ord(i+1)}</span><span class="pl-n"><b>${nm(p.name)}</b><small>${pc}% wins · ${p.bets} bet${p.bets===1?"":"s"}${p.owed>0?` · <i>owes Nan ${money(Math.round(p.owed)).replace(".00","")}</i>`:""}</small></span><span class="pl-m">${money(Math.round(p.net)).replace(".00","")}</span></div>`}).join("")}</div>`})()}
     <p class="calc-out"><small>Updates when bets are placed and results come in. Play money only.</small></p>`}
 async function saveName(){const v=(($("nameIn")||{}).value||"").trim();PB.nameIn=v;
   if(!SYNC.code){PB.msg="Place a bet first to start your account.";return renderBets()}
