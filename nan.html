@@ -158,6 +158,7 @@ details.follow p{margin:0 12px 8px;font-size:15px;color:#d9c9a3}
 .tabs.who{margin:8px 0 0;display:flex;flex-wrap:wrap;gap:6px;align-items:center}.tabs.who .wl{color:var(--paper);font-weight:700;margin-right:4px}
 .smap{background:#fff8;border:1px solid var(--line);padding:6px 8px;margin:6px 0;font-size:15px}.smap>div{padding:2px 0}.smap .tw{display:inline-block;min-width:96px;font-weight:700}
 .tip .rest{display:block;font-size:14px;color:var(--ink2);margin-top:2px}.worder .tw{min-width:52px}
+.tabs.who .wsep{margin-left:14px}.wchk{color:var(--paper);font-size:15px;display:inline-flex;align-items:center;gap:4px;cursor:pointer}.wchk input{width:18px;height:18px}
 .tgwrap{overflow-x:auto}.tgrid{width:100%;border-collapse:collapse;font-size:15px}
 .tgrid th,.tgrid td{padding:6px 6px;border-bottom:1px solid #0002;text-align:left;vertical-align:top}
 .tgrid thead th{font:400 15px/1 var(--display);text-transform:uppercase;letter-spacing:.4px;color:var(--ink2);border-bottom:2px solid var(--ink)}
@@ -333,7 +334,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.19.5"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.19.6"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -504,6 +505,8 @@ function renderFollow(){
    The Panel's pick averages every tipster's chance for each runner, so all the feeds' data has a say. */
 const TIPS_URL=SB+"/otr-tips",TIPS={bob:{},bobAt:0,pop:{},map:{},asked:new Set(),askedMap:new Set(),busy:false};
 const WHO={all:"Everyone",nan:"Nan",pop:"Pop",bob:"Bob",gran:"Gran"};
+// tipsters the punter has switched off (Nan is always on); saved on this device
+let OFF=(()=>{try{return new Set(JSON.parse(localStorage.getItem("otr-nan-off")||"[]").filter(w=>["pop","bob","gran"].includes(w)))}catch(e){return new Set()}})();
 const fkey=v=>String(v||"").toLowerCase().replace(/[^a-z0-9]/g,"");
 const POP_SAYS=["Pop's been studying the form since 5am. With his tea.","Pop says this one's the goods, and he's never wrong. Ask him.","Pop reckons it's a lay-down misère.","Pop had a word with the trainer. Well, he waved at him.","Pop's model says so, and Pop trusts his model more than Nan.","Pop: 'I've seen this before. In 1987.'","Pop circled this one in pen, not pencil.","Pop reckons the numbers add up. He used a calculator this time."];
 const BOB_SAYS=["Bob's robot says this one. Bob doesn't know how it works either.","Bob from down the pub swears by this one.","Bob's computer crunched it. Bob had a pie.","Bob reckons it's money for jam.","Bob's tipping it, so it's either a certainty or a disaster.","Bob ran the numbers twice and got the same answer. A first.","Bob says the algorithm loves it. Bob loves the algorithm.","Bob's gone all in. Don't tell his missus."];
@@ -514,9 +517,10 @@ function bobFor(r){const b=TIPS.bob[r.date];if(!b)return null;const k=`${r.code}
 const popKey=r=>`${r.date}|${r.code}|${fkey(r.venue)}|${r.no}`;
 // each tipster's view of a race: [{who, label, says, pick:{no,name,box,p}, chance: Map(nameKey -> p)}]
 function tipsters(r){const rk=ranked(r);if(!rk||!rk.length)return [];const field=rk.map(x=>x.u),byName=new Map(field.map(u=>[nkey(u.name),u])),out=[];
-  const mk=(who,label,list,seedL)=>{const ch=new Map();for(const x of list){const u=(x.no!=null&&r.code!=="H"?field.find(f=>f.no===x.no&&nkey(f.name)===nkey(x.name)):null)||byName.get(nkey(x.name));if(u)ch.set(nkey(u.name),(ch.get(nkey(u.name))||0)+x.p)}
+  let mk=(who,label,list,seedL)=>{const ch=new Map();for(const x of list){const u=(x.no!=null&&r.code!=="H"?field.find(f=>f.no===x.no&&nkey(f.name)===nkey(x.name)):null)||byName.get(nkey(x.name));if(u)ch.set(nkey(u.name),(ch.get(nkey(u.name))||0)+x.p)}
     let s=0;for(const v of ch.values())s+=v;if(!ch.size||s<=0)return;for(const [k,v] of ch)ch.set(k,v/s);
     const top=[...ch.entries()].sort((a,b)=>b[1]-a[1])[0],u=byName.get(top[0]);out.push({who,label,says:says(seedL,r.id+who+u.name),pick:{no:u.no,name:u.name,box:u.box,p:top[1]},chance:ch})};
+  const mk0=mk;mk=(who,...a)=>{if(!OFF.has(who))mk0(who,...a)};
   mk("nan","Nan's Tips",rk.map(x=>({name:x.u.name,p:x.p})),[nanSays(r.code,r.id+"|"+rk[0].u.name)]);
   const pp=TIPS.pop[popKey(r)];if(pp&&pp.runners)mk("pop","Pop's Tips",pp.runners,POP_SAYS);
   const bb=bobFor(r),km=TIPS.map[popKey(r)];
@@ -555,7 +559,7 @@ function panelHtml(r){const pn=panelOf(r),ts=pn?pn.ts:tipsters(r);if(!ts.length)
   let prow="";if(pn){const tot=new Map();for(const u of ranked(r).map(x=>x.u)){let v=0;for(const t of pn.ts)v+=t.chance.get(nkey(u.name))||0;tot.set(nkey(u.name),v/pn.ts.length)}
     const top=topN(r,{chance:tot},4);prow=`<tr class="prow"><th>Panel<small>${pn.agree} of ${pn.ts.length} have it on top</small></th>${[0,1,2,3].map(k=>cell(top[k])).join("")}</tr>`}
   return `<div class="panel"><h4>The tipsters</h4><div class="tgwrap"><table class="tgrid"><thead><tr><th></th><th>1st</th><th>2nd</th><th>3rd</th><th>4th</th></tr></thead><tbody>${ts.map(row).join("")}${prow}</tbody></table></div>
-    ${mapHtml(r)}${ts.length<4?`<p class="tnote">${[!TIPS.pop[popKey(r)]?"Pop's still thinking":"",!bobFor(r)?"Bob hasn't rated this race":"",!tipsters0(r,"gran")?"Gran's waiting for the bookies to put prices up":""].filter(Boolean).join(" · ")}</p>`:""}<p class="tnote">Tap any runner to bet on it. The Panel averages everyone's chances.</p></div>`}
+    ${mapHtml(r)}${ts.length<4?`<p class="tnote">${[!OFF.has("pop")&&!TIPS.pop[popKey(r)]?"Pop's still thinking":"",!OFF.has("bob")&&!bobFor(r)?"Bob hasn't rated this race":"",!OFF.has("gran")&&!tipsters0(r,"gran")?"Gran's waiting for the bookies to put prices up":""].filter(Boolean).join(" · ")}</p>`:""}<p class="tnote">Tap any runner to bet on it. The Panel averages everyone's chances.</p></div>`}
 async function loadBob(){const ds=[...new Set(RACES.map(r=>r.date))].slice(0,2);let changed=false;
   for(const d of ds){try{const j=await getJSON(TIPS_URL+"?date="+d);if(j.bob){TIPS.bob[d]=j.bob;changed=true}}catch(e){}}
   TIPS.bobAt=Date.now();if(changed)render()}
@@ -583,7 +587,9 @@ function render(){
   const meets=[...new Map(RACES.filter(r=>ST.code==="all"||r.code===ST.code).map(r=>[`${r.code}|${r.venue}`,r])).values()].sort((a,b)=>a.venue.localeCompare(b.venue));
   if(ST.meet!=="all"&&!meets.some(r=>`${r.code}|${r.venue}`===ST.meet))ST.meet="all";
   $("meet").innerHTML=`<option value="all">All meetings</option>`+meets.map(r=>`<option value="${escH(r.code+"|"+r.venue)}" ${ST.meet===r.code+"|"+r.venue?"selected":""}>${escH(r.venue)} · ${CODE[r.code]}</option>`).join("");
-  $("whoc").innerHTML=`<span class="wl">Whose tips</span>`+Object.entries(WHO).map(([k,l])=>`<button data-who="${k}" aria-pressed="${ST.who===k}">${l}</button>`).join("");
+  if(OFF.has(ST.who))ST.who="all";
+  $("whoc").innerHTML=`<span class="wl">Whose tips</span>`+Object.entries(WHO).filter(([k])=>!OFF.has(k)).map(([k,l])=>`<button data-who="${k}" aria-pressed="${ST.who===k}">${l}</button>`).join("")
+    +`<span class="wl wsep">Tipsters on</span><label class="wchk"><input type="checkbox" checked disabled> Nan</label>`+["pop","bob","gran"].map(k=>`<label class="wchk"><input type="checkbox" data-tipon="${k}" ${OFF.has(k)?"":"checked"}> ${WHO[k]}</label>`).join("");
   const list=visible(),open=new Set([...document.querySelectorAll("details.race[open]")].map(d=>d.dataset.id));
   const openRun=new Set([...document.querySelectorAll("details.run[open]")].map(d=>d.closest("details.race").dataset.id+"#"+d.querySelector(".no").textContent));
   // Best Bet and Roughie, from races still to run
@@ -618,6 +624,7 @@ function render(){
 }
 document.addEventListener("click",e=>{const b=e.target.closest("[data-code]");if(b){ST.code=b.dataset.code;render()}});
 document.addEventListener("click",e=>{const b=e.target.closest("[data-who]");if(b){ST.who=b.dataset.who;try{localStorage.setItem("otr-nan-who",ST.who)}catch(e){}render()}});
+document.addEventListener("change",e=>{const c=e.target.closest("[data-tipon]");if(!c)return;if(c.checked)OFF.delete(c.dataset.tipon);else OFF.add(c.dataset.tipon);try{localStorage.setItem("otr-nan-off",JSON.stringify([...OFF]))}catch(e){}render()});
 try{const w=localStorage.getItem("otr-nan-who");if(w&&WHO[w])ST.who=w}catch(e){}
 document.addEventListener("click",e=>{const b=e.target.closest("[data-loadrace]");if(!b)return;e.preventDefault();WANTR.add(b.dataset.loadrace);pump();render()});
 document.addEventListener("click",e=>{const b=e.target.closest("[data-day]");if(!b)return;const d=b.dataset.day;
