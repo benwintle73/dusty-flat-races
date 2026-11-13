@@ -427,7 +427,7 @@ details.srcs{margin-top:16px}details.srcs>.allow,details.srcs #allow>.allow{marg
 </style>
 </head>
 <body>
-<header class="mast"><h1>Nan's Tips</h1><span class="sub" id="sub">Loading today's races…</span><button class="verbtn" id="refBtn" aria-label="Refresh to get the latest version"><b id="verTxt"></b><small id="verSub">Refresh</small></button><a href="./?play=1">Play Off To The Races &#9656;</a></header>
+<header class="mast"><h1>Nan's Tips</h1><span class="sub" id="sub"><span>Loading</span><span>today's races…</span></span><button class="verbtn" id="refBtn" aria-label="Refresh to get the latest version"><b id="verTxt"></b><small id="verSub">Refresh</small></button><a href="./?play=1">Play Off To The Races &#9656;</a></header>
 <main class="wrap">
   <div class="view"><button data-view="tips" aria-pressed="true">Today's tips</button><button data-view="races" aria-pressed="false">Races</button><button data-view="record" aria-pressed="false">Tipsters</button><button data-view="punters" aria-pressed="false">Punters</button><button data-view="bets" aria-pressed="false">My bets</button><button data-view="cricket" aria-pressed="false">Cricket</button></div>
   <section id="tipsView">
@@ -591,7 +591,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.34.6"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.34.7"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -610,7 +610,7 @@ async function loadAll(){
       addRace({id:`${code}|${m.slug}|${r.number}`,code,venue:m.track,slug:m.slug,date:m.date,no:r.number,name:r.name,dist:r.distance,cls:r.cls,jump:r.jump})}
   RACES.sort((a,b)=>Date.parse(a.jump)-Date.parse(b.jump)||a.venue.localeCompare(b.venue));
   const bad=[pe,dl,hl].filter(x=>x.status!=="fulfilled").length;
-  const shown=ST.day||ST.today,sd=shown?new Date(shown+"T12:00:00"):null;$("sub").innerHTML=sd?`<span>${sd.toLocaleDateString("en-AU",{weekday:"long"})}${TOMORROW?" (tomorrow)":""}</span><span>${ord(sd.getDate())} ${sd.toLocaleDateString("en-AU",{month:"long"})}</span>`:"Today";
+  const shown=ST.day||ST.today,sd=shown?new Date(shown+"T12:00:00"):null;$("sub").innerHTML=sd?`<span>${sd.toLocaleDateString("en-AU",{weekday:"long"})}${TOMORROW?" (tomorrow)":""}</span><span>${ord(sd.getDate())} ${sd.toLocaleDateString("en-AU",{month:"long"})}</span>`:"<span>Today</span>";
   $("dayc").innerHTML=`<button data-day="today" aria-pressed="${!TOMORROW}">Today</button><button data-day="tomorrow" aria-pressed="${TOMORROW}">Tomorrow</button><button data-day="past">Past days</button>`;
   if(TOMORROW&&!RACES.length)$("status").textContent="Tomorrow's races aren't out yet. Horse fields usually arrive mid-afternoon.";
   $("status").textContent=bad===3?"Nan couldn't load today's races. Try again soon.":bad?"Some codes didn't load, so they're missing for now.":"";
