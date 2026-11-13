@@ -305,7 +305,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null};
-const NAN_VERSION="2.15.2"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.15.3"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -794,9 +794,9 @@ function builderHtml(r){
     ${styles.length?`<div class="calc-row"><span class="calc-l">Style</span>${styles.map(([s,l])=>`<button data-bstyle="${s}" aria-pressed="${BUILD.style===s}">${l}</button>`).join("")}</div>`:""}
     ${BUILD.style==="standout"&&ex?`<div class="calc-row"><span class="calc-l">Place</span>${Array.from({length:k},(_,i)=>`<button data-bpos="${i}" aria-pressed="${BUILD.pos===i}">${ord(i+1)} (${(BUILD.legs[i]||[]).length})</button>`).join("")}</div>`:""}
     <div class="calc-row"><span class="calc-l">Pick</span>${f.map(u=>`<button class="bsel" data-bsel="${u.no}" aria-pressed="${on(u.no)}">${cloth(u.no,r.code,u.box)} ${escH(u.name)}${marks(u.no)?` <i>${marks(u.no)}</i>`:""}</button>`).join("")}</div>
-    <div class="calc-row"><span class="calc-l">${ex?"Outlay":"Stake"}</span>${[5,10,20,50].map(v=>`<button data-bstake="${v}" aria-pressed="${BUILD.stake===v}">$${v}</button>`).join("")}<label class="calc-own">$<input id="bStake" type="number" min="1" step="1" inputmode="decimal" value="${BUILD.stake}"></label></div>
+    <div class="calc-row"><span class="calc-l">${ex?"Outlay":"Stake"}</span>${[0.5,1,2,3,5,10,20,50].map(v=>`<button data-bstake="${v}" aria-pressed="${BUILD.stake===v}">${v<1?(v*100)+"c":"$"+v}</button>`).join("")}<label class="calc-own">$<input id="bStake" type="number" min="0.5" step="0.5" inputmode="decimal" value="${BUILD.stake}"></label></div>
     <p class="calc-out">${help}${ex&&combos(tk)?`<b>${comboLine(tk)}</b> (flexi: a ${money(BUILD.stake)} outlay over ${combos(tk)} combination${combos(tk)===1?"":"s"}). `:""}Pays the official tote dividend.</p>
-    <div class="calc-row"><button class="ffload" data-badd ${ok&&BUILD.stake>=1?"":"disabled"}>Add ${money(cost)} ${BT[t][0].toLowerCase()}${styleName(tk)} to bet slip</button><button data-bclose>Close</button></div></div>`;
+    <div class="calc-row"><button class="ffload" data-badd ${ok&&BUILD.stake>=0.5?"":"disabled"}>Add ${money(cost)} ${BT[t][0].toLowerCase()}${styleName(tk)} to bet slip</button><button data-bclose>Close</button></div></div>`;
 }
 /* multi-race bets: the panel at the top of Today's tips */
 function autoLegs(r,type){const k=BT[type][1]||2,later=RACES.filter(x=>x.code===r.code&&x.venue===r.venue&&x.no>=r.no&&Date.now()<Date.parse(x.jump)).sort((a,b)=>a.no-b.no);
@@ -822,9 +822,9 @@ function multiHtml(){
     ${MB.legs.map((l,i)=>{const r=RACES.find(x=>x.id===l.id);if(!r)return "";const f=fieldOf(r);if(!f){WANTR.add(r.id);setTimeout(pump,0)}
       return `<div class="mleg"><div class="rmeta">Race ${i+1}: ${timeOf(r.jump)} · ${escH(r.venue)} R${r.no} · ${CODE[r.code]} <button data-mlrem="${i}">Remove</button></div>
         <div class="calc-row">${f?f.map(u=>`<button class="bsel" data-mlsel="${i}|${u.no}" aria-pressed="${l.sel.includes(u.no)}">${cloth(u.no,r.code,u.box)} ${escH(u.name)}</button>`).join(""):"<span>Loading the field…</span>"}</div></div>`}).join("")}
-    <div class="calc-row"><span class="calc-l">Outlay</span>${[5,10,20,50].map(v=>`<button data-mstake="${v}" aria-pressed="${MB.stake===v}">$${v}</button>`).join("")}<label class="calc-own">$<input id="mStake" type="number" min="1" step="1" inputmode="decimal" value="${MB.stake}"></label></div>
+    <div class="calc-row"><span class="calc-l">Outlay</span>${[0.5,1,2,3,5,10,20,50].map(v=>`<button data-mstake="${v}" aria-pressed="${MB.stake===v}">${v<1?(v*100)+"c":"$"+v}</button>`).join("")}<label class="calc-own">$<input id="mStake" type="number" min="0.5" step="0.5" inputmode="decimal" value="${MB.stake}"></label></div>
     <p class="calc-out">${t&&combos(t)?`<b>${comboLine(t)}</b>. `:""}${prob?`<span class="minus">${prob}</span> `:""}${MB.type==="allup"?"Pays the official win dividends multiplied together.":"The tote pool for this bet isn't in the results feed, so it pays an estimate: 85% of the winners' dividends multiplied together."}</p>
-    <div class="calc-row"><button class="ffload" data-mbadd ${prob||MB.stake<1?"disabled":""}>Add ${money(MB.stake)} ${BT[MB.type][0]} to bet slip</button><button data-mbclose>Cancel</button></div></div>`;
+    <div class="calc-row"><button class="ffload" data-mbadd ${prob||MB.stake<0.5?"disabled":""}>Add ${money(MB.stake)} ${BT[MB.type][0]} to bet slip</button><button data-mbclose>Cancel</button></div></div>`;
 }
 function multiTicket0(){return {type:MB.type,stake:MB.stake,legs:MB.legs.map(l=>({sel:l.sel.map(n=>({no:n}))}))}}
 /* a placed multi-race bet */
@@ -956,7 +956,7 @@ document.addEventListener("click",e=>{
 });
 document.addEventListener("change",e=>{if(e.target.id==="loanIn"){LOANAMT=Math.max(0,Math.round((+e.target.value||0)*100)/100);LOANMSG="";return renderBets()}});
 setInterval(()=>{const c=document.getElementById("loanClock");if(!c)return;const left=+c.dataset.at-Date.now();if(left<=0)return renderBets();c.textContent=hms(left)},1000);
-document.addEventListener("change",e=>{if(e.target.id==="bStake"){BUILD.stake=Math.max(1,Math.round((+e.target.value||1)*100)/100);render()}if(e.target.id==="mStake"&&MB){MB.stake=Math.max(1,Math.round((+e.target.value||1)*100)/100);render()}});
+document.addEventListener("change",e=>{if(e.target.id==="bStake"){BUILD.stake=Math.max(0.5,Math.round((+e.target.value||0.5)*100)/100);render()}if(e.target.id==="mStake"&&MB){MB.stake=Math.max(0.5,Math.round((+e.target.value||0.5)*100)/100);render()}});
 setInterval(()=>{if(ST.view==="bets"){checkOfficial(false);renderBets()}},5*60e3);
 function toTop(id){const el=$(id)||$(ST.view+"View");if(!el)return;try{el.scrollIntoView({block:"start",behavior:"instant"})}catch(e){try{el.scrollIntoView(true)}catch(_){}}try{window.scrollBy(0,-10)}catch(e){}}
 function setView(v,focus){
