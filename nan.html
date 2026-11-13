@@ -84,7 +84,8 @@ details.run[open]>summary{background:var(--paper2)}
 .foot-serious{margin-top:14px!important;padding-top:10px;border-top:1px solid #3b3120;color:#e8dcbc}
 .empty{background:var(--paper);color:var(--ink);padding:14px;font-size:17px}
 .view{display:flex;gap:6px;margin-top:10px}
-.view button{flex:1;background:var(--tote2);color:var(--paper);border:2px solid var(--amber-dim);min-height:48px;font:400 20px/1 var(--display);letter-spacing:.6px;text-transform:uppercase}
+.view button{flex:1;min-width:0;background:var(--tote2);color:var(--paper);border:2px solid var(--amber-dim);min-height:48px;font:400 20px/1 var(--display);letter-spacing:.6px;text-transform:uppercase}
+@media (max-width:480px){.view{flex-wrap:wrap}.view button{flex:1 1 40%;min-height:42px;font-size:18px}}
 .view button[aria-pressed="true"]{background:var(--amber);color:var(--tote);border-color:var(--amber)}
 [hidden]{display:none!important}
 .sumgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px;margin-top:10px}
@@ -213,6 +214,15 @@ details.race>summary.rsum .rchev{align-self:center}
 .morerow{display:flex;gap:6px;margin:8px 0}.morerow .more{margin:0;flex:2}.morerow .more.all{flex:1}
 .more small{font:500 14px/1 var(--led);text-transform:none;color:var(--amber)}
 .races{gap:6px}
+.tm{display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:22px;padding:0 4px;border-radius:4px;color:#fff;font:700 12px/1 var(--led);letter-spacing:.4px;flex:none;box-shadow:inset 0 -2px 0 #0003}
+.tm.tmd{background:#6b6250}
+.cro{display:inline-flex;align-items:center;gap:3px;flex:none}.cro b{font:700 14px/1 var(--led)}
+.crm .r-top .tm{height:26px;min-width:40px;font-size:13px}
+.crsides button{display:inline-flex;align-items:center;gap:6px}.crsides button b{font-family:var(--led)}
+.crcomp{overflow:hidden;text-overflow:ellipsis;min-width:0}
+.crwhy{font-style:italic;color:var(--ink2);margin:4px 0}
+.crhead p{margin:4px 0}
+.crpast{margin-top:10px}
 @media (max-width:560px){
   .scrrow{grid-template-columns:36px 28px minmax(0,1fr)}
   details.run>summary{grid-template-columns:36px 28px minmax(0,1fr) 52px 54px;font-size:15px}
@@ -224,7 +234,7 @@ details.race>summary.rsum .rchev{align-self:center}
 <body>
 <header class="mast"><h1>Nan's Tips</h1><span class="sub" id="sub">Loading today's races…</span><a href="./?play=1">Play Off To The Races &#9656;</a></header>
 <main class="wrap">
-  <div class="view"><button data-view="tips" aria-pressed="true">Today's tips</button><button data-view="record" aria-pressed="false">Leaderboard</button><button data-view="bets" aria-pressed="false">My bets</button></div>
+  <div class="view"><button data-view="tips" aria-pressed="true">Today's tips</button><button data-view="record" aria-pressed="false">Leaderboard</button><button data-view="bets" aria-pressed="false">My bets</button><button data-view="cricket" aria-pressed="false">Cricket</button></div>
   <section id="tipsView">
   <div class="bar">
     <div class="tabs dayc" id="dayc"></div>
@@ -241,6 +251,7 @@ details.race>summary.rsum .rchev{align-self:center}
   <div class="races" id="races"></div>
   </section>
   <section id="betsView" hidden></section>
+  <section id="cricketView" hidden></section>
   <section id="recordView" hidden>
     <div class="note" id="recNote">Loading Nan's record…</div>
     <div class="calc board" id="board"><h3>Tipster leaderboard</h3><p>Loading…</p></div>
@@ -823,7 +834,7 @@ function loanWindow(now=Date.now()){let start=null,used=0;
 function ledger(running){
   const ev=BK.loans.map(l=>({t:l.at,loan:l.amount})),per={};
   for(const t of BK.tickets){if(t.status==="cancelled")continue;const o=settleOf(t);
-    if(o.state==="won"&&o.pay>0&&(o.src==="official"||running&&o.src==="manual"))ev.push({t:o.src==="official"?((BK.off[t.rk]||{}).at||0):((BK.manualAt||{})[t.rk]||0),win:o.pay,id:t.id})}
+    if(o.state==="won"&&o.pay>0&&(o.src==="official"||o.src==="entered"||running&&o.src==="manual"))ev.push({t:o.src==="official"?((BK.off[t.rk]||{}).at||0):((BK.manualAt||{})[t.rk]||0),win:o.pay,id:t.id})}
   ev.sort((a,b)=>a.t-b.t||(a.loan?-1:1));let debt=0,repaid=0,borrowed=0;
   for(const e of ev){if(e.loan){debt+=e.loan;borrowed+=e.loan}else{const r=Math.min(debt,e.win);debt=r2(debt-r);repaid+=r;if(r>0)per[e.id]=r2(r)}}
   return {debt:r2(debt),repaid:r2(repaid),borrowed:r2(borrowed),per};
@@ -968,6 +979,7 @@ function settleMulti(t){
   return {state:"won",pay:r2(t.stake/combos(t)*div*(t.type==="allup"?1:.85)),src};
 }
 function settleOf(t){
+  if(t.sport==="cricket")return crSettle(t);
   if(isMulti(t.type))return settleMulti(t);
   if(t.status==="cancelled")return {state:"cancelled"};
   const off=BK.off[t.rk];
@@ -981,11 +993,11 @@ function settleOf(t){
 function balances(){
   const live=BK.tickets.filter(t=>t.status!=="cancelled"),staked=live.reduce((a,t)=>a+costOf(t),0);
   let offRet=0,manRet=0,waitSt=0,openSt=0;
-  for(const t of live){const o=settleOf(t);if(o.src==="official"&&o.pay!=null)offRet+=o.pay;else if(o.src==="manual")manRet+=o.pay;if(o.state==="open")openSt+=costOf(t);if(o.state==="waiting"||o.state==="div"||o.src==="manual")waitSt+=costOf(t)}
+  for(const t of live){const o=settleOf(t);if((o.src==="official"||o.src==="entered")&&o.pay!=null)offRet+=o.pay;else if(o.src==="manual")manRet+=o.pay;if(o.state==="open")openSt+=costOf(t);if(o.state==="waiting"||o.state==="div"||o.src==="manual")waitSt+=costOf(t)}
   const lo=ledger(false),lr=ledger(true),base=BK.start+BK.topups+lo.borrowed-staked;
   const official=r2(base+offRet-lo.repaid);
   return {official,running:r2(base+offRet+manRet-lr.repaid),openSt,waitSt,owed:lo.debt,owedRun:lr.debt,borrowed:lo.borrowed,repaid:lo.repaid,
-    profit:r2(offRet-BK.tickets.filter(t=>t.status!=="cancelled"&&settleOf(t).src==="official").reduce((a,t)=>a+costOf(t),0))};
+    profit:r2(offRet-BK.tickets.filter(t=>t.status!=="cancelled"&&["official","entered"].includes(settleOf(t).src)).reduce((a,t)=>a+costOf(t),0))};
 }
 // how a bet's runners read: boxed and straight as saddlecloths, standout position by position
 function selHtml(t,code){code=code||t.code;
@@ -995,6 +1007,7 @@ function selHtml(t,code){code=code||t.code;
 const styleName=t=>exotic(t.type)?({box:" (boxed)",standout:" (standout)"}[t.style]||""):"";
 const comboLine=t=>exotic(t.type)||isMulti(t.type)?`${combos(t)} combination${combos(t)===1?"":"s"} · ${flexiPct(t)}% of the dividend`:"";
 function slipHtml(t){
+  if(t.sport==="cricket")return crSlip(t);
   if(isMulti(t.type))return `${timeOf(t.jump)}${cdn(t.jump)} · <b>${BT[t.type][0]}</b> ${t.legs.map(l=>`${escH(l.venue)} R${l.no}: ${l.sel.map(x=>cloth(x.no,l.code,x.box)).join(" ")}`).join(" · ")} · ${money(costOf(t))} <small>(${comboLine(t)})</small>`;
   return `${timeOf(t.jump)}${cdn(t.jump)} · ${escH(t.venue)} R${t.no} · <b>${BT[t.type][0]}${styleName(t)}</b> ${selHtml(t)} · ${money(costOf(t))}${comboLine(t)?` <small>(${comboLine(t)})</small>`:""}`;
 }
@@ -1080,6 +1093,7 @@ function tkMulti(t){
 function slipBar(){const n=BK.slip.length,el=$("slipBar");if(!el)return;el.hidden=!n||ST.view==="bets";
   if(n)el.innerHTML=`<span>Bet slip: <b>${n} bet${n>1?"s":""}</b> · ${money(BK.slip.reduce((a,t)=>a+costOf(t),0))} · <b>not placed yet</b></span><button class="ffload" data-review>Review &amp; confirm</button>`}
 function tkHtml(t){
+  if(t.sport==="cricket")return crTk(t);
   if(isMulti(t.type))return tkMulti(t);
   const o=settleOf(t),c=costOf(t),man=BK.manual[t.rk],afterJump=Date.now()>=Date.parse(t.jump);
   const tag={open:["To run",""],waiting:["Waiting on results",""],div:["Won, dividend coming",""],won:[`Won ${money(o.pay||0)}`,"won"],lost:["Lost","lost"],void:["Scratched: refunded",""],cancelled:["Cancelled",""]}[o.state];
@@ -1110,7 +1124,7 @@ function loanHtml(b){const w=loanWindow();
 function renderBets(){
   const b=balances(),el=$("betsView");if(!el)return;LEDGER=ledger(true);
   const live=BK.tickets.slice().sort((a,b)=>Date.parse(b.jump)-Date.parse(a.jump)),slipCost=BK.slip.reduce((a,t)=>a+costOf(t),0),closedSlip=BK.slip.some(t=>Date.now()>=Date.parse(t.jump));
-  const groups=[["Before the jump",t=>settleOf(t).state==="open"],["Run: waiting on official results",t=>["waiting","div"].includes(settleOf(t).state)||settleOf(t).src==="manual"],["Settled",t=>settleOf(t).src==="official"],["Cancelled",t=>t.status==="cancelled"]];
+  const groups=[["Before the jump",t=>settleOf(t).state==="open"],["Run: waiting on official results",t=>["waiting","div"].includes(settleOf(t).state)||settleOf(t).src==="manual"],["Settled",t=>["official","entered"].includes(settleOf(t).src)],["Cancelled",t=>t.status==="cancelled"]];
   const slipBox=BK.slip.length?`<div class="calc confirmbox" id="slipBox"><h3>Confirm your bet${BK.slip.length>1?"s":""}</h3>
       <p class="notyet"><b>Not placed yet.</b> Check ${BK.slip.length>1?"these bets":"this bet"}, then press <b>Confirm</b> to place ${BK.slip.length>1?"them":"it"}. Nothing is placed until you do.</p>
       ${BK.slip.map((t,i)=>`<div class="slipline"><span>${slipHtml(t)}${Date.now()>=Date.parse(t.jump)?' <b class="minus">jumped</b>':""}</span><button data-bslipdel="${i}">Remove</button></div>`).join("")}
@@ -1124,7 +1138,7 @@ function renderBets(){
     ${loanHtml(b)}
     ${groups.map(([h,f])=>{const ts=live.filter(t=>f(t)&&(h==="Cancelled"||t.status!=="cancelled"));return ts.length?`<h3 class="bgrp">${h} (${ts.length})</h3><div class="races">${ts.map(tkHtml).join("")}</div>`:""}).join("")}
     ${syncHtml()}
-    <p class="note">Play money only. Bets are saved to your account (see Your account) and on this device. Win and place pay the official tote dividend; exotics pay the official dividend for that bet, scaled by your flexi percentage (outlay ÷ combinations). Duet, doubles, trebles, quaddies and Big 6s are estimated, because the results feed doesn't carry those pools; All Up pays the official win dividends multiplied together. Scratched selections are refunded (in a box or standout, just their combinations).</p>`;
+    <p class="note">Play money only. Bets are saved to your account (see Your account) and on this device. Cricket bets pay the price you took, and settle on the result you enter (there's no official cricket results feed). Win and place pay the official tote dividend; exotics pay the official dividend for that bet, scaled by your flexi percentage (outlay ÷ combinations). Duet, doubles, trebles, quaddies and Big 6s are estimated, because the results feed doesn't carry those pools; All Up pays the official win dividends multiplied together. Scratched selections are refunded (in a box or standout, just their combinations).</p>`;
   slipBar();
 }
 let BKBUSY=false;
@@ -1132,7 +1146,7 @@ let BKBUSY=false;
 const raceRefs=t=>isMulti(t.type)?t.legs:[{rk:t.rk,code:t.code,date:t.date,no:t.no,venue:t.venue,jump:t.jump,field:t.field,sel:t.sel}];
 async function checkOfficial(force){
   if(BKBUSY)return;const need=new Map(),refs=[];
-  for(const t of BK.tickets){if(t.status==="cancelled")continue;
+  for(const t of BK.tickets){if(t.status==="cancelled"||t.sport==="cricket")continue;
     for(const r of raceRefs(t)){if(Date.now()<Date.parse(r.jump)+(force?60e3:5*60e3))continue;const o=BK.off[r.rk];if(o&&o.fin&&/final|paying|official|closed/i.test(o.st||"final")&&settleOf(t).state!=="div")continue;if(!refs.some(x=>x.rk===r.rk)){need.set(r.code+"|"+r.date,[r.code,r.date]);refs.push(r)}}}
   if(!need.size){if(force){CHECKMSG="Nothing waiting on official results.";renderBets()}return}
   BKBUSY=true;if(force){CHECKMSG="Checking for official results…";renderBets()}let got=0;
@@ -1211,13 +1225,105 @@ document.addEventListener("change",e=>{if(e.target.id==="loanIn"){LOANAMT=Math.m
 setInterval(()=>{const c=document.getElementById("loanClock");if(!c)return;const left=+c.dataset.at-Date.now();if(left<=0)return renderBets();c.textContent=hms(left)},1000);
 document.addEventListener("change",e=>{if(e.target.id==="bStake"){BUILD.stake=Math.max(0.5,Math.round((+e.target.value||0.5)*100)/100);render()}if(e.target.id==="mStake"&&MB){MB.stake=Math.max(0.5,Math.round((+e.target.value||0.5)*100)/100);render()}});
 setInterval(()=>{if(ST.view==="bets"){checkOfficial(false);renderBets()}},5*60e3);
+/* ---------- Cricket: Nan and the panel tip every match; bets come out of the same balance as the races ---------- */
+// Head to head (and the draw in Tests) at the bookies' price from PuntersEdge. Betting closes at the first ball.
+// There's no official cricket results feed, so the result you enter settles the bet for good (you can change it).
+const CR_URL=SB+"/otr-cricket";
+const CR={matches:[],locked:false,loaded:false,busy:false,err:"",open:null,side:null,stake:10,paused:false,man:null,msg:""};
+function crProbs(m){const o=m.odds,ks=["home","away"].concat(m.test&&o.draw?["draw"]:[]);let s=0;const p={};for(const k of ks){p[k]=1/o[k];s+=p[k]}for(const k of ks)p[k]/=s;return p}
+const crName=(m,k)=>k==="draw"?"Draw":k==="tie"?"Tie":k==="nr"?"No result":m[k];
+const crHash=s=>{let h=2166136261;for(const c of String(s))h=Math.imul(h^c.charCodeAt(0),16777619);return (h>>>0)/4294967296};
+const crAbbr=n=>{const w=String(n||"").replace(/[^A-Za-z ]/g,"").trim().split(/\s+/).filter(Boolean);return (w.length>1?w.map(x=>x[0]).join("").slice(0,3):(w[0]||"?").slice(0,3)).toUpperCase()};
+function crChip(m,k){if(k==="draw"||k==="tie"||k==="nr")return `<span class="tm tmd">${k==="draw"?"DRW":k==="tie"?"TIE":"N/R"}</span>`;
+  const n=m[k],h=Math.floor(crHash(n)*360);return `<span class="tm" style="background:hsl(${h},52%,34%)">${escH(crAbbr(n))}</span>`}
+/* Nan always backs Australia; otherwise the bookies' favourite, and in a Test she takes the draw at 30% or better.
+   Pop loves a roughie (the outsider whenever it's a 35% chance or better), Bob goes on a hunch, Gran follows the bookies. */
+function crTips(m){const p=crProbs(m),ks=Object.keys(p),fav=["home","away"].sort((a,b)=>p[b]-p[a])[0],dog=fav==="home"?"away":"home";
+  const aus=["home","away"].find(k=>/^australia\b/i.test(m[k]));
+  const nan=aus||(p.draw>=.3?"draw":fav),pop=p[dog]>=.35?dog:fav;
+  let r=crHash(m.id+"bob"),bob=ks[ks.length-1];for(const k of ks){if(r<p[k]){bob=k;break}r-=p[k]}
+  const ts=[["nan","Nan",nan],["pop","Pop",pop],["bob","Bob",bob],["gran","Gran",fav]].filter(([w])=>w==="nan"||!OFF.has(w));
+  const c={};for(const x of ts)c[x[2]]=(c[x[2]]||0)+1;const panel=Object.keys(c).sort((a,b)=>c[b]-c[a]||p[b]-p[a])[0];
+  const why=aus&&aus!==fav?"Nan always backs Australia, whatever the bookies say.":aus?"Australia, of course. The bookies agree for once.":nan==="draw"?"Nan reckons it'll rain. She can feel it in her knee.":p[nan]>=.7?"Nan says this one's a lay-down misère.":"Nan's going with the bookies on this one.";
+  return {p,ts,panel,agree:c[panel],nan,why}}
+const crDay=iso=>{const d=new Date(iso),k=x=>x.toLocaleDateString("en-AU",{timeZone:"Australia/Melbourne"}),t=new Date();
+  if(k(d)===k(t))return "Today";if(k(d)===k(new Date(t.getTime()+864e5)))return "Tomorrow";
+  return d.toLocaleDateString("en-AU",{weekday:"long",day:"numeric",month:"long",timeZone:"Australia/Melbourne"})};
+async function loadCricket(recheck){if(CR.busy)return;CR.busy=true;CR.err="";if(recheck){CR.msg="Checking with PuntersEdge…";renderCricket()}
+  try{const j=await getJSON(CR_URL+(recheck?"?recheck=1":""));CR.matches=j.matches||[];CR.locked=!!j.locked;CR.paused=!!j.paused;CR.loaded=true;
+    CR.msg=recheck?(CR.locked?"Still no cricket on this PuntersEdge plan.":`Cricket's on: ${CR.matches.length} match${CR.matches.length===1?"":"es"}.`):""}
+  catch(e){CR.err="Couldn't load the cricket. Try again in a minute.";CR.loaded=true}
+  CR.busy=false;if(ST.view==="cricket")renderCricket()}
+function crCard(m){const started=Date.now()>=Date.parse(m.start),tp=crTips(m),[hm,ap]=timeOf(m.start).split(" "),nanP=tp.p[tp.nan];
+  const sides=Object.keys(tp.p),open=CR.open===m.id;
+  const odds=sides.map(k=>`<span class="cro">${crChip(m,k)}<b>${m.odds[k].toFixed(2)}</b></span>`).join("");
+  const others=tp.ts.filter(x=>x[0]!=="nan");
+  const panel=`<div class="r-panel">${others.map(x=>`<span class="r-t"><small>${x[1]}</small>${crChip(m,x[2])}</span>`).join("")}<span class="r-t r-pan"><small>Panel</small>${crChip(m,tp.panel)}</span><span class="agree a${tp.agree===tp.ts.length?"all":""}">${tp.agree}/${tp.ts.length}<span class="agw"> agree</span></span></div>`;
+  let body="";
+  if(open){if(started)body=`<p class="qnote">Underway. Betting closed at the first ball.</p>`;
+    else{const side=sides.includes(CR.side)?CR.side:null,ret=side?r2(CR.stake*m.odds[side]):0;
+      body=`<p class="crwhy">${tp.why}</p><div class="builder"><div class="calc-row crsides">${sides.map(k=>`<button data-crside="${k}" aria-pressed="${side===k}">${crChip(m,k)} ${escH(crName(m,k))} <b>${m.odds[k].toFixed(2)}</b></button>`).join("")}</div>
+        <div class="calc-row"><span class="calc-l">Stake</span>${[5,10,20,50].map(v=>`<button data-crstake="${v}" aria-pressed="${CR.stake===v}">$${v}</button>`).join("")}<label class="calc-own">$<input id="crStake" type="number" min="0.5" step="0.5" inputmode="decimal" value="${CR.stake}"></label></div>
+        <div class="calc-row"><button class="ffload" data-cradd ${side?"":"disabled"}>${side?`Add to bet slip: ${money(CR.stake)} on ${escH(crName(m,side))} · returns ${money(ret)}`:"Pick a side first"}</button></div>
+        <p class="calc-out"><small>Head to head at the bookies' price (the middle of ${m.books} bookmaker${m.books===1?"":"s"}). ${m.test?"A Test can be drawn: back the draw, or a draw loses both sides. ":"A tie or no result is refunded. "}Betting closes at the first ball.</small></p></div>`}}
+  return `<details class="race crm${started?" jumped":""}" data-crid="${escH(m.id)}" ${open?"open":""}><summary class="rsum"><div class="r-main">
+    <div class="r-title"><span class="r-time">${hm||""}<small>${ap||""}</small></span><b class="r-v">${escH(m.home)} v ${escH(m.away)}</b><span class="r-cd">${started?'<span class="cdn gone">underway</span>':cdn(m.start).replace("⏱ ","")}</span></div>
+    <div class="r-top"><span class="r-who">Nan</span>${crChip(m,tp.nan)}<b class="r-name">${escH(crName(m,tp.nan))}</b><span class="r-pc">${pct(nanP)}</span></div>
+    <div class="r-next"><span class="r-who">Odds</span>${odds}<span class="r-scr crcomp">${escH(m.test&&/test/i.test(m.comp)?"Test":m.comp)}</span></div>
+    ${panel}</div><span class="rchev">&#9656;</span></summary><div class="rbody">${body}</div></details>`}
+function renderCricket(){const el=$("cricketView");if(!el)return;
+  const now=Date.now(),up=CR.matches.filter(m=>Date.parse(m.start)>now),gone=CR.matches.filter(m=>Date.parse(m.start)<=now).reverse();
+  const days=[];for(const m of up){const d=crDay(m.start);let g=days.find(x=>x[0]===d);if(!g)days.push(g=[d,[]]);g[1].push(m)}
+  const head=`<div class="calc crhead"><h3>Cricket</h3><p>Nan and the panel tip every match. Bets come out of the same balance as your races, and Borrow from Nan works here too. Tap a match to bet.</p>${CR.msg?`<p class="loanmsg">${CR.msg}</p>`:""}</div>`;
+  let main;
+  if(!CR.loaded)main=`<p class="note">Loading the cricket…</p>`;
+  else if(CR.err)main=`<p class="note">${CR.err}</p>`;
+  else if(CR.locked&&!CR.matches.length)main=`<div class="calc"><h3>No cricket prices yet</h3><p>Cricket odds come from PuntersEdge, and their sports odds need the Standard plan. Once it's upgraded, press Check again and the matches load (it also rechecks by itself twice a day).</p><div class="calc-row"><button class="ffload" data-crrecheck ${CR.busy?"disabled":""}>Check again</button></div></div>`;
+  else if(!up.length)main=`<p class="note">No upcoming matches with prices right now.${CR.paused?" PuntersEdge credits are running low, so cricket is paused to keep the horses going.":""}</p>`;
+  else main=days.map(([d,ms])=>`<h3 class="bgrp">${d}</h3><div class="races">${ms.map(crCard).join("")}</div>`).join("");
+  const past=gone.length?`<details class="follow crpast"><summary>Underway and finished <b>(${gone.length})</b><span class="rchev">&#9656;</span></summary><div class="races">${gone.map(crCard).join("")}</div><p class="note">Enter results for your bets under My bets.</p></details>`:"";
+  el.innerHTML=head+main+past+`<p class="note">Play money only. Prices are the middle of the Australian bookmakers' head-to-head prices from PuntersEdge, refreshed every few hours before the match. There's no official results feed for cricket, so you enter the result under My bets: it settles the bet for good, and you can change it if you got it wrong.</p>`;
+  slipBar()}
+function crSettle(t){if(t.status==="cancelled")return {state:"cancelled"};
+  const res=(BK.manual[t.rk]||[])[0];
+  if(res){if(res==="nr"||res==="tie"&&t.sel!=="tie")return {state:"void",pay:t.stake,src:"entered"};
+    return t.sel===res?{state:"won",pay:r2(t.stake*t.price),src:"entered"}:{state:"lost",pay:0,src:"entered"}}
+  return {state:Date.now()<Date.parse(t.jump)?"open":"waiting"}}
+const crWhen=iso=>`${crDay(iso)==="Today"?"":crDay(iso).split(" ").slice(0,3).join(" ").replace(/,$/,"")+" "}${timeOf(iso)}`;
+function crSlip(t){return `${crWhen(t.jump)}${cdn(t.jump)} · ${escH(t.home)} v ${escH(t.away)} · <b>Head to head</b> ${crChip(t,t.sel)} ${escH(crName(t,t.sel))} @ ${t.price.toFixed(2)} · ${money(t.stake)}`}
+function crTk(t){const o=settleOf(t),res=(BK.manual[t.rk]||[])[0],started=Date.now()>=Date.parse(t.jump);
+  const tag={open:["To play",""],waiting:["Enter the result",""],won:[`Won ${money(o.pay||0)}`,"won"],lost:["Lost","lost"],void:["Refunded",""],cancelled:["Cancelled",""]}[o.state];
+  const opts=t.test?["home","away","draw","nr"]:["home","away","tie","nr"];
+  return `<div class="rec tk"><div><div class="rmeta">${crWhen(t.jump)}${t.status!=="cancelled"?cdn(t.jump):""} · Cricket · ${escH(t.comp)}</div>
+    <div class="line"><b>Head to head</b> ${crChip(t,t.sel)} ${escH(crName(t,t.sel))} <small>(${escH(t.home)} v ${escH(t.away)})</small> @ ${t.price.toFixed(2)} · ${money(t.stake)} <small>(returns ${money(r2(t.stake*t.price))})</small></div></div>
+    <span class="tag ${tag[1]}">${tag[0]}</span>
+    ${(LEDGER.per[t.id]||0)>0?`<div class="order nanpay">${money(LEDGER.per[t.id])} of it paid back to Nan</div>`:""}
+    ${res?`<div class="order">Result you entered: ${crChip(t,res)} ${escH(res==="home"||res==="away"?t[res]+" won":crName(t,res))}${res==="nr"||res==="tie"&&t.sel!=="tie"?" (stake refunded)":""}</div>`:""}
+    <div class="tkbtns">${o.state==="open"?`<button data-bcancel="${t.id}">Cancel bet</button>`:""}${started&&t.status!=="cancelled"?`<button data-crman="${escH(t.rk)}">${res?"Change result":"Enter result"}</button>`:""}</div>
+    ${CR.man===t.rk?`<div class="builder"><p><b>Who won ${escH(t.home)} v ${escH(t.away)}?</b></p><div class="calc-row">${opts.map(k=>`<button data-crres="${k}" data-rk="${escH(t.rk)}" aria-pressed="${res===k}">${crChip(t,k)} ${escH(k==="home"||k==="away"?t[k]:k==="nr"?"No result / abandoned":crName(t,k))}</button>`).join("")}<button data-mclose>Close</button></div><p class="calc-out"><small>There's no official cricket results feed, so this settles every bet on this match for good, in both balances. Change it any time if you got it wrong.</small></p></div>`:""}</div>`}
+document.addEventListener("click",e=>{const g=s=>e.target.closest(s);let b;
+  if(g("[data-crrecheck]"))return loadCricket(true);
+  if(b=g("details.crm>summary")){e.preventDefault();const id=b.parentElement.dataset.crid;CR.open=CR.open===id?null:id;CR.side=null;return renderCricket()}
+  if(b=g("[data-crside]")){CR.side=b.dataset.crside;return renderCricket()}
+  if(b=g("[data-crstake]")){CR.stake=+b.dataset.crstake;return renderCricket()}
+  if(g("[data-cradd]")){const m=CR.matches.find(x=>x.id===CR.open);if(!m||!CR.side||Date.now()>=Date.parse(m.start)||!(CR.stake>0))return;
+    BK.slip.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,7),sport:"cricket",type:"h2h",rk:"C:"+m.id,mid:m.id,comp:m.comp,test:!!m.test,home:m.home,away:m.away,venue:`${m.home} v ${m.away}`,jump:m.start,sel:CR.side,price:m.odds[CR.side],stake:CR.stake});
+    saveBK();CR.msg=`Added to your bet slip: ${money(CR.stake)} on ${escH(crName(m,CR.side))}. Not placed yet: press Review &amp; confirm at the bottom to place it.`;CR.side=null;CR.open=null;renderCricket();return toTop("cricketView")}
+  if(b=g("[data-crman]")){CR.man=CR.man===b.dataset.crman?null:b.dataset.crman;return renderBets()}
+  if(b=g("[data-crres]")){BK.manual[b.dataset.rk]=[b.dataset.crres];(BK.manualAt=BK.manualAt||{})[b.dataset.rk]=Date.now();CR.man=null;BKMSG="Result saved. Every bet on that match is settled.";saveBK();renderBets();return toTop("bkMsg")}
+  if(g("[data-mclose]")&&CR.man){CR.man=null;return renderBets()}
+});
+document.addEventListener("change",e=>{if(e.target.id==="crStake"){CR.stake=Math.max(.5,Math.round((+e.target.value||.5)*100)/100);renderCricket()}});
+setInterval(()=>{if(ST.view==="cricket"&&!document.activeElement?.matches?.("#crStake"))renderCricket()},60e3);
+setInterval(()=>{if(ST.view==="cricket")loadCricket(false)},15*60e3);
 function toTop(id){const el=$(id)||$(ST.view+"View");if(!el)return;try{el.scrollIntoView({block:"start",behavior:"instant"})}catch(e){try{el.scrollIntoView(true)}catch(_){}}try{window.scrollBy(0,-10)}catch(e){}}
 function setView(v,focus){
   const was=ST.view;
   document.querySelectorAll("[data-view]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.view===v));
-  ST.view=v;$("tipsView").hidden=v!=="tips";$("recordView").hidden=v!=="record";$("betsView").hidden=v!=="bets";
+  ST.view=v;$("tipsView").hidden=v!=="tips";$("recordView").hidden=v!=="record";$("betsView").hidden=v!=="bets";$("cricketView").hidden=v!=="cricket";
   if(v==="record"){if(!REC.sum)loadRecord();else renderRecord();loadBoard()}
   if(v==="bets"){renderBets();checkOfficial(false)}
+  if(v==="cricket"){renderCricket();loadCricket(false)}
   slipBar();
   if(focus)toTop(focus);else if(was!==v&&v!=="tips")toTop(v+"View");
   try{history.replaceState(null,"",v==="tips"?location.pathname+location.search:"#"+v)}catch(e){}
@@ -1238,7 +1344,7 @@ document.addEventListener("change",e=>{if(e.target.id==="stakeIn"){const v=Math.
   pullBK()})();
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")pullBK()});
 setInterval(()=>{if(document.visibilityState==="visible")pullBK()},30e3);
-if(location.hash==="#record")setView("record");else if(location.hash==="#bets")setView("bets",BK.slip.length?"slipBox":null);else slipBar();
+if(location.hash==="#record")setView("record");else if(location.hash==="#cricket")setView("cricket");else if(location.hash==="#bets")setView("bets",BK.slip.length?"slipBox":null);else slipBar();
 function refreshAllow(){clearTimeout(refreshAllow.t);refreshAllow.t=setTimeout(()=>getJSON(SB+"/otr-nan?follow=1").then(j=>{ALLOW=j.allowance||ALLOW;CREDITS=j.credits||CREDITS;$("allow").innerHTML=creditsHtml(CREDITS)}).catch(()=>{}),1500)}
 setInterval(refreshAllow,120e3);
 loadAll();
