@@ -473,7 +473,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.29.3"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.29.4"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -544,7 +544,27 @@ function loadForm(r){
 }
 
 /* ---------- page ---------- */
-const noField=(r,short)=>LIMIT[r.code+r.slug]?(short?"Form not in yet: today's form allowance ran out":"Nan can't see this field yet: today's FormFav form allowance has run out. She'll pick it once the form comes in (it frees up through the day)."):(short?"No field yet":"No field for this race yet.");
+// when the form isn't in yet: a short line on the race card and a longer one inside, a different pair for each race
+const NOFORM=[
+ ["Nan's lost her glasses. Form soon.","Nan can't find her reading glasses. They're on her head. Nobody's told her. The form will be in later today and she'll pick it then."],
+ ["Nan's waiting on the paperboy.","Nan's waiting on the form like she waits on the paperboy: by the window, tutting. It comes through during the day."],
+ ["Form's in the post. Australia Post.","The form's in the post. Australia Post, so give it a bit. Nan will pick this one as soon as it lands."],
+ ["Nan's on hold to the form people.","Nan's on hold to the form people. The music is Greensleeves. Again. She'll pick it once the form comes through later today."],
+ ["Pop borrowed the form guide. Again.","Pop's taken the form guide to the toilet and he's not coming out. It frees up during the day, and Nan will pick it then."],
+ ["Nan's kettle's on. Form's not.","The kettle's on but the form isn't. Nan will have a cuppa and pick this one once the form comes in later."],
+ ["Form's running late. Like Pop.","The form's running late, like Pop to everything. It comes through during the day, and Nan's pencil is sharpened and ready."],
+ ["Nan's squinting. Form's not here.","Nan's squinting at a blank page. Turns out it's just blank. The form comes in later today and she'll pick it then."],
+ ["Gran's got the form. Gran won't share.","Gran's got the only copy of the form and she's knitting with it. Nan will pick this once more comes through later today."],
+ ["Bob spilled a beer on the form.","Bob spilled a schooner on the form. It's drying on the line. Nan will pick this one once the fresh form comes in later."],
+ ["Nan's waiting. Nan hates waiting.","Nan's waiting for the form, and Nan hates waiting. Ask the bloke at the deli. It frees up through the day and she'll pick it then."],
+ ["The form's still in the oven.","The form's still in the oven with the scones. It comes out later today and Nan will pick this race then."],
+ ["Nan's rung the stewards. Twice.","Nan's rung the stewards twice about the form. They've stopped answering. It comes through during the day, and she'll pick it then."],
+ ["Form not in. Nan's doing the crossword.","No form yet, so Nan's doing the crossword. Seven down is 'patience'. The form comes in later today and she'll pick it then."],
+ ["Nan's waiting by the letterbox.","Nan's out by the letterbox in her dressing gown waiting for the form. It frees up during the day, and she'll pick it then."],
+ ["The form's stuck in traffic.","The form's stuck in traffic on the Western Ring Road. It'll get here later today, and Nan will pick it then."],
+ ["Nan's resting her eyes. Form soon.","Nan's resting her eyes till the form comes in. She's not asleep. She's thinking. The form comes through later today."],
+ ["Davo's got the form. Davo's at the pub.","Bob lent the form to Davo, and Davo's at the pub. Nan will pick this one once fresh form comes through later today."]];
+const noField=(r,short)=>{if(!LIMIT[r.code+r.slug])return short?"No field yet":"No field for this race yet.";const x=NOFORM[sayHash(r.id+"|noform")%NOFORM.length];return short?x[0]:x[1]};
 const recTxt=x=>x&&x.s?`${x.s}: ${x.w}-${x[2]}-${x[3]}`:"–";
 const runSub=(r,u)=>r.src==="quick"?[r.code==="D"?`Box ${u.box}`:`Bar ${u.box}`,u.form||"no form"].join(" · "):r.code==="H"?[u.form,u.jockey,u.barrier?"Bar "+u.barrier:"",u.weight?u.weight+"kg":""].filter(Boolean).join(" · "):r.code==="D"?`Box ${u.box}${u.reserve?" (reserve)":""} · ${u.form||"no form"}`:`${u.row==="second"?"Sr":"Fr"}${u.barrier} · ${u.driver||""} · ${u.form||""}`;
 function formTable(rows){return `<table class="form"><tbody>${rows.filter(([,v])=>v!==undefined).map(([l,v])=>`<tr><td>${l}</td><td class="n">${v}</td></tr>`).join("")}</tbody></table>`}
