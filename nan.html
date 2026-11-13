@@ -1229,6 +1229,10 @@ setInterval(()=>{if(ST.view==="bets"){checkOfficial(false);renderBets()}},5*60e3
 // Head to head (and the draw in Tests) at the bookies' price from PuntersEdge. Betting closes at the first ball.
 // There's no official cricket results feed, so the result you enter settles the bet for good (you can change it).
 const CR_URL=SB+"/otr-cricket";
+// only the cricket people here follow: Australian competitions, the big leagues, and internationals between the major nations
+const CR_COMPS=/big bash|\bbbl\b|wbbl|sheffield shield|marsh (one-day )?cup|\bipl\b|indian premier|the hundred/i;
+const CR_NATIONS=/^(australia|england|india|new zealand|south africa|pakistan|sri lanka|west indies|bangladesh|afghanistan|ireland|zimbabwe)( women| w)?$/i;
+const crMajor=m=>CR_COMPS.test(m.comp||"")||CR_NATIONS.test(String(m.home||"").trim())&&CR_NATIONS.test(String(m.away||"").trim());
 const CR={matches:[],locked:false,loaded:false,busy:false,err:"",open:null,side:null,stake:10,paused:false,man:null,msg:""};
 function crProbs(m){const o=m.odds,ks=["home","away"].concat(m.test&&o.draw?["draw"]:[]);let s=0;const p={};for(const k of ks){p[k]=1/o[k];s+=p[k]}for(const k of ks)p[k]/=s;return p}
 const crName=(m,k)=>k==="draw"?"Draw":k==="tie"?"Tie":k==="nr"?"No result":m[k];
@@ -1250,7 +1254,7 @@ const crDay=iso=>{const d=new Date(iso),k=x=>x.toLocaleDateString("en-AU",{timeZ
   if(k(d)===k(t))return "Today";if(k(d)===k(new Date(t.getTime()+864e5)))return "Tomorrow";
   return d.toLocaleDateString("en-AU",{weekday:"long",day:"numeric",month:"long",timeZone:"Australia/Melbourne"})};
 async function loadCricket(recheck){if(CR.busy)return;CR.busy=true;CR.err="";if(recheck){CR.msg="Checking with PuntersEdge…";renderCricket()}
-  try{const j=await getJSON(CR_URL+(recheck?"?recheck=1":""));CR.matches=j.matches||[];CR.locked=!!j.locked;CR.paused=!!j.paused;CR.loaded=true;
+  try{const j=await getJSON(CR_URL+(recheck?"?recheck=1":""));CR.matches=(j.matches||[]).filter(crMajor);CR.locked=!!j.locked;CR.paused=!!j.paused;CR.loaded=true;
     CR.msg=recheck?(CR.locked?"Still no cricket on this PuntersEdge plan.":`Cricket's on: ${CR.matches.length} match${CR.matches.length===1?"":"es"}.`):""}
   catch(e){CR.err="Couldn't load the cricket. Try again in a minute.";CR.loaded=true}
   CR.busy=false;if(ST.view==="cricket")renderCricket()}
