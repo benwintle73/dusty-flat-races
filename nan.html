@@ -168,7 +168,7 @@ details.follow p{margin:0 12px 8px;font-size:15px;color:#d9c9a3}
 .bb-nm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:16px}.bb-nm small{display:block;font:500 13px/1.2 var(--led);color:var(--ink2);margin-top:2px;overflow:hidden;text-overflow:ellipsis}.bb-run[aria-pressed="true"] .bb-nm small{color:#d9ceb2}
 .bb-rw{display:grid;grid-template-columns:minmax(0,1fr) 64px;gap:4px}.bb-rw .bb-run{min-height:52px}
 .bb-fm{background:var(--paper);border:1px solid var(--line);color:var(--ink);font:700 14px/1 var(--led);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}.bb-fm span{font-size:11px;color:var(--ink2)}.bb-fm[aria-expanded="true"]{background:var(--ink);color:var(--paper)}
-.bb-form{grid-column:1/-1;background:var(--paper);border:1px solid var(--line);padding:6px 10px 8px;margin-bottom:4px;font-size:14px}.bb-form h4{margin:4px 0}
+.bb-form{grid-column:1/-1;background:var(--paper);color:var(--ink);border:1px solid var(--line);padding:6px 10px 8px;margin-bottom:4px;font-size:14px}.bb-form h4{margin:4px 0}
 .bb-run i{font-style:normal;color:var(--good);font:700 16px/1 var(--led)}.bb-run[aria-pressed="true"] i{color:var(--amber)}
 .bb-cnt{color:var(--good)}.bb .calc-out{color:var(--ink2)}.bb .bb-own{color:var(--ink)}.bb-mh{margin:0 0 6px;font-size:14px;color:var(--ink2)}
 .bb-roll{width:100%;margin-top:6px;min-height:46px;background:#5b3d8a;color:#fff;border:0;font:700 18px/1 var(--led);cursor:pointer;letter-spacing:.3px}.bb-px{font:600 14px/1 var(--led);color:var(--ink2);flex:none}.bb-run[aria-pressed="true"] .bb-px{color:var(--paper)}
@@ -284,10 +284,28 @@ details.race>summary.rsum .rchev{align-self:center}
 .rs-nav{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:6px;align-items:center}
 .rs-nav button{background:var(--amber);color:var(--tote);border:0;min-height:44px;padding:0 12px;font:700 17px/1 var(--led);cursor:pointer}.rs-nav button:disabled{opacity:.35}
 .rs-nav select{min-height:44px;min-width:0;width:100%;font:700 16px/1 var(--led);padding:0 6px;border:1px solid var(--line);background:var(--paper)}
-.rs-head{display:flex;align-items:center;gap:8px;margin:12px 0 2px;min-width:0;white-space:nowrap}.rs-v{font:400 24px/1.05 var(--display);text-transform:uppercase;letter-spacing:.3px;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.rs-head{display:flex;align-items:center;gap:8px;margin:14px 0 2px;min-width:0;white-space:nowrap}.rs-v{font:400 24px/1.05 var(--display);text-transform:uppercase;letter-spacing:.3px;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .rs-meta{margin:2px 0 4px;color:var(--ink2);font:600 14px/1.3 var(--led)}.rs-tips{margin:6px 0 0;display:flex;align-items:center;gap:5px;font:600 14px/1 var(--led);color:var(--ink2)}.rs-tips .sc{min-width:22px;height:22px;font-size:13px}
 .rs-i{margin:6px 0 0;font:600 12px/1 var(--led);text-transform:uppercase;letter-spacing:.4px;color:var(--ink2)}
-#racesView [data-bclose],#racesView .bb-multi{display:none}#racesView .bb-act{grid-template-columns:1fr}
+.rs-day{grid-template-columns:repeat(2,minmax(0,1fr));margin-bottom:5px}
+.rs-nav{grid-template-columns:96px minmax(0,1fr) 96px}.rs-evb{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:var(--ink)!important;color:var(--paper)!important}.rs-evb small{font:600 11px/1 var(--led);text-transform:uppercase;letter-spacing:.5px;color:var(--amber)}
+.rs-ev{margin-top:8px;border:1px solid var(--line);background:var(--paper);padding:8px}.rs-nx{width:100%;min-height:42px;background:var(--amber);color:var(--tote);border:0;font:700 15px/1.1 var(--led);cursor:pointer;margin-bottom:4px}
+.ev-m{padding:8px 0 2px;border-top:1px solid var(--line)}.rs-nx+.ev-m{border-top:0}.ev-h{display:flex;align-items:baseline;gap:8px;margin-bottom:6px;min-width:0}.ev-h b{font:400 19px/1 var(--display);text-transform:uppercase;letter-spacing:.3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}.ev-h small{margin-left:auto;font:600 12px/1 var(--led);color:var(--ink2);white-space:nowrap}
+.ev-c{flex:none;width:62px;font:700 11px/1 var(--led);text-transform:uppercase;letter-spacing:.4px;color:var(--ink2)}
+.ev-r{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:4px}.ev-r button{min-height:42px;background:var(--paper2);color:var(--ink);border:1px solid var(--line);font:700 15px/1 var(--led);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:0}.ev-r small{font:600 11px/1 var(--led);color:var(--ink2)}
+.ev-r button.gone{opacity:.5}.ev-r button[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink);opacity:1}.ev-r button[aria-pressed="true"] small{color:var(--amber)}
+.rs-nm{margin:0 0 3px;color:var(--ink2);font:500 14px/1.3 var(--led)}
+.rs-tb{margin-top:10px;background:var(--tote);color:#efe6d2;padding:4px 10px 6px}.rs-tbh{display:flex;align-items:baseline;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid #4a3f2c}.rs-tbh b{font:400 20px/1 var(--display);text-transform:uppercase;color:var(--amber);letter-spacing:.4px}.rs-tbh span{font:600 12px/1 var(--led);color:#b9ad92}
+.rs-tr{display:grid;grid-template-columns:82px minmax(0,1fr) 52px;gap:8px;align-items:center;width:100%;min-height:40px;background:none;border:0;border-bottom:1px solid #3a3122;color:inherit;text-align:left;padding:0;font:600 16px/1.1 var(--led);cursor:pointer}.rs-tr:last-child{border-bottom:0}
+.rs-tr b{font:700 13px/1 var(--led);text-transform:uppercase;letter-spacing:.4px;color:#b9ad92}.rs-tr span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:6px}.rs-tr em{font:700 17px/1 var(--led);font-style:normal;text-align:right;color:var(--amber)}.rs-tr:disabled{cursor:default}.rs-pn{cursor:default}.rs-tr .sc{min-width:22px;height:22px;font-size:13px}
+.bb-runners.g{gap:4px}.bb-runners.g .bb-rw{grid-template-columns:minmax(0,1fr) 46px}
+.bb-runners.g .bb-run{display:grid;grid-template-columns:30px minmax(0,1fr) 48px 48px;column-gap:7px;padding:6px 8px;min-height:60px}
+.bb-runners.g .bb-run .sc{width:30px;height:30px;min-width:30px;font-size:17px}
+.bb-runners.g .bb-nm{font-size:16px}.bb-runners.g .bb-nm i{margin-left:6px;font-size:14px}.bb-runners.g .bb-nm small{font-size:12.5px;margin-top:3px}
+.g-px{text-align:right;font:700 16px/1 var(--led);font-variant-numeric:tabular-nums;white-space:nowrap}.bb-run:disabled{cursor:default;opacity:1}
+.bb-runners.g .g-hd{margin-bottom:-2px}.bb-runners.g .g-hd .bb-run{min-height:0;padding:0 8px;background:none;border-color:transparent;font:600 11px/1 var(--led);text-transform:uppercase;letter-spacing:.5px;color:var(--ink2);cursor:default}.g-hd .bb-run span:nth-child(n+3){text-align:right}
+@media (min-width:700px){.bb-runners.g{grid-template-columns:1fr}}
+.bb-low{margin-top:6px;border-top:1px solid var(--line);padding-top:2px}#racesView [data-bclose],#racesView .bb-multi{display:none}#racesView .bb-act{grid-template-columns:1fr}
 .crcomp{overflow:hidden;text-overflow:ellipsis;min-width:0}
 .crwhy{font-style:italic;color:var(--ink2);margin:4px 0}
 .crhead p{margin:4px 0}
@@ -448,7 +466,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.26.1"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.27.0"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -1134,7 +1152,7 @@ function buildOk(t){const k=BT[t.type][1];
   if(t.style==="box")return t.sel.length>=k&&combos(t)>0;
   return t.sel.length===k;
 }
-function builderHtml(r){
+function builderHtml(r,G){
   if(BUILD.id!==r.id){const canAdd=MB&&!MB.legs.some(l=>l.id===r.id)&&(MB.type==="allup"?MB.legs.length<8:MB.legs.length<BT[MB.type][1]);
     return `<button class="betbtn" data-bopen="${escH(r.id)}">Bet on this race</button>${canAdd?` <button class="betbtn" data-madd="${escH(r.id)}">Add to my ${BT[MB.type][0]}</button>`:""}`}
   const f=fieldOf(r)||[],t=BUILD.type,k=BT[t][1],ex=exotic(t),tk=buildTicket(r),ok=buildOk(tk),cost=t==="ew"?2*BUILD.stake:BUILD.stake;
@@ -1146,27 +1164,32 @@ function builderHtml(r){
     :BUILD.style==="standout"?`Pick runners for each place in turn: choose a place below, then tap its runners. `
     :`Pick ${k} runners${ordered(t)?" in finishing order":""}${t==="duet"?" to both run in the first three":""}. `;
   const px=u=>u.est&&u.est<500?`<small class="bb-px">$${u.est.toFixed(2)}</small>`:"";
+  const runners=`<div class="bb-runners${G?" g":""}">${(()=>{const RX=new Map((ranked(r)||[]).map(x=>[x.u.no,x])),PL=G?placePx(r,f):null;return (G?`<div class="bb-rw g-hd" aria-hidden="true"><div class="bb-run"><span></span><span>Runner</span><span>Win</span><span>Place</span></div><span></span></div>`:"")+[...f].sort((a,b)=>a.no-b.no).map(u=>{const x=RX.get(u.no),open=BUILD.form===u.no,uu=(x&&x.u)||u,mk=marks(u.no)?`<i>${marks(u.no)}</i>`:on(u.no)?`<i>✓</i>`:"";
+      const row=G?(()=>{const [l1,l2]=gameSub(r,uu);return `<button class="bsel bb-run" data-bsel="${u.no}" aria-pressed="${on(u.no)}"${G==="closed"?" disabled":""}>${cloth(u.no,r.code,u.box)}<span class="bb-nm">${escH(u.name)}${mk}<small>${escH(l1)}</small>${l2?`<small>${escH(l2)}</small>`:""}</span><b class="g-px">${u.est&&u.est<500?div(u.est):"–"}</b><b class="g-px">${PL.get(u.no)?div(PL.get(u.no)):"–"}</b></button>`})()
+        :`<button class="bsel bb-run" data-bsel="${u.no}" aria-pressed="${on(u.no)}">${cloth(u.no,r.code,u.box)}<span class="bb-nm">${escH(u.name)}<small>${escH(runSub(r,uu))}</small></span>${mk}${px(u)}</button>`;
+      return `<div class="bb-rw${open?" open":""}">${row}<button class="bb-fm" data-bform="${u.no}" aria-expanded="${open}">Form<span>${open?"▴":"▾"}</span></button>
+        ${open&&x?`<div class="bb-form">${fullForm(r,x)}</div>`:""}</div>`}).join("")})()}</div>`;
+  const mys=(()=>{const ts=tipsters(r),opts=[["none","No tipster"],...ts.map(x=>[x.who,WHO[x.who]]),...(ts.length>1?[["any","Any tipster"]]:[])],cur=opts.some(o=>o[0]===BUILD.mt)?BUILD.mt:"none",chip=([w,l])=>`<button data-bmt="${w}" aria-pressed="${cur===w}">${l}</button>`;
+      return `<div class="bb-h">Mystery bet${BUILD.myst?` <span class="bb-cnt">· rolled${BUILD.myst.who?` with ${BUILD.myst.who}'s pick${BUILD.myst.any?" (luck of the draw)":""}`:""}</span>`:""}</div>
+      <p class="bb-mh">Let Nan pull ${k>1?`${k} runners`:"a runner"} out of her hat${k>1&&exotic(t)&&ordered(t)?", boxed":""}. Lock in a tipster's pick if you like.</p>
+      <div class="bb-grid bb-myst" style="grid-template-columns:repeat(${opts.filter(o=>o[0]==="none"||o[0]==="any").length},minmax(0,1fr))">${opts.filter(o=>o[0]==="none"||o[0]==="any").map(chip).join("")}</div>
+      ${ts.length?`<div class="bb-grid bb-myst" style="grid-template-columns:repeat(${ts.length},minmax(0,1fr));margin-top:5px">${opts.filter(o=>o[0]!=="none"&&o[0]!=="any").map(chip).join("")}</div>`:""}
+      <button class="bb-roll" data-bmyst>🎲 ${BUILD.myst?"Roll again":`Mystery ${BT[t][0].toLowerCase()}`}</button>`})();
+  if(G==="closed")return `<div class="builder bb"><div class="bb-h">Field</div>${runners}</div>`;
   return `<div class="builder bb">
     <div class="bb-h">Bet type · this race</div>
     <div class="bb-grid">${SINGLE.map(x=>`<button data-btype="${x}" aria-pressed="${t===x}">${BT[x][0]}</button>`).join("")}</div>
     <div class="bb-h bb-multi">Over several races</div>
     <div class="bb-grid bb-g3 bb-multi">${MULTI.map(x=>`<button data-btype="${x}">${BT[x][0]}</button>`).join("")}</div>
-    ${(()=>{const ts=tipsters(r),opts=[["none","No tipster"],...ts.map(x=>[x.who,WHO[x.who]]),...(ts.length>1?[["any","Any tipster"]]:[])],cur=opts.some(o=>o[0]===BUILD.mt)?BUILD.mt:"none",chip=([w,l])=>`<button data-bmt="${w}" aria-pressed="${cur===w}">${l}</button>`;
-      return `<div class="bb-h">Mystery bet${BUILD.myst?` <span class="bb-cnt">· rolled${BUILD.myst.who?` with ${BUILD.myst.who}'s pick${BUILD.myst.any?" (luck of the draw)":""}`:""}</span>`:""}</div>
-      <p class="bb-mh">Let Nan pull ${k>1?`${k} runners`:"a runner"} out of her hat${k>1&&exotic(t)&&ordered(t)?", boxed":""}. Lock in a tipster's pick if you like.</p>
-      <div class="bb-grid bb-myst" style="grid-template-columns:repeat(${opts.filter(o=>o[0]==="none"||o[0]==="any").length},minmax(0,1fr))">${opts.filter(o=>o[0]==="none"||o[0]==="any").map(chip).join("")}</div>
-      ${ts.length?`<div class="bb-grid bb-myst" style="grid-template-columns:repeat(${ts.length},minmax(0,1fr));margin-top:5px">${opts.filter(o=>o[0]!=="none"&&o[0]!=="any").map(chip).join("")}</div>`:""}
-      <button class="bb-roll" data-bmyst>🎲 ${BUILD.myst?"Roll again":`Mystery ${BT[t][0].toLowerCase()}`}</button>`})()}
+    ${G?"":mys}
     ${styles.length?`<div class="bb-h">Style</div><div class="bb-grid bb-g3">${styles.map(([s,l])=>`<button data-bstyle="${s}" aria-pressed="${BUILD.style===s}">${l}</button>`).join("")}</div>`:""}
     ${BUILD.style==="standout"&&ex?`<div class="bb-h">Place</div><div class="bb-grid">${Array.from({length:k},(_,i)=>`<button data-bpos="${i}" aria-pressed="${BUILD.pos===i}">${ord(i+1)} (${(BUILD.legs[i]||[]).length})</button>`).join("")}</div>`:""}
     <div class="bb-h">${k>1||ex?"Pick runners":"Pick a runner"}${(BUILD.style==="standout"?(BUILD.legs[BUILD.pos]||[]).length:BUILD.sel.length)?` <span class="bb-cnt">· ${BUILD.style==="standout"?(BUILD.legs[BUILD.pos]||[]).length:BUILD.sel.length} picked</span>`:""}</div>
-    <div class="bb-runners">${(()=>{const RX=new Map((ranked(r)||[]).map(x=>[x.u.no,x]));return [...f].sort((a,b)=>a.no-b.no).map(u=>{const x=RX.get(u.no),open=BUILD.form===u.no;
-      return `<div class="bb-rw${open?" open":""}"><button class="bsel bb-run" data-bsel="${u.no}" aria-pressed="${on(u.no)}">${cloth(u.no,r.code,u.box)}<span class="bb-nm">${escH(u.name)}<small>${escH(runSub(r,(x&&x.u)||u))}</small></span>${marks(u.no)?`<i>${marks(u.no)}</i>`:on(u.no)?`<i>✓</i>`:""}${px(u)}</button><button class="bb-fm" data-bform="${u.no}" aria-expanded="${open}">Form<span>${open?"▴":"▾"}</span></button>
-        ${open&&x?`<div class="bb-form">${fullForm(r,x)}</div>`:""}</div>`}).join("")})()}</div>
+    ${runners}
     <div class="bb-h">${ex?"Outlay":"Stake"}</div>
     <div class="bb-grid">${[0.5,1,2,5,10,20,50].map(v=>`<button data-bstake="${v}" aria-pressed="${BUILD.stake===v}">${v<1?(v*100)+"c":"$"+v}</button>`).join("")}<label class="bb-own">$<input id="bStake" type="number" min="0.5" step="0.5" inputmode="decimal" value="${BUILD.stake}"></label></div>
     <p class="calc-out">${help}${ex&&combos(tk)?`<b>${comboLine(tk)}</b> (flexi: a ${money(BUILD.stake)} outlay over ${combos(tk)} combination${combos(tk)===1?"":"s"}). `:""}Pays the official tote dividend.</p>
-    <div class="bb-act"><button class="ffload" data-badd ${ok&&BUILD.stake>=0.5?"":"disabled"}>Add ${money(cost)} ${BT[t][0].toLowerCase()}${styleName(tk)} to bet slip</button><button data-bclose>Close</button></div></div>`;
+    <div class="bb-act"><button class="ffload" data-badd ${ok&&BUILD.stake>=0.5?"":"disabled"}>Add ${money(cost)} ${BT[t][0].toLowerCase()}${styleName(tk)} to bet slip</button><button data-bclose>Close</button></div>${G?`<div class="bb-low">${mys}</div>`:""}</div>`;
 }
 /* multi-race bets: the panel at the top of Today's tips */
 function autoLegs(r,type){const k=BT[type][1]||2,later=RACES.filter(x=>x.code===r.code&&x.venue===r.venue&&x.no>=r.no&&Date.now()<Date.parse(x.jump)).sort((a,b)=>a.no-b.no);
@@ -1512,28 +1535,62 @@ setInterval(()=>{if(ST.view==="cricket"&&!document.activeElement?.matches?.("#cr
 setInterval(()=>{if(ST.view==="cricket")loadCricket(false)},15*60e3);
 setInterval(()=>{if(ST.view==="cricket"||ST.view==="bets")crCheck()},5*60e3);
 /* ---------- Races: one race at a time, the full field with its form, and the bet builder. Prev / Next race. ---------- */
-const RS={id:null,code:"all"};
-function raceList(){const now=Date.now();return RACES.filter(r=>(RS.code==="all"||r.code===RS.code)&&Date.parse(r.jump)>now-60e3).sort((a,b)=>Date.parse(a.jump)-Date.parse(b.jump))}
-function renderRaces(){const el=$("racesView");if(!el)return;const list=raceList();
-  let r=list.find(x=>x.id===RS.id);if(!r){r=list[0];RS.id=r?r.id:null}
+const RS={id:null,code:"all",ev:false};
+// every race of the day (run or not), in jump order, for the chosen code
+function raceList(){return RACES.filter(r=>RS.code==="all"||r.code===RS.code).sort((a,b)=>Date.parse(a.jump)-Date.parse(b.jump)||a.venue.localeCompare(b.venue)||a.no-b.no)}
+const placesOf=n=>n>=8?3:n>=5?2:1;
+// Nan's place price estimate for each runner (same sum as the bet settler uses when there's no official dividend)
+function placePx(r,f){const P=placesOf(f.length),m=new Map();if(P<2)return m;for(const u of f)m.set(u.no,estDiv(inTopP(f,u.no,P)));return m}
+// the game's two lines under a runner: form · box/barrier · sex, then the trainer (and jockey/driver)
+function gameSub(r,u){const T=u.trainer?"Trainer "+u.trainer:"";
+  if(r.src==="quick")return [[u.form||"no form",u.box==null?"":(r.code==="D"?"Box ":"Bar ")+u.box].filter(Boolean).join(" · "),T];
+  if(r.code==="H")return [[u.form||"no form",u.barrier?"Bar "+u.barrier:"",u.weight?u.weight+"kg":"",u.sex||""].filter(Boolean).join(" · "),[u.jockey?"J "+u.jockey:"",u.trainer?"T "+u.trainer:""].filter(Boolean).join(" · ")];
+  if(r.code==="D")return [[u.form||u.last20&&String(u.last20).slice(-5)||"no form","Box "+u.box+(u.reserve?" (reserve)":""),u.sex||""].filter(Boolean).join(" · "),T];
+  return [[u.form||"no form",(u.row==="second"?"Second row ":"Front row ")+(u.barrier||""),u.sex||""].filter(Boolean).join(" · "),[u.driver?"D "+u.driver:"",u.trainer?"T "+u.trainer:""].filter(Boolean).join(" · ")]}
+// Nan's tips table, like the game's: tap a row to load that bet
+function rsTips(r,f){const rk=ranked(r);if(!rk||rk.length<2)return "";
+  const pf=rk.map(x=>({no:x.u.no,est:1/Math.max(1e-6,x.p)})),P=placesOf(f.length),nm=no=>(rk.find(x=>x.u.no===no)||{u:{}}).u.name||"",top=rk.map(x=>x.u.no);
+  const pc=p=>p>=.1?Math.round(p*100)+"%":p>=.01?(p*100).toFixed(1)+"%":"<1%";
+  const pl=P>1?top.map(n=>[n,inTopP(pf,n,P)]).sort((a,b)=>b[1]-a[1])[0]:null,q=top.slice(0,2),t=top.slice(0,3),f4=top.slice(0,4);
+  const rows=[["win",[top[0]],seqP(pf,[top[0]]),top[0]],pl&&["place",[pl[0]],pl[1],pl[0]],["quinella",q,seqP(pf,q)+seqP(pf,[q[1],q[0]]),q.join(" & ")],["exacta",q,seqP(pf,q),q.join("-")],
+    t.length===3&&["trifecta",t,seqP(pf,t),t.join("-")],f4.length===4&&["first4",f4,seqP(pf,f4),f4.join("-")]].filter(Boolean);
+  const open=Date.now()<Date.parse(r.jump),pn=panelOf(r);
+  return `<div class="rs-tb"><div class="rs-tbh"><b>Nan's tips</b><span>${open?"Tap one to load the bet":"Betting's closed"}</span></div>
+    ${rows.map(([ty,sel,p,l])=>`<button class="rs-tr" data-rtip="${ty}|${sel.join(",")}" ${open?"":"disabled"}><b>${BT[ty][0]}</b><span>${typeof l==="number"?cloth(l,r.code,(rk.find(x=>x.u.no===l)||{u:{}}).u.box)+" "+escH(nm(l)):escH(l)}</span><em>${pc(p)}</em></button>`).join("")}
+    ${pn?`<div class="rs-tr rs-pn"><b>Panel</b><span>${cloth(pn.pick.no,r.code,pn.pick.box)} ${escH(pn.pick.name||nm(pn.pick.no))}</span><em></em></div>`:""}</div>`}
+function evHtml(list,cur){const now=Date.now(),ms=new Map();for(const x of list){const k=x.code+"|"+x.venue;if(!ms.has(k))ms.set(k,[]);ms.get(k).push(x)}
+  const nx=list.find(x=>Date.parse(x.jump)>now);
+  return `<div class="rs-ev">${nx?`<button class="rs-nx" data-rsid="${escH(nx.id)}">Next to jump: ${timeOf(nx.jump)} ${escH(nx.venue)} R${nx.no}</button>`:""}
+    ${[...ms.values()].map(rs=>`<div class="ev-m"><div class="ev-h"><span class="ev-c">${CODE[rs[0].code]}</span><b>${escH(rs[0].venue)}</b><small>${rs.length} race${rs.length===1?"":"s"}</small></div>
+      <div class="ev-r">${rs.sort((a,b)=>a.no-b.no).map(x=>{const gone=now>=Date.parse(x.jump);return `<button data-rsid="${escH(x.id)}" aria-pressed="${x.id===cur}" class="${gone?"gone":""}">R${x.no}<small>${gone?"run":timeOf(x.jump).replace(/ ?[ap]m$/,"")}</small></button>`}).join("")}</div></div>`).join("")}</div>`}
+function renderRaces(){const el=$("racesView");if(!el)return;const list=raceList(),now=Date.now();
+  let r=list.find(x=>x.id===RS.id);if(!r){r=list.find(x=>Date.parse(x.jump)>now)||list[list.length-1];RS.id=r?r.id:null}
+  const day=`<div class="bb-grid rs-day"><button data-day="today" aria-pressed="${!TOMORROW}">Today</button><button data-day="tomorrow" aria-pressed="${TOMORROW}">Tomorrow</button></div>`;
   const codes=[["all","All"],["H","Horses"],["D","Dogs"],["N","Harness"]].map(([k,l])=>`<button data-rscode="${k}" aria-pressed="${RS.code===k}">${l}</button>`).join("");
-  if(!r){el.innerHTML=`<div class="calc rs"><div class="bb-grid rs-codes">${codes}</div><p>No more races today${RS.code!=="all"?" for "+CODE[RS.code].toLowerCase():""}. Check back tomorrow.</p></div>`;return}
-  const i=list.indexOf(r),[hm,ap]=timeOf(r.jump).split(" "),f=fieldOf(r),rk=f?ranked(r):null,pn=f?panelOf(r):null,nan=rk&&rk[0];
-  if(BUILD.id!==r.id){BUILD.id=r.id;BUILD.sel=[];BUILD.form=null}
-  el.innerHTML=`<div class="calc rs">
+  if(!r){el.innerHTML=`<div class="calc rs">${day}<div class="bb-grid rs-codes">${codes}</div><p>${TOMORROW?"Tomorrow's races aren't out yet. Horse fields usually arrive mid-afternoon.":"No races loaded"+(RS.code!=="all"?" for "+CODE[RS.code].toLowerCase():"")+"."}</p></div>`;return}
+  const i=list.indexOf(r),[hm,ap]=timeOf(r.jump).split(" "),f=fieldOf(r),gone=now>=Date.parse(r.jump);
+  if(BUILD.id!==r.id){BUILD.id=r.id;BUILD.sel=[];BUILD.form=null;BUILD.myst=null}
+  const P=f?placesOf(f.length):0;
+  el.innerHTML=`<div class="calc rs">${day}
     <div class="bb-grid rs-codes">${codes}</div>
-    <div class="rs-nav"><button data-rsgo="-1" ${i>0?"":"disabled"}>◀ Prev</button><select id="rsPick" aria-label="Pick a race">${list.map(x=>`<option value="${escH(x.id)}" ${x.id===r.id?"selected":""}>${timeOf(x.jump)} · ${escH(x.venue)} R${x.no}</option>`).join("")}</select><button data-rsgo="1" ${i<list.length-1?"":"disabled"}>Next ▶</button></div>
-    <div class="rs-head"><span class="r-time">${hm||""}<small>${ap||""}</small></span><b class="rs-v">${escH(r.venue)} R${r.no}</b><span class="r-cd">${Date.now()>=Date.parse(r.jump)?'<span class="cdn gone">jumped</span>':cdn(r.jump).replace("⏱ ","")}</span></div>
-    <p class="rs-meta">${[CODE[r.code],r.dist?r.dist+"m":"",escH(r.name||""),r.scr&&r.scr.length?`Scratched: ${r.scr.map(u=>u.no).join(", ")}`:""].filter(Boolean).join(" · ")}</p>
-    ${nan?`<p class="rs-tips">Tips if you want them: Nan ${cloth(nan.u.no,r.code,nan.u.box)}${pn?` · Panel ${cloth(pn.pick.no,r.code,pn.pick.box)}`:""}</p>`:""}
-    <p class="rs-i">Race ${i+1} of ${list.length}${RS.code==="all"?"":" "+CODE[RS.code].toLowerCase()} still to run today</p>
+    <div class="rs-nav"><button data-rsgo="-1" ${i>0?"":"disabled"}>◀ Prev</button><button class="rs-evb" data-rsev aria-expanded="${RS.ev}">Race ${i+1} of ${list.length}<small>All events ${RS.ev?"▴":"▾"}</small></button><button data-rsgo="1" ${i<list.length-1?"":"disabled"}>Next ▶</button></div>
+    ${RS.ev?evHtml(list,r.id):""}
+    <div class="rs-head"><span class="r-time">${hm||""}<small>${ap||""}</small></span><b class="rs-v">R${r.no} ${escH(r.venue)}</b><span class="r-cd">${gone?'<span class="cdn gone">jumped</span>':cdn(r.jump).replace("⏱ ","")}</span></div>
+    <p class="rs-meta">${[CODE[r.code],r.dist?r.dist+"m":"",r.cond||"",f?f.length+" runners":"",P>1?`Pays ${P} places`:P?"Win only":""].filter(Boolean).map(escH).join(" · ")}</p>
+    ${r.name?`<p class="rs-nm">${escH(r.name)}</p>`:""}
+    ${r.scr&&r.scr.length?`<p class="rs-nm">Scratched: ${r.scr.map(u=>escH(u.no+" "+(u.name||""))).join(", ")}</p>`:""}
+    ${f?rsTips(r,f):""}
   </div>
-  ${f?builderHtml(r):`<p class="note">${noField(r)}</p>`}`;
+  ${f?builderHtml(r,gone?"closed":true):`<p class="note">${noField(r)}</p>`}`;
 }
 function rsGo(d){const list=raceList(),i=list.findIndex(x=>x.id===RS.id),n=list[i+d];if(!n)return;RS.id=n.id;renderRaces();toTop("racesView")}
-document.addEventListener("click",e=>{const b=e.target.closest("[data-rsgo],[data-rscode]");if(!b)return;
-  if(b.dataset.rscode){RS.code=b.dataset.rscode;RS.id=null;return renderRaces()}rsGo(+b.dataset.rsgo)});
-document.addEventListener("change",e=>{if(e.target.id==="rsPick"){RS.id=e.target.value;renderRaces()}});
+document.addEventListener("click",e=>{const b=e.target.closest("[data-rsgo],[data-rscode],[data-rsev],[data-rsid],[data-rtip]");if(!b)return;
+  if(b.dataset.rscode){RS.code=b.dataset.rscode;RS.id=null;return renderRaces()}
+  if(b.hasAttribute("data-rsev")){RS.ev=!RS.ev;return renderRaces()}
+  if(b.dataset.rsid){RS.id=b.dataset.rsid;RS.ev=false;renderRaces();return toTop("racesView")}
+  if(b.dataset.rtip){const [ty,sel]=b.dataset.rtip.split("|");Object.assign(BUILD,{type:ty,style:"straight",pos:0,legs:[[],[],[],[]],sel:sel.split(",").map(Number),myst:null});renderRaces();
+    const x=document.querySelector("#racesView .bb-runners");if(x)try{x.scrollIntoView({block:"start",behavior:"smooth"})}catch(_){x.scrollIntoView()}return}
+  rsGo(+b.dataset.rsgo)});
 function toTop(id){const el=$(id)||$(ST.view+"View");if(!el)return;try{el.scrollIntoView({block:"start",behavior:"instant"})}catch(e){try{el.scrollIntoView(true)}catch(_){}}try{window.scrollBy(0,-10)}catch(e){}}
 function setView(v,focus){
   const was=ST.view;
