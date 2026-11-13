@@ -579,7 +579,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.34.0"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.34.1"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -2846,7 +2846,7 @@ function setView(v,focus){
   if(v==="bets"){renderBets();checkOfficial(false);crCheck()}
   if(v==="cricket"){renderCricket();loadCricket(false).then(crCheck)}
   slipBar();
-  if(focus)toTop(focus);else if(was!==v&&v!=="tips")toTop(v+"View");
+  if(focus)toTop(focus); // tab buttons switch in place; only links to a spot (like Review & confirm) scroll
   try{history.replaceState(null,"",v==="tips"?location.pathname+location.search:"#"+v)}catch(e){}
 }
 document.addEventListener("click",e=>{
