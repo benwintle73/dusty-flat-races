@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Nan's Tips · Off To The Races</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -151,6 +151,10 @@ details.follow p{margin:0 12px 8px;font-size:15px;color:#d9c9a3}
 #recRes{margin-top:6px}
 #slipBar{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;background:var(--tote);color:var(--paper);padding:8px 12px;border-top:3px solid var(--amber);font-size:16px}
 #slipBar[hidden]{display:none}
+/* v2.30.4: slip bar floats as one compact row, clear of the phone's home bar and browser toolbar */
+#slipBar{left:10px;right:10px;bottom:calc(14px + env(safe-area-inset-bottom));flex-wrap:nowrap;justify-content:space-between;gap:10px;padding:8px 8px 8px 14px;border:2px solid var(--amber);border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.55);max-width:620px;margin:0 auto}
+#slipBar .sb-t{min-width:0;display:flex;flex-direction:column;line-height:1.15}#slipBar .sb-t b{font:700 18px/1.1 var(--led);color:var(--amber)}#slipBar .sb-t small{font-size:13px;color:#d9c9a3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#slipBar .ffload{flex:none;min-height:44px;padding:0 16px;font-size:16px;border-radius:8px}
 .betbtn{background:var(--good);color:#fff;border:0;min-height:44px;padding:0 14px;font-weight:700;font-size:16px;cursor:pointer;margin:6px 0}
 .rbody>.betbtn,.rbody [data-bopen],.rbody [data-madd]{width:100%}
 .builder{background:var(--paper2);padding:8px 10px;margin:6px 0}
@@ -225,7 +229,7 @@ details.follow p{margin:0 12px 8px;font-size:15px;color:#d9c9a3}
 .bgrp{color:var(--amber);font:400 20px/1 var(--display);letter-spacing:.4px;text-transform:uppercase;margin:16px 0 6px}
 .mrow{display:inline-flex;gap:5px;align-items:center;margin:3px 8px 3px 0;font-weight:700}.mrow select{min-height:36px;font-size:15px;max-width:220px}
 .ffload[disabled]{opacity:.5;cursor:not-allowed}
-body{padding-bottom:60px}
+body{padding-bottom:calc(100px + env(safe-area-inset-bottom))}
 .nan-loan{border-top-color:var(--red)}
 .nan-loan .calc-l{width:auto;margin-right:4px}
 .syncin{display:grid;grid-template-columns:minmax(0,1fr) auto}.syncin .calc-l{grid-column:1/-1;width:auto}.syncin input{min-height:42px;font:700 18px/1 var(--led);padding:0 8px;border:1px solid var(--line);min-width:0}
@@ -548,7 +552,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.30.3"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.30.4"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -2338,7 +2342,7 @@ function tkMulti(t){
     <div class="tkbtns">${o.state==="open"?`<button data-bcancel="${t.id}">Cancel bet</button>`:""}</div></div>`;
 }
 function slipBar(){const n=BK.slip.length,el=$("slipBar");if(!el)return;el.hidden=!n||ST.view==="bets";
-  if(n)el.innerHTML=`<span>Bet slip: <b>${n} bet${n>1?"s":""}</b> · ${money(BK.slip.reduce((a,t)=>a+costOf(t),0))} · <b>not placed yet</b></span><button class="ffload" data-review>Review &amp; confirm</button>`}
+  if(n)el.innerHTML=`<span class="sb-t"><b>${n} bet${n>1?"s":""} · ${money(BK.slip.reduce((a,t)=>a+costOf(t),0))}</b><small>On your slip, not placed yet</small></span><button class="ffload" data-review>Review &amp; confirm</button>`}
 function tkHtml(t){
   if(t.sport==="cricket")return crTk(t);
   if(isMulti(t.type))return tkMulti(t);
