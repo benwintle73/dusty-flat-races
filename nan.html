@@ -142,6 +142,10 @@ details.follow p{margin:0 12px 8px;font-size:15px;color:#d9c9a3}
 .mwarn{background:#fff3cd;border-left:4px solid #d99a1e;padding:8px 10px;margin:8px 0;font-size:15px}
 .multi{margin:10px 0}.mleg{border-top:1px solid #0002;padding:6px 0}.mleg .rmeta button{margin-left:8px}
 .bsel{display:inline-flex;align-items:center;gap:5px}.bsel i{font-style:normal;color:var(--good);font-weight:700}
+.confirmbox{border-top-color:var(--amber);outline:3px solid var(--amber);margin-bottom:10px}
+.notyet{background:#fff3cd;border-left:5px solid var(--amber);padding:8px 10px;margin:4px 0 8px;font-size:16px}
+.bigconfirm{font-size:18px;min-height:46px;padding:0 18px}
+.okmsg{font-weight:700}
 .slipline{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line);font-size:15px}
 .slipline button,.tkbtns button,[data-bcheck],[data-btop],[data-bslipclr],[data-bclose],[data-mclose]{background:var(--paper2);color:var(--ink);border:1px solid var(--line);min-height:36px;padding:0 10px;font-weight:700;cursor:pointer}
 #betsView>.calc-row button{background:var(--paper);}
@@ -301,7 +305,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null};
-const NAN_VERSION="2.15.1"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.15.2"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -838,7 +842,7 @@ function tkMulti(t){
     <div class="tkbtns">${o.state==="open"?`<button data-bcancel="${t.id}">Cancel bet</button>`:""}</div></div>`;
 }
 function slipBar(){const n=BK.slip.length,el=$("slipBar");if(!el)return;el.hidden=!n||ST.view==="bets";
-  if(n)el.innerHTML=`<span>Bet slip: <b>${n} bet${n>1?"s":""}</b> · ${money(BK.slip.reduce((a,t)=>a+costOf(t),0))}</span><button class="ffload" data-view="bets">Review &amp; confirm</button>`}
+  if(n)el.innerHTML=`<span>Bet slip: <b>${n} bet${n>1?"s":""}</b> · ${money(BK.slip.reduce((a,t)=>a+costOf(t),0))} · <b>not placed yet</b></span><button class="ffload" data-review>Review &amp; confirm</button>`}
 function tkHtml(t){
   if(isMulti(t.type))return tkMulti(t);
   const o=settleOf(t),c=costOf(t),man=BK.manual[t.rk],afterJump=Date.now()>=Date.parse(t.jump);
@@ -871,14 +875,15 @@ function renderBets(){
   const b=balances(),el=$("betsView");if(!el)return;LEDGER=ledger(true);
   const live=BK.tickets.slice().sort((a,b)=>Date.parse(b.jump)-Date.parse(a.jump)),slipCost=BK.slip.reduce((a,t)=>a+costOf(t),0),closedSlip=BK.slip.some(t=>Date.now()>=Date.parse(t.jump));
   const groups=[["Before the jump",t=>settleOf(t).state==="open"],["Run: waiting on official results",t=>["waiting","div"].includes(settleOf(t).state)||settleOf(t).src==="manual"],["Settled",t=>settleOf(t).src==="official"],["Cancelled",t=>t.status==="cancelled"]];
-  el.innerHTML=`<div class="sumgrid"><div class="sum all"><h3>Running balance</h3><div class="big">${money(b.running)}</div><p>Includes results you've entered yourself. This is what you can bet with.</p></div>
+  const slipBox=BK.slip.length?`<div class="calc confirmbox" id="slipBox"><h3>Confirm your bet${BK.slip.length>1?"s":""}</h3>
+      <p class="notyet"><b>Not placed yet.</b> Check ${BK.slip.length>1?"these bets":"this bet"}, then press <b>Confirm</b> to place ${BK.slip.length>1?"them":"it"}. Nothing is placed until you do.</p>
+      ${BK.slip.map((t,i)=>`<div class="slipline"><span>${slipHtml(t)}${Date.now()>=Date.parse(t.jump)?' <b class="minus">jumped</b>':""}</span><button data-bslipdel="${i}">Remove</button></div>`).join("")}
+      <div class="calc-row"><button class="ffload bigconfirm" data-bconfirm ${slipCost>b.running||closedSlip?"disabled":""}>Confirm and place ${BK.slip.length} bet${BK.slip.length>1?"s":""} · ${money(slipCost)}</button><button data-bslipclr>Clear slip</button></div>${slipCost>b.running?'<p class="minus">Not enough in your running balance.</p>':""}${closedSlip?'<p class="minus">Remove bets on races that have jumped.</p>':""}</div>`
+    :`<div class="calc" id="slipBox"><h3>Bet slip</h3><p>Your slip is empty. On Today's tips, open a race and press <b>Bet on this race</b>.</p></div>`;
+  el.innerHTML=`${BKMSG?`<div class="note okmsg" id="bkMsg">${BKMSG}</div>`:""}${slipBox}<div class="sumgrid"><div class="sum all"><h3>Running balance</h3><div class="big">${money(b.running)}</div><p>Includes results you've entered yourself. This is what you can bet with.</p></div>
     <div class="sum"><h3>Official balance</h3><div class="big">${money(b.official)}</div><p>Only official results. Changes when they come in.</p></div>
     <div class="sum"><h3>Bets out</h3><div class="big">${money(b.openSt+b.waitSt)}</div><p>${money(b.openSt)} still to run · ${money(b.waitSt)} run, waiting on official results</p></div>
     <div class="sum"><h3>Official profit</h3><div class="big ${b.profit>=0?"plus":"minus"}">${b.profit>=0?"+":""}${money(b.profit)}</div><p>From settled bets. Started with ${money(BK.start)}${BK.topups?` + ${money(BK.topups)} added`:""}${b.owed>0?` · owe Nan ${money(b.owed)}`:""}.</p></div></div>
-    ${BKMSG?`<div class="note">${BKMSG}</div>`:""}
-    <div class="calc"><h3>Bet slip</h3>${BK.slip.length?BK.slip.map((t,i)=>`<div class="slipline"><span>${slipHtml(t)}${Date.now()>=Date.parse(t.jump)?' <b class="minus">jumped</b>':""}</span><button data-bslipdel="${i}">Remove</button></div>`).join("")+
-      `<div class="calc-row"><button class="ffload" data-bconfirm ${slipCost>b.running||closedSlip?"disabled":""}>Confirm ${BK.slip.length} bet${BK.slip.length>1?"s":""} · ${money(slipCost)}</button><button data-bslipclr>Clear slip</button></div>${slipCost>b.running?'<p class="minus">Not enough in your running balance.</p>':""}${closedSlip?'<p class="minus">Remove bets on races that have jumped.</p>':""}`
-      :`<p>Your slip is empty. On Today's tips, open a race and press <b>Bet on this race</b>.</p>`}</div>
     <div class="calc-row"><button data-bcheck>Check official results</button></div>
     ${loanHtml(b)}
     ${groups.map(([h,f])=>{const ts=live.filter(t=>f(t)&&(h==="Cancelled"||t.status!=="cancelled"));return ts.length?`<h3 class="bgrp">${h} (${ts.length})</h3><div class="races">${ts.map(tkHtml).join("")}</div>`:""}).join("")}
@@ -923,16 +928,16 @@ document.addEventListener("click",e=>{
   if(b=g("[data-mstake]")){if(MB)MB.stake=+b.dataset.mstake;return render()}
   if(g("[data-mbclose]")){MB=null;return render()}
   if(g("[data-mbadd]")){if(!MB||multiProblem())return;const t=multiTicket();
-    BK.slip.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,7),...t});saveBK();MB=null;$("status").textContent="Added to your bet slip.";return render()}
+    BK.slip.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,7),...t});saveBK();MB=null;$("status").textContent="Added to your bet slip. Not placed yet: press Review &amp; confirm at the bottom to place it.".replace("&amp;","&");return render()}
   if(b=g("[data-bstake]")){BUILD.stake=+b.dataset.bstake;return render()}
   if(g("[data-badd]")){const r=RACES.find(x=>x.id===BUILD.id);if(!r||Date.now()>=Date.parse(r.jump))return;const f=fieldOf(r);if(!f)return;
     const tk=buildTicket(r);if(!buildOk(tk))return;
     BK.slip.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,7),rk:rkey(r),code:r.code,date:r.date,venue:r.venue,no:r.no,jump:r.jump,...tk});
-    saveBK();BUILD.sel=[];BUILD.legs=[[],[],[],[]];BUILD.pos=0;$("status").textContent="Added to your bet slip.";return render()}
+    saveBK();BUILD.sel=[];BUILD.legs=[[],[],[],[]];BUILD.pos=0;$("status").textContent="Added to your bet slip. Not placed yet: press Review &amp; confirm at the bottom to place it.".replace("&amp;","&");return render()}
   if(b=g("[data-bslipdel]")){BK.slip.splice(+b.dataset.bslipdel,1);saveBK();return renderBets()}
   if(g("[data-bslipclr]")){BK.slip=[];saveBK();return renderBets()}
   if(g("[data-bconfirm]")){const cost=BK.slip.reduce((a,t)=>a+costOf(t),0);if(cost>balances().running||BK.slip.some(t=>Date.now()>=Date.parse(t.jump)))return;
-    for(const t of BK.slip)BK.tickets.push({...t,status:"placed",placedAt:new Date().toISOString()});BKMSG=`${BK.slip.length} bet${BK.slip.length>1?"s":""} confirmed and locked in: ${money(cost)}.`;BK.slip=[];saveBK();return renderBets()}
+    for(const t of BK.slip)BK.tickets.push({...t,status:"placed",placedAt:new Date().toISOString()});BKMSG=`Placed: ${BK.slip.length} bet${BK.slip.length>1?"s":""} confirmed and locked in for ${money(cost)}. You'll find ${BK.slip.length>1?"them":"it"} under Before the jump.`;BK.slip=[];saveBK();renderBets();return toTop("bkMsg")}
   if(b=g("[data-bcancel]")){const t=BK.tickets.find(x=>x.id===b.dataset.bcancel);if(t&&Date.now()<Date.parse(t.jump)){t.status="cancelled";BKMSG=`Cancelled: ${money(costOf(t))} back in your balance.`;saveBK()}return renderBets()}
   if(b=g("[data-bman]")){MANUAL=b.dataset.bman;return renderBets()}
   if(g("[data-mclose]")){MANUAL=null;return renderBets()}
@@ -953,15 +958,19 @@ document.addEventListener("change",e=>{if(e.target.id==="loanIn"){LOANAMT=Math.m
 setInterval(()=>{const c=document.getElementById("loanClock");if(!c)return;const left=+c.dataset.at-Date.now();if(left<=0)return renderBets();c.textContent=hms(left)},1000);
 document.addEventListener("change",e=>{if(e.target.id==="bStake"){BUILD.stake=Math.max(1,Math.round((+e.target.value||1)*100)/100);render()}if(e.target.id==="mStake"&&MB){MB.stake=Math.max(1,Math.round((+e.target.value||1)*100)/100);render()}});
 setInterval(()=>{if(ST.view==="bets"){checkOfficial(false);renderBets()}},5*60e3);
-function setView(v){
+function toTop(id){const el=$(id)||$(ST.view+"View");if(!el)return;try{el.scrollIntoView({block:"start",behavior:"instant"})}catch(e){try{el.scrollIntoView(true)}catch(_){}}try{window.scrollBy(0,-10)}catch(e){}}
+function setView(v,focus){
+  const was=ST.view;
   document.querySelectorAll("[data-view]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.view===v));
   ST.view=v;$("tipsView").hidden=v!=="tips";$("recordView").hidden=v!=="record";$("betsView").hidden=v!=="bets";
   if(v==="record"){if(!REC.sum)loadRecord();else renderRecord()}
   if(v==="bets"){renderBets();checkOfficial(false)}
   slipBar();
+  if(focus)toTop(focus);else if(was!==v&&v!=="tips")toTop(v+"View");
   try{history.replaceState(null,"",v==="tips"?location.pathname+location.search:"#"+v)}catch(e){}
 }
 document.addEventListener("click",e=>{
+  if(e.target.closest("[data-review]"))return setView("bets","slipBox");
   const v=e.target.closest("[data-view]");if(v)return setView(v.dataset.view);
   const d=e.target.closest("[data-rday]");if(d){REC.date=d.dataset.rday;renderRecord();loadDay(REC.date,REC.date===(REC.sum&&REC.sum.today))}
   const c=e.target.closest("[data-rcode]");if(c){REC.code=c.dataset.rcode;renderRecord()}
@@ -970,7 +979,7 @@ document.addEventListener("click",e=>{
   const bt=e.target.closest("[data-bet]");if(bt){REC.bet=bt.dataset.bet;renderRecord()}
 });
 document.addEventListener("change",e=>{if(e.target.id==="stakeIn"){const v=Math.round(Math.max(.5,Math.min(10000,+e.target.value||1))*2)/2;REC.stake=v;renderRecord()}});
-if(location.hash==="#record")setView("record");else if(location.hash==="#bets")setView("bets");else slipBar();
+if(location.hash==="#record")setView("record");else if(location.hash==="#bets")setView("bets",BK.slip.length?"slipBox":null);else slipBar();
 function refreshAllow(){clearTimeout(refreshAllow.t);refreshAllow.t=setTimeout(()=>getJSON(SB+"/otr-nan?follow=1").then(j=>{ALLOW=j.allowance||ALLOW;CREDITS=j.credits||CREDITS;$("allow").innerHTML=creditsHtml(CREDITS)}).catch(()=>{}),1500)}
 setInterval(refreshAllow,120e3);
 loadAll();
