@@ -36,14 +36,17 @@ html{background:var(--tote)}body{padding-left:env(safe-area-inset-left);padding-
 @media (display-mode:standalone){.mast{padding-top:calc(46px + env(safe-area-inset-top))!important}}
 html.app .mast{padding-top:calc(46px + env(safe-area-inset-top))!important}
 /* version badge, top right: doubles as the refresh button. A gentle glow invites a tap; it turns solid gold when a newer version is out */
-.mast{position:relative}.mast.mast{padding-right:118px}
-.mast .sub{display:flex;flex-direction:column;gap:3px;flex:0 1 auto;line-height:1}
-.verbtn{position:absolute;right:12px;top:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:92px;background:var(--tote2);color:var(--amber);border:2px solid var(--amber);border-radius:10px;padding:7px 10px 6px;cursor:pointer;animation:vglow 2.4s ease-in-out infinite}
+/* header: title | date (centred, two lines) | refresh, then the game link underneath */
+.mast.mast{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;column-gap:10px;row-gap:10px}
+.mast>a{grid-column:1/-1;justify-self:start}
+.mast .sub{display:flex;flex-direction:column;align-items:center;text-align:center;gap:3px;flex:1 1 auto;min-width:0;line-height:1;align-self:center}
+.mast .sub{white-space:nowrap}@media (max-width:400px){.mast .sub{font-size:17px}}
+.verbtn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:84px;background:var(--tote2);color:var(--amber);border:2px solid var(--amber);border-radius:10px;padding:7px 8px 6px;cursor:pointer;animation:vglow 2.4s ease-in-out infinite}
 .verbtn b{font:700 19px/1 var(--led);letter-spacing:.3px}.verbtn small{font:600 11px/1 var(--led);text-transform:uppercase;letter-spacing:1px;color:var(--paper)}
 @keyframes vglow{0%,100%{box-shadow:0 0 0 0 #ffb52e00;border-color:var(--amber-dim)}50%{box-shadow:0 0 12px 2px #ffb52e66;border-color:var(--amber)}}
 .verbtn.new{background:var(--amber);color:var(--tote);border-color:#fff3cd;animation:vflash 1s ease-in-out infinite}.verbtn.new small{color:var(--tote)}
 @keyframes vflash{50%{background:#ffd27a;box-shadow:0 0 16px 4px #ffb52e99}}
-html.app .verbtn{top:calc(40px + env(safe-area-inset-top))}@media (display-mode:standalone){.verbtn{top:calc(40px + env(safe-area-inset-top))}}
+
 @keyframes rspin{to{transform:rotate(360deg)}}
 .mast{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 16px;background:var(--tote);padding:12px 14px;border-bottom:3px solid var(--amber)}
 .mast h1{margin:0;font:400 clamp(28px,5vw,42px)/1 var(--display);color:var(--amber);letter-spacing:.8px;text-transform:uppercase}
@@ -591,7 +594,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.34.7"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.34.8"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
