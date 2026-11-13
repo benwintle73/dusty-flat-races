@@ -81,7 +81,7 @@ details.run[open]>summary{background:var(--paper2)}
 .foot{font-size:14px;color:#cdbf9a;padding:16px 2px 30px;line-height:1.5}
 .foot a{color:#f0d9a8}
 .foot h4{margin:14px 0 4px;color:var(--amber);font:400 20px/1.1 var(--display);letter-spacing:.5px;text-transform:uppercase}
-.foot p{margin:0 0 10px}.foot b{color:#f0e2bf}
+.foot p{margin:0 0 10px}.foot h5{margin:10px 0 2px;font:700 15px/1.1 var(--led);letter-spacing:.6px;text-transform:uppercase;color:#f0d9a8}.foot b{color:#f0e2bf}
 .foot-serious{margin-top:14px!important;padding-top:10px;border-top:1px solid #3b3120;color:#e8dcbc}
 .empty{background:var(--paper);color:var(--ink);padding:14px;font-size:17px}
 .view{display:flex;gap:6px;margin-top:10px}
@@ -425,19 +425,24 @@ details.srcs{margin-top:16px}details.srcs>.allow,details.srcs #allow>.allow{marg
     <div class="races" id="recList"></div>
   </section>
   <div class="foot">
-    <h4>Who's who at Nan's kitchen table</h4>
-    <p><b>Nan</b> does her own homework. Horses: the bookies' market, nudged by recent form. Dogs and harness: each runner's record, last few runs and box or barrier.</p>
-    <p><b>Pop</b> trusts the computer. Has done since it tipped him a $21 winner in 1998.</p>
-    <p><b>Bob</b> got it from a bloke at the pub. Wrong a fair bit, never in doubt.</p>
-    <p><b>Gran</b> backs the favourite. Every race, every time. Roughies are for dreamers.</p>
-    <p><b>The Panel</b> averages the lot and calls it teamwork.</p>
-    <p>Tap a race to see the field, and a runner to see how Nan got there.</p>
+    <h4>Who&rsquo;s who at Nan&rsquo;s table</h4>
+    <p><b>Nan</b> does her homework. Then she checks the market to see if it&rsquo;s done its homework too.</p>
+    <p><b>Pop</b> trusts the computer. He&rsquo;s trusted it since it tipped him a $21 winner in 1998. He still brings it up.</p>
+    <p><b>Bob</b> gets his tips from a bloke at the pub. The bloke&rsquo;s wrong a fair bit. Bob remains completely confident in him.</p>
+    <p><b>Gran</b> backs the favourite. Every race. Every time. Roughies, she says, are for people who enjoy being disappointed creatively.</p>
+    <p><b>The Panel</b> averages everyone&rsquo;s tips and calls it teamwork. If it goes wrong, they&rsquo;ll be holding a meeting.</p>
+    <p>Tap a race to see the field. Tap a runner to see what Nan thinks. She&rsquo;ll explain her reasoning. She won&rsquo;t promise to be right.</p>
     <h4>Where Nan gets her gossip</h4>
-    <p><b>Horses:</b> prices and results from <a href="https://puntersedge.online" target="_blank" rel="noopener">PuntersEdge</a>, form from FormFav. No FormFav form? Nan uses PuntersEdge's recent runs. Both down? She goes off Krok's prices alone, marked Price only.</p>
-    <p><b>Dogs and harness:</b> the prices are Nan's own estimates.</p>
-    <p><b>Everyone else:</b> Pop reads FormFav's predictions, Bob reads Krok's (speed map and all), and Gran reads the bookies.</p>
-    <p><b>Nan's record keeps her honest.</b> Her top pick in every horse race, and every race at the dog and harness meetings she follows, is written down before the jump and checked against the official results. Profit is $1 on the nose of every top pick at the official win dividend. Scratched picks don't count, and no, she can't rub them out afterwards.</p>
-    <p class="foot-serious">Play money only. For fun, 18+. If gambling stops being fun, talk to someone: Gambling Help <a href="tel:1800858858">1800 858 858</a>.</p>
+    <h5>Horses</h5>
+    <p>Nan checks the prices and results on <a href="https://puntersedge.online" target="_blank" rel="noopener">PuntersEdge</a>, then looks at the form on FormFav. If FormFav has no form, she checks the recent runs on PuntersEdge. If both are having a lie-down, she uses Krok&rsquo;s prices alone and labels the tip &ldquo;Price only.&rdquo; Even Nan knows when she&rsquo;s working with half a newspaper.</p>
+    <h5>Dogs &amp; harness</h5>
+    <p>Nan looks at each runner&rsquo;s record, recent runs and box or barrier. Her prices are estimates, not bookmaker odds. She&rsquo;s a tipster, not a tiny bookie in an apron.</p>
+    <h5>The others</h5>
+    <p>Pop reads FormFav&rsquo;s predictions. Bob reads Krok&rsquo;s, including the speed map, which sounds very official when he says it. Gran checks the bookies and backs the favourite. She has a system. It&rsquo;s the same system every race.</p>
+    <h4>Nan&rsquo;s record</h4>
+    <p>Nan&rsquo;s top pick in every horse race&mdash;and every race at the dog and harness meetings she follows&mdash;is recorded before the jump. After the race, it&rsquo;s checked against the official result. No changing the tip after the finish. No blaming the jockey. No &ldquo;that&rsquo;s the one I meant.&rdquo;</p>
+    <p>The profit or loss is worked out using a $1 win stake on each pick and the official win dividend. Scratched runners don&rsquo;t count. Tips stay on the record whether Nan likes the result or not.</p>
+    <p class="foot-serious">For fun only. 18+. Play money, not rent money. If gambling stops being fun, call Gambling Help on <a href="tel:1800858858">1800 858 858</a>.</p>
   </div>
 </main>
 <div id="slipBar" hidden></div>
@@ -543,7 +548,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.30.1"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.30.2"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
