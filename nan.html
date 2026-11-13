@@ -139,6 +139,7 @@ details.follow p{margin:0 12px 8px;font-size:15px;color:#d9c9a3}
 #slipBar[hidden]{display:none}
 .betbtn{background:var(--good);color:#fff;border:0;min-height:40px;padding:0 14px;font-weight:700;font-size:16px;cursor:pointer;margin:6px 0}
 .builder{background:var(--paper2);padding:8px 10px;margin:6px 0}
+.multi{margin:10px 0}.mleg{border-top:1px solid #0002;padding:6px 0}.mleg .rmeta button{margin-left:8px}
 .bsel{display:inline-flex;align-items:center;gap:5px}.bsel i{font-style:normal;color:var(--good);font-weight:700}
 .slipline{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line);font-size:15px}
 .slipline button,.tkbtns button,[data-bcheck],[data-btop],[data-bslipclr],[data-bclose],[data-mclose]{background:var(--paper2);color:var(--ink);border:1px solid var(--line);min-height:36px;padding:0 10px;font-weight:700;cursor:pointer}
@@ -179,6 +180,7 @@ body{padding-bottom:60px}
   <details class="follow" id="follow"></details>
   <div id="hl"></div>
   <div class="note" id="status"></div>
+  <div id="multi"></div>
   <div class="races" id="races"></div>
   </section>
   <section id="betsView" hidden></section>
@@ -218,10 +220,10 @@ const SC_N=[["#d8342a","#fff"],["#fbfaf5","#1a1a1a"],["#2a62c9","#fff"],["#f2c92
 const SC_D=[["#d8342a","#fff"],["linear-gradient(180deg,#1d1d20 0 27%,#fbfaf5 27% 73%,#1d1d20 73%)","#1d1d20"],["#fbfaf5","#1a1a1a"],["#2a62c9","#fff"],["#f2c92b","#1a1a1a"],["#2a9a55","#fff"],["#1d1d20","#fff"],["#ec7fb0","#1a1a1a"]];
 /* Nan's sayings (the same pool as the game), one per race, picked from the race and her pick so it stays put */
 const NAN_SAYS={
-  all:["Nan's been doing the form since the wireless days. Trust her.","Nan put the coin jar on this one.","Nan's knitting needles pointed straight at this one.","Nan reckons you could throw a blanket over the rest.","Nan read the form twice and had a biscuit. Decision made.","Nan's not one to brag, but she had the last three.","Nan says get on before the bookies wake up.","Nan wouldn't put her teeth in for anything else in this race.","The crossword answer this morning was this one's name. Nan says that's no coincidence.","Nan says the numbers don't lie, and neither does Nan.","Nan's lucky cardigan is on. You've been warned.","The whole bridge club is on this one. Don't tell them Nan told you.","Nan's had a cuppa and a long hard look. This is the one.","Nan says if this one loses, she's taking up lawn bowls.","Nan watched the replays in her dressing gown. Worth it.","Nan doesn't do favourites. Except this one. And you, love.","Nan says it'd have to fall over to lose. Touch wood.","Nan reckons the rest are running for second.","Nan's been right before. Don't ask how often she's been wrong.","Nan says she's got a feeling in her waters about this one.","Nan's hip has been twinging all morning. That's always a good sign.","Nan says back it, and if it loses, blame Pop.","Nan's already planning what to do with the winnings. Mostly bingo.","Nan says this one's been flying under the radar. Not any more."],
-  H:["Nan likes the way the money's coming for this one.","Jockey's in form and so is the horse. Nan's smiling.","Nan's seen the barrier draw and she's very happy with it.","Nan says this one's been trained to the minute.","Nan reckons it's been set for this race since the winter."],
-  D:["Nan says this dog jumps like it's late for its tea.","Nan likes a dog that knows the way to the rail.","Nan says the box draw's a gift. Don't waste it.","Nan reckons this one would chase the lure to Sydney and back.","Nan says this pup's got more early speed than Pop on pension day."],
-  N:["Nan says this driver could steer a shopping trolley through a car park.","Nan likes a pacer that can fire off the gate.","Nan reckons this one's got a sit and a finish in it.","Nan says no gallops, no worries. Steady as she goes.","Nan's mate in the stewards' tower rates the driver."]};
+  all:["Nan's been doing the form since the wireless days. Trust her.","Nan put the coin jar on this one.","Nan's knitting needles pointed straight at this one.","Nan reckons you could throw a blanket over the rest.","Nan read the form twice and had a biscuit. Decision made.","Nan's not one to brag, but she had the last three.","Nan says get on before the bookies wake up.","Nan wouldn't put her teeth in for anything else in this race.","The crossword answer this morning was this one's name. Nan says that's no coincidence.","Nan says the numbers don't lie, and neither does Nan.","Nan's lucky cardigan is on. You've been warned.","The whole bridge club is on this one. Don't tell them Nan told you.","Nan's had a cuppa and a long hard look. This is the one.","Nan says if this one loses, she's taking up lawn bowls.","Nan watched the replays in her dressing gown. Worth it.","Nan doesn't do favourites. Except this one. And you, love.","Nan says it'd have to fall over to lose. Touch wood.","Nan reckons the rest are running for second.","Nan's been right before. Don't ask how often she's been wrong.","Nan says she's got a feeling in her waters about this one.","Nan's hip has been twinging all morning. That's always a good sign.","Nan says back it, and if it loses, blame Pop.","Nan's already planning what to do with the winnings. Mostly bingo.","Nan says this one's been flying under the radar. Not any more.","Horses for courses, love. This one loves this course.","Straight from the horse's mouth. Well, the trainer's cousin's.","Nan says hold your horses, then back this one.","A dark horse? Nan's had the torch on it all week.","Fair dinkum, Nan reckons this is the good thing of the day.","Nan's calling it a smokey. Don't tell the bookies.","Nan says she'll be apples. Mostly.","Give it a burl, love. Nan has.","Nan says don't be a galah, back the form.","Nan's not a mug punter. Not since 1987, anyway.","Nan reckons it's the get out stakes for her purse.","Nan says the others are plodders. This one's a bolter.","Nan's backing it for a gorilla. In buttons.","Nan says a good thing's a good thing until it isn't. This one is.","Nan says this one could win from the back of Bourke.","Heaps of chances, says Nan. Mostly this one's.","Nan put her glasses on for this one. Twice.","Nan says the arvo's looking up already.","Nan says it's got a touch of class. Like Nan.","Nan says a dead heat would be rude. It'll win clear.","Nan's not saying it's a cert. But she's not not saying it."],
+  H:["Nan likes the way the money's coming for this one.","Jockey's in form and so is the horse. Nan's smiling.","Nan's seen the barrier draw and she's very happy with it.","Nan says this one's been trained to the minute.","Nan reckons it's been set for this race since the winter.","Nan says the hoop could ride a lounge chair to victory.","Nan says it's drawn to get the perfect run. Pop says it's the hoop.","Nan says it'll be in front when it counts. At the post."],
+  D:["Nan says this dog jumps like it's late for its tea.","Nan likes a dog that knows the way to the rail.","Nan says the box draw's a gift. Don't waste it.","Nan reckons this one would chase the lure to Sydney and back.","Nan says this pup's got more early speed than Pop on pension day.","Nan says this dog's quicker out of the box than Pop to the pub.","Nan says it'll hug the rail like Nan hugs a bargain.","Nan reckons the lure won't know what hit it."],
+  N:["Nan says this driver could steer a shopping trolley through a car park.","Nan likes a pacer that can fire off the gate.","Nan reckons this one's got a sit and a finish in it.","Nan says no gallops, no worries. Steady as she goes.","Nan's mate in the stewards' tower rates the driver.","Nan says this one's trotting like it's late for bingo.","Nan says the gig's in good hands. Steady as a Sunday drive."]};
 const sayHash=s=>{let h=2166136261;for(const c of String(s)){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0};
 function nanSays(code,seed){const L=[...(NAN_SAYS[code]||[]),...NAN_SAYS.all];return L[sayHash(seed)%L.length]}
 function cloth(no,code,box,cls){
@@ -298,7 +300,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null};
-const NAN_VERSION="2.14.1"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.15.0"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -465,7 +467,7 @@ function renderFollow(){
   el.open=open;
 }
 function render(){
-  renderFollow();if(typeof slipBar==="function")slipBar();
+  renderFollow();$("multi").innerHTML=multiHtml();if(typeof slipBar==="function")slipBar();
   $("codes").innerHTML=[["all","All"],["H","Horses"],["D","Dogs"],["N","Harness"]].map(([k,l])=>`<button data-code="${k}" aria-pressed="${ST.code===k}">${l}</button>`).join("");
   const meets=[...new Map(RACES.filter(r=>ST.code==="all"||r.code===ST.code).map(r=>[`${r.code}|${r.venue}`,r])).values()].sort((a,b)=>a.venue.localeCompare(b.venue));
   if(ST.meet!=="all"&&!meets.some(r=>`${r.code}|${r.venue}`===ST.meet))ST.meet="all";
@@ -612,7 +614,7 @@ function renderRecord(){
 // Bets can be cancelled until the jump. After the jump they're locked. Official results settle them
 // (the official balance); a result typed in by hand settles them early at an estimated dividend (the running balance),
 // and the official result replaces it when it comes in.
-const BK_KEY="nanbets1",BT={win:["Win",1],place:["Place",1],ew:["Each way",1],quinella:["Quinella",2],exacta:["Exacta",2],trifecta:["Trifecta",3],first4:["First 4",4]};
+const BK_KEY="nanbets1";
 let BK=(()=>{try{const b=JSON.parse(localStorage.getItem(BK_KEY));if(b&&Array.isArray(b.tickets))return {start:1000,topups:0,slip:[],manual:{},manualAt:{},off:{},loans:[],...b}}catch(e){}return {start:1000,topups:0,tickets:[],slip:[],manual:{},manualAt:{},off:{},loans:[]}})();
 /* Borrowing from Nan: up to $1,000 in any 24 hours. The clock starts with the first amount borrowed; the rest of the $1,000
    can be taken any time before it runs out. What's owed comes out of the next winnings (the whole payout of a winning bet)
@@ -631,12 +633,10 @@ function ledger(running){
   return {debt:r2(debt),repaid:r2(repaid),borrowed:r2(borrowed),per};
 }
 function saveBK(){try{localStorage.setItem(BK_KEY,JSON.stringify(BK))}catch(e){}}
-const BUILD={id:null,type:"win",sel:[],stake:10};
+const BUILD={id:null,type:"win",sel:[],stake:10,style:"straight",pos:0,legs:[[],[],[],[]]};
 const rkey=r=>`${r.code}|${r.date}|${vkey(r.venue)}|${r.no}`;
 const costOf=t=>t.type==="ew"?2*t.stake:t.stake;
 const r2=v=>Math.round(v*100)/100;
-const ordered=type=>["exacta","trifecta","first4"].includes(type);
-function selText(t){const n=BT[t.type][1];return n>1?t.sel.map(x=>x.no).join(ordered(t.type)?" - ":" & "):`${t.sel[0].no}. ${t.sel[0].name}`}
 // the field as it stood when the bet was made, with the price used for estimates: the market for horses and quick form, Nan's price otherwise
 function fieldOf(r){const rk=ranked(r);if(!rk)return null;return rk.map(x=>({no:x.u.no,name:x.u.name,box:x.u.box,est:mkt(r)?(x.u.win||x.price):x.price}))}
 /* estimated tote dividends from the prices (each runner's chance ~ 1/price; later places by the same shares; tote keeps ~15%) */
@@ -644,34 +644,97 @@ function chances(field){const q=field.map(u=>1/Math.max(1.01,u.est||50)),s=q.red
 function seqP(field,seq){const p=chances(field);let left=1,out=1;for(const n of seq){const i=field.findIndex(u=>u.no===n);if(i<0)return 0;out*=p[i]/Math.max(1e-9,left);left-=p[i]}return out}
 function inTopP(field,no,k){const p=chances(field);const go=(used,k,left)=>{if(k===0)return 0;let t=0;field.forEach((u,i)=>{if(used.has(i))return;const pi=p[i]/Math.max(1e-9,left);if(u.no===no)t+=pi;else{used.add(i);t+=pi*go(used,k-1,left-p[i]);used.delete(i)}});return t};return go(new Set(),k,1)}
 const estDiv=P=>P>0?Math.max(1.04,r2(.85/P)):null;
-function estDivs(t,order){const f=t.field||[],n=t.sel.map(x=>x.no),pp=t.pp||(f.length>=8?3:f.length>=5?2:1);
-  return {win:estDiv(seqP(f,[n[0]])),place:estDiv(inTopP(f,n[0],pp)),quinella:estDiv(n.length>=2?seqP(f,[n[0],n[1]])+seqP(f,[n[1],n[0]]):0),exacta:estDiv(seqP(f,n.slice(0,2))),trifecta:estDiv(seqP(f,n.slice(0,3))),first4:estDiv(seqP(f,n.slice(0,4))),pp}}
-/* what a bet returns against a finishing order: {void|hit, pay}; pay null = it won but no dividend yet */
-function outcome(t,fin,exo,pp,scr,est){
-  const key=x=>nkey(x.name),order=fin.slice().sort((a,b)=>a.pos-b.pos),names=order.map(key),sel=t.sel.map(key);
-  const gone=(scr||[]).some(s=>t.sel.some(x=>(s.name?nkey(s.name)===nkey(x.name):+s.no===+x.no)));
-  if(gone)return {void:true,pay:costOf(t)};
-  const posOf=n=>{const i=names.indexOf(n);return i<0?99:order[i].pos},st=t.stake,need=BT[t.type][1];
-  const div=(d,e)=>d!=null?d:e!=null?e:null,P=pp||est.pp||3;
-  const win=posOf(sel[0])===1,plc=posOf(sel[0])<=P;
-  const winD=div(win&&order[0]&&order[0].win,est.win),plD=div(plc&&(order.find(x=>key(x)===sel[0])||{}).place,est.place);
-  const pay=(hit,d)=>({hit,pay:hit?(d!=null?r2(st*d):null):0});
-  switch(t.type){
-    case "win":return pay(win,winD);
-    case "place":return pay(plc,plD);
-    case "ew":{const a=pay(win,winD),b=pay(plc,plD);return {hit:a.hit||b.hit,pay:a.pay==null||b.pay==null?null:r2(a.pay+b.pay)}}
-    case "quinella":return pay(new Set(sel).size===2&&sel.every(n=>posOf(n)<=2),div(exo&&exo.quinella,est.quinella));
-    default:return pay(sel.slice(0,need).every((n,i)=>posOf(n)===i+1),div(exo&&exo[t.type],est[t.type]));
+/* ---------- bet types (as on the TAB and Sportsbet) ----------
+   This race: Win, Place, Each way, and the exotics Quinella, Exacta, Duet, Trifecta, First 4. Exotics can be Straight,
+   Boxed (any order among the picks) or Standout (runners chosen for each finishing position). Over several races:
+   Running Double (two races in a row), Daily Double (any two at a meeting), Treble (three), Quaddie (four), Big 6 (six,
+   any meetings) and All Up (win bets rolled on, any races). More than one runner can go in each leg.
+   Exotics and multi-race bets are flexi: the stake is the total outlay, and it pays stake ÷ combinations of the dividend
+   (e.g. $12 on a 24-combination box = 50%). Scratched combinations are refunded. */
+const BT={win:["Win",1],place:["Place",1],ew:["Each way",1],quinella:["Quinella",2],exacta:["Exacta",2],duet:["Duet",2],trifecta:["Trifecta",3],first4:["First 4",4],
+  rdouble:["Running Double",2,"multi"],ddouble:["Daily Double",2,"multi"],treble:["Treble",3,"multi"],quaddie:["Quaddie",4,"multi"],big6:["Big 6",6,"multi"],allup:["All Up",0,"multi"]};
+const isMulti=type=>!!BT[type]&&BT[type][2]==="multi";
+const exotic=type=>["quinella","exacta","duet","trifecta","first4"].includes(type);
+const ordered=type=>["exacta","trifecta","first4"].includes(type);
+// the runners a bet covers in each finishing position: straight one each, boxed all picks everywhere, standout as chosen
+function posSets(t){const k=BT[t.type][1],nos=t.sel.map(x=>x.no);
+  if(t.style==="standout"&&t.legs)return t.legs.slice(0,k);
+  if(t.style==="box")return Array.from({length:k},()=>nos);
+  return nos.slice(0,k).map(n=>[n])}
+function combos(t){
+  if(isMulti(t.type))return t.legs.reduce((a,l)=>a*Math.max(0,l.sel.length),1);
+  if(!exotic(t.type))return 1;
+  const k=BT[t.type][1];
+  if(!ordered(t.type)){const n=new Set(t.sel.map(x=>x.no)).size;return n*(n-1)/2}
+  const sets=posSets(t);let c=0;const go=(i,used)=>{if(i===k){c++;return}for(const n of sets[i]||[])if(!used.has(n)){used.add(n);go(i+1,used);used.delete(n)}};go(0,new Set());return c}
+const flexiPct=t=>{const c=combos(t);return c?Math.round(10000*t.stake/c)/100:0};
+// both runners in the first three, for an estimated Duet dividend
+function pairTop3(f,a,b){let t=0;for(const u of f){if(u.no===a||u.no===b)continue;for(const s of [[a,b,u.no],[a,u.no,b],[u.no,a,b],[b,a,u.no],[b,u.no,a],[u.no,b,a]])t+=seqP(f,s)}return t}
+/* what a single-race bet returns against a finishing order: {void|hit, pay}; pay null = it won but no dividend yet.
+   official: dividends come only from the official result (null until they're in); otherwise they're estimated from the prices */
+function outcome(t,fin,exo,pp,scr,official){
+  const key=x=>nkey(x.name),order=fin.slice().sort((a,b)=>a.pos-b.pos),names=order.map(key),f=t.field||[];
+  const nameOf=no=>{const u=f.find(x=>x.no===no)||t.sel.find(x=>x.no===no);return u?nkey(u.name):String(no)};
+  const scrNos=new Set();for(const s of scr||[])for(const x of (f.length?f:t.sel))if(s.name?nkey(s.name)===nkey(x.name):+s.no===+x.no)scrNos.add(x.no);
+  const st=t.stake,P=pp||(f.length>=8?3:f.length>=5?2:1);
+  const posOf=no=>{const i=names.indexOf(nameOf(no));return i<0?99:order[i].pos};
+  const noAt=pos=>{const x=order.find(y=>y.pos===pos);if(!x)return null;const u=f.find(v=>nkey(v.name)===key(x));return u?u.no:(x.no!=null?+x.no:null)};
+  if(!exotic(t.type)){
+    const no=t.sel[0].no;if(scrNos.has(no))return {void:true,pay:costOf(t)};
+    const win=posOf(no)===1,plc=posOf(no)<=P,me=order.find(x=>key(x)===nameOf(no))||{};
+    const winD=win?(me.win!=null?me.win:official?null:estDiv(seqP(f,[no]))):null,plD=plc?(me.place!=null?me.place:official?null:estDiv(inTopP(f,no,P))):null;
+    const pay=(hit,d)=>({hit,pay:hit?(d!=null?r2(st*d):null):0});
+    if(t.type==="win")return pay(win,winD);if(t.type==="place")return pay(plc,plD);
+    const a=pay(win,winD),b=pay(plc,plD);return {hit:a.hit||b.hit,pay:a.pay==null||b.pay==null?null:r2(a.pay+b.pay)};
   }
+  // scratched picks drop out of the combinations; their share of the stake comes back (all of it if nothing is left)
+  const live={...t,sel:t.sel.filter(x=>!scrNos.has(x.no)),legs:t.legs&&t.legs.map(l=>l.filter(n=>!scrNos.has(n)))};
+  const c0=combos(t),c1=combos(live);if(!c0||!c1)return {void:true,pay:costOf(t)};
+  const fx=st/c0,refund=r2(fx*(c0-c1)),k=BT[t.type][1],top=[1,2,3,4].map(noAt);let wins=[];
+  if(t.type==="quinella"){const s=new Set(live.sel.map(x=>x.no));if(top[0]!=null&&top[1]!=null&&s.has(top[0])&&s.has(top[1]))wins=[[top[0],top[1]]]}
+  else if(t.type==="duet"){const s=new Set(live.sel.map(x=>x.no)),t3=top.slice(0,3).filter(n=>n!=null);for(let i=0;i<t3.length;i++)for(let j=i+1;j<t3.length;j++)if(s.has(t3[i])&&s.has(t3[j]))wins.push([t3[i],t3[j]])}
+  else{const sets=posSets(live),need=top.slice(0,k);if(need.every((n,i)=>n!=null&&(sets[i]||[]).includes(n)))wins=[need]}
+  if(!wins.length)return {hit:false,pay:refund};
+  // Duet pays a dividend for each winning pair; the results feed carries one Duet figure, so Duet is always estimated
+  const dv=w=>{if(t.type!=="duet"&&exo&&exo[t.type])return exo[t.type];if(official&&t.type!=="duet")return null;
+    return estDiv(t.type==="quinella"?seqP(f,w)+seqP(f,[w[1],w[0]]):t.type==="duet"?pairTop3(f,w[0],w[1]):seqP(f,w))};
+  let pay=refund;for(const w of wins){const d=dv(w);if(d==null)return {hit:true,pay:null};pay+=fx*d}
+  return {hit:true,pay:r2(pay)};
+}
+/* multi-race bets, leg by leg: the official winner, or the winner you entered yourself */
+function legResult(leg){
+  const off=BK.off[leg.rk];
+  if(off&&off.fin&&off.fin.length){const w=off.fin.slice().sort((a,b)=>a.pos-b.pos)[0],u=(leg.field||[]).find(x=>nkey(x.name)===nkey(w.name));
+    return {src:"official",no:u?u.no:(w.no!=null?+w.no:null),win:w.win!=null?w.win:null,scr:off.scr||[]}}
+  const man=BK.manual[leg.rk];if(man&&man.length)return {src:"manual",no:man[0],win:null,scr:[]};
+  return null;
+}
+function settleMulti(t){
+  if(t.status==="cancelled")return {state:"cancelled"};
+  let pending=false,src="official",div=1;
+  for(const leg of t.legs){
+    const r=legResult(leg);if(!r){pending=true;continue}
+    if(r.src==="manual")src="manual";
+    const scrNos=new Set();for(const s of r.scr)for(const x of (leg.field||leg.sel))if(s.name?nkey(s.name)===nkey(x.name):+s.no===+x.no)scrNos.add(x.no);
+    const live=leg.sel.filter(x=>!scrNos.has(x.no));
+    if(!live.length)return {state:"void",pay:costOf(t),src:r.src};
+    if(!live.some(x=>x.no===r.no))return {state:"lost",pay:0,src:r.src};
+    div*=r.win!=null?r.win:(estDiv(seqP(leg.field||[],[r.no]))||1);
+  }
+  if(pending)return {state:Date.now()<Date.parse(t.jump)?"open":"waiting"};
+  // All Up multiplies the win dividends; tote doubles, trebles, quaddies and Big 6s have their own pools,
+  // estimated here at 85% of the win dividends multiplied together
+  return {state:"won",pay:r2(t.stake/combos(t)*div*(t.type==="allup"?1:.85)),src};
 }
 function settleOf(t){
+  if(isMulti(t.type))return settleMulti(t);
   if(t.status==="cancelled")return {state:"cancelled"};
   const off=BK.off[t.rk];
-  if(off&&off.fin&&off.fin.length){const o=outcome(t,off.fin,off.exo||{},off.pp,off.scr,{});
+  if(off&&off.fin&&off.fin.length){const o=outcome(t,off.fin,off.exo||{},off.pp,off.scr,true);
     if(o.void)return {state:"void",pay:o.pay,src:"official"};if(o.hit&&o.pay==null)return {state:"div",src:"official"};return {state:o.hit?"won":"lost",pay:o.pay,src:"official"}}
   const man=BK.manual[t.rk];
   if(man&&man.length){const fin=man.map((no,i)=>{const u=(t.field||[]).find(x=>x.no===no)||{no,name:String(no)};return {no,name:u.name,pos:i+1}});
-    const o=outcome(t,fin,{},null,[],estDivs(t));return {state:o.hit?"won":"lost",pay:o.pay||0,src:"manual"}}
+    const o=outcome(t,fin,{},null,[],false);return {state:o.hit?"won":"lost",pay:o.pay||0,src:"manual"}}
   return {state:Date.now()<Date.parse(t.jump)?"open":"waiting"};
 }
 function balances(){
@@ -683,22 +746,104 @@ function balances(){
   return {official,running:r2(base+offRet+manRet-lr.repaid),openSt,waitSt,owed:lo.debt,owedRun:lr.debt,borrowed:lo.borrowed,repaid:lo.repaid,
     profit:r2(offRet-BK.tickets.filter(t=>t.status!=="cancelled"&&settleOf(t).src==="official").reduce((a,t)=>a+costOf(t),0))};
 }
+// how a bet's runners read: boxed and straight as saddlecloths, standout position by position
+function selHtml(t,code){code=code||t.code;
+  if(t.style==="standout"&&t.legs)return t.legs.map((l,i)=>`${ord(i+1)} ${l.map(n=>cloth(n,code,((t.field||[]).find(u=>u.no===n)||{}).box)).join(" ")}`).join(" · ");
+  return t.sel.map(x=>cloth(x.no,code,x.box)).join(exotic(t.type)&&t.style!=="box"&&ordered(t.type)?" - ":" ")+(exotic(t.type)?"":" "+escH(t.sel[0].name));
+}
+const styleName=t=>exotic(t.type)?({box:" (boxed)",standout:" (standout)"}[t.style]||""):"";
+const comboLine=t=>exotic(t.type)||isMulti(t.type)?`${combos(t)} combination${combos(t)===1?"":"s"} · ${flexiPct(t)}% of the dividend`:"";
+function slipHtml(t){
+  if(isMulti(t.type))return `${timeOf(t.jump)} · <b>${BT[t.type][0]}</b> ${t.legs.map(l=>`${escH(l.venue)} R${l.no}: ${l.sel.map(x=>cloth(x.no,l.code,x.box)).join(" ")}`).join(" · ")} · ${money(costOf(t))} <small>(${comboLine(t)})</small>`;
+  return `${timeOf(t.jump)} · ${escH(t.venue)} R${t.no} · <b>${BT[t.type][0]}${styleName(t)}</b> ${selHtml(t)} · ${money(costOf(t))}${comboLine(t)?` <small>(${comboLine(t)})</small>`:""}`;
+}
+/* the bet builder for one race */
+let MB=null; // a multi-race bet being built: {type, legs:[{id, sel:[runner numbers]}], stake}
+const SINGLE=["win","place","ew","quinella","exacta","duet","trifecta","first4"],MULTI=["rdouble","ddouble","treble","quaddie","big6","allup"];
+function buildTicket(r){
+  const f=fieldOf(r)||[],t=BUILD.type,k=BT[t][1];
+  const sel=BUILD.style==="standout"?[...new Set(BUILD.legs.slice(0,k).flat())]:BUILD.sel;
+  return {type:t,style:exotic(t)?BUILD.style:undefined,legs:BUILD.style==="standout"?BUILD.legs.slice(0,k).map(l=>l.slice()):undefined,stake:BUILD.stake,
+    sel:sel.map(n=>{const u=f.find(x=>x.no===n)||{name:String(n)};return {no:n,name:u.name,box:u.box}}),field:f};
+}
+function buildOk(t){const k=BT[t.type][1];
+  if(!exotic(t.type))return t.sel.length===1;
+  if(t.style==="standout")return t.legs.every(l=>l.length)&&combos(t)>0;
+  if(t.style==="box")return t.sel.length>=k&&combos(t)>0;
+  return t.sel.length===k;
+}
 function builderHtml(r){
-  if(BUILD.id!==r.id)return `<button class="betbtn" data-bopen="${escH(r.id)}">Bet on this race</button>`;
-  const f=fieldOf(r)||[],need=BT[BUILD.type][1],cost=BUILD.type==="ew"?2*BUILD.stake:BUILD.stake,full=BUILD.sel.length===need;
-  return `<div class="builder"><div class="calc-row"><span class="calc-l">Bet</span>${Object.entries(BT).map(([k,[l]])=>`<button data-btype="${k}" aria-pressed="${BUILD.type===k}">${l}</button>`).join("")}</div>
-    <div class="calc-row"><span class="calc-l">Pick</span>${f.map(u=>{const i=BUILD.sel.indexOf(u.no);return `<button class="bsel" data-bsel="${u.no}" aria-pressed="${i>=0}">${cloth(u.no,r.code,u.box)} ${escH(u.name)}${i>=0&&need>1&&ordered(BUILD.type)?` <i>${ord(i+1)}</i>`:""}</button>`}).join("")}</div>
-    <div class="calc-row"><span class="calc-l">Stake</span>${[5,10,20,50].map(v=>`<button data-bstake="${v}" aria-pressed="${BUILD.stake===v}">$${v}</button>`).join("")}<label class="calc-own">$<input id="bStake" type="number" min="1" step="1" inputmode="decimal" value="${BUILD.stake}"></label></div>
-    <p class="calc-out">${need>1?`Pick ${need} runners${ordered(BUILD.type)?" in finishing order":""}. `:""}${BUILD.type==="ew"?"Each way is a win bet and a place bet. ":""}Pays the official tote dividend.</p>
-    <div class="calc-row"><button class="ffload" data-badd ${full&&BUILD.stake>=1?"":"disabled"}>Add ${money(cost)} ${BT[BUILD.type][0].toLowerCase()} to bet slip</button><button data-bclose>Close</button></div></div>`;
+  if(BUILD.id!==r.id){const canAdd=MB&&!MB.legs.some(l=>l.id===r.id)&&(MB.type==="allup"?MB.legs.length<8:MB.legs.length<BT[MB.type][1]);
+    return `<button class="betbtn" data-bopen="${escH(r.id)}">Bet on this race</button>${canAdd?` <button class="betbtn" data-madd="${escH(r.id)}">Add to my ${BT[MB.type][0]}</button>`:""}`}
+  const f=fieldOf(r)||[],t=BUILD.type,k=BT[t][1],ex=exotic(t),tk=buildTicket(r),ok=buildOk(tk),cost=t==="ew"?2*BUILD.stake:BUILD.stake;
+  const styles=ex?(ordered(t)?[["straight","Straight"],["box","Boxed"],["standout","Standout"]]:[["straight","Straight"],["box","Boxed"]]):[];
+  const marks=n=>BUILD.style==="standout"?BUILD.legs.slice(0,k).map((l,i)=>l.includes(n)?ord(i+1):"").filter(Boolean).join(" "):BUILD.style==="straight"&&k>1&&ordered(t)&&BUILD.sel.includes(n)?ord(BUILD.sel.indexOf(n)+1):"";
+  const on=n=>BUILD.style==="standout"?(BUILD.legs[BUILD.pos]||[]).includes(n):BUILD.sel.includes(n);
+  const help=!ex?(t==="ew"?"Each way is a win bet and a place bet (half each). ":"")
+    :BUILD.style==="box"?`Pick ${k} or more runners: any ${k} of them can fill the first ${k===2?"two":k===3?"three":"four"} in any order${t==="duet"?" (Duet: any two of them in the first three)":""}. `
+    :BUILD.style==="standout"?`Pick runners for each place in turn: choose a place below, then tap its runners. `
+    :`Pick ${k} runners${ordered(t)?" in finishing order":""}${t==="duet"?" to both run in the first three":""}. `;
+  return `<div class="builder">
+    <div class="calc-row"><span class="calc-l">This race</span>${SINGLE.map(x=>`<button data-btype="${x}" aria-pressed="${t===x}">${BT[x][0]}</button>`).join("")}</div>
+    <div class="calc-row"><span class="calc-l">Over several races</span>${MULTI.map(x=>`<button data-btype="${x}">${BT[x][0]}</button>`).join("")}</div>
+    ${styles.length?`<div class="calc-row"><span class="calc-l">Style</span>${styles.map(([s,l])=>`<button data-bstyle="${s}" aria-pressed="${BUILD.style===s}">${l}</button>`).join("")}</div>`:""}
+    ${BUILD.style==="standout"&&ex?`<div class="calc-row"><span class="calc-l">Place</span>${Array.from({length:k},(_,i)=>`<button data-bpos="${i}" aria-pressed="${BUILD.pos===i}">${ord(i+1)} (${(BUILD.legs[i]||[]).length})</button>`).join("")}</div>`:""}
+    <div class="calc-row"><span class="calc-l">Pick</span>${f.map(u=>`<button class="bsel" data-bsel="${u.no}" aria-pressed="${on(u.no)}">${cloth(u.no,r.code,u.box)} ${escH(u.name)}${marks(u.no)?` <i>${marks(u.no)}</i>`:""}</button>`).join("")}</div>
+    <div class="calc-row"><span class="calc-l">${ex?"Outlay":"Stake"}</span>${[5,10,20,50].map(v=>`<button data-bstake="${v}" aria-pressed="${BUILD.stake===v}">$${v}</button>`).join("")}<label class="calc-own">$<input id="bStake" type="number" min="1" step="1" inputmode="decimal" value="${BUILD.stake}"></label></div>
+    <p class="calc-out">${help}${ex&&combos(tk)?`<b>${comboLine(tk)}</b> (flexi: a ${money(BUILD.stake)} outlay over ${combos(tk)} combination${combos(tk)===1?"":"s"}). `:""}Pays the official tote dividend.</p>
+    <div class="calc-row"><button class="ffload" data-badd ${ok&&BUILD.stake>=1?"":"disabled"}>Add ${money(cost)} ${BT[t][0].toLowerCase()}${styleName(tk)} to bet slip</button><button data-bclose>Close</button></div></div>`;
+}
+/* multi-race bets: the panel at the top of Today's tips */
+function autoLegs(r,type){const k=BT[type][1]||2,later=RACES.filter(x=>x.code===r.code&&x.venue===r.venue&&x.no>=r.no&&Date.now()<Date.parse(x.jump)).sort((a,b)=>a.no-b.no);
+  return (type==="allup"?[r]:later.slice(0,k)).map(x=>({id:x.id,sel:[]}))}
+function multiProblem(){
+  const k=BT[MB.type][1],rs=MB.legs.map(l=>RACES.find(x=>x.id===l.id));
+  if(MB.type==="allup"?MB.legs.length<2:MB.legs.length!==k)return MB.type==="allup"?"An All Up needs at least two races.":`A ${BT[MB.type][0]} needs ${k} races: ${MB.legs.length} so far. Open another race and press Add to my ${BT[MB.type][0]}.`;
+  if(rs.some(r=>!r))return "One of the races isn't on today's list any more.";
+  if(rs.some(r=>Date.now()>=Date.parse(r.jump)))return "One of the races has already jumped.";
+  if(MB.legs.some(l=>!l.sel.length))return "Pick at least one runner in every race.";
+  if(!["big6","allup"].includes(MB.type)&&rs.some(r=>r.code!==rs[0].code||r.venue!==rs[0].venue))return `A ${BT[MB.type][0]} is at one meeting.`;
+  if(MB.type==="rdouble"){const n=rs.map(r=>r.no).sort((a,b)=>a-b);if(n[1]!==n[0]+1)return "A Running Double is two races in a row.";}
+  return "";
+}
+function multiTicket(){const legs=MB.legs.map(l=>{const r=RACES.find(x=>x.id===l.id),f=fieldOf(r)||[];
+    return {rk:rkey(r),code:r.code,date:r.date,venue:r.venue,no:r.no,jump:r.jump,field:f,sel:l.sel.map(n=>{const u=f.find(x=>x.no===n)||{name:String(n)};return {no:n,name:u.name,box:u.box}})}}).sort((a,b)=>Date.parse(a.jump)-Date.parse(b.jump));
+  return {type:MB.type,legs,stake:MB.stake,rk:legs[0].rk,code:legs[0].code,date:legs[0].date,venue:legs[0].venue,no:legs[0].no,jump:legs[0].jump};
+}
+function multiHtml(){
+  if(!MB)return "";const prob=multiProblem(),t=MB.legs.length?multiTicket0():null;
+  return `<div class="calc multi"><h3>${BT[MB.type][0]}</h3>
+    <p class="calc-out">${{rdouble:"Pick the winners of two races in a row.",ddouble:"Pick the winners of two races at one meeting.",treble:"Pick the winners of three races at one meeting.",quaddie:"Pick the winners of four races at one meeting.",big6:"Pick the winners of six races, at any meetings.",allup:"Win bets rolled on: every winner's dividend multiplies the next."}[MB.type]} More than one runner in a race makes more combinations.</p>
+    ${MB.legs.map((l,i)=>{const r=RACES.find(x=>x.id===l.id);if(!r)return "";const f=fieldOf(r);if(!f){WANTR.add(r.id);setTimeout(pump,0)}
+      return `<div class="mleg"><div class="rmeta">Race ${i+1}: ${timeOf(r.jump)} · ${escH(r.venue)} R${r.no} · ${CODE[r.code]} <button data-mlrem="${i}">Remove</button></div>
+        <div class="calc-row">${f?f.map(u=>`<button class="bsel" data-mlsel="${i}|${u.no}" aria-pressed="${l.sel.includes(u.no)}">${cloth(u.no,r.code,u.box)} ${escH(u.name)}</button>`).join(""):"<span>Loading the field…</span>"}</div></div>`}).join("")}
+    <div class="calc-row"><span class="calc-l">Outlay</span>${[5,10,20,50].map(v=>`<button data-mstake="${v}" aria-pressed="${MB.stake===v}">$${v}</button>`).join("")}<label class="calc-own">$<input id="mStake" type="number" min="1" step="1" inputmode="decimal" value="${MB.stake}"></label></div>
+    <p class="calc-out">${t&&combos(t)?`<b>${comboLine(t)}</b>. `:""}${prob?`<span class="minus">${prob}</span> `:""}${MB.type==="allup"?"Pays the official win dividends multiplied together.":"The tote pool for this bet isn't in the results feed, so it pays an estimate: 85% of the winners' dividends multiplied together."}</p>
+    <div class="calc-row"><button class="ffload" data-mbadd ${prob||MB.stake<1?"disabled":""}>Add ${money(MB.stake)} ${BT[MB.type][0]} to bet slip</button><button data-mbclose>Cancel</button></div></div>`;
+}
+function multiTicket0(){return {type:MB.type,stake:MB.stake,legs:MB.legs.map(l=>({sel:l.sel.map(n=>({no:n}))}))}}
+/* a placed multi-race bet */
+function tkMulti(t){
+  const o=settleOf(t),c=costOf(t);
+  const tag={open:["To run",""],waiting:["Waiting on results",""],won:[`Won ${money(o.pay||0)}`,"won"],lost:["Lost","lost"],void:["Scratched: refunded",""],cancelled:["Cancelled",""]}[o.state];
+  return `<div class="rec tk"><div><div class="rmeta">${timeOf(t.jump)} · ${BT[t.type][0]} · ${t.legs.length} races</div>
+    <div class="line"><b>${BT[t.type][0]}</b> · ${money(c)} <small>(${comboLine(t)})</small></div></div>
+    <span class="tag ${tag[1]}">${tag[0]}${o.src==="manual"&&o.state!=="open"?" · your result":""}</span>
+    ${(LEDGER.per[t.id]||0)>0?`<div class="order nanpay">${money(LEDGER.per[t.id])} of it paid back to Nan</div>`:""}
+    ${t.legs.map((l,i)=>{const r=legResult(l),run=Date.now()>=Date.parse(l.jump);
+      return `<div class="order">Race ${i+1}: ${escH(l.venue)} R${l.no} ${timeOf(l.jump)} · ${l.sel.map(x=>cloth(x.no,l.code,x.box)).join(" ")}${r?` · won by ${r.no!=null?cloth(r.no,l.code,((l.field||[]).find(u=>u.no===r.no)||{}).box):"?"}${r.src==="manual"?" (your result)":""}`:""}
+        ${run&&!(BK.off[l.rk]&&BK.off[l.rk].fin)&&t.status!=="cancelled"?` <button data-bman="${escH(l.rk)}">${BK.manual[l.rk]?"Change my result":"Enter result"}</button>${BK.manual[l.rk]?` <button data-bmanclr="${escH(l.rk)}">Clear my result</button>`:""}`:""}</div>
+        ${MANUAL===l.rk?manualForm({field:l.field,rk:l.rk}):""}`}).join("")}
+    <div class="tkbtns">${o.state==="open"?`<button data-bcancel="${t.id}">Cancel bet</button>`:""}</div></div>`;
 }
 function slipBar(){const n=BK.slip.length,el=$("slipBar");if(!el)return;el.hidden=!n||ST.view==="bets";
   if(n)el.innerHTML=`<span>Bet slip: <b>${n} bet${n>1?"s":""}</b> · ${money(BK.slip.reduce((a,t)=>a+costOf(t),0))}</span><button class="ffload" data-view="bets">Review &amp; confirm</button>`}
 function tkHtml(t){
+  if(isMulti(t.type))return tkMulti(t);
   const o=settleOf(t),c=costOf(t),man=BK.manual[t.rk],afterJump=Date.now()>=Date.parse(t.jump);
   const tag={open:["To run",""],waiting:["Waiting on results",""],div:["Won, dividend coming",""],won:[`Won ${money(o.pay||0)}`,"won"],lost:["Lost","lost"],void:["Scratched: refunded",""],cancelled:["Cancelled",""]}[o.state];
   return `<div class="rec tk"><div><div class="rmeta">${timeOf(t.jump)} · ${escH(t.venue)} R${t.no} · ${CODE[t.code]}</div>
-    <div class="line"><b>${BT[t.type][0]}</b> ${t.sel.map(x=>cloth(x.no,t.code,x.box)).join(" ")} ${escH(BT[t.type][1]===1?t.sel[0].name:"")} · ${money(c)}${t.type==="ew"?` (${money(t.stake)} each way)`:""}</div></div>
+    <div class="line"><b>${BT[t.type][0]}${styleName(t)}</b> ${selHtml(t)} · ${money(c)}${t.type==="ew"?` (${money(t.stake)} each way)`:""}${comboLine(t)?` <small>(${comboLine(t)})</small>`:""}</div></div>
     <span class="tag ${tag[1]}">${tag[0]}${o.src==="manual"?" · your result":""}</span>
     ${(LEDGER.per[t.id]||0)>0?`<div class="order nanpay">${money(LEDGER.per[t.id])} of it paid back to Nan</div>`:""}
     ${o.src==="manual"?`<div class="order">Your result: ${man.map((n,i)=>`${ord(i+1)} ${cloth(n,t.code,((t.field||[]).find(u=>u.no===n)||{}).box)}`).join(" · ")}. Estimated dividend until the official result comes in.</div>`:""}
@@ -730,27 +875,30 @@ function renderBets(){
     <div class="sum"><h3>Bets out</h3><div class="big">${money(b.openSt+b.waitSt)}</div><p>${money(b.openSt)} still to run · ${money(b.waitSt)} run, waiting on official results</p></div>
     <div class="sum"><h3>Official profit</h3><div class="big ${b.profit>=0?"plus":"minus"}">${b.profit>=0?"+":""}${money(b.profit)}</div><p>From settled bets. Started with ${money(BK.start)}${BK.topups?` + ${money(BK.topups)} added`:""}${b.owed>0?` · owe Nan ${money(b.owed)}`:""}.</p></div></div>
     ${BKMSG?`<div class="note">${BKMSG}</div>`:""}
-    <div class="calc"><h3>Bet slip</h3>${BK.slip.length?BK.slip.map((t,i)=>`<div class="slipline"><span>${timeOf(t.jump)} · ${escH(t.venue)} R${t.no} · <b>${BT[t.type][0]}</b> ${t.sel.map(x=>cloth(x.no,t.code,x.box)).join(" ")}${BT[t.type][1]===1?" "+escH(t.sel[0].name):""} · ${money(costOf(t))}${Date.now()>=Date.parse(t.jump)?' <b class="minus">jumped</b>':""}</span><button data-bslipdel="${i}">Remove</button></div>`).join("")+
+    <div class="calc"><h3>Bet slip</h3>${BK.slip.length?BK.slip.map((t,i)=>`<div class="slipline"><span>${slipHtml(t)}${Date.now()>=Date.parse(t.jump)?' <b class="minus">jumped</b>':""}</span><button data-bslipdel="${i}">Remove</button></div>`).join("")+
       `<div class="calc-row"><button class="ffload" data-bconfirm ${slipCost>b.running||closedSlip?"disabled":""}>Confirm ${BK.slip.length} bet${BK.slip.length>1?"s":""} · ${money(slipCost)}</button><button data-bslipclr>Clear slip</button></div>${slipCost>b.running?'<p class="minus">Not enough in your running balance.</p>':""}${closedSlip?'<p class="minus">Remove bets on races that have jumped.</p>':""}`
       :`<p>Your slip is empty. On Today's tips, open a race and press <b>Bet on this race</b>.</p>`}</div>
     <div class="calc-row"><button data-bcheck>Check official results</button></div>
     ${loanHtml(b)}
     ${groups.map(([h,f])=>{const ts=live.filter(t=>f(t)&&(h==="Cancelled"||t.status!=="cancelled"));return ts.length?`<h3 class="bgrp">${h} (${ts.length})</h3><div class="races">${ts.map(tkHtml).join("")}</div>`:""}).join("")}
-    <p class="note">Play money only. Bets are saved in this browser on this device. Win and place pay the official tote dividend; exotics pay the official dividend for that bet. Scratched selections are refunded.</p>`;
+    <p class="note">Play money only. Bets are saved in this browser on this device. Win and place pay the official tote dividend; exotics pay the official dividend for that bet, scaled by your flexi percentage (outlay ÷ combinations). Duet, doubles, trebles, quaddies and Big 6s are estimated, because the results feed doesn't carry those pools; All Up pays the official win dividends multiplied together. Scratched selections are refunded (in a box or standout, just their combinations).</p>`;
   slipBar();
 }
 let BKBUSY=false;
+// the races a bet depends on: the race itself, or each leg of a multi-race bet
+const raceRefs=t=>isMulti(t.type)?t.legs:[{rk:t.rk,code:t.code,date:t.date,no:t.no,venue:t.venue,jump:t.jump,field:t.field,sel:t.sel}];
 async function checkOfficial(force){
-  if(BKBUSY)return;const today=ST.today||REC_TODAY(),need=new Map();
-  for(const t of BK.tickets){if(t.status==="cancelled"||Date.now()<Date.parse(t.jump)+5*60e3)continue;if(BK.off[t.rk]&&BK.off[t.rk].fin&&settleOf(t).state!=="div")continue;need.set(t.code+"|"+t.date,[t.code,t.date])}
+  if(BKBUSY)return;const need=new Map(),refs=[];
+  for(const t of BK.tickets){if(t.status==="cancelled")continue;
+    for(const r of raceRefs(t)){if(Date.now()<Date.parse(r.jump)+5*60e3)continue;if(BK.off[r.rk]&&BK.off[r.rk].fin&&settleOf(t).state!=="div")continue;need.set(r.code+"|"+r.date,[r.code,r.date]);refs.push(r)}}
   if(!need.size){if(force){BKMSG="Nothing waiting on official results.";renderBets()}return}
   BKBUSY=true;let got=0;
   for(const [code,date] of need.values()){
     try{const j=await getJSON(`${SB}/otr-nan?official=1&code=${code}&date=${date}`);
-      for(const t of BK.tickets.filter(t=>t.code===code&&t.date===date&&t.status!=="cancelled")){
-        const names=new Set((t.field||t.sel).map(x=>nkey(x.name)));
-        const m=(j.races||[]).filter(x=>+x.n===+t.no&&(x.fin||[]).length).map(x=>({x,s:x.fin.filter(u=>names.has(nkey(u.name))).length+(vkey(x.venue)===vkey(t.venue)?.5:0)})).sort((a,b)=>b.s-a.s)[0];
-        if(m&&m.s>=2&&/final|paying|official|closed/i.test(m.x.st||"final")){if(!BK.off[t.rk])got++;BK.off[t.rk]={fin:m.x.fin,exo:m.x.exo||{},pp:m.x.pp,scr:m.x.scr||[],at:Date.now()}}}
+      for(const r of refs.filter(r=>r.code===code&&r.date===date)){
+        const names=new Set((r.field||r.sel).map(x=>nkey(x.name)));
+        const m=(j.races||[]).filter(x=>+x.n===+r.no&&(x.fin||[]).length).map(x=>({x,s:x.fin.filter(u=>names.has(nkey(u.name))).length+(vkey(x.venue)===vkey(r.venue)?.5:0)})).sort((a,b)=>b.s-a.s)[0];
+        if(m&&m.s>=1.5&&/final|paying|official|closed/i.test(m.x.st||"final")){if(!BK.off[r.rk])got++;BK.off[r.rk]={fin:m.x.fin,exo:m.x.exo||{},pp:m.x.pp,scr:m.x.scr||[],at:Date.now()}}}
     }catch(e){}
   }
   BKBUSY=false;saveBK();BKMSG=force?(got?`Official results in for ${got} race${got>1?"s":""}.`:"No new official results yet. Dogs and harness come in a few times a day."):BKMSG;renderBets();
@@ -760,13 +908,26 @@ document.addEventListener("click",e=>{
   const g=s=>e.target.closest(s);let b;
   if(b=g("[data-bopen]")){BUILD.id=b.dataset.bopen;BUILD.sel=[];return render()}
   if(g("[data-bclose]")){BUILD.id=null;return render()}
-  if(b=g("[data-btype]")){BUILD.type=b.dataset.btype;BUILD.sel=BUILD.sel.slice(0,BT[BUILD.type][1]);return render()}
-  if(b=g("[data-bsel]")){const n=+b.dataset.bsel,i=BUILD.sel.indexOf(n),need=BT[BUILD.type][1];if(i>=0)BUILD.sel.splice(i,1);else{if(BUILD.sel.length>=need)BUILD.sel.shift();BUILD.sel.push(n)}return render()}
+  if(b=g("[data-btype]")){const ty=b.dataset.btype;
+    if(isMulti(ty)){const r=RACES.find(x=>x.id===BUILD.id);if(!r)return;MB={type:ty,legs:autoLegs(r,ty),stake:BUILD.stake};BUILD.id=null;render();const m=$("multi");if(m)m.scrollIntoView({block:"start"});return}
+    BUILD.type=ty;BUILD.style="straight";BUILD.pos=0;BUILD.legs=[[],[],[],[]];BUILD.sel=exotic(ty)?BUILD.sel.slice(0,BT[ty][1]):BUILD.sel.slice(0,1);return render()}
+  if(b=g("[data-bstyle]")){BUILD.style=b.dataset.bstyle;BUILD.pos=0;BUILD.legs=[[],[],[],[]];if(BUILD.style==="straight")BUILD.sel=BUILD.sel.slice(0,BT[BUILD.type][1]);return render()}
+  if(b=g("[data-bpos]")){BUILD.pos=+b.dataset.bpos;return render()}
+  if(b=g("[data-bsel]")){const n=+b.dataset.bsel,need=BT[BUILD.type][1];
+    if(BUILD.style==="standout"&&exotic(BUILD.type)){const l=BUILD.legs[BUILD.pos],i=l.indexOf(n);if(i>=0)l.splice(i,1);else l.push(n);return render()}
+    const i=BUILD.sel.indexOf(n);if(i>=0)BUILD.sel.splice(i,1);else{if(!(BUILD.style==="box"&&exotic(BUILD.type))&&BUILD.sel.length>=need)BUILD.sel.shift();BUILD.sel.push(n)}return render()}
+  if(b=g("[data-madd]")){if(MB&&!MB.legs.some(l=>l.id===b.dataset.madd))MB.legs.push({id:b.dataset.madd,sel:[]});render();const m=$("multi");if(m)m.scrollIntoView({block:"start"});return}
+  if(b=g("[data-mlsel]")){const [i,n]=b.dataset.mlsel.split("|").map(Number),l=MB&&MB.legs[i];if(!l)return;const j=l.sel.indexOf(n);if(j>=0)l.sel.splice(j,1);else l.sel.push(n);return render()}
+  if(b=g("[data-mlrem]")){if(MB)MB.legs.splice(+b.dataset.mlrem,1);return render()}
+  if(b=g("[data-mstake]")){if(MB)MB.stake=+b.dataset.mstake;return render()}
+  if(g("[data-mbclose]")){MB=null;return render()}
+  if(g("[data-mbadd]")){if(!MB||multiProblem())return;const t=multiTicket();
+    BK.slip.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,7),...t});saveBK();MB=null;$("status").textContent="Added to your bet slip.";return render()}
   if(b=g("[data-bstake]")){BUILD.stake=+b.dataset.bstake;return render()}
   if(g("[data-badd]")){const r=RACES.find(x=>x.id===BUILD.id);if(!r||Date.now()>=Date.parse(r.jump))return;const f=fieldOf(r);if(!f)return;
-    BK.slip.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,7),rk:rkey(r),code:r.code,date:r.date,venue:r.venue,no:r.no,jump:r.jump,type:BUILD.type,stake:BUILD.stake,
-      sel:BUILD.sel.map(n=>{const u=f.find(x=>x.no===n);return {no:n,name:u.name,box:u.box}}),field:f});
-    saveBK();BUILD.sel=[];$("status").textContent="Added to your bet slip.";return render()}
+    const tk=buildTicket(r);if(!buildOk(tk))return;
+    BK.slip.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,7),rk:rkey(r),code:r.code,date:r.date,venue:r.venue,no:r.no,jump:r.jump,...tk});
+    saveBK();BUILD.sel=[];BUILD.legs=[[],[],[],[]];BUILD.pos=0;$("status").textContent="Added to your bet slip.";return render()}
   if(b=g("[data-bslipdel]")){BK.slip.splice(+b.dataset.bslipdel,1);saveBK();return renderBets()}
   if(g("[data-bslipclr]")){BK.slip=[];saveBK();return renderBets()}
   if(g("[data-bconfirm]")){const cost=BK.slip.reduce((a,t)=>a+costOf(t),0);if(cost>balances().running||BK.slip.some(t=>Date.now()>=Date.parse(t.jump)))return;
@@ -789,7 +950,7 @@ document.addEventListener("click",e=>{
 });
 document.addEventListener("change",e=>{if(e.target.id==="loanIn"){LOANAMT=Math.max(0,Math.round((+e.target.value||0)*100)/100);LOANMSG="";return renderBets()}});
 setInterval(()=>{const c=document.getElementById("loanClock");if(!c)return;const left=+c.dataset.at-Date.now();if(left<=0)return renderBets();c.textContent=hms(left)},1000);
-document.addEventListener("change",e=>{if(e.target.id==="bStake"){BUILD.stake=Math.max(1,Math.round((+e.target.value||1)*100)/100);render()}});
+document.addEventListener("change",e=>{if(e.target.id==="bStake"){BUILD.stake=Math.max(1,Math.round((+e.target.value||1)*100)/100);render()}if(e.target.id==="mStake"&&MB){MB.stake=Math.max(1,Math.round((+e.target.value||1)*100)/100);render()}});
 setInterval(()=>{if(ST.view==="bets"){checkOfficial(false);renderBets()}},5*60e3);
 function setView(v){
   document.querySelectorAll("[data-view]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.view===v));
