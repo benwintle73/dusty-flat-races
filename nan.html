@@ -151,6 +151,7 @@ details.follow p{margin:0 12px 8px;font-size:15px;color:#d9c9a3}
 .acct b.acode{display:block;font:400 34px/1.1 var(--display);letter-spacing:3px;margin:2px 0}
 #syncIn{font-size:18px;text-transform:uppercase;width:150px;min-height:36px;padding:0 8px}
 .checkmsg{background:var(--paper);color:var(--ink);border-left:5px solid var(--amber);padding:8px 12px;margin:6px 0 10px;font-size:15px}
+.btable{width:100%;border-collapse:collapse;font-size:16px;margin:6px 0}.btable th,.btable td{padding:5px 6px;border-bottom:1px solid var(--line);text-align:right}.btable th:nth-child(2),.btable td:nth-child(2),.btable th:first-child,.btable td:first-child{text-align:left}.btable tr.lead{background:#fff3cd}
 .panel{background:#f3ead2;border:1px solid var(--line);padding:6px 10px;margin:4px 0 10px}.panel h4{margin:2px 0 4px;font:400 18px/1 var(--display);text-transform:uppercase;letter-spacing:.4px}
 .tip{display:block;padding:5px 4px;border-bottom:1px dashed #0002;cursor:pointer;font-size:16px}.tip:hover{background:#fff6}.tip small{display:block;font-style:italic;color:#5b4520;font-size:13px}
 .tip .tw{display:inline-block;min-width:118px;font-weight:700}.tip.ptop{background:#fff3cd;border-bottom:0;margin-top:3px}.tnote{font-size:13px;color:#5b4520;margin:4px 0 0}
@@ -203,6 +204,7 @@ body{padding-bottom:60px}
   <section id="betsView" hidden></section>
   <section id="recordView" hidden>
     <div class="note" id="recNote">Loading Nan's record…</div>
+    <div class="calc board" id="board"><h3>Tipster leaderboard</h3><p>Loading…</p></div>
     <div class="sumgrid" id="recSum"></div>
     <div class="bar"><div class="tabs days" id="recDays"></div></div>
     <div class="bar"><div class="tabs" id="recCodes"></div><div class="tabs" id="recRes"></div></div>
@@ -320,7 +322,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null};
-const NAN_VERSION="2.17.0"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.18.0"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -655,6 +657,22 @@ function renderCalc(rows){
     <div class="calc-out">${n?`<b>${money(REC.stake)} ${b[1].toLowerCase()}</b> on ${b[2]}, in the ${n} race${n>1?"s":""} below: staked <b>${money(cost)}</b>, back <b>${money(back)}</b>, <b class="${prof>=0?"plus":"minus"}">${prof>=0?"+":""}${money(prof)}</b> (${hits} collect${hits===1?"":"s"}).`:"No settled races to bet on with these filters yet."}${unk?` ${unk} winning bet${unk>1?"s":""} left out: no dividend recorded.`:""}
       <small>Official tote dividends per $1, after the fact. Scratched picks are refunds and don't count. ${REC.res!=="all"?"A results filter is on, so this only counts those races.":""}</small></div>`;
 }
+/* ---------- Tipster leaderboard: Nan v Pop v Bob v Gran, level $10 win bets on each one's top pick ---------- */
+const PANEL_START="2026-11-13",BOARD={rows:null,today:null,per:"since",code:"all"};
+async function loadBoard(){try{const j=await getJSON(TIPS_URL+"?board=1");BOARD.rows=j.rows||[];BOARD.today=j.today}catch(e){BOARD.rows=BOARD.rows||[]}renderBoard()}
+function renderBoard(){const el=$("board");if(!el)return;if(!BOARD.rows){el.innerHTML='<h3>Tipster leaderboard</h3><p>Loading…</p>';return}
+  const t=BOARD.today||REC_TODAY(),from=BOARD.per==="today"?t:BOARD.per==="week"?new Date(Date.parse(t+"T12:00:00")-6*864e5).toISOString().slice(0,10):PANEL_START;
+  const rows=BOARD.rows.filter(r=>r.date>=from&&(BOARD.code==="all"||r.code===BOARD.code)),W={nan:"Nan",pop:"Pop",bob:"Bob",gran:"Gran"};
+  const agg=Object.keys(W).map(w=>{const rs=rows.filter(r=>r.who===w),b=rs.reduce((a,r)=>a+ +r.bets,0),won=rs.reduce((a,r)=>a+ +r.won,0),pl=rs.reduce((a,r)=>a+ +r.placed,0),back=rs.reduce((a,r)=>a+ +r.back,0);return {w,b,won,pl,back,profit:10*(back-b)}}).filter(a=>a.b>0).sort((a,b)=>b.profit-a.profit||b.won/b.b-a.won/a.b);
+  const chip=(k,v,l,cur)=>`<button data-board${k}="${v}" aria-pressed="${cur===v}">${l}</button>`;
+  el.innerHTML=`<h3>Tipster leaderboard</h3>
+    <div class="calc-row">${chip("per","since","Since the panel started",BOARD.per)}${chip("per","week","Last 7 days",BOARD.per)}${chip("per","today","Today",BOARD.per)}</div>
+    <div class="calc-row">${chip("code","all","All codes",BOARD.code)}${chip("code","H","Horses",BOARD.code)}${chip("code","D","Dogs",BOARD.code)}${chip("code","N","Harness",BOARD.code)}</div>
+    ${agg.length?`<table class="btable"><thead><tr><th></th><th>Tipster</th><th>Bets</th><th>Won</th><th>Strike</th><th>Placed</th><th>Return per $1</th><th>Profit at $10 a bet</th></tr></thead><tbody>
+      ${agg.map((a,i)=>`<tr class="${i===0?"lead":""}"><td>${i===0?"👑":i+1}</td><td><b>${W[a.w]}</b></td><td>${a.b}</td><td>${a.won}</td><td>${pct(a.won/a.b)}</td><td>${pct(a.pl/a.b)}</td><td>${div(a.back/a.b)}</td><td class="${a.profit>=0?"plus":"minus"}">${a.profit>=0?"+":"-"}${money(Math.abs(a.profit)).replace("-","")}</td></tr>`).join("")}</tbody></table>
+      <p class="calc-out"><small>${agg[0]?`${W[agg[0].w]} is in front. `:""}Each tipster's top pick in every race they rate, settled on the official result and win dividend. Pop and Bob rate most races; Gran only tips horses (she follows the bookies' favourite). Nan's tips go back further, so "Since the panel started" is the fair comparison.</small></p>`
+      :`<p>No settled races for the tipsters in this period yet. Results come in through the day.</p>`}`}
+document.addEventListener("click",e=>{const p=e.target.closest("[data-boardper]"),c=e.target.closest("[data-boardcode]");if(p){BOARD.per=p.dataset.boardper;renderBoard()}if(c){BOARD.code=c.dataset.boardcode;renderBoard()}});
 function renderRecord(){
   const s=REC.sum;if(!s)return;
   const days=s.days||[],all=days.flatMap(d=>Object.values(d.codes)),byCode=k=>days.map(d=>d.codes[k]).filter(Boolean);
@@ -1087,7 +1105,7 @@ function setView(v,focus){
   const was=ST.view;
   document.querySelectorAll("[data-view]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.view===v));
   ST.view=v;$("tipsView").hidden=v!=="tips";$("recordView").hidden=v!=="record";$("betsView").hidden=v!=="bets";
-  if(v==="record"){if(!REC.sum)loadRecord();else renderRecord()}
+  if(v==="record"){if(!REC.sum)loadRecord();else renderRecord();loadBoard()}
   if(v==="bets"){renderBets();checkOfficial(false)}
   slipBar();
   if(focus)toTop(focus);else if(was!==v&&v!=="tips")toTop(v+"View");
