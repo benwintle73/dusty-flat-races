@@ -325,7 +325,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.19.0"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.19.1"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -513,7 +513,10 @@ function tipsters(r){const rk=ranked(r);if(!rk||!rk.length)return [];const field
   const pp=TIPS.pop[popKey(r)];if(pp&&pp.runners)mk("pop","Pop's Tips",pp.runners,POP_SAYS);
   const bb=bobFor(r),km=TIPS.map[popKey(r)];
   if(bb){const f=km&&km.runners?new Map(km.runners.map(u=>[nkey(u.name),u.f])):null;mk("bob","Bob's Tips",f?bb.map(u=>({...u,p:u.p*(f.get(nkey(u.name))??1)})):bb,BOB_SAYS)}
-  if(mkt(r)){const live=field.filter(u=>u.win>1);if(live.length>=3)mk("gran","Gran's Tips",live.map(u=>({name:u.name,p:1/u.win})),GRAN_SAYS)}
+  {let live=field.filter(u=>u.win>1).map(u=>({name:u.name,p:1/u.win}));
+    // dogs and harness with full form carry no prices of their own: Gran reads PuntersEdge's market for the race
+    if(live.length<3){const q=quickRace(r);if(q)live=(q.runners||[]).filter(u=>u.win>1).map(u=>({name:u.name,p:1/u.win}))}
+    if(live.length>=3)mk("gran","Gran's Tips",live,GRAN_SAYS)}
   return out}
 // a tipster's first n picks in a race, best first
 function topN(r,t,n){const f=ranked(r).map(x=>x.u);return [...t.chance.entries()].sort((a,b)=>b[1]-a[1]).slice(0,n).map(([k,p])=>{const u=f.find(x=>nkey(x.name)===k);return {no:u.no,name:u.name,box:u.box,p}})}
@@ -527,6 +530,7 @@ function mapHtml(r){const km=TIPS.map[popKey(r)];if(!km||!km.runners)return "";c
     ${good.length?`<div><span class="tw">Good ${draw}</span>${good.map(u=>cloth(u.me.no,r.code,u.me.box)).join(" ")} <small>${draw}s that win more often here</small></div>`:""}
     ${bad.length?`<div><span class="tw">Poor ${draw}</span>${bad.map(u=>cloth(u.me.no,r.code,u.me.box)).join(" ")}</div>`:""}
     <div><small>Bob lifts or trims each runner's chance for its running style and ${draw} record at this track.</small></div></div>`}
+const tipsters0=(r,w)=>tipsters(r).some(t=>t.who===w);
 function panelOf(r){const ts=tipsters(r);if(ts.length<2)return null;const rk=ranked(r),tot=new Map();
   for(const u of rk.map(x=>x.u)){let s=0;for(const t of ts)s+=t.chance.get(nkey(u.name))||0;tot.set(nkey(u.name),s/ts.length)}
   const best=[...tot.entries()].sort((a,b)=>b[1]-a[1])[0],u=rk.map(x=>x.u).find(x=>nkey(x.name)===best[0]);
@@ -536,7 +540,7 @@ function panelLine(r){const pn=panelOf(r);if(!pn)return "";const o=pn.ts.filter(
 function panelHtml(r){const pn=panelOf(r),ts=pn?pn.ts:tipsters(r);if(!ts.length)return "";
   const row=t=>`<div class="tip" data-hlbet="${escH(r.id)}|${t.pick.no}"><span class="tw">${t.label}</span>${cloth(t.pick.no,r.code,t.pick.box)} <b>${escH(t.pick.name)}</b> ${pct(t.pick.p)}<small>${escH(t.says)}</small></div>`;
   return `<div class="panel"><h4>The tipsters</h4>${ts.map(row).join("")}${pn?`<div class="tip ptop" data-hlbet="${escH(r.id)}|${pn.pick.no}"><span class="tw">The Panel's pick</span>${cloth(pn.pick.no,r.code,pn.pick.box)} <b>${escH(pn.pick.name)}</b> ${pct(pn.pick.p)}<small>${pn.agree} of ${pn.ts.length} tipsters have it on top. The Panel averages everyone's chances.</small></div>`:""}
-    ${mapHtml(r)}${ts.length<4?`<p class="tnote">${[!TIPS.pop[popKey(r)]?"Pop's still thinking":"",!bobFor(r)?"Bob hasn't rated this race":"",!mkt(r)?"Gran's waiting for prices":""].filter(Boolean).join(" · ")}</p>`:""}<p class="tnote">Tap a tip to bet on it.</p></div>`}
+    ${mapHtml(r)}${ts.length<4?`<p class="tnote">${[!TIPS.pop[popKey(r)]?"Pop's still thinking":"",!bobFor(r)?"Bob hasn't rated this race":"",!tipsters0(r,"gran")?"Gran's waiting for the bookies to put prices up":""].filter(Boolean).join(" · ")}</p>`:""}<p class="tnote">Tap a tip to bet on it.</p></div>`}
 async function loadBob(){const ds=[...new Set(RACES.map(r=>r.date))].slice(0,2);let changed=false;
   for(const d of ds){try{const j=await getJSON(TIPS_URL+"?date="+d);if(j.bob){TIPS.bob[d]=j.bob;changed=true}}catch(e){}}
   TIPS.bobAt=Date.now();if(changed)render()}
@@ -579,7 +583,7 @@ function render(){
     const val=mine.map(x=>{const u=x.t.pick,f=ranked(x.r).find(y=>y.u.no===u.no),pr=f?(x.r.code==="H"?f.u.win:f.price):0;return {...x,pr,ev:u.p*pr}}).filter(x=>x.pr>=6).sort((a,b)=>b.ev-a.ev)[0];
     const box=(x,title,extra)=>`<div class="hl" data-hlbet="${escH(x.r.id)}|${x.t.pick.no}"><button class="betbtn hlbet">Bet on ${escH(x.t.pick.name)}</button><b>${title}:</b> ${tag(x.r)} · ${cloth(x.t.pick.no,x.r.code,x.t.pick.box)} <b>${escH(x.t.pick.name)}</b> ${pct(x.t.pick.p)}${extra||""}<span class="nsays">${escH(x.t.says)}</span></div>`;
     $("hl").innerHTML=mine.length?box(mine[0],`${WHO[w]}'s Best Bet`)+(mine[1]?box(mine[1],`${WHO[w]}'s Next Best`):"")+(val&&val!==mine[0]&&val!==mine[1]?box(val,`${WHO[w]}'s Value Bet`,` ${div(val.pr)}`):"")
-      :`<div class="hl">${WHO[w]} hasn't tipped any of the races still to run yet.${w==="gran"?" Gran only tips where the bookies have prices up, mostly horses.":""}</div>`}
+      :`<div class="hl">${WHO[w]} hasn't tipped any of the races still to run yet.${w==="gran"?" Gran only tips once the bookies have prices up.":""}</div>`}
   else if(ST.who==="nan")$("hl").innerHTML=NANHL;
   else   $("hl").innerHTML=(pbest?`<div class="hl hlpanel" data-hlbet="${escH(pbest.r.id)}|${pbest.pn.pick.no}"><button class="betbtn hlbet">Bet on ${escH(pbest.pn.pick.name)}</button><b>The Panel's Best Bet:</b> ${tag(pbest.r)} · ${cloth(pbest.pn.pick.no,pbest.r.code,pbest.pn.pick.box)} <b>${escH(pbest.pn.pick.name)}</b> ${pct(pbest.pn.pick.p)}<span class="nsays">${pbest.pn.agree} of ${pbest.pn.ts.length} tipsters agree: ${pbest.pn.ts.map(t=>t.label.split("'")[0]).join(", ")}.</span></div>`:"")+(best?`<div class="hl" data-hlbet="${escH(best.r.id)}|${best.rk[0].u.no}"><button class="betbtn hlbet">Bet on ${escH(best.rk[0].u.name)}</button><b>Nan's Best Bet:</b> ${tag(best.r)} · ${cloth(best.rk[0].u.no,best.r.code,best.rk[0].u.box)} <b>${escH(best.rk[0].u.name)}</b> ${pct(best.rk[0].p)} ${div(best.rk[0].price)}<span class="nsays">${escH(nanSays(best.r.code,best.r.id+"|"+best.rk[0].u.name))}</span></div>`:"")
     +(rough?`<div class="hl" data-hlbet="${escH(rough.x.r.id)}|${rough.y.u.no}"><button class="betbtn hlbet">Bet on ${escH(rough.y.u.name)}</button><b>Nan's Roughie:</b> ${tag(rough.x.r)} · ${cloth(rough.y.u.no,rough.x.r.code,rough.y.u.box)} <b>${escH(rough.y.u.name)}</b> ${pct(rough.y.p)} ${div(rough.pr)}<span class="nsays">${escH(nanSays(rough.x.r.code,rough.x.r.id+"|"+rough.y.u.name))}</span></div>`:"");
@@ -707,7 +711,7 @@ function renderBoard(){const el=$("board");if(!el)return;if(!BOARD.rows){el.inne
     <div class="calc-row">${chip("code","all","All codes",BOARD.code)}${chip("code","H","Horses",BOARD.code)}${chip("code","D","Dogs",BOARD.code)}${chip("code","N","Harness",BOARD.code)}</div>
     ${agg.length?`<table class="btable"><thead><tr><th></th><th>Tipster</th><th>Bets</th><th>Won</th><th>Strike</th><th>Placed</th><th>Return per $1</th><th>Profit at $10 a bet</th></tr></thead><tbody>
       ${agg.map((a,i)=>`<tr class="${i===0?"lead":""}"><td>${i===0?"👑":i+1}</td><td><b>${W[a.w]}</b></td><td>${a.b}</td><td>${a.won}</td><td>${pct(a.won/a.b)}</td><td>${pct(a.pl/a.b)}</td><td>${div(a.back/a.b)}</td><td class="${a.profit>=0?"plus":"minus"}">${a.profit>=0?"+":"-"}${money(Math.abs(a.profit)).replace("-","")}</td></tr>`).join("")}</tbody></table>
-      <p class="calc-out"><small>${agg[0]?`${W[agg[0].w]} is in front. `:""}Each tipster's top pick in every race they rate, settled on the official result and win dividend. Pop and Bob rate most races; Gran only tips horses (she follows the bookies' favourite). Nan's tips go back further, so "Since the panel started" is the fair comparison.</small></p>`
+      <p class="calc-out"><small>${agg[0]?`${W[agg[0].w]} is in front. `:""}Each tipster's top pick in every race they rate, settled on the official result and win dividend. Pop and Bob rate most races; Gran follows the bookies' favourite, wherever prices are up. Nan's tips go back further, so "Since the panel started" is the fair comparison.</small></p>`
       :`<p>No settled races for the tipsters in this period yet. Results come in through the day.</p>`}`}
 document.addEventListener("click",e=>{const p=e.target.closest("[data-boardper]"),c=e.target.closest("[data-boardcode]");if(p){BOARD.per=p.dataset.boardper;renderBoard()}if(c){BOARD.code=c.dataset.boardcode;renderBoard()}});
 function renderRecord(){
