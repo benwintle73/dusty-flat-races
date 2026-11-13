@@ -148,6 +148,8 @@ details.follow p{margin:0 12px 8px;font-size:15px;color:#d9c9a3}
 .okmsg{font-weight:700}
 .cdn{display:inline-block;background:var(--tote);color:var(--paper);padding:1px 7px;border-radius:3px;font-variant-numeric:tabular-nums;white-space:nowrap}
 .cdn.soon{background:#c0392b;color:#fff}.cdn.gone{background:#666;color:#fff}
+.acct b.acode{display:block;font:400 34px/1.1 var(--display);letter-spacing:3px;margin:2px 0}
+#syncIn{font-size:18px;text-transform:uppercase;width:150px;min-height:36px;padding:0 8px}
 .slipline{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line);font-size:15px}
 .slipline button,.tkbtns button,[data-bcheck],[data-btop],[data-bslipclr],[data-bclose],[data-mclose]{background:var(--paper2);color:var(--ink);border:1px solid var(--line);min-height:36px;padding:0 10px;font-weight:700;cursor:pointer}
 #betsView>.calc-row button{background:var(--paper);}
@@ -310,7 +312,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null};
-const NAN_VERSION="2.15.4"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.16.0"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -642,7 +644,52 @@ function ledger(running){
   for(const e of ev){if(e.loan){debt+=e.loan;borrowed+=e.loan}else{const r=Math.min(debt,e.win);debt=r2(debt-r);repaid+=r;if(r>0)per[e.id]=r2(r)}}
   return {debt:r2(debt),repaid:r2(repaid),borrowed:r2(borrowed),per};
 }
-function saveBK(){try{localStorage.setItem(BK_KEY,JSON.stringify(BK))}catch(e){}}
+function saveBK(){try{localStorage.setItem(BK_KEY,JSON.stringify(BK))}catch(e){}SYNC.dirty=true;saveSync();clearTimeout(SYNC_T);SYNC_T=setTimeout(pushBK,700)}
+/* ---------- Account sync: the same bets on any device, keyed by a sync code ---------- */
+const SYNC_KEY="otr-nan-sync",BETS_URL=SB+"/otr-bets",CODE_RE=/^[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}$/;
+let SYNC=(()=>{try{const j=JSON.parse(localStorage.getItem(SYNC_KEY));if(j&&CODE_RE.test(j.code))return {rev:0,dirty:false,...j}}catch(e){}return {code:null,rev:0,dirty:true}})(),SYNC_T=0,SYNC_ST="",SYNC_AT=0,SYNC_BUSY=false,SYNC_MSG="";
+function saveSync(){try{localStorage.setItem(SYNC_KEY,JSON.stringify({code:SYNC.code,rev:SYNC.rev,dirty:SYNC.dirty}))}catch(e){}}
+function newCode(){const a="ABCDEFGHJKLMNPQRSTUVWXYZ23456789",v=new Uint32Array(8);crypto.getRandomValues(v);const c=[...v].map(x=>a[x%a.length]).join("");return c.slice(0,4)+"-"+c.slice(4)}
+const bkDefaults=b=>({start:1000,topups:0,tickets:[],slip:[],manual:{},manualAt:{},off:{},loans:[],...(b||{})});
+function mergeBK(mine,theirs){const a=bkDefaults(mine),b=bkDefaults(theirs),tk=new Map();
+  for(const t of [...b.tickets,...a.tickets]){const o=tk.get(t.id);tk.set(t.id,!o?t:(t.status==="cancelled"||o.status==="cancelled")?{...t,status:"cancelled"}:t)}
+  const ids=new Set(tk.keys()),slip=new Map();for(const t of [...b.slip,...a.slip])if(!ids.has(t.id))slip.set(t.id,t);
+  const loans=new Map();for(const l of [...b.loans,...a.loans])loans.set(l.at+"|"+l.amount,l);
+  const manual={...b.manual},manualAt={...b.manualAt};for(const k in a.manual)if(!(k in manual)||(a.manualAt[k]||0)>=(manualAt[k]||0)){manual[k]=a.manual[k];manualAt[k]=a.manualAt[k]}
+  return {...b,...a,start:a.start,topups:Math.max(a.topups||0,b.topups||0),tickets:[...tk.values()],slip:[...slip.values()],loans:[...loans.values()].sort((x,y)=>x.at-y.at),manual,manualAt,off:{...b.off,...a.off}}}
+function adopt(data){BK=bkDefaults(data);try{localStorage.setItem(BK_KEY,JSON.stringify(BK))}catch(e){}LEDGER={per:{}};try{render()}catch(e){}if(ST.view==="bets")renderBets();slipBar()}
+async function pushBK(){if(!SYNC.code||SYNC_BUSY)return;SYNC_BUSY=true;SYNC_ST="saving";paintSync();
+  try{for(let i=0;i<3;i++){const r=await fetch(BETS_URL,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({code:SYNC.code,data:BK,base:SYNC.rev})}).then(r=>r.json());
+      if(r.ok){SYNC.rev=r.rev;SYNC.dirty=false;saveSync();SYNC_ST="ok";SYNC_AT=Date.now();break}
+      if(r.conflict){SYNC.rev=r.rev;if(r.data){BK=mergeBK(BK,r.data);try{localStorage.setItem(BK_KEY,JSON.stringify(BK))}catch(e){}}continue}
+      throw new Error(r.error||"sync")}}
+  catch(e){SYNC_ST="offline"}SYNC_BUSY=false;paintSync();if(ST.view==="bets")renderBets();else slipBar()}
+async function pullBK(){if(!SYNC.code||SYNC_BUSY)return;
+  try{const r=await fetch(BETS_URL+"?code="+SYNC.code).then(r=>r.json());if(r.error)throw new Error(r.error);
+    if(!r.data){SYNC.rev=0;return pushBK()}
+    if(r.rev!==SYNC.rev){if(SYNC.dirty){SYNC.rev=r.rev;BK=mergeBK(BK,r.data);return pushBK()}SYNC.rev=r.rev;saveSync();adopt(r.data)}
+    else if(SYNC.dirty)return pushBK();
+    SYNC_ST="ok";SYNC_AT=Date.now()}catch(e){SYNC_ST="offline"}paintSync()}
+async function linkCode(code,{keepMine=true}={}){code=String(code||"").toUpperCase().replace(/[^A-Z0-9]/g,"");code=code.slice(0,4)+"-"+code.slice(4,8);
+  if(!CODE_RE.test(code)){SYNC_MSG="That code doesn't look right. It's 8 letters and numbers, like ABCD-2345.";return renderBets()}
+  if(code===SYNC.code){SYNC_MSG="That's already your code.";return renderBets()}
+  try{const r=await fetch(BETS_URL+"?code="+code).then(r=>r.json());if(r.error)throw new Error(r.error);
+    if(!r.data){SYNC_MSG="No account found with that code. Check it and try again.";return renderBets()}
+    const mine=BK.tickets.length||BK.slip.length||BK.loans.length;SYNC.code=code;SYNC.rev=r.rev;
+    if(keepMine&&mine){BK=mergeBK(BK,r.data);SYNC.dirty=true;saveSync();adopt(BK);await pushBK()}else{SYNC.dirty=false;saveSync();adopt(r.data)}
+    SYNC_MSG=`Linked. This device now uses account ${code}${keepMine&&mine?", and the bets that were on this device have been added to it":""}.`}
+  catch(e){SYNC_MSG="Couldn't reach the server. Check your connection and try again."}renderBets()}
+function syncLink(){return location.origin+location.pathname+"?sync="+SYNC.code+"#bets"}
+function syncLine(){return SYNC_ST==="saving"?"Saving…":SYNC_ST==="offline"?"Offline: saved on this device and will sync when you're back online.":SYNC_AT?`Synced ${timeOf(new Date(SYNC_AT).toISOString())}`:"Connecting…"}
+function paintSync(){const el=document.getElementById("syncSt");if(el)el.textContent=syncLine()}
+function syncHtml(){return `<div class="calc" id="acctBox"><h3>Your account</h3>
+  <p>Your bets, balance and loans are saved to your account, so you can pick them up on your phone or any computer.</p>
+  <div class="acct"><div><small>Your account code</small><b class="acode">${SYNC.code||"…"}</b><small id="syncSt">${syncLine()}</small></div></div>
+  <p class="calc-out"><small><b>On another device:</b> open this link, or open Nan's Tips, go to My bets, and enter your code below. Keep your code to yourself: anyone with it can see and place bets on this account.</small></p>
+  <div class="calc-row"><button data-scopy>Copy my link</button><button data-scode>Copy my code</button></div>
+  <div class="calc-row"><span class="calc-l">Use a code</span><input id="syncIn" placeholder="ABCD-2345" maxlength="9" autocapitalize="characters" autocomplete="off"><button class="ffload" data-slink>Link this device</button></div>
+  ${SYNC_MSG?`<p class="loanmsg">${SYNC_MSG}</p>`:""}</div>`}
+async function copyText(t,msg){try{await navigator.clipboard.writeText(t);SYNC_MSG=msg}catch(e){SYNC_MSG="Copy this: "+t}renderBets()}
 const BUILD={id:null,type:"win",sel:[],stake:10,style:"straight",pos:0,legs:[[],[],[],[]]};
 const rkey=r=>`${r.code}|${r.date}|${vkey(r.venue)}|${r.no}`;
 const costOf=t=>t.type==="ew"?2*t.stake:t.stake;
@@ -892,7 +939,8 @@ function renderBets(){
     <div class="calc-row"><button data-bcheck>Check official results</button></div>
     ${loanHtml(b)}
     ${groups.map(([h,f])=>{const ts=live.filter(t=>f(t)&&(h==="Cancelled"||t.status!=="cancelled"));return ts.length?`<h3 class="bgrp">${h} (${ts.length})</h3><div class="races">${ts.map(tkHtml).join("")}</div>`:""}).join("")}
-    <p class="note">Play money only. Bets are saved in this browser on this device. Win and place pay the official tote dividend; exotics pay the official dividend for that bet, scaled by your flexi percentage (outlay ÷ combinations). Duet, doubles, trebles, quaddies and Big 6s are estimated, because the results feed doesn't carry those pools; All Up pays the official win dividends multiplied together. Scratched selections are refunded (in a box or standout, just their combinations).</p>`;
+    ${syncHtml()}
+    <p class="note">Play money only. Bets are saved to your account (see Your account) and on this device. Win and place pay the official tote dividend; exotics pay the official dividend for that bet, scaled by your flexi percentage (outlay ÷ combinations). Duet, doubles, trebles, quaddies and Big 6s are estimated, because the results feed doesn't carry those pools; All Up pays the official win dividends multiplied together. Scratched selections are refunded (in a box or standout, just their combinations).</p>`;
   slipBar();
 }
 let BKBUSY=false;
@@ -950,6 +998,9 @@ document.addEventListener("click",e=>{
   if(b=g("[data-msave]")){const v=[...document.querySelectorAll("[data-mpos]")].map(s=>+s.value||null);const picks=v.filter(Boolean);
     if(!v[0]){BKMSG="Pick at least the winner.";return renderBets()}if(new Set(picks).size!==picks.length){BKMSG="Each runner can only finish once.";return renderBets()}
     BK.manual[b.dataset.msave]=v.slice(0,v.findIndex(x=>!x)<0?4:v.findIndex(x=>!x));(BK.manualAt=BK.manualAt||{})[b.dataset.msave]=Date.now();MANUAL=null;BKMSG="Your result is saved. The running balance includes it for now; the official result replaces it when it comes in, and overrides it if it's different.";saveBK();return renderBets()}
+  if(g("[data-scopy]"))return copyText(syncLink(),"Link copied. Open it on your phone or other computer.");
+  if(g("[data-scode]"))return copyText(SYNC.code,"Code copied.");
+  if(g("[data-slink]")){const v=($("syncIn")||{}).value;return linkCode(v)}
   if(g("[data-bcheck]"))return checkOfficial(true);
   if(b=g("[data-lamt]")){LOANAMT=+b.dataset.lamt;LOANMSG="";return renderBets()}
   if(g("[data-lborrow]")){const w=loanWindow(),amt=r2(LOANAMT);
@@ -984,6 +1035,12 @@ document.addEventListener("click",e=>{
   const bt=e.target.closest("[data-bet]");if(bt){REC.bet=bt.dataset.bet;renderRecord()}
 });
 document.addEventListener("change",e=>{if(e.target.id==="stakeIn"){const v=Math.round(Math.max(.5,Math.min(10000,+e.target.value||1))*2)/2;REC.stake=v;renderRecord()}});
+(async()=>{const q=new URLSearchParams(location.search).get("sync");
+  if(q){try{history.replaceState(null,"",location.pathname+location.hash)}catch(e){}if(q.toUpperCase()!==SYNC.code){if(!SYNC.code){SYNC.code=newCode();saveSync()}return linkCode(q)}}
+  if(!SYNC.code){SYNC.code=newCode();SYNC.rev=0;SYNC.dirty=true;saveSync();return pushBK()}
+  pullBK()})();
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")pullBK()});
+setInterval(()=>{if(document.visibilityState==="visible")pullBK()},30e3);
 if(location.hash==="#record")setView("record");else if(location.hash==="#bets")setView("bets",BK.slip.length?"slipBox":null);else slipBar();
 function refreshAllow(){clearTimeout(refreshAllow.t);refreshAllow.t=setTimeout(()=>getJSON(SB+"/otr-nan?follow=1").then(j=>{ALLOW=j.allowance||ALLOW;CREDITS=j.credits||CREDITS;$("allow").innerHTML=creditsHtml(CREDITS)}).catch(()=>{}),1500)}
 setInterval(refreshAllow,120e3);
