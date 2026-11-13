@@ -165,7 +165,10 @@ details.follow p{margin:0 12px 8px;font-size:15px;color:#d9c9a3}
 .bb-runners{display:grid;grid-template-columns:1fr;gap:4px}
 @media (min-width:700px){.bb-runners{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .bb-run{display:flex;align-items:center;gap:9px;text-align:left;width:100%;min-height:46px;padding:0 10px}
-.bb-nm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:16px}
+.bb-nm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:16px}.bb-nm small{display:block;font:500 13px/1.2 var(--led);color:var(--ink2);margin-top:2px;overflow:hidden;text-overflow:ellipsis}.bb-run[aria-pressed="true"] .bb-nm small{color:#d9ceb2}
+.bb-rw{display:grid;grid-template-columns:minmax(0,1fr) 64px;gap:4px}.bb-rw .bb-run{min-height:52px}
+.bb-fm{background:var(--paper);border:1px solid var(--line);color:var(--ink);font:700 14px/1 var(--led);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}.bb-fm span{font-size:11px;color:var(--ink2)}.bb-fm[aria-expanded="true"]{background:var(--ink);color:var(--paper)}
+.bb-form{grid-column:1/-1;background:var(--paper);border:1px solid var(--line);padding:6px 10px 8px;margin-bottom:4px;font-size:14px}.bb-form h4{margin:4px 0}
 .bb-run i{font-style:normal;color:var(--good);font:700 16px/1 var(--led)}.bb-run[aria-pressed="true"] i{color:var(--amber)}
 .bb-cnt{color:var(--good)}.bb-px{font:600 14px/1 var(--led);color:var(--ink2);flex:none}.bb-run[aria-pressed="true"] .bb-px{color:var(--paper)}
 .bb-act{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px;margin-top:8px}.bb-act .ffload{background:var(--amber);color:var(--tote);border:0;min-height:48px;font-size:16px}.bb-act .ffload:disabled{opacity:.55}.bb-act [data-bclose]{padding:0 16px}
@@ -434,7 +437,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.23.1"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.24.0"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -507,6 +510,7 @@ function loadForm(r){
 /* ---------- page ---------- */
 const noField=(r,short)=>LIMIT[r.code+r.slug]?(short?"Form not in yet: today's form allowance ran out":"Nan can't see this field yet: today's FormFav form allowance has run out. She'll pick it once the form comes in (it frees up through the day)."):(short?"No field yet":"No field for this race yet.");
 const recTxt=x=>x&&x.s?`${x.s}: ${x.w}-${x[2]}-${x[3]}`:"–";
+const runSub=(r,u)=>r.src==="quick"?[r.code==="D"?`Box ${u.box}`:`Bar ${u.box}`,u.form||"no form"].join(" · "):r.code==="H"?[u.form,u.jockey,u.barrier?"Bar "+u.barrier:"",u.weight?u.weight+"kg":""].filter(Boolean).join(" · "):r.code==="D"?`Box ${u.box}${u.reserve?" (reserve)":""} · ${u.form||"no form"}`:`${u.row==="second"?"Sr":"Fr"}${u.barrier} · ${u.driver||""} · ${u.form||""}`;
 function formTable(rows){return `<table class="form"><tbody>${rows.filter(([,v])=>v!==undefined).map(([l,v])=>`<tr><td>${l}</td><td class="n">${v}</td></tr>`).join("")}</tbody></table>`}
 function fullForm(r,x){
   const u=x.u;
@@ -563,7 +567,7 @@ function raceBody(r){
   const canBet=Date.now()<Date.parse(r.jump);
   return `<p class="nsays">${escH(nanSays(r.code,r.id+"|"+rk[0].u.name))}</p>${whoOrderHtml(r)}${panelHtml(r)}${loadBtn}${canBet?builderHtml(r):""}<p class="rmeta">${[r.name,r.dist?r.dist+"m":"",r.cls,r.cond||(r.card&&r.card.cond),r.est?"No market yet: horse prices estimated":""].filter(Boolean).map(escH).join(" · ")}</p>
   <table class="field"><thead><tr><th colspan="3">Nan's order</th></tr></thead><tbody>
-  ${rk.map((x,i)=>`<tr><td><details class="run${i===0?" top1":""}"><summary><span class="rk">${ord(i+1)}</span>${cloth(x.u.no,r.code,x.u.box,"no")}<span class="nm"><b>${escH(x.u.name)}</b><small>${escH(r.src==="quick"?[r.code==="D"?`Box ${x.u.box}`:`Bar ${x.u.box}`,x.u.form||"no form"].join(" · "):r.code==="H"?[x.u.jockey,x.u.barrier?"Bar "+x.u.barrier:"",x.u.weight?x.u.weight+"kg":""].filter(Boolean).join(" · "):r.code==="D"?`Box ${x.u.box}${x.u.reserve?" (reserve)":""} · ${x.u.form||"no form"}`:`${x.u.row==="second"?"Sr":"Fr"}${x.u.barrier} · ${x.u.driver||""} · ${x.u.form||""}`)}</small></span>
+  ${rk.map((x,i)=>`<tr><td><details class="run${i===0?" top1":""}"><summary><span class="rk">${ord(i+1)}</span>${cloth(x.u.no,r.code,x.u.box,"no")}<span class="nm"><b>${escH(x.u.name)}</b><small>${escH(runSub(r,x.u))}</small></span>
     <span class="pct">${pct(x.p)}</span><span class="pr">${div(x.price)}<small>${mkt(r)?"market":"Nan's"}</small></span>${mkt(r)?`<span class="pr mk">${div(ladder(1/(x.p*1.13)))}<small>Nan's</small></span>`:"<span></span>"}
     <span class="meter"><i style="width:${Math.round(100*x.p/maxP)}%"></i></span></summary>
     <div class="why">${whyHtml(r,x,i,n)}${fullForm(r,x)}</div></details></td></tr>`).join("")}
@@ -1128,7 +1132,9 @@ function builderHtml(r){
     ${styles.length?`<div class="bb-h">Style</div><div class="bb-grid bb-g3">${styles.map(([s,l])=>`<button data-bstyle="${s}" aria-pressed="${BUILD.style===s}">${l}</button>`).join("")}</div>`:""}
     ${BUILD.style==="standout"&&ex?`<div class="bb-h">Place</div><div class="bb-grid">${Array.from({length:k},(_,i)=>`<button data-bpos="${i}" aria-pressed="${BUILD.pos===i}">${ord(i+1)} (${(BUILD.legs[i]||[]).length})</button>`).join("")}</div>`:""}
     <div class="bb-h">${k>1||ex?"Pick runners":"Pick a runner"}${(BUILD.style==="standout"?(BUILD.legs[BUILD.pos]||[]).length:BUILD.sel.length)?` <span class="bb-cnt">· ${BUILD.style==="standout"?(BUILD.legs[BUILD.pos]||[]).length:BUILD.sel.length} picked</span>`:""}</div>
-    <div class="bb-runners">${[...f].sort((a,b)=>a.no-b.no).map(u=>`<button class="bsel bb-run" data-bsel="${u.no}" aria-pressed="${on(u.no)}">${cloth(u.no,r.code,u.box)}<span class="bb-nm">${escH(u.name)}</span>${marks(u.no)?`<i>${marks(u.no)}</i>`:on(u.no)?`<i>✓</i>`:""}${px(u)}</button>`).join("")}</div>
+    <div class="bb-runners">${(()=>{const RX=new Map((ranked(r)||[]).map(x=>[x.u.no,x]));return [...f].sort((a,b)=>a.no-b.no).map(u=>{const x=RX.get(u.no),open=BUILD.form===u.no;
+      return `<div class="bb-rw${open?" open":""}"><button class="bsel bb-run" data-bsel="${u.no}" aria-pressed="${on(u.no)}">${cloth(u.no,r.code,u.box)}<span class="bb-nm">${escH(u.name)}<small>${escH(runSub(r,(x&&x.u)||u))}</small></span>${marks(u.no)?`<i>${marks(u.no)}</i>`:on(u.no)?`<i>✓</i>`:""}${px(u)}</button><button class="bb-fm" data-bform="${u.no}" aria-expanded="${open}">Form<span>${open?"▴":"▾"}</span></button>
+        ${open&&x?`<div class="bb-form">${fullForm(r,x)}</div>`:""}</div>`}).join("")})()}</div>
     <div class="bb-h">${ex?"Outlay":"Stake"}</div>
     <div class="bb-grid">${[0.5,1,2,5,10,20,50].map(v=>`<button data-bstake="${v}" aria-pressed="${BUILD.stake===v}">${v<1?(v*100)+"c":"$"+v}</button>`).join("")}<label class="bb-own">$<input id="bStake" type="number" min="0.5" step="0.5" inputmode="decimal" value="${BUILD.stake}"></label></div>
     <p class="calc-out">${help}${ex&&combos(tk)?`<b>${comboLine(tk)}</b> (flexi: a ${money(BUILD.stake)} outlay over ${combos(tk)} combination${combos(tk)===1?"":"s"}). `:""}Pays the official tote dividend.</p>
@@ -1274,13 +1280,14 @@ document.addEventListener("click",e=>{
     const d=document.querySelector(`details.race[data-id="${CSS.escape(id)}"]`);if(!d)return;if(!d.open){d.open=true;const rb=d.querySelector(".rbody");if(rb)rb.innerHTML=raceBody(r)}
     setTimeout(()=>{const x=d.querySelector("[data-badd]")||d;try{x.scrollIntoView({block:"center",behavior:"smooth"})}catch(e){x.scrollIntoView()}},60);
     $("status").textContent=`${r.venue} R${r.no}: ${BT.win[0]} bet on Nan's pick is ready. Pick another bet type if you like, then add it to your slip.`;return}
-  if(b=g("[data-bopen]")){BUILD.id=b.dataset.bopen;BUILD.sel=[];return render()}
+  if(b=g("[data-bopen]")){BUILD.id=b.dataset.bopen;BUILD.sel=[];BUILD.form=null;return render()}
   if(g("[data-bclose]")){BUILD.id=null;return render()}
   if(b=g("[data-btype]")){const ty=b.dataset.btype;
     if(isMulti(ty)){const r=RACES.find(x=>x.id===BUILD.id);if(!r)return;MB={type:ty,legs:autoLegs(r,ty),stake:BUILD.stake};BUILD.id=null;render();const m=$("multi");if(m)m.scrollIntoView({block:"start"});return}
     BUILD.type=ty;BUILD.style="straight";BUILD.pos=0;BUILD.legs=[[],[],[],[]];BUILD.sel=exotic(ty)?BUILD.sel.slice(0,BT[ty][1]):BUILD.sel.slice(0,1);return render()}
   if(b=g("[data-bstyle]")){BUILD.style=b.dataset.bstyle;BUILD.pos=0;BUILD.legs=[[],[],[],[]];if(BUILD.style==="straight")BUILD.sel=BUILD.sel.slice(0,BT[BUILD.type][1]);return render()}
   if(b=g("[data-bpos]")){BUILD.pos=+b.dataset.bpos;return render()}
+  if(b=g("[data-bform]")){const n=+b.dataset.bform;BUILD.form=BUILD.form===n?null:n;return render()}
   if(b=g("[data-bsel]")){const n=+b.dataset.bsel,need=BT[BUILD.type][1];
     if(BUILD.style==="standout"&&exotic(BUILD.type)){const l=BUILD.legs[BUILD.pos],i=l.indexOf(n);if(i>=0)l.splice(i,1);else l.push(n);return render()}
     const i=BUILD.sel.indexOf(n);if(i>=0)BUILD.sel.splice(i,1);else{if(!(BUILD.style==="box"&&exotic(BUILD.type))&&BUILD.sel.length>=need)BUILD.sel.shift();BUILD.sel.push(n)}return render()}
