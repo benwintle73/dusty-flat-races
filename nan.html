@@ -200,7 +200,7 @@ details.follow p{margin:0 12px 8px;font-size:15px;color:#d9c9a3}
 .talk{background:#fff8e6;border:1px solid var(--line);padding:6px 10px 4px;margin:4px 0 8px;color:var(--ink)}.talk h4{margin:2px 0 6px}
 .tk-r{display:grid;grid-template-columns:44px 40px minmax(0,1fr);gap:6px;align-items:baseline;padding:5px 0;border-top:1px dashed #0002;font-size:14px;line-height:1.35}.tk-r:first-of-type{border-top:0}
 .tk-r b{font:700 13px/1 var(--led);text-transform:uppercase;letter-spacing:.4px}.tk-o{font:700 14px/1 var(--led);color:var(--ink2);text-align:right}.tk-r span:last-child{font-style:italic;color:#5b4520}
-.bd-per{grid-template-columns:repeat(2,minmax(0,1fr));margin:6px 0 5px}.bd-code{margin-bottom:8px}@media (min-width:700px){.bd-per{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.bd-per{grid-template-columns:repeat(6,minmax(0,1fr));margin:6px 0 5px}.bd-per button{grid-column:span 2;line-height:1.1}.bd-per button:nth-child(-n+2){grid-column:span 3}.bd-code{margin-bottom:8px}@media (min-width:700px){.bd-per{grid-template-columns:repeat(5,minmax(0,1fr))}.bd-per button,.bd-per button:nth-child(-n+2){grid-column:auto}}
 .tip .rest{display:block;font-size:14px;color:var(--ink2);margin-top:2px}.worder .tw{min-width:52px}
 .wchk input{width:16px;height:16px;margin:0;accent-color:var(--amber)}.wchk:not(.on){opacity:.6}
 .tgwrap{overflow-x:auto}.tgrid{width:100%;border-collapse:collapse;font-size:15px}
@@ -1839,13 +1839,13 @@ function renderCalc(rows){
 const PANEL_START="2026-11-13",BOARD={rows:null,today:null,per:"today",code:"all"};
 async function loadBoard(){try{const j=await getJSON(TIPS_URL+"?board=1");BOARD.rows=j.rows||[];BOARD.today=j.today}catch(e){BOARD.rows=BOARD.rows||[]}renderBoard()}
 function renderBoard(){const el=$("board");if(!el)return;if(!BOARD.rows){el.innerHTML='<h3>Tipster leaderboard</h3><p>Loading…</p>';return}
-  const t=BOARD.today||REC_TODAY(),from=BOARD.per==="today"?t:BOARD.per==="week"?new Date(Date.parse(t+"T12:00:00")-6*864e5).toISOString().slice(0,10):BOARD.per==="month"?t.slice(0,8)+"01":PANEL_START;
-  const rows=BOARD.rows.filter(r=>r.date>=from&&(BOARD.code==="all"||r.code===BOARD.code)),W={nan:"Nan",pop:"Pop",bob:"Bob",gran:"Gran"};
+  const t=BOARD.today||REC_TODAY(),yd=new Date(Date.parse(t+"T12:00:00")-864e5).toISOString().slice(0,10),from=BOARD.per==="today"?t:BOARD.per==="yday"?yd:BOARD.per==="week"?new Date(Date.parse(t+"T12:00:00")-6*864e5).toISOString().slice(0,10):BOARD.per==="month"?t.slice(0,8)+"01":PANEL_START;
+  const to=BOARD.per==="yday"?yd:"9999";const rows=BOARD.rows.filter(r=>r.date>=from&&r.date<=to&&(BOARD.code==="all"||r.code===BOARD.code)),W={nan:"Nan",pop:"Pop",bob:"Bob",gran:"Gran"};
   const agg=Object.keys(W).map(w=>{const rs=rows.filter(r=>r.who===w),b=rs.reduce((a,r)=>a+ +r.bets,0),won=rs.reduce((a,r)=>a+ +r.won,0),pl=rs.reduce((a,r)=>a+ +r.placed,0),back=rs.reduce((a,r)=>a+ +r.back,0);return {w,b,won,pl,back,profit:10*(back-b)}}).sort((a,b)=>(b.b>0)-(a.b>0)||b.profit-a.profit||b.won/(b.b||1)-a.won/(a.b||1));
   const wait=agg.filter(a=>!a.b).map(a=>W[a.w]);
   const chip=(k,v,l,cur)=>`<button data-board${k}="${v}" aria-pressed="${cur===v}">${l}</button>`;
   el.innerHTML=`<h3>Tipster leaderboard</h3>
-    <div class="bb-grid bd-per">${chip("per","today","Today",BOARD.per)}${chip("per","week","Last 7 days",BOARD.per)}${chip("per","month","This month",BOARD.per)}${chip("per","since","Since the panel started",BOARD.per)}</div>
+    <div class="bb-grid bd-per">${chip("per","today","Today",BOARD.per)}${chip("per","yday","Yesterday",BOARD.per)}${chip("per","week","Last 7 days",BOARD.per)}${chip("per","month","This month",BOARD.per)}${chip("per","since","Since the panel started",BOARD.per)}</div>
     <div class="bb-grid bd-code">${chip("code","all","All codes",BOARD.code)}${chip("code","H","Horses",BOARD.code)}${chip("code","D","Dogs",BOARD.code)}${chip("code","N","Harness",BOARD.code)}</div>
     ${agg.some(a=>a.b)||BOARD.per!=="week"?`<div class="bwrap"><table class="btable"><thead><tr><th></th><th>Tipster</th><th>Bets</th><th>Won</th><th>Win %</th><th>Place %</th><th title="Average return for every $1 bet">$1 back</th><th title="Profit or loss betting $10 on every top pick">$10 bets</th></tr></thead><tbody>
       ${agg.map((a,i)=>!a.b?`<tr><td>${i+1}</td><td><b>${W[a.w]}</b></td><td colspan="6"><small>Tips are in. Waiting on the first official results.</small></td></tr>`:`<tr class="${i===0?"lead":""}"><td>${i===0?"👑":i+1}</td><td><b>${W[a.w]}</b></td><td>${a.b}</td><td>${a.won}</td><td>${a.won?pct(a.won/a.b):"0%"}</td><td>${a.pl===a.b?"100%":a.pl?pct(a.pl/a.b):"0%"}</td><td>${div(a.back/a.b)}</td><td class="${a.profit>=0?"plus":"minus"}">${a.profit>=0?"+":"-"}${money(Math.abs(a.profit)).replace("-","")}</td></tr>`).join("")}</tbody></table></div>
