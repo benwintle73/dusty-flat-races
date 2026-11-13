@@ -34,6 +34,7 @@ a{color:inherit}
 .bar label{display:flex;align-items:center;gap:6px;font:600 16px/1 var(--led);color:var(--paper)}
 .bar input{width:20px;height:20px}
 .note{font:600 17px/1.3 var(--led);color:#f0d9a8;padding:8px 2px}
+#betsView>p.note,#cricketView>p.note{font:400 14px/1.5 var(--body);color:#cdbf9a}
 .hl{background:var(--paper);color:var(--ink);border-left:5px solid var(--red);padding:9px 12px;margin-top:8px;font-size:17px}
 .hl b{color:var(--ink)}
 .races{display:grid;gap:8px;margin-top:10px}
@@ -80,7 +81,7 @@ details.run[open]>summary{background:var(--paper2)}
 .foot{font-size:14px;color:#cdbf9a;padding:16px 2px 30px;line-height:1.5}
 .foot a{color:#f0d9a8}
 .foot h4{margin:14px 0 4px;color:var(--amber);font:400 20px/1.1 var(--display);letter-spacing:.5px;text-transform:uppercase}
-.foot p{margin:0 0 8px}.foot b{color:#f0e2bf}
+.foot p{margin:0 0 10px}.foot b{color:#f0e2bf}
 .foot-serious{margin-top:14px!important;padding-top:10px;border-top:1px solid #3b3120;color:#e8dcbc}
 .empty{background:var(--paper);color:var(--ink);padding:14px;font-size:17px}
 .view{display:flex;gap:6px;margin-top:10px}
@@ -92,13 +93,14 @@ details.run[open]>summary{background:var(--paper2)}
 .sum{background:var(--paper);color:var(--ink);padding:10px 12px;border-top:5px solid var(--amber-dim)}
 .sum.all{border-top-color:var(--red)}
 .sum h3{margin:0 0 6px;font:400 19px/1 var(--display);letter-spacing:.4px;text-transform:uppercase}
-.sum .big{font:700 30px/1 var(--led)}.sum .big small{font:600 16px/1 var(--led);color:var(--ink2)}
+.sum .big{font:700 30px/1 var(--led)}
+@media (max-width:560px){#betsView .sumgrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}#betsView .sum{padding:8px 10px}#betsView .sum h3{font-size:15px}#betsView .sum .big{font-size:23px}#betsView .sum p{font-size:12px;line-height:1.3;margin:4px 0 0}}.sum .big small{font:600 16px/1 var(--led);color:var(--ink2)}
 .sum p{margin:4px 0 0;font-size:15px;color:var(--ink2)}
 .plus{color:var(--good)}.minus{color:var(--red)}
 .days{display:flex;gap:4px;overflow-x:auto;padding-bottom:2px}
 .days button{flex:0 0 auto}
 .rec{background:var(--paper);color:var(--ink);border:1px solid var(--line);padding:9px 12px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px}
-.rec .tag{align-self:start;font:700 16px/1 var(--led);padding:6px 9px;text-transform:uppercase;letter-spacing:.4px;background:var(--paper2);color:var(--ink2);text-align:center;white-space:nowrap}
+.rec .tag{align-self:start;font:700 14px/1 var(--led);padding:5px 8px;text-transform:uppercase;letter-spacing:.4px;background:var(--paper2);color:var(--ink2);text-align:center;white-space:nowrap}
 .rec .tag.won{background:var(--good);color:#fff}.rec .tag.plc{background:#b98a22;color:#fff}.rec .tag.lost{background:#8e3a2c;color:#fff}
 .rec .line{font-size:16px;grid-column:1/-1}.rec .line b{font-size:17px}
 .rec .order{font-size:15px;color:var(--ink2);grid-column:1/-1}
@@ -106,7 +108,7 @@ details.run[open]>summary{background:var(--paper2)}
 details.follow{background:var(--tote2);color:var(--paper);margin-top:8px}
 details.follow>summary{list-style:none;cursor:pointer;padding:11px 12px;font:600 18px/1.2 var(--led);display:flex;gap:6px;align-items:center}
 details.follow>summary::-webkit-details-marker{display:none}
-details.follow>summary b{color:var(--amber)}details.follow .rchev{margin-left:auto;color:var(--amber-dim)}
+details.follow>summary b{color:var(--amber)}.fs-l{text-transform:uppercase;letter-spacing:.5px;color:var(--amber);font-size:15px;flex:none}.fs-n{margin-left:auto;text-align:right;font-size:16px}details.follow>summary .rchev{margin-left:8px}details.follow .rchev{color:var(--amber-dim)}
 details.follow[open] .rchev{transform:rotate(90deg)}
 details.follow p{margin:0 12px 8px;font-size:15px;color:#d9c9a3}
 .fgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;padding:0 12px 12px}
@@ -117,7 +119,7 @@ details.follow p{margin:0 12px 8px;font-size:15px;color:#d9c9a3}
 .allow{display:grid;grid-template-columns:auto minmax(80px,1fr) auto;gap:10px;align-items:center;background:var(--tote);color:var(--paper);padding:8px 12px;margin-top:8px;font:600 16px/1.2 var(--led)}
 .allow-l{text-transform:uppercase;letter-spacing:.5px;color:var(--amber)}.allow-bar{height:12px;background:#3b3120;border-radius:6px;overflow:hidden}.allow-bar i{display:block;height:100%;border-radius:6px}
 .allow-n b{font-size:18px}
-@media (max-width:560px){.allow{grid-template-columns:auto 1fr}.allow-n{grid-column:1/-1}}
+@media (max-width:560px){.allow{grid-template-columns:auto 1fr;gap:4px 10px}.allow .allow-n{grid-row:1;text-align:right}.allow .allow-bar{grid-column:1/-1;grid-row:2}}
 .allow.credits{display:block;padding:8px 12px}
 .crow{display:grid;grid-template-columns:110px minmax(80px,1fr) auto;gap:10px;align-items:center;margin:3px 0}
 .cnote{display:block;color:#bfae86;font:500 13px/1.3 var(--body,inherit);margin-top:5px}
@@ -128,7 +130,7 @@ details.follow p{margin:0 12px 8px;font-size:15px;color:#d9c9a3}
 .fmode{display:flex;flex-wrap:wrap;gap:6px 18px;margin:8px 0}.fmode label{display:flex;gap:6px;align-items:center}
 .dayc{display:flex;gap:4px}.dayc button{padding:6px 12px}.qnote small{color:var(--ink2)}
 .ffload{background:var(--amber);color:var(--tote);border:0;min-height:38px;padding:0 12px;font-weight:700;font-size:15px;cursor:pointer}
-@media (max-width:560px){.crow{grid-template-columns:auto 1fr}.crow .allow-n{grid-column:1/-1}}
+@media (max-width:560px){.crow{grid-template-columns:auto 1fr;gap:4px 10px;margin:6px 0}.crow .allow-l{grid-row:1}.crow .allow-n{grid-row:1;text-align:right}.crow .allow-bar{grid-column:1/-1;grid-row:2}}
 .calc{background:var(--paper);color:var(--ink);padding:10px 12px;margin-top:8px;border-top:5px solid var(--good)}
 .calc h3{margin:0 0 6px;font:400 20px/1 var(--display);letter-spacing:.4px;text-transform:uppercase}
 .calc-row{display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin:5px 0}
@@ -141,7 +143,8 @@ details.follow p{margin:0 12px 8px;font-size:15px;color:#d9c9a3}
 #recRes{margin-top:6px}
 #slipBar{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;background:var(--tote);color:var(--paper);padding:8px 12px;border-top:3px solid var(--amber);font-size:16px}
 #slipBar[hidden]{display:none}
-.betbtn{background:var(--good);color:#fff;border:0;min-height:40px;padding:0 14px;font-weight:700;font-size:16px;cursor:pointer;margin:6px 0}
+.betbtn{background:var(--good);color:#fff;border:0;min-height:44px;padding:0 14px;font-weight:700;font-size:16px;cursor:pointer;margin:6px 0}
+.rbody>.betbtn,.rbody [data-bopen],.rbody [data-madd]{width:100%}
 .builder{background:var(--paper2);padding:8px 10px;margin:6px 0}
 .mwarn{background:#fff3cd;border-left:4px solid #d99a1e;padding:8px 10px;margin:8px 0;font-size:15px}
 .multi{margin:10px 0}.mleg{border-top:1px solid #0002;padding:6px 0}.mleg .rmeta button{margin-left:8px}
@@ -149,14 +152,14 @@ details.follow p{margin:0 12px 8px;font-size:15px;color:#d9c9a3}
 .bb-h{font:600 12px/1 var(--led);color:var(--ink2);text-transform:uppercase;letter-spacing:.5px;margin:12px 0 6px}.bb>.bb-h:first-child{margin-top:2px}
 .bb-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}.bb-g3{grid-template-columns:repeat(3,minmax(0,1fr))}
 .bb-grid button,.bb-act button,.bb-run{background:var(--paper);color:var(--ink);border:1px solid var(--line);min-height:42px;padding:4px 6px;font:700 15px/1.1 var(--led);cursor:pointer}
-.bb-grid button[aria-pressed="true"],.bb-run[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.bb-grid button[aria-pressed="true"],.bb-run[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}.bb-run[aria-pressed="true"]{box-shadow:inset 5px 0 0 var(--amber)}
 .bb-own{display:flex;align-items:center;gap:3px;font:700 16px/1 var(--led)}.bb-own input{width:100%;min-width:0;min-height:42px;font:700 16px/1 var(--led);padding:0 6px;border:1px solid var(--line);box-sizing:border-box}
 .bb-runners{display:grid;grid-template-columns:1fr;gap:4px}
 @media (min-width:700px){.bb-runners{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .bb-run{display:flex;align-items:center;gap:9px;text-align:left;width:100%;min-height:46px;padding:0 10px}
 .bb-nm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:16px}
-.bb-run i{font-style:normal;color:var(--good);font-weight:700}.bb-run[aria-pressed="true"] i{color:var(--amber)}
-.bb-px{font:600 14px/1 var(--led);color:var(--ink2);flex:none}.bb-run[aria-pressed="true"] .bb-px{color:var(--paper)}
+.bb-run i{font-style:normal;color:var(--good);font:700 16px/1 var(--led)}.bb-run[aria-pressed="true"] i{color:var(--amber)}
+.bb-cnt{color:var(--good)}.bb-px{font:600 14px/1 var(--led);color:var(--ink2);flex:none}.bb-run[aria-pressed="true"] .bb-px{color:var(--paper)}
 .bb-act{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px;margin-top:8px}.bb-act .ffload{background:var(--amber);color:var(--tote);border:0;min-height:48px;font-size:16px}.bb-act .ffload:disabled{opacity:.55}.bb-act [data-bclose]{padding:0 16px}
 .bsel{display:inline-flex;align-items:center;gap:5px}.bsel i{font-style:normal;color:var(--good);font-weight:700}
 .confirmbox{border-top-color:var(--amber);outline:3px solid var(--amber);margin-bottom:10px}
@@ -172,21 +175,31 @@ details.follow p{margin:0 12px 8px;font-size:15px;color:#d9c9a3}
 .panel{background:#f3ead2;border:1px solid var(--line);padding:6px 10px;margin:4px 0 10px}.panel h4{margin:2px 0 4px;font:400 18px/1 var(--display);text-transform:uppercase;letter-spacing:.4px}
 .tip{display:block;padding:5px 4px;border-bottom:1px dashed #0002;cursor:pointer;font-size:16px}.tip:hover{background:#fff6}.tip small{display:block;font-style:italic;color:#5b4520;font-size:13px}
 .tip .tw{display:inline-block;min-width:118px;font-weight:700}.tip.ptop{background:#fff3cd;border-bottom:0;margin-top:3px}.tnote{font-size:13px;color:#5b4520;margin:4px 0 0}
-.tabs.who{margin:8px 0 0;display:flex;flex-wrap:wrap;gap:6px;align-items:center}.tabs.who .wl{color:var(--paper);font-weight:700;margin-right:4px}
+.tabs.who{margin:8px 0 0;display:block;background:var(--tote);padding:8px 12px}
+.wrow{display:grid;grid-template-columns:92px minmax(0,1fr);gap:8px;align-items:center;margin:3px 0}
+.tabs.who .wl{color:var(--amber);font:600 15px/1.1 var(--led);text-transform:uppercase;letter-spacing:.5px}
+.wbtns{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:5px}
+@media (max-width:560px){.wrow{grid-template-columns:1fr;gap:4px;margin:4px 0 6px}.wbtns{grid-template-columns:repeat(5,minmax(0,1fr))}}
+.tabs.who button,.wchk{background:#3b3120;color:var(--paper);border:0;min-height:38px;padding:0 6px;font:700 16px/1 var(--led);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px}
+.tabs.who button[aria-pressed="true"]{background:var(--amber);color:var(--tote)}
 .smap{background:#fff8;border:1px solid var(--line);padding:6px 8px;margin:6px 0;font-size:15px}.smap>div{padding:2px 0}.smap .tw{display:inline-block;min-width:96px;font-weight:700}
 .tip .rest{display:block;font-size:14px;color:var(--ink2);margin-top:2px}.worder .tw{min-width:52px}
-.tabs.who .wsep{margin-left:14px}.wchk{color:var(--paper);font-size:15px;display:inline-flex;align-items:center;gap:4px;cursor:pointer}.wchk input{width:18px;height:18px}
+.wchk input{width:16px;height:16px;margin:0;accent-color:var(--amber)}.wchk:not(.on){opacity:.6}
 .tgwrap{overflow-x:auto}.tgrid{width:100%;border-collapse:collapse;font-size:15px}
 .tgrid th,.tgrid td{padding:6px 6px;border-bottom:1px solid #0002;text-align:left;vertical-align:top}
 .tgrid thead th{font:400 15px/1 var(--display);text-transform:uppercase;letter-spacing:.4px;color:var(--ink2);border-bottom:2px solid var(--ink)}
 .tgrid tbody th{font-size:17px;white-space:nowrap;width:1%}.tgrid tbody th small{display:block;font-weight:400;font-style:italic;font-size:12px;color:#5b4520;white-space:normal;min-width:120px;max-width:190px}
 .tgrid td.tc{cursor:pointer}.tgrid td.tc:hover{background:#fff8}.tgrid td:nth-child(2){background:#fff5;font-size:16px}.tgrid .tp{color:var(--ink2);white-space:nowrap}
 .tgrid tr.prow th,.tgrid tr.prow td{background:#fff3cd;border-bottom:0}
-@media(max-width:640px){.tgrid{font-size:13px}.tgrid tbody th small{display:none}.tgrid td b{display:block}}
+@media(max-width:640px){.tgrid{font-size:13px;table-layout:fixed}.tgrid thead th:first-child,.tgrid tbody th{width:62px}.tgrid tbody th small{display:none}
+  .tgrid td b{display:none}.tgrid th,.tgrid td{text-align:center;vertical-align:middle;padding:7px 2px}.tgrid tbody th{text-align:left;font-size:15px}
+  .tgrid td .sc{display:grid;width:max-content;margin:0 auto 3px}.tgrid .tp{display:block;font:600 13px/1 var(--led)}}
 .panelline{font-size:14px;color:var(--ink2);margin-top:3px}.panelline .agree{font-size:12px;background:#0001;padding:0 5px;border-radius:3px}.panelline .agree.aall{background:var(--good);color:#fff}
 .hl.hlpanel{border-left-color:var(--good)}
 .hl{cursor:pointer}.hl:hover{outline:2px solid var(--amber)}
-.hlbet{float:right;margin-left:10px}
+.hlbet{width:100%;margin:8px 0 0}
+.hl-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}.hl-h b{font:400 18px/1.1 var(--display);text-transform:uppercase;letter-spacing:.3px}.hl-h small{font:600 14px/1.2 var(--led);color:var(--ink2)}
+.hl-p{display:flex;align-items:center;gap:8px;margin-top:6px;min-width:0}.hl-n{font-size:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}.hl-s{margin-left:auto;font:700 16px/1 var(--led);white-space:nowrap;flex:none}
 .slipline{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line);font-size:15px}
 .slipline button,.tkbtns button,[data-bcheck],[data-btop],[data-bslipclr],[data-bclose],[data-mclose]{background:var(--paper2);color:var(--ink);border:1px solid var(--line);min-height:36px;padding:0 10px;font-weight:700;cursor:pointer}
 #betsView>.calc-row button{background:var(--paper);}
@@ -197,6 +210,7 @@ details.follow p{margin:0 12px 8px;font-size:15px;color:#d9c9a3}
 body{padding-bottom:60px}
 .nan-loan{border-top-color:var(--red)}
 .nan-loan .calc-l{width:auto;margin-right:4px}
+.syncin{display:grid;grid-template-columns:minmax(0,1fr) auto}.syncin .calc-l{grid-column:1/-1;width:auto}.syncin input{min-height:42px;font:700 18px/1 var(--led);padding:0 8px;border:1px solid var(--line);min-width:0}
 .calc-row .ffload{background:var(--amber);color:var(--tote);border:0}
 .loan-top{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:6px}
 .loan-top small{display:block;color:var(--ink2);font-size:13px}.loan-top b{display:block;font:700 24px/1.1 var(--led)}
@@ -217,11 +231,11 @@ details.race>summary.rsum{grid-template-columns:minmax(0,1fr) 14px;gap:0 8px;ali
 .r-pc{margin-left:auto;font:700 16px/1 var(--led);padding-left:4px}
 .r-next .sc{margin-right:1px}.r-scr{margin-left:auto;font:600 13px/1 var(--led);color:var(--ink2);white-space:nowrap}
 .r-note{font-size:15px;color:var(--ink2)}
-.r-panel{gap:4px 9px;padding-top:5px;border-top:1px dashed var(--line);font-size:13px;flex-wrap:nowrap;overflow:hidden}
-.r-t{display:inline-flex;align-items:center;gap:3px;flex:none}.r-t small{font:600 12px/1 var(--led);color:var(--ink2);text-transform:uppercase}
+.r-panel{gap:6px;padding-top:5px;border-top:1px dashed var(--line);font-size:13px;flex-wrap:nowrap;overflow:hidden}
+.r-t{display:inline-flex;align-items:center;justify-content:space-between;gap:3px;flex:none;width:58px;margin-left:6px}.r-t small{font:600 12px/1 var(--led);color:var(--ink2);text-transform:uppercase}
 .r-pan small{color:var(--ink)}.r-panel .agree{margin-left:auto;flex:none;font:600 12px/1 var(--led);background:#0001;padding:3px 6px;border-radius:3px}.r-panel .agree.aall{background:var(--good);color:#fff}
 .r-panel .sc,.r-next .sc{min-width:22px;height:22px;font-size:13px}
-@media (max-width:420px){.r-panel{gap:4px 7px}.agw{display:none}details.race>summary.rsum{gap:0 4px;padding:8px 8px}}
+@media (max-width:420px){.r-panel .r-t{margin-left:4px;width:56px}.agw{display:none}details.race>summary.rsum{gap:0 4px;padding:8px 8px}}
 details.race>summary.rsum .rchev{align-self:center}
 .more{display:block;width:100%;margin:8px 0;min-height:48px;background:var(--tote2);color:var(--paper);border:2px solid var(--amber-dim);font:400 19px/1 var(--display);letter-spacing:.5px;text-transform:uppercase;cursor:pointer}
 .morerow{display:flex;gap:6px;margin:8px 0}.morerow .more{margin:0;flex:2}.morerow .more.all{flex:1}
@@ -235,7 +249,7 @@ details.race>summary.rsum .rchev{align-self:center}
 .crcomp{overflow:hidden;text-overflow:ellipsis;min-width:0}
 .crwhy{font-style:italic;color:var(--ink2);margin:4px 0}
 .crhead p{margin:4px 0}
-.crpast{margin-top:10px}
+.crpast{margin-top:10px}.crpast>summary .rchev{margin-left:auto}
 @media (max-width:560px){
   .scrrow{grid-template-columns:36px 28px minmax(0,1fr)}
   details.run>summary{grid-template-columns:36px 28px minmax(0,1fr) 52px 54px;font-size:15px}
@@ -278,10 +292,10 @@ details.race>summary.rsum .rchev{align-self:center}
   <div class="foot">
     <h4>Who's who at Nan's kitchen table</h4>
     <p><b>Nan</b> works every pick out herself, pencil behind the ear and a cuppa going cold. Horses: she watches the bookies like a hawk and nudges their market by recent form. Dogs and harness: each runner's record, its last few runs and where it jumps from.</p>
-    <p><b>Pop</b> is FormFav's prediction model. He bought a computer in 1998 and has trusted it ever since.<br>
-    <b>Bob</b> is Krok's KrokBot model. Nobody's quite sure what Bob does, but he's very confident about it.<br>
-    <b>Gran</b> backs the bookies' favourite. Hasn't read a form guide since the Melbourne Cup was on black and white telly, and isn't about to start.<br>
-    <b>The Panel</b> averages the lot: a family argument that ends in a group hug.</p>
+    <p><b>Pop</b> is FormFav's prediction model. He bought a computer in 1998 and has trusted it ever since.</p>
+    <p><b>Bob</b> is Krok's KrokBot model. Nobody's quite sure what Bob does, but he's very confident about it.</p>
+    <p><b>Gran</b> backs the bookies' favourite. Hasn't read a form guide since the Melbourne Cup was on black and white telly, and isn't about to start.</p>
+    <p><b>The Panel</b> averages the lot: a family argument that ends in a group hug.</p>
     <p>Tap a race to see the field, and a runner to see exactly how Nan got there (she shows her working).</p>
     <h4>Where Nan gets her gossip</h4>
     <p>Horse prices and results come from <a href="https://puntersedge.online" target="_blank" rel="noopener">PuntersEdge</a>; form from FormFav. Dog and harness prices are Nan's own guesses. When FormFav's form runs dry, she borrows quick form from PuntersEdge (the market plus recent runs). If PuntersEdge is having a lie-down too, Krok's cards fill in, marked Price only: no form there, so Nan goes on the market alone, muttering.</p>
@@ -390,7 +404,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.19.6"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.20.0"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -550,7 +564,7 @@ function renderFollow(){
   const group=code=>{const ms=meets.filter(m=>m.code===code).map(m=>({m,rs:RACES.filter(r=>r.code===code&&r.slug===m.slug)})).sort((a,b)=>a.m.venue.localeCompare(b.m.venue));
     return ms.length?`<div class="fgrp"><h4>${CODE[code]}</h4>${ms.map(({m,rs})=>{const left=rs.filter(r=>Date.parse(r.jump)>now);
       return `<label class="fopt"><input type="checkbox" data-follow="${code}|${escH(m.slug)}" ${FOLLOW.auto||ticked(m)?"checked":""} ${FOLLOW.auto?"disabled title=\"Automatic mode follows every meeting\"":""}><span><b>${escH(m.venue)}</b><small>${left.length?`${left.length} race${left.length>1?"s":""} to run · next ${timeOf(left[0].jump)}`:"all run"}</small></span></label>`}).join("")}</div>`:""};
-  el.innerHTML=`<summary>Meetings Nan follows: ${FOLLOW.auto?`<b>all ${meets.length}</b> dog and harness meetings today (automatic)`:`<b>${n}</b> of ${meets.length} dog and harness meetings today${FOLLOW.mode==="manual"?" (only what you pick)":""}`} <span class="rchev">&#9656;</span></summary>
+  el.innerHTML=`<summary><span class="fs-l">Meetings Nan follows</span><span class="fs-n">${FOLLOW.auto?`<b>All ${meets.length}</b> dogs &amp; harness · auto`:`<b>${n}</b> of ${meets.length} dogs &amp; harness${FOLLOW.mode==="manual"?" · your picks":""}`}</span><span class="rchev">&#9656;</span></summary>
     <div class="fmode"><label><input type="radio" name="fmode" value="auto" ${FOLLOW.mode!=="manual"?"checked":""}> Automatic: every meeting while credits allow</label><label><input type="radio" name="fmode" value="manual" ${FOLLOW.mode==="manual"?"checked":""}> Only what I pick: ticked meetings, or single races with "Load this race only"</label></div>
     <p>Dog and harness form comes from FormFav's free allowance of 1,000 lookups a day (about one per race). Nan loads the meetings you tick by herself and keeps them in her record; any other meeting loads only when you open one of its races. Horses don't use the allowance, so they're always on. Ticked tracks stay ticked for future days. On Automatic, Nan follows every meeting while FormFav and Krok have enough credits for every race left today, and your ticks take over when credits run short. On Only what I pick, nothing loads unless you tick a meeting or open a race and choose Load this race only (about 1 credit).</p>
     <div class="fgrid">${group("D")}${group("N")}${(()=>{const hs=[...new Map(RACES.filter(r=>r.code==="H").map(r=>[r.venue,r])).keys()].sort();return hs.length?`<div class="fgrp"><h4>Horses</h4><p class="hnote">All ${hs.length} meetings, always on: PuntersEdge loads every horse race in one call, so they never use FormFav credits.</p><p class="hnote">${hs.map(escH).join(" · ")}</p></div>`:""})()}</div>`;
@@ -649,7 +663,7 @@ function raceCard(r,open,tag){const rk=ranked(r),t=Date.parse(r.jump),gone=t<=Da
     pick=`<div class="r-top"><span class="r-who">${WHO[w]}</span>${cloth(top[0].no,r.code,top[0].box)}<b class="r-name">${escH(top[0].name)}</b><span class="r-pc">${pct(top[0].p)}</span></div>
       <div class="r-next"><span class="r-who">Then</span>${top.slice(1,4).map(x=>cloth(x.no,r.code,x.box)).join("")}<span class="r-scr">${meta}${r.scr&&r.scr.length?` · ${r.scr.length} scr`:""}</span></div>`}
   const pn=rk&&!gone?panelOf(r):null,others=pn?pn.ts.filter(x=>x.who!=="nan"):[];
-  const panel=pn?`<div class="r-panel">${others.map(x=>`<span class="r-t"><small>${escH(x.label.split("'")[0])}</small>${cloth(x.pick.no,r.code,x.pick.box)}</span>`).join("")}<span class="r-t r-pan"><small>Panel</small>${cloth(pn.pick.no,r.code,pn.pick.box)}</span><span class="agree a${pn.agree===pn.ts.length?"all":""}">${pn.agree}/${pn.ts.length}<span class="agw"> agree</span></span></div>`:"";
+  const panel=pn?`<div class="r-panel"><span class="r-who">Panel</span>${cloth(pn.pick.no,r.code,pn.pick.box)}${others.map(x=>`<span class="r-t"><small>${escH(x.label.split("'")[0])}</small>${cloth(x.pick.no,r.code,x.pick.box)}</span>`).join("")}<span class="agree a${pn.agree===pn.ts.length?"all":""}">${pn.agree}/${pn.ts.length}<span class="agw"> agree</span></span></div>`:"";
   const src=rk&&r.src==="quick"?`<span class="qtag">${QUICK[r.code]&&QUICK[r.code].priceOnly?"Price only":"Quick form"}</span>`:"";
   return `<details class="race${gone?" jumped":""}" data-id="${escH(r.id)}" ${open.has(r.id)?"open":""}><summary class="rsum">
     <div class="r-main"><div class="r-title"><span class="r-time">${hm||""}<small>${ap||""}</small></span><b class="r-v">${escH(r.venue)}</b><b class="r-n">R${r.no}</b>${src}<span class="r-cd">${gone?'<span class="cdn gone">jumped</span>':cdn(r.jump).replace("⏱ ","")}</span></div>${pick}${panel}</div>
@@ -661,8 +675,8 @@ function render(){
   if(ST.meet!=="all"&&!meets.some(r=>`${r.code}|${r.venue}`===ST.meet))ST.meet="all";
   $("meet").innerHTML=`<option value="all">All meetings</option>`+meets.map(r=>`<option value="${escH(r.code+"|"+r.venue)}" ${ST.meet===r.code+"|"+r.venue?"selected":""}>${escH(r.venue)} · ${CODE[r.code]}</option>`).join("");
   if(OFF.has(ST.who))ST.who="all";
-  $("whoc").innerHTML=`<span class="wl">Whose tips</span>`+Object.entries(WHO).filter(([k])=>!OFF.has(k)).map(([k,l])=>`<button data-who="${k}" aria-pressed="${ST.who===k}">${l}</button>`).join("")
-    +`<span class="wl wsep">Tipsters on</span><label class="wchk"><input type="checkbox" checked disabled> Nan</label>`+["pop","bob","gran"].map(k=>`<label class="wchk"><input type="checkbox" data-tipon="${k}" ${OFF.has(k)?"":"checked"}> ${WHO[k]}</label>`).join("");
+  $("whoc").innerHTML=`<div class="wrow"><span class="wl">Whose tips</span><div class="wbtns">${Object.entries(WHO).filter(([k])=>!OFF.has(k)).map(([k,l])=>`<button data-who="${k}" aria-pressed="${ST.who===k}">${l}</button>`).join("")}</div></div>`
+    +`<div class="wrow"><span class="wl">Tipsters on</span><div class="wbtns"><label class="wchk on"><input type="checkbox" checked disabled> Nan</label>${["pop","bob","gran"].map(k=>`<label class="wchk${OFF.has(k)?"":" on"}"><input type="checkbox" data-tipon="${k}" ${OFF.has(k)?"":"checked"}> ${WHO[k]}</label>`).join("")}</div></div>`;
   const list=visible(),open=new Set([...document.querySelectorAll("details.race[open]")].map(d=>d.dataset.id));
   const openRun=new Set([...document.querySelectorAll("details.run[open]")].map(d=>d.closest("details.race").dataset.id+"#"+d.querySelector(".no").textContent));
   // Best Bet and Roughie, from races still to run
@@ -671,17 +685,17 @@ function render(){
   let rough=null;for(const x of live)for(const y of x.rk.slice(1,4)){const pr=x.r.code==="H"?y.u.win:y.price;if(pr>=8&&(!rough||y.p*pr>rough.y.p*rough.pr))rough={x,y,pr}}
   const tag=r=>`${timeOf(r.jump)} · ${escH(r.venue)} R${r.no} · ${CODE[r.code]}`;
   let pbest=null;for(const x of live){const pn=panelOf(x.r);if(pn&&pn.ts.length>=3&&pn.agree>=3&&(!pbest||pn.pick.p>pbest.pn.pick.p))pbest={r:x.r,pn}}
-  const NANHL=(best?`<div class="hl" data-hlbet="${escH(best.r.id)}|${best.rk[0].u.no}"><button class="betbtn hlbet">Bet on ${escH(best.rk[0].u.name)}</button><b>Nan's Best Bet:</b> ${tag(best.r)} · ${cloth(best.rk[0].u.no,best.r.code,best.rk[0].u.box)} <b>${escH(best.rk[0].u.name)}</b> ${pct(best.rk[0].p)} ${div(best.rk[0].price)}<span class="nsays">${escH(nanSays(best.r.code,best.r.id+"|"+best.rk[0].u.name))}</span></div>`:"")
-    +(rough?`<div class="hl" data-hlbet="${escH(rough.x.r.id)}|${rough.y.u.no}"><button class="betbtn hlbet">Bet on ${escH(rough.y.u.name)}</button><b>Nan's Roughie:</b> ${tag(rough.x.r)} · ${cloth(rough.y.u.no,rough.x.r.code,rough.y.u.box)} <b>${escH(rough.y.u.name)}</b> ${pct(rough.y.p)} ${div(rough.pr)}<span class="nsays">${escH(nanSays(rough.x.r.code,rough.x.r.id+"|"+rough.y.u.name))}</span></div>`:"");
+  const NANHL=(best?`<div class="hl" data-hlbet="${escH(best.r.id)}|${best.rk[0].u.no}"><div class="hl-h"><b>Nan's Best Bet</b><small>${tag(best.r)}</small></div><div class="hl-p">${cloth(best.rk[0].u.no,best.r.code,best.rk[0].u.box)}<b class="hl-n">${escH(best.rk[0].u.name)}</b><span class="hl-s">${pct(best.rk[0].p)} ${div(best.rk[0].price)}</span></div><span class="nsays">${escH(nanSays(best.r.code,best.r.id+"|"+best.rk[0].u.name))}</span><button class="betbtn hlbet">Bet on ${escH(best.rk[0].u.name)}</button></div>`:"")
+    +(rough?`<div class="hl" data-hlbet="${escH(rough.x.r.id)}|${rough.y.u.no}"><div class="hl-h"><b>Nan's Roughie</b><small>${tag(rough.x.r)}</small></div><div class="hl-p">${cloth(rough.y.u.no,rough.x.r.code,rough.y.u.box)}<b class="hl-n">${escH(rough.y.u.name)}</b><span class="hl-s">${pct(rough.y.p)} ${div(rough.pr)}</span></div><span class="nsays">${escH(nanSays(rough.x.r.code,rough.x.r.id+"|"+rough.y.u.name))}</span><button class="betbtn hlbet">Bet on ${escH(rough.y.u.name)}</button></div>`:"");
   const tOf=(r,w)=>tipsters(r).find(t=>t.who===w);
   if(ST.who!=="all"&&ST.who!=="nan"){const w=ST.who,mine=live.map(x=>({r:x.r,t:tOf(x.r,w)})).filter(x=>x.t).sort((a,b)=>b.t.pick.p-a.t.pick.p);
     const val=mine.map(x=>{const u=x.t.pick,f=ranked(x.r).find(y=>y.u.no===u.no),pr=f?(x.r.code==="H"?f.u.win:f.price):0;return {...x,pr,ev:u.p*pr}}).filter(x=>x.pr>=6).sort((a,b)=>b.ev-a.ev)[0];
-    const box=(x,title,extra)=>`<div class="hl" data-hlbet="${escH(x.r.id)}|${x.t.pick.no}"><button class="betbtn hlbet">Bet on ${escH(x.t.pick.name)}</button><b>${title}:</b> ${tag(x.r)} · ${cloth(x.t.pick.no,x.r.code,x.t.pick.box)} <b>${escH(x.t.pick.name)}</b> ${pct(x.t.pick.p)}${extra||""}<span class="nsays">${escH(x.t.says)}</span></div>`;
+    const box=(x,title,extra)=>`<div class="hl" data-hlbet="${escH(x.r.id)}|${x.t.pick.no}"><div class="hl-h"><b>${title}</b><small>${tag(x.r)}</small></div><div class="hl-p">${cloth(x.t.pick.no,x.r.code,x.t.pick.box)}<b class="hl-n">${escH(x.t.pick.name)}</b><span class="hl-s">${pct(x.t.pick.p)}${extra||""}</span></div><span class="nsays">${escH(x.t.says)}</span><button class="betbtn hlbet">Bet on ${escH(x.t.pick.name)}</button></div>`;
     $("hl").innerHTML=mine.length?box(mine[0],`${WHO[w]}'s Best Bet`)+(mine[1]?box(mine[1],`${WHO[w]}'s Next Best`):"")+(val&&val!==mine[0]&&val!==mine[1]?box(val,`${WHO[w]}'s Value Bet`,` ${div(val.pr)}`):"")
       :`<div class="hl">${WHO[w]} hasn't tipped any of the races still to run yet.${w==="gran"?" Gran only tips once the bookies have prices up.":""}</div>`}
   else if(ST.who==="nan")$("hl").innerHTML=NANHL;
-  else   $("hl").innerHTML=(pbest?`<div class="hl hlpanel" data-hlbet="${escH(pbest.r.id)}|${pbest.pn.pick.no}"><button class="betbtn hlbet">Bet on ${escH(pbest.pn.pick.name)}</button><b>The Panel's Best Bet:</b> ${tag(pbest.r)} · ${cloth(pbest.pn.pick.no,pbest.r.code,pbest.pn.pick.box)} <b>${escH(pbest.pn.pick.name)}</b> ${pct(pbest.pn.pick.p)}<span class="nsays">${pbest.pn.agree} of ${pbest.pn.ts.length} tipsters agree: ${pbest.pn.ts.map(t=>t.label.split("'")[0]).join(", ")}.</span></div>`:"")+(best?`<div class="hl" data-hlbet="${escH(best.r.id)}|${best.rk[0].u.no}"><button class="betbtn hlbet">Bet on ${escH(best.rk[0].u.name)}</button><b>Nan's Best Bet:</b> ${tag(best.r)} · ${cloth(best.rk[0].u.no,best.r.code,best.rk[0].u.box)} <b>${escH(best.rk[0].u.name)}</b> ${pct(best.rk[0].p)} ${div(best.rk[0].price)}<span class="nsays">${escH(nanSays(best.r.code,best.r.id+"|"+best.rk[0].u.name))}</span></div>`:"")
-    +(rough?`<div class="hl" data-hlbet="${escH(rough.x.r.id)}|${rough.y.u.no}"><button class="betbtn hlbet">Bet on ${escH(rough.y.u.name)}</button><b>Nan's Roughie:</b> ${tag(rough.x.r)} · ${cloth(rough.y.u.no,rough.x.r.code,rough.y.u.box)} <b>${escH(rough.y.u.name)}</b> ${pct(rough.y.p)} ${div(rough.pr)}<span class="nsays">${escH(nanSays(rough.x.r.code,rough.x.r.id+"|"+rough.y.u.name))}</span></div>`:"");
+  else   $("hl").innerHTML=(pbest?`<div class="hl hlpanel" data-hlbet="${escH(pbest.r.id)}|${pbest.pn.pick.no}"><div class="hl-h"><b>The Panel's Best Bet</b><small>${tag(pbest.r)}</small></div><div class="hl-p">${cloth(pbest.pn.pick.no,pbest.r.code,pbest.pn.pick.box)}<b class="hl-n">${escH(pbest.pn.pick.name)}</b><span class="hl-s">${pct(pbest.pn.pick.p)}</span></div><span class="nsays">${pbest.pn.agree} of ${pbest.pn.ts.length} tipsters agree: ${pbest.pn.ts.map(t=>t.label.split("'")[0]).join(", ")}.</span><button class="betbtn hlbet">Bet on ${escH(pbest.pn.pick.name)}</button></div>`:"")+(best?`<div class="hl" data-hlbet="${escH(best.r.id)}|${best.rk[0].u.no}"><div class="hl-h"><b>Nan's Best Bet</b><small>${tag(best.r)}</small></div><div class="hl-p">${cloth(best.rk[0].u.no,best.r.code,best.rk[0].u.box)}<b class="hl-n">${escH(best.rk[0].u.name)}</b><span class="hl-s">${pct(best.rk[0].p)} ${div(best.rk[0].price)}</span></div><span class="nsays">${escH(nanSays(best.r.code,best.r.id+"|"+best.rk[0].u.name))}</span><button class="betbtn hlbet">Bet on ${escH(best.rk[0].u.name)}</button></div>`:"")
+    +(rough?`<div class="hl" data-hlbet="${escH(rough.x.r.id)}|${rough.y.u.no}"><div class="hl-h"><b>Nan's Roughie</b><small>${tag(rough.x.r)}</small></div><div class="hl-p">${cloth(rough.y.u.no,rough.x.r.code,rough.y.u.box)}<b class="hl-n">${escH(rough.y.u.name)}</b><span class="hl-s">${pct(rough.y.p)} ${div(rough.pr)}</span></div><span class="nsays">${escH(nanSays(rough.x.r.code,rough.x.r.id+"|"+rough.y.u.name))}</span><button class="betbtn hlbet">Bet on ${escH(rough.y.u.name)}</button></div>`:"");
   const waiting=RACES.filter(r=>r.code!=="H"&&!CARDS[r.code+r.slug]&&wanted(r)).length;
   if(waiting&&!$("status").textContent.startsWith("Nan couldn't"))$("status").textContent=`Nan is still reading the form for ${waiting} race${waiting>1?"s":""}…`;
   else if($("status").textContent.startsWith("Nan is still"))$("status").textContent="";
@@ -895,7 +909,7 @@ function syncHtml(){return `<div class="calc" id="acctBox"><h3>Your account</h3>
   <div class="acct"><div><small>Your account code</small><b class="acode">${SYNC.code||"…"}</b><small id="syncSt">${syncLine()}</small></div></div>
   <p class="calc-out"><small><b>On another device:</b> open this link, or open Nan's Tips, go to My bets, and enter your code below. Keep your code to yourself: anyone with it can see and place bets on this account.</small></p>
   <div class="calc-row"><button data-scopy>Copy my link</button><button data-scode>Copy my code</button></div>
-  <div class="calc-row"><span class="calc-l">Use a code</span><input id="syncIn" placeholder="ABCD-2345" maxlength="9" autocapitalize="characters" autocomplete="off"><button class="ffload" data-slink>Link this device</button></div>
+  <div class="calc-row syncin"><span class="calc-l">Use a code</span><input id="syncIn" placeholder="ABCD-2345" maxlength="9" autocapitalize="characters" autocomplete="off"><button class="ffload" data-slink>Link this device</button></div>
   ${SYNC_MSG?`<p class="loanmsg">${SYNC_MSG}</p>`:""}</div>`}
 async function copyText(t,msg){try{await navigator.clipboard.writeText(t);SYNC_MSG=msg}catch(e){SYNC_MSG="Copy this: "+t}renderBets()}
 const BUILD={id:null,type:"win",sel:[],stake:10,style:"straight",pos:0,legs:[[],[],[],[]]};
@@ -1058,8 +1072,8 @@ function builderHtml(r){
     <div class="bb-grid bb-g3">${MULTI.map(x=>`<button data-btype="${x}">${BT[x][0]}</button>`).join("")}</div>
     ${styles.length?`<div class="bb-h">Style</div><div class="bb-grid bb-g3">${styles.map(([s,l])=>`<button data-bstyle="${s}" aria-pressed="${BUILD.style===s}">${l}</button>`).join("")}</div>`:""}
     ${BUILD.style==="standout"&&ex?`<div class="bb-h">Place</div><div class="bb-grid">${Array.from({length:k},(_,i)=>`<button data-bpos="${i}" aria-pressed="${BUILD.pos===i}">${ord(i+1)} (${(BUILD.legs[i]||[]).length})</button>`).join("")}</div>`:""}
-    <div class="bb-h">${k>1||ex?"Pick runners":"Pick a runner"}</div>
-    <div class="bb-runners">${[...f].sort((a,b)=>a.no-b.no).map(u=>`<button class="bsel bb-run" data-bsel="${u.no}" aria-pressed="${on(u.no)}">${cloth(u.no,r.code,u.box)}<span class="bb-nm">${escH(u.name)}</span>${marks(u.no)?`<i>${marks(u.no)}</i>`:""}${px(u)}</button>`).join("")}</div>
+    <div class="bb-h">${k>1||ex?"Pick runners":"Pick a runner"}${(BUILD.style==="standout"?(BUILD.legs[BUILD.pos]||[]).length:BUILD.sel.length)?` <span class="bb-cnt">· ${BUILD.style==="standout"?(BUILD.legs[BUILD.pos]||[]).length:BUILD.sel.length} picked</span>`:""}</div>
+    <div class="bb-runners">${[...f].sort((a,b)=>a.no-b.no).map(u=>`<button class="bsel bb-run" data-bsel="${u.no}" aria-pressed="${on(u.no)}">${cloth(u.no,r.code,u.box)}<span class="bb-nm">${escH(u.name)}</span>${marks(u.no)?`<i>${marks(u.no)}</i>`:on(u.no)?`<i>✓</i>`:""}${px(u)}</button>`).join("")}</div>
     <div class="bb-h">${ex?"Outlay":"Stake"}</div>
     <div class="bb-grid">${[0.5,1,2,5,10,20,50].map(v=>`<button data-bstake="${v}" aria-pressed="${BUILD.stake===v}">${v<1?(v*100)+"c":"$"+v}</button>`).join("")}<label class="bb-own">$<input id="bStake" type="number" min="0.5" step="0.5" inputmode="decimal" value="${BUILD.stake}"></label></div>
     <p class="calc-out">${help}${ex&&combos(tk)?`<b>${comboLine(tk)}</b> (flexi: a ${money(BUILD.stake)} outlay over ${combos(tk)} combination${combos(tk)===1?"":"s"}). `:""}Pays the official tote dividend.</p>
@@ -1115,9 +1129,10 @@ function tkHtml(t){
   if(isMulti(t.type))return tkMulti(t);
   const o=settleOf(t),c=costOf(t),man=BK.manual[t.rk],afterJump=Date.now()>=Date.parse(t.jump);
   const tag={open:["To run",""],waiting:["Waiting on results",""],div:["Won, dividend coming",""],won:[`Won ${money(o.pay||0)}`,"won"],lost:["Lost","lost"],void:["Scratched: refunded",""],cancelled:["Cancelled",""]}[o.state];
-  return `<div class="rec tk"><div><div class="rmeta">${timeOf(t.jump)}${t.status!=="cancelled"?cdn(t.jump):""} · ${escH(t.venue)} R${t.no} · ${CODE[t.code]}</div>
-    <div class="line"><b>${BT[t.type][0]}${styleName(t)}</b> ${selHtml(t)} · ${money(c)}${t.type==="ew"?` (${money(t.stake)} each way)`:""}${comboLine(t)?` <small>(${comboLine(t)})</small>`:""}</div></div>
+  return `<div class="rec tk"><div class="rmeta">${timeOf(t.jump)}${t.status!=="cancelled"?cdn(t.jump):""} · ${escH(t.venue)} R${t.no} · ${CODE[t.code]}</div>
     <span class="tag ${tag[1]}">${tag[0]}${o.src==="manual"?" · your result":""}</span>
+    <div class="line"><b>${BT[t.type][0]}${styleName(t)}</b> ${selHtml(t)} · ${money(c)}</div>
+    ${t.type==="ew"||comboLine(t)?`<div class="order">${t.type==="ew"?`${money(t.stake)} each way`:comboLine(t)}</div>`:""}
     ${(LEDGER.per[t.id]||0)>0?`<div class="order nanpay">${money(LEDGER.per[t.id])} of it paid back to Nan</div>`:""}
     ${o.src==="manual"?`<div class="order">Your result: ${man.map((n,i)=>`${ord(i+1)} ${cloth(n,t.code,((t.field||[]).find(u=>u.no===n)||{}).box)}`).join(" · ")}. Estimated dividend for now: the official result will replace this when it's in, and overrides it if it's different.</div>`:""}
     ${o.src==="official"&&BK.off[t.rk]?`<div class="order">Official: ${BK.off[t.rk].fin.slice().sort((a,b)=>a.pos-b.pos).slice(0,4).map(x=>`${ord(x.pos)} ${x.no!=null?cloth(x.no,t.code)+" ":""}${escH(x.name)}`).join(" · ")}</div>`:""}
@@ -1280,7 +1295,7 @@ function crCard(m){const started=Date.now()>=Date.parse(m.start),tp=crTips(m),[h
   const sides=Object.keys(tp.p),open=CR.open===m.id;
   const odds=sides.map(k=>`<span class="cro">${crChip(m,k)}<b>${m.odds[k].toFixed(2)}</b></span>`).join("");
   const others=tp.ts.filter(x=>x[0]!=="nan");
-  const panel=`<div class="r-panel">${others.map(x=>`<span class="r-t"><small>${x[1]}</small>${crChip(m,x[2])}</span>`).join("")}<span class="r-t r-pan"><small>Panel</small>${crChip(m,tp.panel)}</span><span class="agree a${tp.agree===tp.ts.length?"all":""}">${tp.agree}/${tp.ts.length}<span class="agw"> agree</span></span></div>`;
+  const panel=`<div class="r-panel"><span class="r-who">Panel</span>${crChip(m,tp.panel)}${others.map(x=>`<span class="r-t"><small>${x[1]}</small>${crChip(m,x[2])}</span>`).join("")}<span class="agree a${tp.agree===tp.ts.length?"all":""}">${tp.agree}/${tp.ts.length}<span class="agw"> agree</span></span></div>`;
   let body="";
   if(open){if(started)body=`<p class="qnote">Underway. Betting closed at the first ball.</p>`;
     else{const side=sides.includes(CR.side)?CR.side:null,ret=side?r2(CR.stake*m.odds[side]):0;
@@ -1316,9 +1331,10 @@ function crSlip(t){return `${crWhen(t.jump)}${cdn(t.jump)} · ${escH(t.home)} v 
 function crTk(t){const o=settleOf(t),res=(BK.manual[t.rk]||[])[0],started=Date.now()>=Date.parse(t.jump);
   const tag={open:["To play",""],waiting:["Enter the result",""],won:[`Won ${money(o.pay||0)}`,"won"],lost:["Lost","lost"],void:["Refunded",""],cancelled:["Cancelled",""]}[o.state];
   const opts=t.test?["home","away","draw","nr"]:["home","away","tie","nr"];
-  return `<div class="rec tk"><div><div class="rmeta">${crWhen(t.jump)}${t.status!=="cancelled"?cdn(t.jump):""} · Cricket · ${escH(t.comp)}</div>
-    <div class="line"><b>Head to head</b> ${crChip(t,t.sel)} ${escH(crName(t,t.sel))} <small>(${escH(t.home)} v ${escH(t.away)})</small> @ ${t.price.toFixed(2)} · ${money(t.stake)} <small>(returns ${money(r2(t.stake*t.price))})</small></div></div>
+  return `<div class="rec tk"><div class="rmeta">${crWhen(t.jump)}${t.status!=="cancelled"?cdn(t.jump):""} · Cricket · ${escH(t.comp)}</div>
     <span class="tag ${tag[1]}">${tag[0]}</span>
+    <div class="line"><b>Head to head</b> ${crChip(t,t.sel)} ${escH(crName(t,t.sel))} @ ${t.price.toFixed(2)} · ${money(t.stake)}</div>
+    <div class="order">${escH(t.home)} v ${escH(t.away)} · returns ${money(r2(t.stake*t.price))}</div>
     ${(LEDGER.per[t.id]||0)>0?`<div class="order nanpay">${money(LEDGER.per[t.id])} of it paid back to Nan</div>`:""}
     ${res?`<div class="order">Result you entered: ${crChip(t,res)} ${escH(res==="home"||res==="away"?t[res]+" won":crName(t,res))}${res==="nr"||res==="tie"&&t.sel!=="tie"?" (stake refunded)":""}</div>`:""}
     <div class="tkbtns">${o.state==="open"?`<button data-bcancel="${t.id}">Cancel bet</button>`:""}${started&&t.status!=="cancelled"?`<button data-crman="${escH(t.rk)}">${res?"Change result":"Enter result"}</button>`:""}</div>
