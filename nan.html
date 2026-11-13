@@ -316,6 +316,33 @@ details.race>summary.rsum .rchev{align-self:center}
 .crwhy{font-style:italic;color:var(--ink2);margin:4px 0}
 .crhead p{margin:4px 0}
 .crpast{margin-top:10px}.crpast>summary .rchev{margin-left:auto}
+/* v2.30.1: Nan's record lined up like the race cards */
+.rec.rc{display:block;padding:9px 12px;min-width:0}.races>*{min-width:0}
+.rc-h{display:flex;align-items:center;gap:8px;min-width:0;white-space:nowrap;padding-bottom:5px;border-bottom:1px solid var(--line)}
+.rc-v{font:400 19px/1.05 var(--display);letter-spacing:.3px;text-transform:uppercase;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.rc-h .tag{margin-left:auto;flex:none}
+.rc-m{font:600 14px/1.2 var(--led);color:var(--ink2);margin:5px 0 2px}
+.rc-g{margin-top:6px}
+.rc-res{display:flex;align-items:center;gap:5px;min-width:0;border-top:1px dashed var(--line);margin-top:4px;padding-top:7px;font-size:15px}.rc-res .sc{min-width:24px;height:24px;font-size:14px}
+.rc-hd1{flex:none;width:58px;font:600 11px/1 var(--led);text-transform:uppercase;letter-spacing:.5px;color:var(--ink2)}.rc-w{margin-left:6px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rc-w b{font-family:var(--led)}
+.rc-hd,.rc-r{display:grid;grid-template-columns:34px 28px minmax(0,1fr) 48px 62px;column-gap:6px;align-items:center}
+.rc-hd{font:600 11px/1 var(--led);text-transform:uppercase;letter-spacing:.3px;color:var(--ink2);padding:2px 0 4px}.rc-hd span:first-child{grid-column:1/4}.rc-hd span:nth-child(n+2){text-align:right}
+.rc-r{min-height:32px;font-size:15px;border-bottom:1px solid #0000000d}.rc-r:last-child{border-bottom:0}
+.rc-r .sc{min-width:24px;height:24px;font-size:14px}
+.rc-k{font:700 15px/1 var(--led);color:var(--ink2)}.rc-r.top .rc-k{color:var(--red)}.rc-r.top .rc-n{font-weight:700}
+.rc-n{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rc-p,.rc-f{text-align:right;font:700 15px/1 var(--led);font-variant-numeric:tabular-nums}.rc-p{color:var(--ink2)}
+.rc-f.w{color:var(--good)}.rc-f.p{color:#9a6f12}
+.rec.rc .betline{margin-top:6px;padding-top:6px;border-top:1px dashed var(--line)}
+.cgrid{display:grid;grid-template-columns:46px minmax(0,1fr);gap:6px;align-items:start;margin:6px 0}.cgrid>.calc-l{line-height:40px}
+@media (max-width:560px){#recordView .sumgrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}#recordView .sum{padding:8px 10px}#recordView .sum h3{font-size:15px}#recordView .sum .big{font-size:23px}#recordView .sum .big small{display:block;font-size:13px;margin-top:2px}#recordView .sum p{font-size:12px;line-height:1.3}}.cgrid .calc-l{width:auto}
+.cg{display:grid;gap:5px}.cg6{grid-template-columns:repeat(6,minmax(0,1fr))}.cg4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.cg button{background:var(--paper2);color:var(--ink);border:1px solid var(--line);min-height:40px;padding:2px 3px;font:700 15px/1.1 var(--led);cursor:pointer;min-width:0}
+.cg button[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.cg .calc-own{min-width:0}.cg .calc-own input{width:100%;min-width:0;min-height:40px}
+.recf{flex-direction:column;align-items:stretch}.recf .tabs{display:grid!important;gap:5px}#recCodes{grid-template-columns:repeat(4,minmax(0,1fr))}#recRes{grid-template-columns:repeat(3,minmax(0,1fr));margin-top:0}
+.recf button{padding:0 4px;min-height:40px}
+@media (max-width:420px){.rc-hd,.rc-r{grid-template-columns:32px 26px minmax(0,1fr) 42px 52px;column-gap:5px}.cg button{font-size:14px}}
 /* v2.30: tips first, filters below, sources tucked away */
 #hl{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:8px;margin-top:8px}#hl .hl{margin-top:0}
 .hl-p{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:4px 10px}
@@ -392,7 +419,7 @@ details.srcs{margin-top:16px}details.srcs>.allow,details.srcs #allow>.allow{marg
     <div class="calc board" id="board"><h3>Tipster leaderboard</h3><p>Loading…</p></div>
     <div class="sumgrid" id="recSum"></div>
     <div class="bar"><div class="tabs days" id="recDays"></div></div>
-    <div class="bar"><div class="tabs" id="recCodes"></div><div class="tabs" id="recRes"></div></div>
+    <div class="bar recf"><div class="tabs" id="recCodes"></div><div class="tabs" id="recRes"></div></div>
     <div class="calc" id="recCalc"></div>
     <div class="note" id="recDay"></div>
     <div class="races" id="recList"></div>
@@ -516,7 +543,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.30.0"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.30.1"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -1879,7 +1906,7 @@ function betOut(r,type,st){
   }
   return null;
 }
-const RESF=[["all","All results"],["1","Winners"],["2","2nd"],["3","3rd"],["p","Placed (top 3)"],["u","Unplaced"]];
+const RESF=[["all","All results"],["1","Winners"],["2","2nd"],["3","3rd"],["p","Placed"],["u","Unplaced"]];
 function resOk(r){const f=REC.res;if(f==="all")return true;if(!r.settled_at||r.won===null)return false;const p=r.top_pos||99;
   return f==="1"?p===1:f==="2"?p===2:f==="3"?p===3:f==="p"?p<=3:p>3}
 const money=v=>(v<0?"-$":"$")+Math.abs(v).toLocaleString("en-AU",{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -1913,12 +1940,14 @@ function recRow(r){
   else if(r.won){tag=`Won${r.ret?" "+div(r.ret):""}`;cls="won"}
   else if(r.placed){tag=`${ord(r.top_pos)} · placed`;cls="plc"}
   else{tag=r.top_pos?ord(r.top_pos):"Unplaced";cls="lost"}
-  const pos=Object.fromEntries(fin.map(x=>[x.name.toLowerCase(),x.pos]));
-  return `<div class="rec"><div><div class="rmeta">${timeOf(r.jump)} · ${escH(r.venue)} R${r.race} · ${codeName}${r.dist?" · "+r.dist+"m":""}</div>
-    <div class="line">Nan: ${cloth(top.no,r.code,top.box)} <b>${escH(top.name)}</b> ${pct(top.p)} · ${r.code==="H"&&top.mk?`market ${div(top.mk)}`:`her price ${div(top.price)}`}</div></div>
-    <span class="tag ${cls}">${tag}</span>
-    ${fin.length?`<div class="order">Result: ${fin.slice(0,3).map(x=>`${ord(x.pos)} ${x.no!=null?cloth(x.no,r.code)+" ":""}${escH(x.name)}${x.pos===1&&x.win?` (${div(x.win)})`:""}`).join(" · ")}</div>`:""}
-    <div class="order">Nan's order: ${r.picks.slice(0,4).map((x,i)=>{const p=pos[String(x.name).toLowerCase()];return `${ord(i+1)} ${cloth(x.no,r.code,x.box)} ${escH(x.name)} ${pct(x.p)}${p&&p<=3?` <i>→ ${ord(p)}</i>`:""}`}).join(" · ")}</div>${betLine(r)}</div>`;
+  const pos=Object.fromEntries(fin.map(x=>[x.name.toLowerCase(),x.pos])),[hm,ap]=timeOf(r.jump).split(" ");
+  const price=r.code==="H"&&top.mk?`market ${div(top.mk)}`:`Nan's price ${div(top.price)}`;
+  const fcell=p=>p?`<span class="rc-f${p===1?" w":p<=3?" p":""}">${ord(p)}</span>`:`<span class="rc-f">${fin.length?"–":""}</span>`;
+  return `<div class="rec rc"><div class="rc-h"><span class="r-time">${hm||""}<small>${ap||""}</small></span><b class="rc-v">${escH(r.venue)} R${r.race}</b><span class="tag ${cls}">${tag}</span></div>
+    <div class="rc-m">${[codeName,r.dist?r.dist+"m":"",top.name?price:""].filter(Boolean).join(" · ")}</div>
+    <div class="rc-g"><div class="rc-hd"><span>Nan's order</span><span>Chance</span><span>Finish</span></div>
+    ${r.picks.slice(0,4).map((x,i)=>`<div class="rc-r${i===0?" top":""}"><span class="rc-k">${ord(i+1)}</span>${cloth(x.no,r.code,x.box)}<span class="rc-n">${escH(x.name)}</span><span class="rc-p">${pct(x.p)}</span>${fcell(pos[String(x.name).toLowerCase()])}</div>`).join("")}</div>
+    ${fin.length?`<div class="rc-res"><span class="rc-hd1">Result</span>${fin.slice(0,3).map(x=>x.no!=null?cloth(x.no,r.code):"").join("")}<span class="rc-w">${escH(fin[0].name)}${fin[0].win?` <b>${div(fin[0].win)}</b>`:""}</span></div>`:""}${betLine(r)}</div>`;
 }
 function betLine(r){
   const o=betOut(r,REC.bet,REC.stake),name=BETS.find(b=>b[0]===REC.bet)[1];if(!o)return "";
@@ -1928,8 +1957,8 @@ function renderCalc(rows){
   let cost=0,back=0,n=0,hits=0,unk=0;for(const r of rows){const o=betOut(r,REC.bet,REC.stake);if(!o)continue;if(o.hit&&o.back===null){unk++;continue}n++;cost+=o.cost;back+=o.back;if(o.hit)hits++}
   const b=BETS.find(x=>x[0]===REC.bet),prof=back-cost;
   $("recCalc").innerHTML=`<h3>If you'd backed Nan</h3>
-    <div class="calc-row"><span class="calc-l">Stake</span>${[1,5,10,20,50].map(v=>`<button data-stake="${v}" aria-pressed="${REC.stake===v}">$${v}</button>`).join("")}<label class="calc-own">$<input id="stakeIn" type="number" min="0.5" step="0.5" inputmode="decimal" value="${REC.stake}"></label></div>
-    <div class="calc-row"><span class="calc-l">Bet</span>${BETS.map(([k,l])=>`<button data-bet="${k}" aria-pressed="${REC.bet===k}">${l}</button>`).join("")}</div>
+    <div class="cgrid"><span class="calc-l">Stake</span><div class="cg cg6">${[1,5,10,20,50].map(v=>`<button data-stake="${v}" aria-pressed="${REC.stake===v}">$${v}</button>`).join("")}<label class="calc-own">$<input id="stakeIn" type="number" min="0.5" step="0.5" inputmode="decimal" value="${REC.stake}" aria-label="Your own stake"></label></div></div>
+    <div class="cgrid"><span class="calc-l">Bet</span><div class="cg cg4">${BETS.map(([k,l])=>`<button data-bet="${k}" aria-pressed="${REC.bet===k}">${l}</button>`).join("")}</div></div>
     <div class="calc-out">${n?`<b>${money(REC.stake)} ${b[1].toLowerCase()}</b> on ${b[2]}, in the ${n} race${n>1?"s":""} below: staked <b>${money(cost)}</b>, back <b>${money(back)}</b>, <b class="${prof>=0?"plus":"minus"}">${prof>=0?"+":""}${money(prof)}</b> (${hits} collect${hits===1?"":"s"}).`:"No settled races to bet on with these filters yet."}${unk?` ${unk} winning bet${unk>1?"s":""} left out: no dividend recorded.`:""}
       <small>Official tote dividends per $1, after the fact. Scratched picks are refunds and don't count. ${REC.res!=="all"?"A results filter is on, so this only counts those races.":""}</small></div>`;
 }
