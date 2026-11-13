@@ -118,7 +118,10 @@ details.follow p{margin:0 12px 8px;font-size:15px;color:#d9c9a3}
 .crow{display:grid;grid-template-columns:110px minmax(80px,1fr) auto;gap:10px;align-items:center;margin:3px 0}
 .cnote{display:block;color:#bfae86;font:500 13px/1.3 var(--body,inherit);margin-top:5px}
 .qtag{background:#2a62c9;color:#fff;padding:1px 6px;font-weight:700}
-.qnote{background:var(--paper2);padding:8px 10px;font-size:15px}.qnote small{color:var(--ink2)}
+.qnote{background:var(--paper2);padding:8px 10px;font-size:15px}
+.nsays{font-style:italic;margin:6px 0 8px;color:#5b4520}.hl .nsays{display:block;margin:2px 0 0;font-size:14px}
+.fmode{display:flex;flex-wrap:wrap;gap:6px 18px;margin:8px 0}.fmode label{display:flex;gap:6px;align-items:center}
+.dayc{display:flex;gap:4px}.dayc button{padding:6px 12px}.qnote small{color:var(--ink2)}
 .ffload{background:var(--amber);color:var(--tote);border:0;min-height:38px;padding:0 12px;font-weight:700;font-size:15px;cursor:pointer}
 @media (max-width:560px){.crow{grid-template-columns:auto 1fr}.crow .allow-n{grid-column:1/-1}}
 .calc{background:var(--paper);color:var(--ink);padding:10px 12px;margin-top:8px;border-top:5px solid var(--good)}
@@ -166,6 +169,7 @@ body{padding-bottom:60px}
   <div class="view"><button data-view="tips" aria-pressed="true">Today's tips</button><button data-view="record" aria-pressed="false">Nan's record</button><button data-view="bets" aria-pressed="false">My bets</button></div>
   <section id="tipsView">
   <div class="bar">
+    <div class="tabs dayc" id="dayc"></div>
     <div class="tabs" id="codes"></div>
     <select id="meet" aria-label="Meeting"></select>
     <label><input type="checkbox" id="past"> Show jumped races</label>
@@ -211,6 +215,14 @@ const ord=n=>n+(["th","st","nd","rd"][(n%100-20)%10]||["th","st","nd","rd"][n%10
 // Saddlecloth colours: dogs wear their box's rug (1 red, 2 black-and-white, 3 white, 4 blue, 5 yellow, 6 green, 7 black, 8 pink); horses and harness by number
 const SC_N=[["#d8342a","#fff"],["#fbfaf5","#1a1a1a"],["#2a62c9","#fff"],["#f2c92b","#1a1a1a"],["#2a9a55","#fff"],["#1d1d20","#f2c92b"],["#f07a1a","#1a1a1a"],["#ec7fb0","#1a1a1a"],["#36c0c9","#1a1a1a"],["#7b3fb5","#fff"],["#9aa0a6","#b8261a"],["#9bd13b","#1a1a1a"],["#7a4a2a","#fff"],["#7d1f2b","#f2c92b"],["#c9b98a","#1a1a1a"],["#8cc8f0","#b8261a"],["#1f2f6b","#fff"],["#3e6b2e","#f2c92b"],["#5a2a6b","#f2c92b"],["#e8e0c8","#b8261a"]];
 const SC_D=[["#d8342a","#fff"],["linear-gradient(180deg,#1d1d20 0 27%,#fbfaf5 27% 73%,#1d1d20 73%)","#1d1d20"],["#fbfaf5","#1a1a1a"],["#2a62c9","#fff"],["#f2c92b","#1a1a1a"],["#2a9a55","#fff"],["#1d1d20","#fff"],["#ec7fb0","#1a1a1a"]];
+/* Nan's sayings (the same pool as the game), one per race, picked from the race and her pick so it stays put */
+const NAN_SAYS={
+  all:["Nan's been doing the form since the wireless days. Trust her.","Nan put the coin jar on this one.","Nan's knitting needles pointed straight at this one.","Nan reckons you could throw a blanket over the rest.","Nan read the form twice and had a biscuit. Decision made.","Nan's not one to brag, but she had the last three.","Nan says get on before the bookies wake up.","Nan wouldn't put her teeth in for anything else in this race.","The crossword answer this morning was this one's name. Nan says that's no coincidence.","Nan says the numbers don't lie, and neither does Nan.","Nan's lucky cardigan is on. You've been warned.","The whole bridge club is on this one. Don't tell them Nan told you.","Nan's had a cuppa and a long hard look. This is the one.","Nan says if this one loses, she's taking up lawn bowls.","Nan watched the replays in her dressing gown. Worth it.","Nan doesn't do favourites. Except this one. And you, love.","Nan says it'd have to fall over to lose. Touch wood.","Nan reckons the rest are running for second.","Nan's been right before. Don't ask how often she's been wrong.","Nan says she's got a feeling in her waters about this one.","Nan's hip has been twinging all morning. That's always a good sign.","Nan says back it, and if it loses, blame Pop.","Nan's already planning what to do with the winnings. Mostly bingo.","Nan says this one's been flying under the radar. Not any more."],
+  H:["Nan likes the way the money's coming for this one.","Jockey's in form and so is the horse. Nan's smiling.","Nan's seen the barrier draw and she's very happy with it.","Nan says this one's been trained to the minute.","Nan reckons it's been set for this race since the winter."],
+  D:["Nan says this dog jumps like it's late for its tea.","Nan likes a dog that knows the way to the rail.","Nan says the box draw's a gift. Don't waste it.","Nan reckons this one would chase the lure to Sydney and back.","Nan says this pup's got more early speed than Pop on pension day."],
+  N:["Nan says this driver could steer a shopping trolley through a car park.","Nan likes a pacer that can fire off the gate.","Nan reckons this one's got a sit and a finish in it.","Nan says no gallops, no worries. Steady as she goes.","Nan's mate in the stewards' tower rates the driver."]};
+const sayHash=s=>{let h=2166136261;for(const c of String(s)){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0};
+function nanSays(code,seed){const L=[...(NAN_SAYS[code]||[]),...NAN_SAYS.all];return L[sayHash(seed)%L.length]}
 function cloth(no,code,box,cls){
   const d=code==="D",k=d?((box||no)-1)%8:(no-1)%20,[bg,ink]=(d?SC_D:SC_N)[k<0?0:k]||SC_N[0],stripes=bg.includes("gradient");
   return `<span class="sc${cls?" "+cls:""}" style="background:${bg};color:${ink}${stripes?";font-size:14px":""}">${no}</span>`;
@@ -285,29 +297,36 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null};
-const NAN_VERSION="2.13.0"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.14.0"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
+// ?day=tomorrow shows tomorrow's races (form loads only for what you open or pick); past days are on Nan's record
+const TOMORROW=new URLSearchParams(location.search).get("day")==="tomorrow";
+const pickDay=(days,today)=>TOMORROW?(days||[]).map(d=>d.date).filter(d=>d>today).sort()[0]:today;
 async function loadAll(){
   const [pe,dl,hl,fo,qd,qh]=await Promise.allSettled([getJSON(PE_URL),getJSON(DG_URL+"?list=1"),getJSON(HN_URL+"&list=1"),getJSON(SB+"/otr-nan?follow=1"),getJSON(PE_URL+"?quick=greyhound"),getJSON(PE_URL+"?quick=harness")]);
   if(qd.status==="fulfilled")QUICK.D=qd.value;if(qh.status==="fulfilled")QUICK.N=qh.value;
-  if(fo.status==="fulfilled"&&fo.value.tracks){FOLLOW={D:fo.value.tracks.D||[],N:fo.value.tracks.N||[],auto:!!fo.value.auto};ALLOW=fo.value.allowance||null;CREDITS=fo.value.credits||null}
+  if(fo.status==="fulfilled"&&fo.value.tracks){FOLLOW={D:fo.value.tracks.D||[],N:fo.value.tracks.N||[],auto:!!fo.value.auto,mode:fo.value.mode||"auto"};ALLOW=fo.value.allowance||null;CREDITS=fo.value.credits||null}
   if(pe.status==="fulfilled"){const j=pe.value;ST.today=ST.today||j.today;RESULTS=j.results||{};
-    for(const d of j.days||[])if(d.date===j.today)for(const m of d.meetings)for(const r of m.races)
+    const want=pickDay(j.days,j.today);ST.day=want;for(const d of j.days||[])if(d.date===want)for(const m of d.meetings)for(const r of m.races)
       addRace({id:`H|${m.key}|${r.number}`,key:`${m.key}_T_${r.number}`,code:"H",venue:m.venue,state:m.state,date:m.date,no:r.number,name:r.name,dist:r.distance,cls:r.cls,cond:r.track,jump:r.jump,est:r.est,race:r})}
   for(const [res,code] of [[dl,"D"],[hl,"N"]])if(res.status==="fulfilled"){const j=res.value;ST.today=ST.today||j.today;
-    const d=(j.days||[]).find(x=>x.date===j.today);for(const m of d?d.meetings:[])for(const r of m.races)
+    const want=pickDay(j.days,j.today);ST.day=ST.day||want;const d=(j.days||[]).find(x=>x.date===want);for(const m of d?d.meetings:[])for(const r of m.races)
       addRace({id:`${code}|${m.slug}|${r.number}`,code,venue:m.track,slug:m.slug,date:m.date,no:r.number,name:r.name,dist:r.distance,cls:r.cls,jump:r.jump})}
   RACES.sort((a,b)=>Date.parse(a.jump)-Date.parse(b.jump)||a.venue.localeCompare(b.venue));
   const bad=[pe,dl,hl].filter(x=>x.status!=="fulfilled").length;
-  $("sub").textContent=(ST.today?new Date(ST.today+"T12:00:00").toLocaleDateString("en-AU",{weekday:"long",day:"numeric",month:"long"}):"Today")+" · v"+NAN_VERSION;
+  const shown=ST.day||ST.today;$("sub").textContent=(shown?new Date(shown+"T12:00:00").toLocaleDateString("en-AU",{weekday:"long",day:"numeric",month:"long"}):"Today")+(TOMORROW?" (tomorrow)":"")+" · v"+NAN_VERSION;
+  $("dayc").innerHTML=`<button data-day="today" aria-pressed="${!TOMORROW}">Today</button><button data-day="tomorrow" aria-pressed="${TOMORROW}">Tomorrow</button><button data-day="past">Past days</button>`;
+  if(TOMORROW&&!RACES.length)$("status").textContent="Tomorrow's races aren't out yet. Horse fields usually arrive mid-afternoon.";
   $("status").textContent=bad===3?"Nan couldn't load today's races. Try again soon.":bad?"Some codes didn't load, so they're missing for now.":"";
   render();pump();
 }
 // dog and harness fields: only meetings Nan follows load by themselves (to save the daily form allowance); others when asked
 const ticked=r=>(FOLLOW[r.code]||[]).includes(r.slug),follows=r=>!!FOLLOW.auto||ticked(r),wanted=r=>follows(r)||WANT.has(r.code+r.slug);
-const offList=r=>r.code!=="H"&&!CARDS[r.code+r.slug]&&!wanted(r);
+// single races asked for on their own (Only what I pick): CARDR holds each one's field, WANTR the ones asked for
+const CARDR={},WANTR=new Set(),BUSYR={};
+const offList=r=>r.code!=="H"&&!CARDS[r.code+r.slug]&&!CARDR[r.id]&&!wanted(r)&&!WANTR.has(r.id);
 function want(r){if(r.code==="H"||WANT.has(r.code+r.slug))return;WANT.add(r.code+r.slug);pump()}
 // dog and harness fields come one meeting at a time, a few at once
 function pump(){
@@ -318,15 +337,19 @@ function pump(){
       .then(j=>{CARDS[k]=j.races;if(j.limited)LIMIT[k]=Date.now();else delete LIMIT[k]}).catch(()=>{CARDS[k]=[];LIMIT[k]=Date.now()})
       .finally(()=>{BUSY[k]=false;for(const x of RACES)if(x.code+x.slug===k)x.rk=undefined;render();pump();refreshAllow()});
   }
+  for(const id of WANTR){const r=RACES.find(x=>x.id===id);if(!r||CARDR[id]||BUSYR[id]||CARDS[r.code+r.slug])continue;BUSYR[id]=true;
+    getJSON(`${r.code==="D"?DG_URL+"?":HN_URL+"&"}date=${r.date}&venue=${encodeURIComponent(r.slug)}&races=${r.no}`)
+      .then(j=>{CARDR[id]={c:(j.races||[]).find(c=>c.race===r.no)||null}}).catch(()=>{CARDR[id]={c:null}})
+      .finally(()=>{BUSYR[id]=false;r.rk=undefined;render();refreshAllow()})}
 }
 function ranked(r){
   // scratched runners stay on show (struck out) but never get a chance from Nan
   if(r.code==="H"){if(r.rk)return r.rk;const late=((RESULTS[r.key]||{}).scr||[]).map(Number),run=r.race.runners.filter(u=>!late.includes(+u.no));
     const sc=new Map((r.race.scr||[]).map(u=>[+u.no,u.name]));for(const u of r.race.runners)if(late.includes(+u.no))sc.set(+u.no,u.name);
     r.scr=[...sc].sort((a,b)=>a[0]-b[0]).map(([no,name])=>({no,name}));return r.rk=run.length>=2?horseBreak({...r.race,runners:run}):null}
-  const cards=CARDS[r.code+r.slug],c=cards&&cards.find(c=>c.race===r.no);
+  const cards=CARDS[r.code+r.slug],c=(cards&&cards.find(c=>c.race===r.no))||(CARDR[r.id]&&CARDR[r.id].c);
   if(!c){const q=quickRace(r);if(q){if(r.rk&&r.src==="quick")return r.rk;r.src="quick";r.q=q;r.scr=q.scr;return r.rk=q.runners.length>=2?horseBreak({runners:q.runners}):null}
-    if(!cards)return undefined;if(r.rk)return r.rk;return LIMIT[r.code+r.slug]?null:r.rk=null}
+    if(!cards&&!CARDR[r.id])return undefined;if(r.rk)return r.rk;return LIMIT[r.code+r.slug]?null:r.rk=null}
   if(r.rk&&r.src!=="quick")return r.rk;r.src="ff";
   const rs=r.code==="D"?dogLineup(c):hnLineup(c);if(rs.length<4)return r.rk=null;
   r.card=c;r.scr=c.runners.filter(u=>u.scr).sort((a,b)=>a.no-b.no).map(u=>({no:u.no,name:u.name,box:u.box}));return r.rk=r.code==="D"?dogBreak(rs):hnBreak(rs);
@@ -395,13 +418,13 @@ function whyHtml(r,x,rank,n){
 }
 function raceBody(r){
   const rk=ranked(r),k=r.code+r.slug,n0=RACES.filter(x=>x.code+x.slug===k&&Date.parse(x.jump)>Date.now()).length;
-  const loadBtn=r.code!=="H"&&!CARDS[k]&&!BUSY[k]?`<p class="qnote">${r.src==="quick"?(QUICK[r.code]&&QUICK[r.code].priceOnly?"Price only from Krok: no form is available, so Nan is going on the market alone. ":"Quick form from PuntersEdge: Nan is using the market and recent form. "):""}<button class="ffload" data-loadmeet="${escH(k)}">Load FormFav full form for ${escH(r.venue)}</button> <small>uses about ${n0||1} of today's FormFav allowance</small></p>`:"";
+  const loadBtn=r.code!=="H"&&!CARDS[k]&&!BUSY[k]?`<p class="qnote">${r.src==="quick"?(QUICK[r.code]&&QUICK[r.code].priceOnly?"Price only from Krok: no form is available, so Nan is going on the market alone. ":"Quick form from PuntersEdge: Nan is using the market and recent form. "):""}${CARDR[r.id]||BUSYR[r.id]?"":`<button class="ffload" data-loadrace="${escH(r.id)}">Load this race only</button> `}<button class="ffload" data-loadmeet="${escH(k)}">Load all of ${escH(r.venue)}</button> <small>about 1 credit a race (${n0||1} for the whole meeting)</small></p>`:"";
   if(rk===undefined)return offList(r)?loadBtn||`<p>Nan is reading the form…</p>`:'<p>Nan is reading the form…</p>';
   if(!rk)return `<p>${noField(r)}</p>${loadBtn}`;
   if(r.code==="H")loadForm(r);
   const n=rk.length,maxP=rk[0].p;
   const canBet=Date.now()<Date.parse(r.jump);
-  return `${loadBtn}${canBet?builderHtml(r):""}<p class="rmeta">${[r.name,r.dist?r.dist+"m":"",r.cls,r.cond||(r.card&&r.card.cond),r.est?"No market yet: horse prices estimated":""].filter(Boolean).map(escH).join(" · ")}</p>
+  return `<p class="nsays">${escH(nanSays(r.code,r.id+"|"+rk[0].u.name))}</p>${loadBtn}${canBet?builderHtml(r):""}<p class="rmeta">${[r.name,r.dist?r.dist+"m":"",r.cls,r.cond||(r.card&&r.card.cond),r.est?"No market yet: horse prices estimated":""].filter(Boolean).map(escH).join(" · ")}</p>
   <table class="field"><thead><tr><th colspan="3">Nan's order</th></tr></thead><tbody>
   ${rk.map((x,i)=>`<tr><td><details class="run${i===0?" top1":""}"><summary><span class="rk">${ord(i+1)}</span>${cloth(x.u.no,r.code,x.u.box,"no")}<span class="nm"><b>${escH(x.u.name)}</b><small>${escH(r.src==="quick"?[r.code==="D"?`Box ${x.u.box}`:`Bar ${x.u.box}`,x.u.form||"no form"].join(" · "):r.code==="H"?[x.u.jockey,x.u.barrier?"Bar "+x.u.barrier:"",x.u.weight?x.u.weight+"kg":""].filter(Boolean).join(" · "):r.code==="D"?`Box ${x.u.box}${x.u.reserve?" (reserve)":""} · ${x.u.form||"no form"}`:`${x.u.row==="second"?"Sr":"Fr"}${x.u.barrier} · ${x.u.driver||""} · ${x.u.form||""}`)}</small></span>
     <span class="pct">${pct(x.p)}</span><span class="pr">${div(x.price)}<small>${mkt(r)?"market":"Nan's"}</small></span>${mkt(r)?`<span class="pr mk">${div(ladder(1/(x.p*1.13)))}<small>Nan's</small></span>`:"<span></span>"}
@@ -420,7 +443,7 @@ function creditsHtml(c){
   const row=(lab,a,per,note)=>{if(!a)return "";const left=Math.max(0,Math.min(a.limit,a.left)),f=left/a.limit,col=f>.4?"#2f8a4a":f>.15?"#d99a1e":"#c8321f";
     return `<div class="crow"><span class="allow-l">${lab}</span><span class="allow-bar"><i style="width:${Math.round(f*100)}%;background:${col}"></i></span><span class="allow-n"><b>${left.toLocaleString()}</b> of ${a.limit.toLocaleString()} ${per}${note?` · ${note}`:""}</span></div>`};
   const ff=c.ff,ffNote=ff&&ff.left<60?"Nan uses PuntersEdge quick form instead":"";
-  return `<div class="allow credits">${row("FormFav",ff,"left today",ffNote)}${row("PuntersEdge",c.pe,"left this month","")}${row("Krok",c.krok,"left this month","")}<small class="cnote">FormFav gives full dog and harness form (frees up over 24 hours). PuntersEdge gives horse races, results and quick dog and harness form, keeping about 45 credits a day back for horses. Krok fills in dog and harness form when FormFav runs short (5 credits a race, paced to last until its reset), gives price-only cards as a last resort, and backs up horses.</small></div>`;
+  return `<div class="allow credits">${row("FormFav",ff,"left today",ffNote)}${row("PuntersEdge",c.pe,"left this month","")}${row("Krok",c.krok,"left this month","")}<small class="cnote">FormFav gives full dog and harness form (frees up over 24 hours). PuntersEdge gives horse races, results and quick dog and harness form, refreshing more often the more credits are left. Krok fills in dog and harness form when FormFav runs short (5 credits a race, paced to last until its reset), gives price-only cards as a last resort, and backs up horses. Each limit is read from the provider, so upgrades and trials show up by themselves.</small></div>`;
 }
 function meterHtml(a){
   if(!a)return "";const left=Math.max(0,Math.min(a.limit,a.left)),f=left/a.limit,col=f>.4?"#2f8a4a":f>.15?"#d99a1e":"#c8321f";
@@ -434,8 +457,9 @@ function renderFollow(){
   const group=code=>{const ms=meets.filter(m=>m.code===code).map(m=>({m,rs:RACES.filter(r=>r.code===code&&r.slug===m.slug)})).sort((a,b)=>a.m.venue.localeCompare(b.m.venue));
     return ms.length?`<div class="fgrp"><h4>${CODE[code]}</h4>${ms.map(({m,rs})=>{const left=rs.filter(r=>Date.parse(r.jump)>now);
       return `<label class="fopt"><input type="checkbox" data-follow="${code}|${escH(m.slug)}" ${ticked(m)?"checked":""}><span><b>${escH(m.venue)}</b><small>${left.length?`${left.length} race${left.length>1?"s":""} to run · next ${timeOf(left[0].jump)}`:"all run"}</small></span></label>`}).join("")}</div>`:""};
-  el.innerHTML=`<summary>Meetings Nan follows: ${FOLLOW.auto?`<b>all ${meets.length}</b> dog and harness meetings today (automatic)`:`<b>${n}</b> of ${meets.length} dog and harness meetings today`} <span class="rchev">&#9656;</span></summary>
-    <p>Dog and harness form comes from FormFav's free allowance of 1,000 lookups a day (about one per race). Nan loads the meetings you tick by herself and keeps them in her record; any other meeting loads only when you open one of its races. Horses don't use the allowance, so they're always on. Ticked tracks stay ticked for future days. While FormFav and Krok have enough credits for every race left today, Nan follows every meeting automatically; your ticks take over when credits run short.</p>
+  el.innerHTML=`<summary>Meetings Nan follows: ${FOLLOW.auto?`<b>all ${meets.length}</b> dog and harness meetings today (automatic)`:`<b>${n}</b> of ${meets.length} dog and harness meetings today${FOLLOW.mode==="manual"?" (only what you pick)":""}`} <span class="rchev">&#9656;</span></summary>
+    <div class="fmode"><label><input type="radio" name="fmode" value="auto" ${FOLLOW.mode!=="manual"?"checked":""}> Automatic: every meeting while credits allow</label><label><input type="radio" name="fmode" value="manual" ${FOLLOW.mode==="manual"?"checked":""}> Only what I pick: ticked meetings, or single races with "Load this race only"</label></div>
+    <p>Dog and harness form comes from FormFav's free allowance of 1,000 lookups a day (about one per race). Nan loads the meetings you tick by herself and keeps them in her record; any other meeting loads only when you open one of its races. Horses don't use the allowance, so they're always on. Ticked tracks stay ticked for future days. On Automatic, Nan follows every meeting while FormFav and Krok have enough credits for every race left today, and your ticks take over when credits run short. On Only what I pick, nothing loads unless you tick a meeting or open a race and choose Load this race only (about 1 credit).</p>
     <div class="fgrid">${group("D")}${group("N")}</div>`;
   el.open=open;
 }
@@ -452,8 +476,8 @@ function render(){
   const best=live.slice().sort((a,b)=>b.rk[0].p-a.rk[0].p)[0];
   let rough=null;for(const x of live)for(const y of x.rk.slice(1,4)){const pr=x.r.code==="H"?y.u.win:y.price;if(pr>=8&&(!rough||y.p*pr>rough.y.p*rough.pr))rough={x,y,pr}}
   const tag=r=>`${timeOf(r.jump)} · ${escH(r.venue)} R${r.no} · ${CODE[r.code]}`;
-  $("hl").innerHTML=(best?`<div class="hl"><b>Nan's Best Bet:</b> ${tag(best.r)} · ${cloth(best.rk[0].u.no,best.r.code,best.rk[0].u.box)} <b>${escH(best.rk[0].u.name)}</b> ${pct(best.rk[0].p)} ${div(best.rk[0].price)}</div>`:"")
-    +(rough?`<div class="hl"><b>Nan's Roughie:</b> ${tag(rough.x.r)} · ${cloth(rough.y.u.no,rough.x.r.code,rough.y.u.box)} <b>${escH(rough.y.u.name)}</b> ${pct(rough.y.p)} ${div(rough.pr)}</div>`:"");
+  $("hl").innerHTML=(best?`<div class="hl"><b>Nan's Best Bet:</b> ${tag(best.r)} · ${cloth(best.rk[0].u.no,best.r.code,best.rk[0].u.box)} <b>${escH(best.rk[0].u.name)}</b> ${pct(best.rk[0].p)} ${div(best.rk[0].price)}<span class="nsays">${escH(nanSays(best.r.code,best.r.id+"|"+best.rk[0].u.name))}</span></div>`:"")
+    +(rough?`<div class="hl"><b>Nan's Roughie:</b> ${tag(rough.x.r)} · ${cloth(rough.y.u.no,rough.x.r.code,rough.y.u.box)} <b>${escH(rough.y.u.name)}</b> ${pct(rough.y.p)} ${div(rough.pr)}<span class="nsays">${escH(nanSays(rough.x.r.code,rough.x.r.id+"|"+rough.y.u.name))}</span></div>`:"");
   const waiting=RACES.filter(r=>r.code!=="H"&&!CARDS[r.code+r.slug]&&wanted(r)).length;
   if(waiting&&!$("status").textContent.startsWith("Nan couldn't"))$("status").textContent=`Nan is still reading the form for ${waiting} race${waiting>1?"s":""}…`;
   else if($("status").textContent.startsWith("Nan is still"))$("status").textContent="";
@@ -466,11 +490,18 @@ function render(){
   for(const k of openRun){const [id,no]=k.split("#");const d=[...document.querySelectorAll(`details.race[data-id="${CSS.escape(id)}"] details.run`)].find(x=>x.querySelector(".no").textContent===no);if(d)d.open=true}
 }
 document.addEventListener("click",e=>{const b=e.target.closest("[data-code]");if(b){ST.code=b.dataset.code;render()}});
+document.addEventListener("click",e=>{const b=e.target.closest("[data-loadrace]");if(!b)return;e.preventDefault();WANTR.add(b.dataset.loadrace);pump();render()});
+document.addEventListener("click",e=>{const b=e.target.closest("[data-day]");if(!b)return;const d=b.dataset.day;
+  if(d==="past"){const v=document.querySelector('[data-view="record"]');if(v)v.click();return}
+  const u=new URL(location.href);if(d==="tomorrow")u.searchParams.set("day","tomorrow");else u.searchParams.delete("day");if(u.href!==location.href)location.href=u.href});
+document.addEventListener("change",e=>{const c=e.target;if(!c||c.name!=="fmode")return;FOLLOW.mode=c.value;if(c.value==="manual")FOLLOW.auto=false;render();
+  fetch(SB+"/otr-nan?follow=1",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({mode:c.value})}).then(r=>r.json()).then(j=>{if(j.tracks){FOLLOW={D:j.tracks.D||[],N:j.tracks.N||[],auto:!!j.auto,mode:j.mode||c.value};CREDITS=j.credits||CREDITS;ALLOW=j.allowance||ALLOW;render();pump()}})
+    .catch(()=>{$("status").textContent="Couldn't save that. Try again."})});
 document.addEventListener("click",e=>{const b=e.target.closest("[data-loadmeet]");if(!b)return;e.preventDefault();const r=RACES.find(x=>x.code+x.slug===b.dataset.loadmeet);if(r){want(r);render()}});
 document.addEventListener("change",e=>{const c=e.target.closest&&e.target.closest("[data-follow]");if(!c)return;
   const [code,slug]=c.dataset.follow.split("|"),on=c.checked,list=new Set(FOLLOW[code]);on?list.add(slug):list.delete(slug);FOLLOW[code]=[...list];
   if(on)WANT.add(code+slug);pump();render();
-  fetch(SB+"/otr-nan?follow=1",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({code,slug,on})}).then(r=>r.json()).then(j=>{if(j.tracks){FOLLOW={D:j.tracks.D||[],N:j.tracks.N||[],auto:!!j.auto};ALLOW=j.allowance||ALLOW;CREDITS=j.credits||CREDITS;render()}})
+  fetch(SB+"/otr-nan?follow=1",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({code,slug,on})}).then(r=>r.json()).then(j=>{if(j.tracks){FOLLOW={D:j.tracks.D||[],N:j.tracks.N||[],auto:!!j.auto,mode:j.mode||FOLLOW.mode||"auto"};ALLOW=j.allowance||ALLOW;CREDITS=j.credits||CREDITS;render()}})
     .catch(()=>{$("status").textContent="Couldn't save that. Try again."})});
 $("meet").addEventListener("change",e=>{ST.meet=e.target.value;for(const r of RACES)if(`${r.code}|${r.venue}`===ST.meet)want(r);render()});
 $("past").addEventListener("change",e=>{ST.past=e.target.checked;render()});
@@ -669,14 +700,14 @@ function tkHtml(t){
     <div class="line"><b>${BT[t.type][0]}</b> ${t.sel.map(x=>cloth(x.no,t.code,x.box)).join(" ")} ${escH(BT[t.type][1]===1?t.sel[0].name:"")} · ${money(c)}${t.type==="ew"?` (${money(t.stake)} each way)`:""}</div></div>
     <span class="tag ${tag[1]}">${tag[0]}${o.src==="manual"?" · your result":""}</span>
     ${(LEDGER.per[t.id]||0)>0?`<div class="order nanpay">${money(LEDGER.per[t.id])} of it paid back to Nan</div>`:""}
-    ${o.src==="manual"?`<div class="order">Your result: ${man.map((n,i)=>`${ord(i+1)} ${n}`).join(" · ")}. Estimated dividend until the official result comes in.</div>`:""}
+    ${o.src==="manual"?`<div class="order">Your result: ${man.map((n,i)=>`${ord(i+1)} ${cloth(n,t.code,((t.field||[]).find(u=>u.no===n)||{}).box)}`).join(" · ")}. Estimated dividend until the official result comes in.</div>`:""}
     ${o.src==="official"&&BK.off[t.rk]?`<div class="order">Official: ${BK.off[t.rk].fin.slice().sort((a,b)=>a.pos-b.pos).slice(0,4).map(x=>`${ord(x.pos)} ${x.no!=null?cloth(x.no,t.code)+" ":""}${escH(x.name)}`).join(" · ")}</div>`:""}
     <div class="tkbtns">${o.state==="open"?`<button data-bcancel="${t.id}">Cancel bet</button>`:""}${afterJump&&o.src!=="official"&&t.status!=="cancelled"?`<button data-bman="${escH(t.rk)}">${man?"Change my result":"Enter result"}</button>${man?`<button data-bmanclr="${escH(t.rk)}">Clear my result</button>`:""}`:""}</div>
     ${MANUAL===t.rk?manualForm(t):""}</div>`;
 }
 let MANUAL=null,BKMSG="";
 function manualForm(t){const f=t.field||[],cur=BK.manual[t.rk]||[];
-  return `<div class="builder">${[0,1,2,3].map(i=>`<label class="mrow">${ord(i+1)} <select data-mpos="${i}"><option value="">–</option>${f.map(u=>`<option value="${u.no}" ${cur[i]===u.no?"selected":""}>${u.no}. ${escH(u.name)}</option>`).join("")}</select></label>`).join("")}
+  return `<div class="builder">${[0,1,2,3].map(i=>`<label class="mrow">${ord(i+1)} <select data-mpos="${i}"><option value="">–</option>${[...f].sort((a,b)=>a.no-b.no).map(u=>`<option value="${u.no}" ${cur[i]===u.no?"selected":""}>${u.no}. ${escH(u.name)}</option>`).join("")}</select></label>`).join("")}
     <div class="calc-row"><button class="ffload" data-msave="${escH(t.rk)}">Save my result</button><button data-mclose>Close</button></div><p class="calc-out"><small>Applies to every bet on this race. The official result replaces it.</small></p></div>`}
 let LEDGER={per:{}},LOANMSG="",LOANAMT=100;
 const hms=ms=>{ms=Math.max(0,ms);const h=Math.floor(ms/36e5),m=Math.floor(ms%36e5/6e4),s=Math.floor(ms%6e4/1e3);return `${h}h ${String(m).padStart(2,"0")}m ${String(s).padStart(2,"0")}s`};
@@ -698,7 +729,7 @@ function renderBets(){
     <div class="sum"><h3>Bets out</h3><div class="big">${money(b.openSt+b.waitSt)}</div><p>${money(b.openSt)} still to run · ${money(b.waitSt)} run, waiting on official results</p></div>
     <div class="sum"><h3>Official profit</h3><div class="big ${b.profit>=0?"plus":"minus"}">${b.profit>=0?"+":""}${money(b.profit)}</div><p>From settled bets. Started with ${money(BK.start)}${BK.topups?` + ${money(BK.topups)} added`:""}${b.owed>0?` · owe Nan ${money(b.owed)}`:""}.</p></div></div>
     ${BKMSG?`<div class="note">${BKMSG}</div>`:""}
-    <div class="calc"><h3>Bet slip</h3>${BK.slip.length?BK.slip.map((t,i)=>`<div class="slipline"><span>${timeOf(t.jump)} · ${escH(t.venue)} R${t.no} · <b>${BT[t.type][0]}</b> ${escH(selText(t))} · ${money(costOf(t))}${Date.now()>=Date.parse(t.jump)?' <b class="minus">jumped</b>':""}</span><button data-bslipdel="${i}">Remove</button></div>`).join("")+
+    <div class="calc"><h3>Bet slip</h3>${BK.slip.length?BK.slip.map((t,i)=>`<div class="slipline"><span>${timeOf(t.jump)} · ${escH(t.venue)} R${t.no} · <b>${BT[t.type][0]}</b> ${t.sel.map(x=>cloth(x.no,t.code,x.box)).join(" ")}${BT[t.type][1]===1?" "+escH(t.sel[0].name):""} · ${money(costOf(t))}${Date.now()>=Date.parse(t.jump)?' <b class="minus">jumped</b>':""}</span><button data-bslipdel="${i}">Remove</button></div>`).join("")+
       `<div class="calc-row"><button class="ffload" data-bconfirm ${slipCost>b.running||closedSlip?"disabled":""}>Confirm ${BK.slip.length} bet${BK.slip.length>1?"s":""} · ${money(slipCost)}</button><button data-bslipclr>Clear slip</button></div>${slipCost>b.running?'<p class="minus">Not enough in your running balance.</p>':""}${closedSlip?'<p class="minus">Remove bets on races that have jumped.</p>':""}`
       :`<p>Your slip is empty. On Today's tips, open a race and press <b>Bet on this race</b>.</p>`}</div>
     <div class="calc-row"><button data-bcheck>Check official results</button></div>
