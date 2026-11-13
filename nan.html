@@ -157,6 +157,7 @@ details.follow p{margin:0 12px 8px;font-size:15px;color:#d9c9a3}
 .tip .tw{display:inline-block;min-width:118px;font-weight:700}.tip.ptop{background:#fff3cd;border-bottom:0;margin-top:3px}.tnote{font-size:13px;color:#5b4520;margin:4px 0 0}
 .tabs.who{margin:8px 0 0;display:flex;flex-wrap:wrap;gap:6px;align-items:center}.tabs.who .wl{color:var(--paper);font-weight:700;margin-right:4px}
 .smap{background:#fff8;border:1px solid var(--line);padding:6px 8px;margin:6px 0;font-size:15px}.smap>div{padding:2px 0}.smap .tw{display:inline-block;min-width:96px;font-weight:700}
+.tip .rest{display:block;font-size:14px;color:var(--ink2);margin-top:2px}.worder .tw{min-width:52px}
 .panelline{font-size:14px;color:var(--ink2);margin-top:3px}.panelline .agree{font-size:12px;background:#0001;padding:0 5px;border-radius:3px}.panelline .agree.aall{background:var(--good);color:#fff}
 .hl.hlpanel{border-left-color:var(--good)}
 .hl{cursor:pointer}.hl:hover{outline:2px solid var(--amber)}
@@ -325,7 +326,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.19.2"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.19.3"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -452,7 +453,7 @@ function raceBody(r){
   if(r.code==="H")loadForm(r);
   const n=rk.length,maxP=rk[0].p;
   const canBet=Date.now()<Date.parse(r.jump);
-  return `<p class="nsays">${escH(nanSays(r.code,r.id+"|"+rk[0].u.name))}</p>${panelHtml(r)}${loadBtn}${canBet?builderHtml(r):""}<p class="rmeta">${[r.name,r.dist?r.dist+"m":"",r.cls,r.cond||(r.card&&r.card.cond),r.est?"No market yet: horse prices estimated":""].filter(Boolean).map(escH).join(" · ")}</p>
+  return `<p class="nsays">${escH(nanSays(r.code,r.id+"|"+rk[0].u.name))}</p>${whoOrderHtml(r)}${panelHtml(r)}${loadBtn}${canBet?builderHtml(r):""}<p class="rmeta">${[r.name,r.dist?r.dist+"m":"",r.cls,r.cond||(r.card&&r.card.cond),r.est?"No market yet: horse prices estimated":""].filter(Boolean).map(escH).join(" · ")}</p>
   <table class="field"><thead><tr><th colspan="3">Nan's order</th></tr></thead><tbody>
   ${rk.map((x,i)=>`<tr><td><details class="run${i===0?" top1":""}"><summary><span class="rk">${ord(i+1)}</span>${cloth(x.u.no,r.code,x.u.box,"no")}<span class="nm"><b>${escH(x.u.name)}</b><small>${escH(r.src==="quick"?[r.code==="D"?`Box ${x.u.box}`:`Bar ${x.u.box}`,x.u.form||"no form"].join(" · "):r.code==="H"?[x.u.jockey,x.u.barrier?"Bar "+x.u.barrier:"",x.u.weight?x.u.weight+"kg":""].filter(Boolean).join(" · "):r.code==="D"?`Box ${x.u.box}${x.u.reserve?" (reserve)":""} · ${x.u.form||"no form"}`:`${x.u.row==="second"?"Sr":"Fr"}${x.u.barrier} · ${x.u.driver||""} · ${x.u.form||""}`)}</small></span>
     <span class="pct">${pct(x.p)}</span><span class="pr">${div(x.price)}<small>${mkt(r)?"market":"Nan's"}</small></span>${mkt(r)?`<span class="pr mk">${div(ladder(1/(x.p*1.13)))}<small>Nan's</small></span>`:"<span></span>"}
@@ -531,6 +532,10 @@ function mapHtml(r){const km=TIPS.map[popKey(r)];if(!km||!km.runners)return "";c
     ${bad.length?`<div><span class="tw">Poor ${draw}</span>${bad.map(u=>cloth(u.me.no,r.code,u.me.box)).join(" ")}</div>`:""}
     <div><small>Bob lifts or trims each runner's chance for its running style and ${draw} record at this track.</small></div></div>`}
 const tipsters0=(r,w)=>tipsters(r).some(t=>t.who===w);
+// the chosen tipster's full order for a race, every runner
+function whoOrderHtml(r){const w=ST.who;if(w==="all"||w==="nan")return "";const t=tipsters(r).find(x=>x.who===w);if(!t)return `<p class="tnote">${WHO[w]} hasn't rated this race.</p>`;
+  const all=topN(r,t,99),ord=n=>n+(["th","st","nd","rd"][n%100>10&&n%100<14?0:n%10]||"th");
+  return `<div class="panel worder"><h4>${WHO[w]}'s order</h4>${all.map((x,i)=>`<div class="tip" data-hlbet="${escH(r.id)}|${x.no}"><span class="tw">${ord(i+1)}</span>${cloth(x.no,r.code,x.box)} <b>${escH(x.name)}</b> ${pct(x.p)}</div>`).join("")}<p class="tnote">Tap a runner to bet on it. Nan's own order is below.</p></div>`}
 function panelOf(r){const ts=tipsters(r);if(ts.length<2)return null;const rk=ranked(r),tot=new Map();
   for(const u of rk.map(x=>x.u)){let s=0;for(const t of ts)s+=t.chance.get(nkey(u.name))||0;tot.set(nkey(u.name),s/ts.length)}
   const best=[...tot.entries()].sort((a,b)=>b[1]-a[1])[0],u=rk.map(x=>x.u).find(x=>nkey(x.name)===best[0]);
@@ -538,7 +543,7 @@ function panelOf(r){const ts=tipsters(r);if(ts.length<2)return null;const rk=ran
 function panelLine(r){const pn=panelOf(r);if(!pn)return "";const o=pn.ts.filter(t=>t.who!=="nan");
   return `<div class="panelline">${o.map(t=>`${t.label.split("'")[0]} ${cloth(t.pick.no,r.code,t.pick.box)}`).join(" · ")} · <b>Panel:</b> ${cloth(pn.pick.no,r.code,pn.pick.box)} ${escH(pn.pick.name)} <span class="agree a${pn.agree===pn.ts.length?"all":""}">${pn.agree} of ${pn.ts.length} agree</span></div>`}
 function panelHtml(r){const pn=panelOf(r),ts=pn?pn.ts:tipsters(r);if(!ts.length)return "";
-  const row=t=>`<div class="tip" data-hlbet="${escH(r.id)}|${t.pick.no}"><span class="tw">${t.label}</span>${cloth(t.pick.no,r.code,t.pick.box)} <b>${escH(t.pick.name)}</b> ${pct(t.pick.p)}<small>${escH(t.says)}</small></div>`;
+  const row=t=>`<div class="tip" data-hlbet="${escH(r.id)}|${t.pick.no}"><span class="tw">${t.label}</span>${cloth(t.pick.no,r.code,t.pick.box)} <b>${escH(t.pick.name)}</b> ${pct(t.pick.p)}<span class="rest">${topN(r,t,4).slice(1).map((x,i)=>`${["2nd","3rd","4th"][i]} ${cloth(x.no,r.code,x.box)} ${escH(x.name)} ${pct(x.p)}`).join(" · ")}</span><small>${escH(t.says)}</small></div>`;
   return `<div class="panel"><h4>The tipsters</h4>${ts.map(row).join("")}${pn?`<div class="tip ptop" data-hlbet="${escH(r.id)}|${pn.pick.no}"><span class="tw">The Panel's pick</span>${cloth(pn.pick.no,r.code,pn.pick.box)} <b>${escH(pn.pick.name)}</b> ${pct(pn.pick.p)}<small>${pn.agree} of ${pn.ts.length} tipsters have it on top. The Panel averages everyone's chances.</small></div>`:""}
     ${mapHtml(r)}${ts.length<4?`<p class="tnote">${[!TIPS.pop[popKey(r)]?"Pop's still thinking":"",!bobFor(r)?"Bob hasn't rated this race":"",!tipsters0(r,"gran")?"Gran's waiting for the bookies to put prices up":""].filter(Boolean).join(" · ")}</p>`:""}<p class="tnote">Tap a tip to bet on it.</p></div>`}
 async function loadBob(){const ds=[...new Set(RACES.map(r=>r.date))].slice(0,2);let changed=false;
@@ -594,8 +599,8 @@ function render(){
     return `<details class="race${gone?" jumped":""}" data-id="${escH(r.id)}" ${open.has(r.id)?"open":""}><summary>
       <div><div class="rmeta">${tag(r)}${gone?" · jumped":cdn(r.jump)}${rk&&r.src==="quick"?` · <span class="qtag">${QUICK[r.code]&&QUICK[r.code].priceOnly?"Price only":"Quick form"}</span>`:""}</div><div class="rtitle">${escH(r.venue)} R${r.no}${r.dist?" · "+r.dist+"m":""}</div>
       <div class="rpick">${offList(r)&&rk===undefined?`Nan isn't following ${escH(r.venue)} <span class="scrsum">· open to load her pick</span>`:rk===undefined?"Nan is reading the form…":!rk?noField(r,true):(()=>{const w=ST.who==="all"?"nan":ST.who,t=w==="nan"?null:tOf(r,w);if(w!=="nan"&&!t)return `<span class="scrsum">${WHO[w]} hasn't rated this race.</span> `;
-        const top=t?topN(r,t,3):rk.slice(0,3).map(x=>({no:x.u.no,name:x.u.name,box:x.u.box,p:x.p}));
-        return `${WHO[w]}: 1st ${cloth(top[0].no,r.code,top[0].box)} <b>${escH(top[0].name)}</b> ${pct(top[0].p)}${top.length>1?" · "+top.slice(1,3).map((x,i)=>`${["2nd","3rd"][i]} ${cloth(x.no,r.code,x.box)} ${escH(x.name)}`).join(" · "):""}`})()+`${r.scr&&r.scr.length?` <span class="scrsum">· Scr ${r.scr.map(u=>cloth(u.no,r.code,u.box,"x")).join(" ")}</span>`:""}`}</div>${rk&&!gone?panelLine(r):""}</div>
+        const top=t?topN(r,t,4):rk.slice(0,4).map(x=>({no:x.u.no,name:x.u.name,box:x.u.box,p:x.p}));
+        return `${WHO[w]}: 1st ${cloth(top[0].no,r.code,top[0].box)} <b>${escH(top[0].name)}</b> ${pct(top[0].p)}${top.length>1?" · "+top.slice(1,4).map((x,i)=>`${["2nd","3rd","4th"][i]} ${cloth(x.no,r.code,x.box)} ${escH(x.name)}`).join(" · "):""}`})()+`${r.scr&&r.scr.length?` <span class="scrsum">· Scr ${r.scr.map(u=>cloth(u.no,r.code,u.box,"x")).join(" ")}</span>`:""}`}</div>${rk&&!gone?panelLine(r):""}</div>
       <span class="rchev">&#9656;</span></summary><div class="rbody">${open.has(r.id)?raceBody(r):""}</div></details>`}).join("")
     :`<div class="empty">${RACES.length?"No races to show. Tick \"Show jumped races\" or pick another code.":"No real races found for today yet."}</div>`;
   for(const k of openRun){const [id,no]=k.split("#");const d=[...document.querySelectorAll(`details.race[data-id="${CSS.escape(id)}"] details.run`)].find(x=>x.querySelector(".no").textContent===no);if(d)d.open=true}
