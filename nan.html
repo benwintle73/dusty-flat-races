@@ -360,13 +360,14 @@ details.race>summary.rsum .rchev{align-self:center}
   <div class="foot">
     <h4>Who's who at Nan's kitchen table</h4>
     <p><b>Nan</b> works every pick out herself, pencil behind the ear and a cuppa going cold. Horses: she watches the bookies like a hawk and nudges their market by recent form. Dogs and harness: each runner's record, its last few runs and where it jumps from.</p>
-    <p><b>Pop</b> is FormFav's prediction model. Nan's husband of fifty-odd years, retired fitter and turner, up at five every morning whether he needs to be or not. He bought a beige computer in 1998 to do the club newsletter, typed in a race by accident, and it tipped a $21 winner. He's trusted it ever since. It lives in the shed next to the Kingswood, takes ten minutes to start, and Pop won't hear a word against either of them. He circles his picks in pen, reckons he saw it all before in 1987, and has a cup of tea for every race.</p>
-    <p><b>Bob</b> is Krok's KrokBot model. Pop's nephew, a builder by trade: brickie, chippy, whatever the job needs, as long as it's done by smoko. He drives a ute held together by stickers and hasn't missed a Friday at the pub since 2003. Bob says his tips come from his mate Davo, who sits at the end of the bar and "does the numbers", and from his own system, which is written on beer coasters and kept in his wallet. Nobody's ever seen Davo do any numbers. Bob also swears by the speed map, a meat pie at half-time, and never telling his missus how much he's got on. He's wrong a fair bit, but never in doubt.</p>
-    <p><b>Gran</b> backs the bookies' favourite. Nan's big sister, a CWA life member and the undefeated bingo champion of three church halls. She worked out in 1962 that the bookies know more than anyone, and she's backed the favourite ever since. She hasn't read a form guide since the Melbourne Cup was on black and white telly and isn't about to start. Gran watches the prices all day with her knitting, calls everyone "dear", and if the money's coming for one, so is Gran. Roughies, she says, are for dreamers and Pop.</p>
+    <p><b>Pop</b> is Gran's husband of fifty-odd years, retired fitter and turner, up at five every morning whether he needs to be or not. He bought a beige computer in 1998 to do the club newsletter, typed in a race by accident, and it tipped a $21 winner. He's trusted it ever since. It lives in the shed next to the Kingswood, takes ten minutes to start, and Pop won't hear a word against either of them. He circles his picks in pen, reckons he saw it all before in 1987, and has a cup of tea for every race.</p>
+    <p><b>Bob</b> is Pop's nephew, a builder by trade: brickie, chippy, whatever the job needs, as long as it's done by smoko. He drives a ute held together by stickers and hasn't missed a Friday at the pub since 2003. Bob says his tips come from his mate Davo, who sits at the end of the bar and "does the numbers", and from his own system, which is written on beer coasters and kept in his wallet. Nobody's ever seen Davo do any numbers. Bob also swears by the speed map, a meat pie at half-time, and never telling his missus how much he's got on. He's wrong a fair bit, but never in doubt.</p>
+    <p><b>Gran</b> is Nan's big sister and Pop's long-suffering wife, a CWA life member and the undefeated bingo champion of three church halls. She worked out in 1962 that the bookies know more than anyone, and she's backed the favourite ever since. She hasn't read a form guide since the Melbourne Cup was on black and white telly and isn't about to start. Gran watches the prices all day with her knitting, calls everyone "dear", and if the money's coming for one, so is Gran. Roughies, she says, are for dreamers and Pop.</p>
     <p><b>The Panel</b> averages the lot: a family argument that ends in a group hug.</p>
     <p>Tap a race to see the field, and a runner to see exactly how Nan got there (she shows her working).</p>
     <h4>Where Nan gets her gossip</h4>
     <p>Horse prices and results come from <a href="https://puntersedge.online" target="_blank" rel="noopener">PuntersEdge</a>; form from FormFav. Dog and harness prices are Nan's own guesses. When FormFav's form runs dry, she borrows quick form from PuntersEdge (the market plus recent runs). If PuntersEdge is having a lie-down too, Krok's cards fill in, marked Price only: no form there, so Nan goes on the market alone, muttering.</p>
+    <p>The rest of the table: Pop's picks are FormFav's predictions, Bob's are Krok's (speed map included), and Gran's are the bookmakers' market.</p>
     <p><b>Nan's record keeps her honest.</b> Her top pick in every horse race, and every race at the dog and harness meetings she follows, is written down before the jump and checked against the official results. Profit is $1 on the nose of every top pick at the official win dividend. Scratched picks don't count, and no, she can't rub them out afterwards.</p>
     <p class="foot-serious">Play money only. For fun, 18+. If gambling stops being fun, talk to someone: Gambling Help <a href="tel:1800858858">1800 858 858</a>.</p>
   </div>
@@ -472,7 +473,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.29.1"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.29.2"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -760,7 +761,7 @@ CATCH.nan=[
 "Nan says she's always had a good eye. The other one's iffy.",
 "Nan says chin up, tip in.",
 "Nan says she could tell a winner from the car park.",
-"Nan says Pop married well, tipping-wise.",
+"Nan says Gran married Pop. Nan married well.",
 "Nan says she's no expert. She's better than an expert. She's a nan.",
 "Nan says she doesn't make the rules. She just wins by them.",
 "Nan says if it's good enough for the Queen Mother, it's good enough for Nan.",
@@ -891,7 +892,7 @@ CATCH.pop=[
 "Pop says he's chuffed. Really chuffed. Chuffed to bits.",
 "Pop says it's not his first rodeo. It's his four-hundredth.",
 "Pop says the computer's been chewing on this since smoko.",
-"Pop says he'd put the house on it, but Nan's name is on the house.",
+"Pop says he'd put the house on it, but Gran's name is on the house.",
 "Pop says that's the ant's pants of tips.",
 "Pop says he's dinky-di about this one.",
 "Pop says hooroo to the bookies' money.",
@@ -972,7 +973,7 @@ CATCH.pop=[
 "Pop says he's as sure as the sun rising over Bendigo.",
 "Pop says he's a creature of habit. The habit is winning. Sometimes.",
 "Pop says he's tickled pink.",
-"Pop says he's not afraid of the bookies. He's afraid of Nan.",
+"Pop says he's not afraid of the bookies. He's afraid of Gran.",
 "Pop says the model doesn't care about names, just numbers. Pop likes the name too.",
 "Pop says it's a bewdy, mate.",
 "Pop says the computer's on a hot streak like a summer in Mildura.",
@@ -999,7 +1000,7 @@ CATCH.pop=[
 "Pop says he's sharp as a tack, blunt as a spoon.",
 "Pop says he's been around the block. Round the track, too.",
 "Pop says the computer's crunching numbers like Pop crunches Arnott's.",
-"Pop says it's a beauty, and he's got an eye for beauty. He married Nan.",
+"Pop says it's a beauty, and he's got an eye for beauty. He married Gran.",
 "Pop says it's a top-shelf tip.",
 "Pop says he's a man of science. Racing science.",
 "Pop says you can bank on it. Pop's bank has a lot of IOUs.",
@@ -1044,7 +1045,7 @@ CATCH.pop=[
 "Pop says it's hotter than a Melbourne Cup bet.",
 "Pop says he's as fair dinkum as they come.",
 "Pop says the model's sweet. Like a Golden Gaytime.",
-"Pop says he's tipping it, and Nan can't stop him.",
+"Pop says he's tipping it, and Gran can't stop him.",
 "Pop says he's backing it like a dog backs a ute: wholeheartedly.",
 "Pop says it's a lay-down certainty. Pop needs a lay-down after saying that.",
 "Pop says the computer's got its game face on. It's a beige box.",
@@ -1366,7 +1367,7 @@ CATCH.gran=[
 "Gran says she's no dill, dear.",
 "Gran says it's a beauty, and the bookies know it.",
 "Gran says she's tipping like a woman who's read the board twice.",
-"Gran says she backed the favourite at Nan's wedding. Pop was the favourite. Just.",
+"Gran says she backed the favourite at her own wedding. Pop was the favourite. Just.",
 "Gran says she's got the market in her blood.",
 "Gran says she's as solid as a CWA trestle table.",
 "Gran says she's seen the money, she's seen enough.",
@@ -1493,7 +1494,7 @@ nan:{
  11:["Nan has {n} {r}. She says it's here to make up the numbers.","Nan says {n} would need a fire drill to win this.","Nan reckons {n} will run on late. About ten minutes late.","{r} for Nan. She'd rather put her money in the church plate.","Nan says {n} is a lovely {a}. For a paddock.","Nan says if {n} wins, she'll eat her knitting."],
  15:["Nan has {n} {r}. She had to turn the page to find it.","Nan says {n} is in the race the way Pop's in the conversation: technically.","{r} for Nan. She says the form guide was embarrassed to print it.","Nan reckons {n} will start. That's the best she'll say.","Nan says {n} at {p}? She wouldn't take it at twice that.","Nan says {n} will be the first one back to the stalls. Eventually."],
  19:["Nan has {n} {r}. She needed a magnifying glass and a sit down.","Nan says {n} is running for the exercise, like Pop's walks to the pub.","{r}. Nan says {n} has more chance of winning Lotto. And she doesn't play Lotto.","Nan says {n} is there so the others don't feel lonely.","Nan says {n} would need the race run twice and the others asleep for one.","Nan reckons {n} will finish. She's not promising when."],
- last:["Nan has {n} last. She says it's a lovely {a}, it just isn't quick.","Nan says {n} couldn't win this with a head start and a lift home.","Last on Nan's list. She'll be the first to say sorry if it wins.","Nan says if {n} wins, she'll do the washing up for a month.","Nan reckons {n} is running to keep the stewards company.","Nan says she'd sooner back the clerk of the course.","Nan says {n} has the form of a garden gnome. A slow one.","Nan says {n} is running last on her list and probably on the track.","Nan says {n} would need to be the only one turning up.","Nan has {n} last. She says it's not personal, love.","Nan says {n} could have a nice career as a lawnmower.","Nan says {n} is the wooden spoon, and she's got a drawer full.","Nan says if {n} wins, she'll give Pop the remote for a week.","Nan says {n} is there to make the others look fast.","Nan says {n} wouldn't beat her to the shops, and she walks with a stick."],
+ last:["Nan has {n} last. She says it's a lovely {a}, it just isn't quick.","Nan says {n} couldn't win this with a head start and a lift home.","Last on Nan's list. She'll be the first to say sorry if it wins.","Nan says if {n} wins, she'll do the washing up for a month.","Nan reckons {n} is running to keep the stewards company.","Nan says she'd sooner back the clerk of the course.","Nan says {n} has the form of a garden gnome. A slow one.","Nan says {n} is running last on her list and probably on the track.","Nan says {n} would need to be the only one turning up.","Nan has {n} last. She says it's not personal, love.","Nan says {n} could have a nice career as a lawnmower.","Nan says {n} is the wooden spoon, and she's got a drawer full.","Nan says if {n} wins, she'll let Pop have the last scone.","Nan says {n} is there to make the others look fast.","Nan says {n} wouldn't beat her to the shops, and she walks with a stick."],
  scr:["Scratched. Nan says it knew what was coming.","Scratched. Nan's crossing it out before it changes its mind.","Nan says {n} has called in sick. Very sensible."]},
 pop:{
  1:["Pop's computer spat out {n} and Pop's not arguing with it.","Pop's top pick. He's circled {n} in pen, so it's serious.","Pop says {n} is the goods. He's said that before. Sometimes he was right.","Pop's model rates {n} best, and the model's been going since 1998.","Pop's had his tea, done his sums and landed on {n}.","Pop says he saw a {a} just like {n} win in 1987. It was a sign.","Pop's put his reading glasses on for this. {n}, no question.","Pop says the numbers love {n}. Pop loves numbers.","Pop's computer made a whirring noise when he typed in {n}. Good whirring.","Pop reckons {n} is a lay-down misère. He's been waiting all week to say that."],
@@ -1631,7 +1632,7 @@ function mapHtml(r){const km=TIPS.map[popKey(r)];if(!km||!km.runners)return "";c
   const groups=["L","P","M","B"].map(k=>[k,here.filter(u=>u.style===k).sort((a,b)=>(a.settle??9)-(b.settle??9))]).filter(([,l])=>l.length);
   const good=here.filter(u=>u.bf>=1.06).sort((a,b)=>b.bf-a.bf).slice(0,3),bad=here.filter(u=>u.bf<=.94).sort((a,b)=>a.bf-b.bf).slice(0,3),draw=r.code==="D"?"box":"barrier";
   if(!groups.length&&!good.length&&!bad.length)return "";
-  return `<div class="smap"><b>Bob's speed map</b> <small>(Krok)</small>${groups.map(([k,l])=>`<div><span class="tw">${STYLE_NAME[k]}</span>${l.map(u=>cloth(u.me.no,r.code,u.me.box)).join(" ")}</div>`).join("")}
+  return `<div class="smap"><b>Bob's speed map</b>${groups.map(([k,l])=>`<div><span class="tw">${STYLE_NAME[k]}</span>${l.map(u=>cloth(u.me.no,r.code,u.me.box)).join(" ")}</div>`).join("")}
     ${km.leaders>=3?`<div><small>${km.leaders} want the lead: hot pace, which helps the backmarkers.</small></div>`:km.leaders===1?`<div><small>One clear leader: it could pinch a soft lead.</small></div>`:""}
     ${good.length?`<div><span class="tw">Good ${draw}</span>${good.map(u=>cloth(u.me.no,r.code,u.me.box)).join(" ")} <small>${draw}s that win more often here</small></div>`:""}
     ${bad.length?`<div><span class="tw">Poor ${draw}</span>${bad.map(u=>cloth(u.me.no,r.code,u.me.box)).join(" ")}</div>`:""}
