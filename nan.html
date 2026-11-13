@@ -316,6 +316,38 @@ details.race>summary.rsum .rchev{align-self:center}
 .crwhy{font-style:italic;color:var(--ink2);margin:4px 0}
 .crhead p{margin:4px 0}
 .crpast{margin-top:10px}.crpast>summary .rchev{margin-left:auto}
+/* v2.30: tips first, filters below, sources tucked away */
+#hl{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:8px;margin-top:8px}#hl .hl{margin-top:0}
+.hl-p{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:4px 10px}
+.hl-p .hl-m{min-width:0}.hl-p .hl-n{display:block}.hl-s{display:block;margin:2px 0 0;font:600 15px/1.2 var(--led);color:var(--ink2);white-space:normal}.hl-s b{color:var(--ink);font-size:17px}
+.hl .hlbet{width:auto;margin:0;min-height:40px;padding:0 16px}
+.hl .nsays{margin-top:6px}
+details.nums{margin-top:6px;color:#e6d6ae;font-size:14px}details.nums>summary{cursor:pointer;font:600 15px/1.2 var(--led);color:var(--amber);padding:4px 2px;list-style:none}details.nums>summary::-webkit-details-marker{display:none}details.nums>summary::before{content:"? ";font-weight:700}
+details.nums p{margin:4px 2px 6px;line-height:1.4}details.nums b{color:var(--paper)}
+.recstrip{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 10px;background:var(--tote);border-left:5px solid var(--good);padding:8px 12px;margin-top:6px;font:600 16px/1.3 var(--led);cursor:pointer}
+.recstrip .rs-l{color:var(--amber);text-transform:uppercase;letter-spacing:.5px;font-size:14px}.recstrip b{color:var(--paper)}.recstrip .plus{color:#6fd18e}.recstrip .minus{color:#ff8a73}.recstrip small{color:#bfae86;font-size:14px}.recstrip .rs-go{margin-left:auto;color:var(--amber);white-space:nowrap}
+.fbar{flex-direction:column;align-items:stretch;gap:6px}
+.frow{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.fbar>.frow{min-width:0;max-width:100%}
+.frow.scroll{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;gap:10px;scrollbar-width:none}.frow.scroll::-webkit-scrollbar{display:none}.frow.scroll .tabs{flex-wrap:nowrap;flex:none}
+.frow.nw{flex-wrap:nowrap}.frow.nw>*{flex:1 1 0}.frow.nw>.ficon{flex:none}.frow.scroll label{flex:none;white-space:nowrap;padding-right:4px}
+#q{flex:1 1 0;min-width:0;min-height:42px;border:0;background:var(--paper);color:var(--ink);font:600 17px/1 var(--led);padding:0 10px}
+.frow.nw>select{flex:1.2 1 0}
+#status:empty{display:none}
+.bar .ficon{flex:none;width:46px;padding:0;font-size:22px;color:var(--amber)}.bar .ficon[aria-pressed="true"]{background:var(--amber);color:var(--tote)}.bar .ficon:disabled{opacity:.35}
+#nextBtn{background:var(--good);color:#fff}
+#favOnly:disabled{opacity:.45}
+details.srcs{margin-top:16px}details.srcs>.allow,details.srcs #allow>.allow{margin:0 12px 8px}details.srcs #follow{margin:0 12px 12px;background:#3b3120}details.srcs .tabs.who{margin:0 12px 8px}
+.r-pc small{font:600 11px/1 var(--led);color:var(--ink2);text-transform:uppercase;margin-left:3px}
+.pct small{display:block;font:600 12px/1 var(--led);color:var(--ink2);text-transform:uppercase}
+.cdn.res{background:var(--good);color:#fff}
+@media (max-width:560px){
+  .bar{padding:8px}.bar button{min-height:38px;padding:0 11px;font-size:16px}.bar select,#q{min-height:40px;font-size:16px}.bar .ficon{width:42px}
+  #hl{gap:6px}.hl{padding:8px 10px;font-size:16px}.hl-h b{font-size:16px}.hl-h small{font-size:13px}.hl-n{font-size:17px}.hl .nsays{font-size:13px;margin-top:4px}
+  .hl .hlbet{min-height:38px;padding:0 12px;font-size:15px}
+  .recstrip{font-size:15px;padding:7px 10px}
+  .tabs.who button{font-size:15px;padding:0 2px}
+}
 @media (max-width:560px){
   .scrrow{grid-template-columns:36px 28px minmax(0,1fr)}
   details.run>summary{grid-template-columns:36px 28px minmax(0,1fr) 52px 54px;font-size:15px}
@@ -329,19 +361,27 @@ details.race>summary.rsum .rchev{align-self:center}
 <main class="wrap">
   <div class="view"><button data-view="tips" aria-pressed="true">Today's tips</button><button data-view="races" aria-pressed="false">Races</button><button data-view="record" aria-pressed="false">Tipsters</button><button data-view="punters" aria-pressed="false">Punters</button><button data-view="bets" aria-pressed="false">My bets</button><button data-view="cricket" aria-pressed="false">Cricket</button></div>
   <section id="tipsView">
-  <div class="bar">
-    <div class="tabs dayc" id="dayc"></div>
-    <div class="tabs" id="codes"></div>
-    <select id="meet" aria-label="Meeting"></select>
-    <label><input type="checkbox" id="past"> Show jumped races</label>
-  </div>
-  <div id="allow"></div>
-  <details class="follow" id="follow"></details>
   <div class="tabs who" id="whoc"></div>
   <div id="hl"></div>
+  <details class="nums"><summary>What do these numbers mean?</summary>
+    <p><b>Chance</b> (e.g. 27%): how likely the tipster rates the runner to win. Every runner in a race adds up to 100%.</p>
+    <p><b>Price</b> (e.g. $3.40): what $1 returns if it wins, your $1 included. <b>Market</b> is the bookies' price (horses, and quick-form races). <b>Nan's price</b> is her own, worked out from her chance, for dogs and harness.</p>
+    <p><b>3/4 agree</b>: how many tipsters have the same top pick.</p>
+  </details>
+  <div id="recStrip"></div>
+  <div class="bar fbar">
+    <div class="frow scroll"><div class="tabs dayc" id="dayc"></div><div class="tabs" id="codes"></div><label><input type="checkbox" id="past"> Show jumped</label></div>
+    <div class="frow nw"><input type="search" id="q" placeholder="Find a track" aria-label="Search meetings" autocomplete="off"><select id="meet" aria-label="Meeting"></select><button id="favBtn" class="ficon" aria-pressed="false" title="Save this meeting">&#9734;</button></div>
+    <div class="frow nw"><button id="nextBtn">Next to jump &#9656;</button><button id="favOnly" aria-pressed="false">&#9733; My meetings</button></div>
+  </div>
   <div class="note" id="status"></div>
   <div id="multi"></div>
   <div class="races" id="races"></div>
+  <details class="follow srcs" id="srcs"><summary><span class="fs-l">Data sources &amp; settings</span><span class="fs-n" id="srcsN"></span><span class="rchev">&#9656;</span></summary>
+    <div id="allow"></div>
+    <div class="tabs who" id="tipson"></div>
+    <details class="follow" id="follow"></details>
+  </details>
   </section>
   <section id="betsView" hidden></section>
   <section id="racesView" hidden></section>
@@ -383,8 +423,10 @@ const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const div=v=>v?"$"+Number(v).toFixed(2):"–";
 const pct=p=>p>=.995?"99%":p<.01?"<1%":Math.round(p*100)+"%";
 const cdText=ms=>{if(ms<=0)return "jumped";const s=Math.floor(ms/1e3),h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;return h?`${h}h ${String(m).padStart(2,"0")}m`:m?`${m}m ${String(x).padStart(2,"0")}s`:`${x}s`};
+// race status: "In 23m 10s", "Jumping soon · 3m 10s" (under 5 minutes), then "Jumped", then "Result in" once the official result is known
+const SOON=5*60e3,stLabel=ms=>ms<=0?"Jumped":ms<SOON?`Jumping soon ${Math.floor(ms/6e4)}:${String(Math.floor(ms/1e3)%60).padStart(2,"0")}`:"In "+cdText(ms);
 const cdn=iso=>{const ms=Date.parse(iso)-Date.now();return iso&&ms>0?` <span class="cdn${ms<120e3?" soon":""}" data-cdn="${iso}">⏱ ${cdText(ms)}</span>`:""};
-setInterval(()=>{for(const el of document.querySelectorAll("[data-cdn]")){const ms=Date.parse(el.dataset.cdn)-Date.now();el.textContent=(ms>0&&!el.closest(".r-cd")?"⏱ ":"")+cdText(ms);el.classList.toggle("soon",ms>0&&ms<120e3);el.classList.toggle("gone",ms<=0)}},1000);
+setInterval(()=>{for(const el of document.querySelectorAll("[data-cdn]")){const ms=Date.parse(el.dataset.cdn)-Date.now(),rs=el.hasAttribute("data-rs");el.textContent=rs?stLabel(ms):(ms>0&&!el.closest(".r-cd")?"⏱ ":"")+cdText(ms);el.classList.toggle("soon",ms>0&&ms<(rs?SOON:120e3));el.classList.toggle("gone",ms<=0)}},1000);
 const timeOf=iso=>iso?new Date(iso).toLocaleTimeString("en-AU",{hour:"numeric",minute:"2-digit"}).replace(/\s?([ap])\.?m\.?/i,(m,a)=>" "+a.toLowerCase()+"m"):"";
 const CODE={H:"Horses",D:"Dogs",N:"Harness"};
 const ord=n=>n+(["th","st","nd","rd"][(n%100-20)%10]||["th","st","nd","rd"][n%100]||"th");
@@ -474,7 +516,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.29.5"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.30.0"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -497,7 +539,7 @@ async function loadAll(){
   $("dayc").innerHTML=`<button data-day="today" aria-pressed="${!TOMORROW}">Today</button><button data-day="tomorrow" aria-pressed="${TOMORROW}">Tomorrow</button><button data-day="past">Past days</button>`;
   if(TOMORROW&&!RACES.length)$("status").textContent="Tomorrow's races aren't out yet. Horse fields usually arrive mid-afternoon.";
   $("status").textContent=bad===3?"Nan couldn't load today's races. Try again soon.":bad?"Some codes didn't load, so they're missing for now.":"";
-  render();pump();loadBob();pumpPop();
+  render();pump();loadBob();pumpPop();loadStrip();
 }
 // dog and harness fields: only meetings Nan follows load by themselves (to save the daily form allowance); others when asked
 const ticked=r=>(FOLLOW[r.code]||[]).includes(r.slug),follows=r=>!!FOLLOW.auto||ticked(r),wanted=r=>follows(r)||WANT.has(r.code+r.slug);
@@ -625,7 +667,7 @@ function raceBody(r){
   return `<p class="nsays">${escH(catchFor("nan",r))}</p>${whoOrderHtml(r)}${panelHtml(r)}${loadBtn}${canBet?builderHtml(r):""}<p class="rmeta">${[r.name,r.dist?r.dist+"m":"",r.cls,r.cond||(r.card&&r.card.cond),r.est?"No market yet: horse prices estimated":""].filter(Boolean).map(escH).join(" · ")}</p>
   <table class="field"><thead><tr><th colspan="3">Nan's order</th></tr></thead><tbody>
   ${rk.map((x,i)=>`<tr><td><details class="run${i===0?" top1":""}"><summary><span class="rk">${ord(i+1)}</span>${cloth(x.u.no,r.code,x.u.box,"no")}<span class="nm"><b>${escH(x.u.name)}</b><small>${escH(runSub(r,x.u))}</small><small class="nt">${escH(talkFor("nan",r,x.u,i+1,n))}</small></span>
-    <span class="pct">${pct(x.p)}</span><span class="pr">${div(x.price)}<small>${mkt(r)?"market":"Nan's"}</small></span>${mkt(r)?`<span class="pr mk">${div(ladder(1/(x.p*1.13)))}<small>Nan's</small></span>`:"<span></span>"}
+    <span class="pct">${pct(x.p)}<small>chance</small></span><span class="pr">${div(x.price)}<small>${mkt(r)?"market":"Nan's"}</small></span>${mkt(r)?`<span class="pr mk">${div(ladder(1/(x.p*1.13)))}<small>Nan's</small></span>`:"<span></span>"}
     <span class="meter"><i style="width:${Math.round(100*x.p/maxP)}%"></i></span></summary>
     <div class="why">${talkBox(r,x.u,"nan")}${whyHtml(r,x,i,n)}${fullForm(r,x)}</div></details></td></tr>`).join("")}
   ${(r.scr||[]).map(u=>`<tr><td><div class="scrrow"><span class="rk">SCR</span>${cloth(u.no,r.code,u.box,"no x")}<span class="nm"><s>${escH(u.name)}</s><small>Scratched: no chance from Nan</small><small class="nt">${escH(talkFor("nan",r,u,1,1,true))}</small></span></div></td></tr>`).join("")}
@@ -633,7 +675,8 @@ function raceBody(r){
 }
 function visible(){
   const now=Date.now();
-  return RACES.filter(r=>(ST.code==="all"||r.code===ST.code)&&(ST.meet==="all"||`${r.code}|${r.venue}`===ST.meet)&&(ST.past||Date.parse(r.jump)>now-60e3));
+  const q=(ST.q||"").trim().toLowerCase();
+  return RACES.filter(r=>(ST.code==="all"||r.code===ST.code)&&(ST.meet==="all"||`${r.code}|${r.venue}`===ST.meet)&&(!ST.fav||FAV.has(`${r.code}|${r.venue}`))&&(!q||r.venue.toLowerCase().includes(q))&&(ST.past||Date.parse(r.jump)>now-60e3));
 }
 // the form allowance meter: FormFav's free 1,000 dog and harness form lookups a day (rolling 24 hours)
 function creditsHtml(c){
@@ -648,8 +691,11 @@ function meterHtml(a){
   const when=a.at?new Date(a.at).toLocaleTimeString("en-AU",{hour:"numeric",minute:"2-digit"}).replace(/\s?([ap])\.?m\.?/i,(m,x)=>" "+x.toLowerCase()+"m"):"";
   return `<div class="allow" title="Dog and harness form comes from FormFav's free allowance. It frees up gradually over 24 hours."><span class="allow-l">Form allowance</span><span class="allow-bar"><i style="width:${Math.round(f*100)}%;background:${col}"></i></span><span class="allow-n"><b>${left.toLocaleString()}</b> of ${a.limit.toLocaleString()} left${left===0?" · frees up through the day":""}${when?` · as of ${when}`:""}</span></div>`;
 }
+function srcsLine(){const c=CREDITS,low=[];if(c){for(const [k,l] of [["ff","FormFav"],["pe","PuntersEdge"],["krok","Krok"]]){const a=c[k];if(a&&a.limit&&a.left/a.limit<=.15)low.push(l)}}
+  else if(ALLOW&&ALLOW.limit&&ALLOW.left/ALLOW.limit<=.15)low.push("FormFav");
+  return low.length?`<b class="minus">${low.join(", ")} running low</b>`:c||ALLOW?"All sources OK":""}
 function renderFollow(){
-  $("allow").innerHTML=creditsHtml(CREDITS);
+  $("allow").innerHTML=creditsHtml(CREDITS);$("srcsN").innerHTML=srcsLine();
   const now=Date.now(),meets=[...new Map(RACES.filter(r=>r.code!=="H").map(r=>[r.code+r.slug,r])).values()];
   const el=$("follow"),open=el.open,n=meets.filter(ticked).length;
   const group=code=>{const ms=meets.filter(m=>m.code===code).map(m=>({m,rs:RACES.filter(r=>r.code===code&&r.slug===m.slug)})).sort((a,b)=>a.m.venue.localeCompare(b.m.venue));
@@ -669,6 +715,9 @@ const WHO={all:"Everyone",nan:"Nan",pop:"Pop",bob:"Bob",gran:"Gran"};
 // tipsters the punter has switched off (Nan is always on); saved on this device
 let OFF=(()=>{try{return new Set(JSON.parse(localStorage.getItem("otr-nan-off")||"[]").filter(w=>["pop","bob","gran"].includes(w)))}catch(e){return new Set()}})();
 const fkey=v=>String(v||"").toLowerCase().replace(/[^a-z0-9]/g,"");
+// saved meetings ("My meetings"), kept on this device as "code|venue"
+let FAV=(()=>{try{return new Set(JSON.parse(localStorage.getItem("otr-nan-favs")||"[]"))}catch(e){return new Set()}})();
+const saveFav=()=>{try{localStorage.setItem("otr-nan-favs",JSON.stringify([...FAV]))}catch(e){}};
 const POP_SAYS=["Pop's been studying the form since 5am. With his tea.","Pop says this one's the goods, and he's never wrong. Ask him.","Pop reckons it's a lay-down misère.","Pop had a word with the trainer. Well, he waved at him.","Pop's model says so, and Pop trusts his model more than Nan.","Pop: 'I've seen this before. In 1987.'","Pop circled this one in pen, not pencil.","Pop reckons the numbers add up. He used a calculator this time."];
 const BOB_SAYS=["Bob's mate Davo says this one. Bob's not sure how Davo works it out either.","Bob swears by this one, and so does the whole front bar.","Bob's computer crunched it. Bob had a pie.","Bob reckons it's money for jam.","Bob's tipping it, so it's either a certainty or a disaster.","Bob ran the numbers twice and got the same answer. A first.","Bob says the algorithm loves it. Bob loves the algorithm.","Bob's gone all in. Don't tell his missus."];
 const GRAN_SAYS=["Gran follows the money. The money's here.","Gran says the bookies don't make mistakes. Often.","Gran just backs the favourite and knits.","Gran's watched the prices all morning. This is the one they're backing.","Gran says: never argue with the market, dear.","Gran's had the same system since 1962. It's the favourite."];
@@ -1701,6 +1750,20 @@ async function pumpPop(){if(TIPS.busy)return;const now=Date.now();
   TIPS.busy=false;render();if(more)setTimeout(pumpPop,500)}
 setInterval(()=>{if(RACES.length&&Date.now()-TIPS.bobAt>20*60e3)loadBob();if(RACES.length)pumpPop()},60e3);
 setInterval(()=>{TIPS.asked.clear()},45*60e3);
+/* ---------- Nan's record strip near the tips, and which races have official results (for "Result in") ---------- */
+const STRIP={sum:null,done:{}};
+async function loadStrip(){const NU=SB+"/otr-nan";try{STRIP.sum=await getJSON(NU)}catch(e){}
+  const d=ST.today;if(d&&!TOMORROW)try{const j=await getJSON(`${NU}?date=${d}`),m={};for(const x of j.races||[])if(x.settled_at)m[`${x.code}|${fkey(x.venue)}|${x.race}`]=x.result&&x.result.status==="abandoned"?"ab":true;STRIP.done=m}catch(e){}
+  if(document.querySelector("details.run[open]"))renderStrip();else render()}
+setInterval(()=>{if(RACES.length&&document.visibilityState==="visible")loadStrip()},3*60e3);
+function renderStrip(){const el=$("recStrip");if(!el)return;const s=STRIP.sum;if(!s||!s.days||!s.days.length){el.innerHTML="";return}
+  const from=new Date(Date.parse(s.today+"T12:00:00")-6*864e5).toISOString().slice(0,10),t=tally(s.days.filter(d=>d.date>=from).flatMap(d=>Object.values(d.codes)));
+  if(!t.bets){el.innerHTML="";return}const prof=t.back-t.staked;
+  el.innerHTML=`<div class="recstrip" data-view="record" role="button" tabindex="0"><span class="rs-l">Nan's record</span><span>Last 7 days: <b>${t.won} winner${t.won===1?"":"s"} from ${t.bets} tips</b> (${Math.round(100*t.won/t.bets)}%) · $1 on each top pick: <b class="${prof>=0?"plus":"minus"}">${prof>=0?"+":""}${money(prof)}</b></span><span class="rs-go">Full record &#9656;</span></div>`}
+function resultOf(r){if(r.code==="H"&&RESULTS[r.key]&&RESULTS[r.key].done)return true;return STRIP.done[`${r.code}|${fkey(r.venue)}|${r.no}`]||false}
+function raceState(r){const ms=Date.parse(r.jump)-Date.now();
+  if(ms>0)return `<span class="cdn${ms<SOON?" soon":""}" data-cdn="${escH(r.jump)}" data-rs>${stLabel(ms)}</span>`;
+  const x=resultOf(r);return x==="ab"?'<span class="cdn gone">Abandoned</span>':x?'<span class="cdn res">Result in</span>':'<span class="cdn gone">Jumped</span>'}
 // one race, collapsed: time and countdown on the left; venue, the tipster's top pick and the next three, and the panel, lined up on the right
 function raceCard(r,open,tag){const rk=ranked(r),t=Date.parse(r.jump),gone=t<=Date.now(),[hm,ap]=timeOf(r.jump).split(" ");
   const w=ST.who==="all"?"nan":ST.who,tp=w==="nan"?null:tipsters(r).find(x=>x.who===w);
@@ -1710,13 +1773,13 @@ function raceCard(r,open,tag){const rk=ranked(r),t=Date.parse(r.jump),gone=t<=Da
   else if(!rk)pick=`<div class="r-top r-note">${noField(r,true)}</div>`;
   else if(w!=="nan"&&!tp)pick=`<div class="r-top r-note">${WHO[w]} hasn't rated this race.</div>`;
   else{const top=tp?topN(r,tp,4):rk.slice(0,4).map(x=>({no:x.u.no,name:x.u.name,box:x.u.box,p:x.p}));
-    pick=`<div class="r-top"><span class="r-who">${WHO[w]}</span>${cloth(top[0].no,r.code,top[0].box)}<b class="r-name">${escH(top[0].name)}</b><span class="r-pc">${pct(top[0].p)}</span></div>
+    pick=`<div class="r-top"><span class="r-who">${WHO[w]}</span>${cloth(top[0].no,r.code,top[0].box)}<b class="r-name">${escH(top[0].name)}</b><span class="r-pc">${pct(top[0].p)}<small>win</small></span></div>
       <div class="r-next"><span class="r-who">Then</span>${top.slice(1,4).map(x=>cloth(x.no,r.code,x.box)).join("")}<span class="r-scr">${meta}${r.scr&&r.scr.length?` · ${r.scr.length} scr`:""}</span></div>`}
   const pn=rk&&!gone?panelOf(r):null,others=pn?pn.ts.filter(x=>x.who!=="nan"):[];
   const panel=pn?`<div class="r-panel"><span class="r-who">Panel</span>${cloth(pn.pick.no,r.code,pn.pick.box)}${others.map(x=>`<span class="r-t"><small>${escH(x.label.split("'")[0])}</small>${cloth(x.pick.no,r.code,x.pick.box)}</span>`).join("")}<span class="agree a${pn.agree===pn.ts.length?"all":""}">${pn.agree}/${pn.ts.length}<span class="agw"> agree</span></span></div>`:"";
   const src=rk&&r.src==="quick"?`<span class="qtag">${QUICK[r.code]&&QUICK[r.code].priceOnly?"Price only":"Quick form"}</span>`:"";
   return `<details class="race${gone?" jumped":""}" data-id="${escH(r.id)}" ${open.has(r.id)?"open":""}><summary class="rsum">
-    <div class="r-main"><div class="r-title"><span class="r-time">${hm||""}<small>${ap||""}</small></span><b class="r-v">${escH(r.venue)}</b><b class="r-n">R${r.no}</b>${src}<span class="r-cd">${gone?'<span class="cdn gone">jumped</span>':cdn(r.jump).replace("⏱ ","")}</span></div>${pick}${panel}</div>
+    <div class="r-main"><div class="r-title"><span class="r-time">${hm||""}<small>${ap||""}</small></span><b class="r-v">${escH(r.venue)}</b><b class="r-n">R${r.no}</b>${src}<span class="r-cd">${raceState(r)}</span></div>${pick}${panel}</div>
     <span class="rchev">&#9656;</span></summary><div class="rbody">${open.has(r.id)?raceBody(r):""}</div></details>`}
 function render(){
   if(ST.view==="races")renderRaces();
@@ -1724,10 +1787,14 @@ function render(){
   $("codes").innerHTML=[["all","All"],["H","Horses"],["D","Dogs"],["N","Harness"]].map(([k,l])=>`<button data-code="${k}" aria-pressed="${ST.code===k}">${l}</button>`).join("");
   const meets=[...new Map(RACES.filter(r=>ST.code==="all"||r.code===ST.code).map(r=>[`${r.code}|${r.venue}`,r])).values()].sort((a,b)=>a.venue.localeCompare(b.venue));
   if(ST.meet!=="all"&&!meets.some(r=>`${r.code}|${r.venue}`===ST.meet))ST.meet="all";
-  $("meet").innerHTML=`<option value="all">All meetings</option>`+meets.map(r=>`<option value="${escH(r.code+"|"+r.venue)}" ${ST.meet===r.code+"|"+r.venue?"selected":""}>${escH(r.venue)} · ${CODE[r.code]}</option>`).join("");
+  const mopt=r=>`<option value="${escH(r.code+"|"+r.venue)}" ${ST.meet===r.code+"|"+r.venue?"selected":""}>${FAV.has(r.code+"|"+r.venue)?"★ ":""}${escH(r.venue)} · ${CODE[r.code]}</option>`,favM=meets.filter(r=>FAV.has(r.code+"|"+r.venue));
+  $("meet").innerHTML=`<option value="all">All meetings</option>`+(favM.length?`<optgroup label="My meetings">${favM.map(mopt).join("")}</optgroup><optgroup label="All meetings">`:"")+meets.map(mopt).join("")+(favM.length?"</optgroup>":"");
+  const fb=$("favBtn"),fon=ST.meet!=="all"&&FAV.has(ST.meet);fb.disabled=ST.meet==="all";fb.setAttribute("aria-pressed",fon);fb.innerHTML=fon?"&#9733;":"&#9734;";fb.title=ST.meet==="all"?"Pick a meeting to save it":fon?"Remove from My meetings":"Save to My meetings";
+  if(ST.fav&&!FAV.size)ST.fav=false;const fo=$("favOnly");fo.setAttribute("aria-pressed",!!ST.fav);fo.disabled=!FAV.size;fo.title=FAV.size?"Only show meetings you've saved":"Pick a meeting and tap the star to save it";
+  renderStrip();
   if(OFF.has(ST.who))ST.who="all";
-  $("whoc").innerHTML=`<div class="wrow"><span class="wl">Whose tips</span><div class="wbtns">${Object.entries(WHO).filter(([k])=>!OFF.has(k)).map(([k,l])=>`<button data-who="${k}" aria-pressed="${ST.who===k}">${l}</button>`).join("")}</div></div>`
-    +`<div class="wrow"><span class="wl">Tipsters on</span><div class="wbtns"><label class="wchk on"><input type="checkbox" checked disabled> Nan</label>${["pop","bob","gran"].map(k=>`<label class="wchk${OFF.has(k)?"":" on"}"><input type="checkbox" data-tipon="${k}" ${OFF.has(k)?"":"checked"}> ${WHO[k]}</label>`).join("")}</div></div>`;
+  $("whoc").innerHTML=`<div class="wrow"><span class="wl">Whose tips</span><div class="wbtns">${Object.entries(WHO).filter(([k])=>!OFF.has(k)).map(([k,l])=>`<button data-who="${k}" aria-pressed="${ST.who===k}">${l}</button>`).join("")}</div></div>`;
+  $("tipson").innerHTML=`<div class="wrow"><span class="wl">Tipsters on</span><div class="wbtns"><label class="wchk on"><input type="checkbox" checked disabled> Nan</label>${["pop","bob","gran"].map(k=>`<label class="wchk${OFF.has(k)?"":" on"}"><input type="checkbox" data-tipon="${k}" ${OFF.has(k)?"":"checked"}> ${WHO[k]}</label>`).join("")}</div></div>`;
   const list=visible(),open=new Set([...document.querySelectorAll("details.race[open]")].map(d=>d.dataset.id));
   const openRun=new Set([...document.querySelectorAll("details.run[open]")].map(d=>d.closest("details.race").dataset.id+"#"+d.querySelector(".no").textContent));
   // Best Bet and Roughie, from races still to run
@@ -1736,24 +1803,25 @@ function render(){
   let rough=null;for(const x of live)for(const y of x.rk.slice(1,4)){const pr=x.r.code==="H"?y.u.win:y.price;if(pr>=8&&(!rough||y.p*pr>rough.y.p*rough.pr))rough={x,y,pr}}
   const tag=r=>`${timeOf(r.jump)} · ${escH(r.venue)} R${r.no} · ${CODE[r.code]}`;
   let pbest=null;for(const x of live){const pn=panelOf(x.r);if(pn&&pn.ts.length>=3&&pn.agree>=3&&(!pbest||pn.pick.p>pbest.pn.pick.p))pbest={r:x.r,pn}}
-  const NANHL=(best?`<div class="hl" data-hlbet="${escH(best.r.id)}|${best.rk[0].u.no}"><div class="hl-h"><b>Nan's Best Bet</b><small>${tag(best.r)}</small></div><div class="hl-p">${cloth(best.rk[0].u.no,best.r.code,best.rk[0].u.box)}<b class="hl-n">${escH(best.rk[0].u.name)}</b><span class="hl-s">${pct(best.rk[0].p)} ${div(best.rk[0].price)}</span></div><span class="nsays">${escH(catchFor("nan",best.r))}</span><button class="betbtn hlbet">Bet on ${escH(best.rk[0].u.name)}</button></div>`:"")
-    +(rough?`<div class="hl" data-hlbet="${escH(rough.x.r.id)}|${rough.y.u.no}"><div class="hl-h"><b>Nan's Roughie</b><small>${tag(rough.x.r)}</small></div><div class="hl-p">${cloth(rough.y.u.no,rough.x.r.code,rough.y.u.box)}<b class="hl-n">${escH(rough.y.u.name)}</b><span class="hl-s">${pct(rough.y.p)} ${div(rough.pr)}</span></div><span class="nsays">${escH(nanSays(rough.x.r.code,rough.x.r.id+"|"+rough.y.u.name))}</span><button class="betbtn hlbet">Bet on ${escH(rough.y.u.name)}</button></div>`:"");
+  const card=o=>`<div class="hl${o.cls?" "+o.cls:""}" data-hlbet="${escH(o.r.id)}|${o.no}"><div class="hl-h"><b>${o.title}</b><small>${tag(o.r)}</small></div><div class="hl-p">${cloth(o.no,o.r.code,o.box)}<span class="hl-m"><b class="hl-n">${escH(o.name)}</b><span class="hl-s"><b>${pct(o.p)}</b> win chance${o.pr?` · <b>${div(o.pr)}</b> ${o.lbl}`:""}</span></span><button class="betbtn hlbet" aria-label="Bet on ${escH(o.name)}">Bet</button></div><span class="nsays">${escH(o.says)}</span></div>`;
+  const plbl=r=>r.code==="H"||r.src==="quick"?"market":"Nan's price";
+  const bestC=best?card({r:best.r,no:best.rk[0].u.no,box:best.rk[0].u.box,name:best.rk[0].u.name,title:"Nan's Best Bet",p:best.rk[0].p,pr:best.rk[0].price,lbl:plbl(best.r),says:catchFor("nan",best.r)}):"";
+  const roughC=rough?card({r:rough.x.r,no:rough.y.u.no,box:rough.y.u.box,name:rough.y.u.name,title:"Nan's Roughie",p:rough.y.p,pr:rough.pr,lbl:rough.x.r.code==="H"?"market":plbl(rough.x.r),says:nanSays(rough.x.r.code,rough.x.r.id+"|"+rough.y.u.name)}):"";
   const tOf=(r,w)=>tipsters(r).find(t=>t.who===w);
   if(ST.who!=="all"&&ST.who!=="nan"){const w=ST.who,mine=live.map(x=>({r:x.r,t:tOf(x.r,w)})).filter(x=>x.t).sort((a,b)=>b.t.pick.p-a.t.pick.p);
     const val=mine.map(x=>{const u=x.t.pick,f=ranked(x.r).find(y=>y.u.no===u.no),pr=f?(x.r.code==="H"?f.u.win:f.price):0;return {...x,pr,ev:u.p*pr}}).filter(x=>x.pr>=6).sort((a,b)=>b.ev-a.ev)[0];
-    const box=(x,title,extra)=>`<div class="hl" data-hlbet="${escH(x.r.id)}|${x.t.pick.no}"><div class="hl-h"><b>${title}</b><small>${tag(x.r)}</small></div><div class="hl-p">${cloth(x.t.pick.no,x.r.code,x.t.pick.box)}<b class="hl-n">${escH(x.t.pick.name)}</b><span class="hl-s">${pct(x.t.pick.p)}${extra||""}</span></div><span class="nsays">${escH(x.t.says)}</span><button class="betbtn hlbet">Bet on ${escH(x.t.pick.name)}</button></div>`;
-    $("hl").innerHTML=mine.length?box(mine[0],`${WHO[w]}'s Best Bet`)+(mine[1]?box(mine[1],`${WHO[w]}'s Next Best`):"")+(val&&val!==mine[0]&&val!==mine[1]?box(val,`${WHO[w]}'s Value Bet`,` ${div(val.pr)}`):"")
+    const box=(x,title,pr)=>card({r:x.r,no:x.t.pick.no,box:x.t.pick.box,name:x.t.pick.name,title,p:x.t.pick.p,pr,lbl:x.r.code==="H"?"market":plbl(x.r),says:x.t.says});
+    $("hl").innerHTML=mine.length?box(mine[0],`${WHO[w]}'s Best Bet`)+(mine[1]?box(mine[1],`${WHO[w]}'s Next Best`):"")+(val&&val!==mine[0]&&val!==mine[1]?box(val,`${WHO[w]}'s Value Bet`,val.pr):"")
       :`<div class="hl">${WHO[w]} hasn't tipped any of the races still to run yet.${w==="gran"?" Gran only tips once the bookies have prices up.":""}</div>`}
-  else if(ST.who==="nan")$("hl").innerHTML=NANHL;
-  else   $("hl").innerHTML=(pbest?`<div class="hl hlpanel" data-hlbet="${escH(pbest.r.id)}|${pbest.pn.pick.no}"><div class="hl-h"><b>The Panel's Best Bet</b><small>${tag(pbest.r)}</small></div><div class="hl-p">${cloth(pbest.pn.pick.no,pbest.r.code,pbest.pn.pick.box)}<b class="hl-n">${escH(pbest.pn.pick.name)}</b><span class="hl-s">${pct(pbest.pn.pick.p)}</span></div><span class="nsays">${pbest.pn.agree} of ${pbest.pn.ts.length} tipsters agree: ${pbest.pn.ts.map(t=>t.label.split("'")[0]).join(", ")}.</span><button class="betbtn hlbet">Bet on ${escH(pbest.pn.pick.name)}</button></div>`:"")+(best?`<div class="hl" data-hlbet="${escH(best.r.id)}|${best.rk[0].u.no}"><div class="hl-h"><b>Nan's Best Bet</b><small>${tag(best.r)}</small></div><div class="hl-p">${cloth(best.rk[0].u.no,best.r.code,best.rk[0].u.box)}<b class="hl-n">${escH(best.rk[0].u.name)}</b><span class="hl-s">${pct(best.rk[0].p)} ${div(best.rk[0].price)}</span></div><span class="nsays">${escH(catchFor("nan",best.r))}</span><button class="betbtn hlbet">Bet on ${escH(best.rk[0].u.name)}</button></div>`:"")
-    +(rough?`<div class="hl" data-hlbet="${escH(rough.x.r.id)}|${rough.y.u.no}"><div class="hl-h"><b>Nan's Roughie</b><small>${tag(rough.x.r)}</small></div><div class="hl-p">${cloth(rough.y.u.no,rough.x.r.code,rough.y.u.box)}<b class="hl-n">${escH(rough.y.u.name)}</b><span class="hl-s">${pct(rough.y.p)} ${div(rough.pr)}</span></div><span class="nsays">${escH(nanSays(rough.x.r.code,rough.x.r.id+"|"+rough.y.u.name))}</span><button class="betbtn hlbet">Bet on ${escH(rough.y.u.name)}</button></div>`:"");
+  else if(ST.who==="nan")$("hl").innerHTML=bestC+roughC;
+  else $("hl").innerHTML=(pbest?card({cls:"hlpanel",r:pbest.r,no:pbest.pn.pick.no,box:pbest.pn.pick.box,name:pbest.pn.pick.name,title:"The Panel's Best Bet",p:pbest.pn.pick.p,says:`${pbest.pn.agree} of ${pbest.pn.ts.length} tipsters agree: ${pbest.pn.ts.map(t=>t.label.split("'")[0]).join(", ")}.`}):"")+bestC+roughC;
   const waiting=RACES.filter(r=>r.code!=="H"&&!CARDS[r.code+r.slug]&&wanted(r)).length;
   if(waiting&&!$("status").textContent.startsWith("Nan couldn't"))$("status").textContent=`Nan is still reading the form for ${waiting} race${waiting>1?"s":""}…`;
   else if($("status").textContent.startsWith("Nan is still"))$("status").textContent="";
   // races still to run come first; only the next few are shown until "Show more" (the full list is a long scroll)
-  const showAll=ST.more||ST.meet!=="all",cap=ST.cap||10,shown=showAll?list:list.slice(0,cap);
+  const showAll=ST.more||ST.meet!=="all"||!!ST.q,cap=ST.cap||10,shown=showAll?list:list.slice(0,cap);
   $("races").innerHTML=list.length?shown.map(r=>raceCard(r,open,tag)).join("")+(list.length>shown.length?`<div class="morerow"><button class="more" data-more>Show ${Math.min(10,list.length-shown.length)} more <small>(${list.length-shown.length} to go)</small></button>${list.length-shown.length>10?`<button class="more all" data-moreall>Show all</button>`:""}</div>`:"")
-    :`<div class="empty">${RACES.length?"No races to show. Tick \"Show jumped races\" or pick another code.":"No real races found for today yet."}</div>`;
+    :`<div class="empty">${!RACES.length?"No real races found for today yet.":ST.q?`No meetings match "${escH(ST.q)}".`:ST.fav?"None of your saved meetings have races to show.":'No races to show. Tick "Show jumped" or pick another code.'}</div>`;
   for(const k of openRun){const [id,no]=k.split("#");const d=[...document.querySelectorAll(`details.race[data-id="${CSS.escape(id)}"] details.run`)].find(x=>x.querySelector(".no").textContent===no);if(d)d.open=true}
 }
 document.addEventListener("click",e=>{const b=e.target.closest("[data-code]");if(b){ST.code=b.dataset.code;ST.cap=10;render()}});
@@ -1776,6 +1844,15 @@ document.addEventListener("change",e=>{const c=e.target.closest&&e.target.closes
     .catch(()=>{$("status").textContent="Couldn't save that. Try again."})});
 $("meet").addEventListener("change",e=>{ST.meet=e.target.value;for(const r of RACES)if(`${r.code}|${r.venue}`===ST.meet)want(r);render()});
 $("past").addEventListener("change",e=>{ST.past=e.target.checked;render()});
+$("q").addEventListener("input",e=>{ST.q=e.target.value;ST.cap=10;clearTimeout(ST.qt);ST.qt=setTimeout(render,150)});
+$("favBtn").addEventListener("click",()=>{if(ST.meet==="all")return;FAV.has(ST.meet)?FAV.delete(ST.meet):FAV.add(ST.meet);saveFav();render()});
+$("favOnly").addEventListener("click",()=>{ST.fav=!ST.fav;ST.cap=10;render()});
+// Next to jump: open the next race still to run (within the filters if any match) and scroll to it
+$("nextBtn").addEventListener("click",()=>{const now=Date.now(),up=r=>Date.parse(r.jump)>now;let r=visible().find(up);
+  if(!r){r=RACES.filter(up).sort((a,b)=>Date.parse(a.jump)-Date.parse(b.jump))[0];if(!r){$("status").textContent="No more races to run today.";return}
+    ST.code="all";ST.meet="all";ST.fav=false;ST.q="";$("q").value=""}
+  const i=visible().findIndex(x=>x.id===r.id);if(i>=(ST.cap||10))ST.cap=i+1;render();
+  const d=document.querySelector(`#races details.race[data-id="${CSS.escape(r.id)}"]`);if(!d)return;d.open=true;try{d.scrollIntoView({block:"start",behavior:"smooth"})}catch(e){d.scrollIntoView()}});
 document.addEventListener("toggle",e=>{const d=e.target;if(d.matches&&d.matches("details.race")&&d.open){const r=RACES.find(x=>x.id===d.dataset.id);if(r)d.querySelector(".rbody").innerHTML=raceBody(r)}},true);
 
 /* ---------- Nan's record ---------- */
@@ -2562,7 +2639,7 @@ function renderRaces(){const el=$("racesView");if(!el)return;const list=raceList
     <div class="bb-grid rs-codes">${codes}</div>
     <div class="rs-nav"><button data-rsgo="-1" ${i>0?"":"disabled"}>◀ Prev</button><button class="rs-evb" data-rsev aria-expanded="${RS.ev}">Race ${i+1} of ${list.length}<small>All events ${RS.ev?"▴":"▾"}</small></button><button data-rsgo="1" ${i<list.length-1?"":"disabled"}>Next ▶</button></div>
     ${RS.ev?evHtml(list,r.id):""}
-    <div class="rs-head"><span class="r-time">${hm||""}<small>${ap||""}</small></span><b class="rs-v">R${r.no} ${escH(r.venue)}</b><span class="r-cd">${gone?'<span class="cdn gone">jumped</span>':cdn(r.jump).replace("⏱ ","")}</span></div>
+    <div class="rs-head"><span class="r-time">${hm||""}<small>${ap||""}</small></span><b class="rs-v">R${r.no} ${escH(r.venue)}</b><span class="r-cd">${raceState(r)}</span></div>
     <p class="rs-meta">${[CODE[r.code],r.dist?r.dist+"m":"",r.cond||"",f?f.length+" runners":"",P>1?`Pays ${P} places`:P?"Win only":""].filter(Boolean).map(escH).join(" · ")}</p>
     ${r.name?`<p class="rs-nm">${escH(r.name)}</p>`:""}
     ${r.scr&&r.scr.length?`<p class="rs-nm">Scratched: ${r.scr.map(u=>escH(u.no+" "+(u.name||""))).join(", ")}</p>`:""}
@@ -2609,7 +2686,7 @@ document.addEventListener("change",e=>{if(e.target.id==="stakeIn"){const v=Math.
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")pullBK()});
 setInterval(()=>{if(document.visibilityState==="visible")pullBK()},30e3);
 if(location.hash==="#record")setView("record");else if(location.hash==="#races")setView("races");else if(location.hash==="#punters")setView("punters");else if(location.hash==="#cricket")setView("cricket");else if(location.hash==="#bets")setView("bets",BK.slip.length?"slipBox":null);else slipBar();
-function refreshAllow(){clearTimeout(refreshAllow.t);refreshAllow.t=setTimeout(()=>getJSON(SB+"/otr-nan?follow=1").then(j=>{ALLOW=j.allowance||ALLOW;CREDITS=j.credits||CREDITS;$("allow").innerHTML=creditsHtml(CREDITS)}).catch(()=>{}),1500)}
+function refreshAllow(){clearTimeout(refreshAllow.t);refreshAllow.t=setTimeout(()=>getJSON(SB+"/otr-nan?follow=1").then(j=>{ALLOW=j.allowance||ALLOW;CREDITS=j.credits||CREDITS;$("allow").innerHTML=creditsHtml(CREDITS);$("srcsN").innerHTML=srcsLine()}).catch(()=>{}),1500)}
 setInterval(refreshAllow,120e3);
 loadAll();
 setInterval(()=>{for(const k in LIMIT)if(Date.now()-LIMIT[k]>10*60e3&&!BUSY[k])delete CARDS[k];pump();if(!document.querySelector("details.run[open]"))render()},60e3);
