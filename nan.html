@@ -350,7 +350,7 @@ details.race>summary.rsum .rchev{align-self:center}
 <div id="slipBar" hidden></div>
 <script>
 const SB="https://nkkhbtrrytctpfwjenrz.supabase.co/functions/v1";
-const PE_URL=SB+"/otr-pe",DG_URL=SB+"/otr-dogs",HN_URL=SB+"/otr-dogs?code=harness",FF_URL=SB+"/otr-form";
+const AB_URL=SB+"/otr-aband",PE_URL=SB+"/otr-pe",DG_URL=SB+"/otr-dogs",HN_URL=SB+"/otr-dogs?code=harness",FF_URL=SB+"/otr-form";
 const $=id=>document.getElementById(id);
 const escH=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
@@ -448,7 +448,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.26.0"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.26.1"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -1071,6 +1071,7 @@ function settleMulti(t){
   if(t.status==="cancelled")return {state:"cancelled"};
   let pending=false,src="official",div=1;
   for(const leg of t.legs){
+    if((BK.off[leg.rk]||{}).aband)return {state:"void",pay:costOf(t),src:"official",aband:true};
     const r=legResult(leg);if(!r){pending=true;continue}
     if(r.src==="manual")src="manual";
     const scrNos=new Set();for(const s of r.scr)for(const x of (leg.field||leg.sel))if(s.name?nkey(s.name)===nkey(x.name):+s.no===+x.no)scrNos.add(x.no);
@@ -1089,6 +1090,7 @@ function settleOf(t){
   if(isMulti(t.type))return settleMulti(t);
   if(t.status==="cancelled")return {state:"cancelled"};
   const off=BK.off[t.rk];
+  if(off&&off.aband)return {state:"void",pay:costOf(t),src:"official",aband:true};
   if(off&&off.fin&&off.fin.length){const o=outcome(t,off.fin,off.exo||{},off.pp,off.scr,true);
     if(o.void)return {state:"void",pay:o.pay,src:"official"};if(o.hit&&o.pay==null)return {state:"div",src:"official"};return {state:o.hit?"won":"lost",pay:o.pay,src:"official"}}
   const man=BK.manual[t.rk];
@@ -1202,7 +1204,7 @@ function resList(title,rows,code,mine,note){
 const myNos=t=>new Set([...(t.sel||[]).map(x=>x.no),...(t.style==="standout"&&t.legs?t.legs.flat():[])]);
 function tkMulti(t){
   const o=settleOf(t),c=costOf(t);
-  const tag={open:["To run",""],waiting:["Waiting on results",""],won:[`Won ${money(o.pay||0)}`,"won"],lost:["Lost","lost"],void:["Refunded",""],cancelled:["Cancelled",""]}[o.state];
+  const tag={open:["To run",""],waiting:["Waiting on results",""],won:[`Won ${money(o.pay||0)}`,"won"],lost:["Lost","lost"],void:[o.aband?"Abandoned":"Refunded",""],cancelled:["Cancelled",""]}[o.state];
   return `<div class="rec tk"><div><div class="rmeta">${timeOf(t.jump)}${t.status!=="cancelled"?cdn(t.jump):""} · ${BT[t.type][0]} · ${t.legs.length} races</div>
     <div class="line"><b>${BT[t.type][0]}</b> · ${money(c)} <small>(${comboLine(t)})</small></div></div>
     <span class="tag ${tag[1]}">${tag[0]}${o.src==="manual"&&o.state!=="open"?" · your result":""}</span>
@@ -1220,14 +1222,14 @@ function tkHtml(t){
   if(t.sport==="cricket")return crTk(t);
   if(isMulti(t.type))return tkMulti(t);
   const o=settleOf(t),c=costOf(t),man=BK.manual[t.rk],afterJump=Date.now()>=Date.parse(t.jump);
-  const tag={open:["To run",""],waiting:["Waiting on results",""],div:["Won, dividend coming",""],won:[`Won ${money(o.pay||0)}`,"won"],lost:["Lost","lost"],void:["Refunded",""],cancelled:["Cancelled",""]}[o.state];
+  const tag={open:["To run",""],waiting:["Waiting on results",""],div:["Won, dividend coming",""],won:[`Won ${money(o.pay||0)}`,"won"],lost:["Lost","lost"],void:[o.aband?"Abandoned":"Refunded",""],cancelled:["Cancelled",""]}[o.state];
   return `<div class="rec tk"><div class="rmeta">${timeOf(t.jump)}${t.status!=="cancelled"?cdn(t.jump):""} · ${escH(t.venue)} R${t.no} · ${CODE[t.code]}</div>
     <span class="tag ${tag[1]}">${tag[0]}${o.src==="manual"?" · your result":""}</span>
     <div class="line"><b>${BT[t.type][0]}${styleName(t)}</b> ${selHtml(t)} · ${money(c)}</div>
     ${t.type==="ew"||comboLine(t)?`<div class="order">${t.type==="ew"?`${money(t.stake)} each way`:comboLine(t)}</div>`:""}
     ${(LEDGER.per[t.id]||0)>0?`<div class="order nanpay">${money(LEDGER.per[t.id])} of it paid back to Nan</div>`:""}
     ${o.src==="manual"?resList("Your result",man.map((n,i)=>{const u=(t.field||[]).find(x=>x.no===n)||{};return {pos:i+1,no:n,name:u.name,box:u.box}}),t.code,myNos(t),"Estimated dividend for now. The official result replaces this when it's in."):""}
-    ${o.src==="official"&&BK.off[t.rk]?resList("Official result",BK.off[t.rk].fin.slice().sort((a,b)=>a.pos-b.pos).slice(0,4).map(x=>({...x,box:((t.field||[]).find(u=>u.no===x.no)||{}).box})),t.code,myNos(t),o.state==="void"?"A runner you picked was scratched, so the stake came back.":""):""}
+    ${o.aband?`<p class="calc-out abd">Race abandoned: it was never run, so your ${money(costOf(t))} came back.</p>`:o.src==="official"&&BK.off[t.rk]?resList("Official result",BK.off[t.rk].fin.slice().sort((a,b)=>a.pos-b.pos).slice(0,4).map(x=>({...x,box:((t.field||[]).find(u=>u.no===x.no)||{}).box})),t.code,myNos(t),o.state==="void"?"A runner you picked was scratched, so the stake came back.":""):""}
     <div class="tkbtns">${o.state==="open"?`<button data-bcancel="${t.id}">Cancel bet</button>`:""}${afterJump&&o.src!=="official"&&t.status!=="cancelled"?`<button data-bman="${escH(t.rk)}">${man?"Change my result":"Enter result"}</button>${man?`<button data-bmanclr="${escH(t.rk)}">Clear my result</button>`:""}`:""}</div>
     ${MANUAL===t.rk?manualForm(t):""}</div>`;
 }
@@ -1275,7 +1277,7 @@ const raceRefs=t=>isMulti(t.type)?t.legs:[{rk:t.rk,code:t.code,date:t.date,no:t.
 async function checkOfficial(force){
   if(BKBUSY)return;const need=new Map(),refs=[];
   for(const t of BK.tickets){if(t.status==="cancelled"||t.sport==="cricket")continue;
-    for(const r of raceRefs(t)){if(Date.now()<Date.parse(r.jump)+(force?60e3:5*60e3))continue;const o=BK.off[r.rk];if(o&&o.fin&&/final|paying|official|closed/i.test(o.st||"final")&&settleOf(t).state!=="div")continue;if(!refs.some(x=>x.rk===r.rk)){need.set(r.code+"|"+r.date,[r.code,r.date]);refs.push(r)}}}
+    for(const r of raceRefs(t)){if(Date.now()<Date.parse(r.jump)+(force?60e3:5*60e3))continue;const o=BK.off[r.rk];if(o&&o.fin&&/final|paying|official|closed|abandoned/i.test(o.st||"final")&&settleOf(t).state!=="div")continue;if(!refs.some(x=>x.rk===r.rk)){need.set(r.code+"|"+r.date,[r.code,r.date]);refs.push(r)}}}
   if(!need.size){if(force){CHECKMSG="Nothing waiting on official results.";renderBets()}return}
   BKBUSY=true;if(force){CHECKMSG="Checking for official results…";renderBets()}let got=0;
   await Promise.allSettled([...need.values()].filter(([c])=>c!=="H").map(([c,d])=>fetch(`${SB}/otr-res?code=${c}&date=${d}`)));
@@ -1287,8 +1289,12 @@ async function checkOfficial(force){
         if(m&&m.s>=1.5&&/final|paying|official|closed|interim/i.test(m.x.st||"final")){if(!BK.off[r.rk])got++;BK.off[r.rk]={fin:m.x.fin,exo:m.x.exo||{},pp:m.x.pp,scr:m.x.scr||[],st:m.x.st||"final",at:(BK.off[r.rk]||{}).at||Date.now()}}}
     }catch(e){}
   }
+  const ab=new Map();for(const r of refs)if(r.code!=="H"&&!(BK.off[r.rk]&&BK.off[r.rk].fin)&&Date.now()>Date.parse(r.jump)+20*60e3)ab.set(r.code+"|"+r.date,[r.code,r.date]);
+  for(const [code,date] of ab.values()){try{const j=await getJSON(`${AB_URL}?code=${code}&date=${date}`);
+    for(const r of refs.filter(r=>r.code===code&&r.date===date&&!(BK.off[r.rk]&&BK.off[r.rk].fin))){const m=(j.abandoned||[]).find(x=>vkey(x.track)===vkey(r.venue)&&(x.races||[]).includes(+r.no));
+      if(m){BK.off[r.rk]={fin:[],aband:true,st:"abandoned",at:Date.now()};got++}}}catch(e){}}
   BKBUSY=false;saveBK();
-  if(force){const still=refs.filter(r=>!(BK.off[r.rk]&&BK.off[r.rk].fin)),interim=refs.filter(r=>BK.off[r.rk]&&!/final|paying|official|closed/i.test(BK.off[r.rk].st||"final"));
+  if(force){const still=refs.filter(r=>!(BK.off[r.rk]&&BK.off[r.rk].fin)),interim=refs.filter(r=>BK.off[r.rk]&&!/final|paying|official|closed|abandoned/i.test(BK.off[r.rk].st||"final"));
     const ago=r=>Math.max(1,Math.round((Date.now()-Date.parse(r.jump))/6e4));
     CHECKMSG=`Checked at ${timeOf(new Date().toISOString())}. `+(got?`Results in for ${got} race${got>1?"s":""}. `:"No new results yet. ")
       +(still.length?`Still waiting on: ${still.map(r=>`${escH(r.venue)} R${r.no} (ran ${ago(r)} min ago)`).join(", ")}. Results usually arrive 10 to 30 minutes after a race; enter it yourself to settle sooner. `:"")
@@ -1476,7 +1482,7 @@ const crWhen=iso=>`${crDay(iso)==="Today"?"":crDay(iso).split(" ").slice(0,3).jo
 function crSlip(t){return `${crWhen(t.start||t.jump)}${cdn(t.jump)} · ${escH(t.home)} v ${escH(t.away)} · <b>${CR_MKT[t.type||"h2h"]}</b> ${crChip(t,t.sel)} ${escH(crLabel(t))} @ ${t.price.toFixed(2)} · ${money(t.stake)}`}
 function crTk(t){const o=settleOf(t),mk=t.type||"h2h",r=(BK.off[t.rk]||{}).cr,res=mk==="h2h"&&!(r&&r.final)?(BK.manual[t.rk]||[])[0]:null,started=Date.now()>=Date.parse(t.jump);
   const late=mk==="h2h"&&!(r&&r.final)&&Date.now()>Date.parse(t.start||t.jump)+8*3600e3;
-  const tag={open:["To play",""],waiting:[r&&r.state==="in"?"Under way":"Waiting on result",""],won:[`Won ${money(o.pay||0)}`,"won"],lost:["Lost","lost"],void:["Refunded",""],cancelled:["Cancelled",""]}[o.state];
+  const tag={open:["To play",""],waiting:[r&&r.state==="in"?"Under way":"Waiting on result",""],won:[`Won ${money(o.pay||0)}`,"won"],lost:["Lost","lost"],void:[o.aband?"Abandoned":"Refunded",""],cancelled:["Cancelled",""]}[o.state];
   const opts=t.test?["home","away","draw","nr"]:["home","away","tie","nr"];
   return `<div class="rec tk"><div class="rmeta">${crWhen(t.start||t.jump)}${t.status!=="cancelled"?cdn(t.jump):""} · Cricket · ${escH(t.comp)}</div>
     <span class="tag ${tag[1]}">${tag[0]}</span>
