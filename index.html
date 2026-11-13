@@ -47,6 +47,7 @@ canvas{width:100%;height:auto;display:block}
 .hint{font-size:16px;color:var(--paper2);min-height:22px}
 .hint b{color:var(--amber);font:700 22px/1 var(--led)}
 .stake{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+@media (max-width:560px){.stake{display:grid;grid-template-columns:repeat(5,minmax(0,1fr))}.stake label{grid-column:1/3;align-self:center}.stake #stake{grid-column:3/-1;width:100%;box-sizing:border-box}.go .big{font-size:18px;letter-spacing:.3px}.stake .chip{min-width:0;padding:0 2px}}
 .stake label{font-weight:600}
 #stake{width:92px;min-height:44px;background:#000;color:var(--amber);border:2px solid var(--tote2);font:700 28px/1 var(--led);padding:2px 8px}
 .chip{min-height:44px;min-width:50px;background:var(--tote2);color:var(--paper);border:0;font-weight:600;padding:0 8px}
@@ -107,7 +108,7 @@ canvas{width:100%;height:auto;display:block}
 .silk{width:34px;height:34px;display:grid;place-items:center;font:700 25px/1 var(--body);border:2px solid var(--ink);position:relative}
 .silk i{position:absolute;right:-7px;top:-8px;background:var(--red);color:#fff;font:700 13px/18px var(--body);width:18px;height:18px;text-align:center}
 .rname{font-weight:700;font-size:18px;line-height:1.1;overflow-wrap:anywhere}
-.rmeta{font-size:14px;color:var(--ink2);line-height:1.2}
+.rmeta{font-size:14px;color:var(--ink2);line-height:1.25}
 .rmeta b{color:var(--ink);letter-spacing:1px}
 .odds{text-align:right;font:700 26px/1 var(--led);white-space:nowrap;font-variant-numeric:tabular-nums}
 .odds small{display:block;font:600 11px/1.3 var(--body);color:var(--ink2);text-transform:uppercase}
@@ -170,6 +171,7 @@ canvas{width:100%;height:auto;display:block}
 .nav button[aria-pressed=true]{background:var(--amber);color:var(--tote)}
 .nav button:disabled{opacity:.5;cursor:not-allowed}
 .nav button.alt{background:none;border:2px solid var(--amber-dim);color:var(--amber);margin-left:auto}
+@media (max-width:560px){.nav div{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}.nav button,.nav a.navlink{padding:0 4px;font-size:17px;justify-content:center;text-align:center}.nav button.alt{margin-left:0}.nav a.navlink{grid-column:1/-1}}
 #realbtn,#daily{display:none}
 .foot{font-size:14px;color:#a9c0a6;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center}
 .foot button{background:none;border:1px solid #6d8a6c;color:#d8e4d4;min-height:40px;padding:0 12px}
@@ -2060,7 +2062,7 @@ function renderCard(){
     const tag=on&&TYPES[S.type][1]>1?(S.type==="quin"?"•":i+1):"";
     return `<button class="runner${on?" on":""}" data-k="${k}" aria-pressed="${on}" ${S.phase!=="bet"?"disabled":""}>
       ${silk(h,k,tag)}
-      <span><span class="rname">${h.name}</span><br><span class="rmeta">${r.harness?`${h.form?`<b>${escH(h.form)}</b> · `:""}${rowTag(h)} · Driver ${escH(h.jock)}<br>${h.trainer?"Trainer "+escH(h.trainer)+" · ":""}${r.trot?"Trotter":"Pacer"}${h.style&&!r.realHarness?" · "+HN_STYLE[h.style]:""}${h.age?" · "+h.age+"yo":""}${h.sex?" "+escH(String(h.sex).toLowerCase()):""}`:r.realDogs?`${h.form?`<b>${escH(h.form)}</b> · `:""}Box ${h.box}${h.reserve?" (reserve)":""}${h.sex?" · "+escH(h.sex):""}<br>Trainer ${escH(h.jock)}`:r.dogs?`<b>${h.form}</b> · Box ${h.no} · ${h.kg}kg · ${h.sex}<br>Trainer ${h.jock} · ${DOG_STYLE[h.style]} · ${DOG_COATS[h.coat%DOG_COATS.length].n}`:h.real?`${h.form?`<b>${h.form}</b> · `:""}B${h.realBarrier} · ${h.weight}kg · ${h.jock}<br>${h.trainer||""}${h.speed?" · "+h.speed:""}`:`<b>${h.form}</b> · B${h.barrier} · ${h.weight}kg · ${h.jock}<br>${STYLE[h.style]} · Best ${h.trip}m · Wet ${h.wetRec}`}</span></span>
+      <span><span class="rname">${h.name}</span><br><span class="rmeta">${r.harness?`${h.form?`<b>${escH(h.form)}</b> · `:""}${rowTag(h)} · Driver ${escH(h.jock)}<br>${h.trainer?"Trainer "+escH(h.trainer)+" · ":""}${r.trot?"Trotter":"Pacer"}${h.style&&!r.realHarness?" · "+HN_STYLE[h.style]:""}${h.age?" · "+h.age+"yo":""}${h.sex?" "+escH(String(h.sex).toLowerCase()):""}`:r.realDogs?`${h.form?`<b>${escH(h.form)}</b> · `:""}Box ${h.box}${h.reserve?" (reserve)":""}${h.sex?" · "+escH(h.sex):""}<br>Trainer ${escH(h.jock)}`:r.dogs?`<b>${h.form}</b> · Box ${h.no} · ${h.kg}kg · ${h.sex}<br>Trainer ${h.jock} · ${DOG_STYLE[h.style]} · ${DOG_COATS[h.coat%DOG_COATS.length].n}`:h.real?`${h.form?`<b>${h.form}</b> · `:""}B${h.realBarrier} · ${h.weight}kg<br>${h.jock}${h.trainer?`<br>${h.trainer}${h.speed?" · "+h.speed:""}`:h.speed?`<br>${h.speed}`:""}`:`<b>${h.form}</b> · B${h.barrier} · ${h.weight}kg<br>${h.jock} · ${STYLE[h.style]}<br>Best ${h.trip}m · Wet ${h.wetRec}`}</span></span>
       <span class="odds"><small>Win</small>${oddsTxt(h.win)}</span>
       <span class="odds"><small>Place</small>${oddsTxt(h.place)}</span>
     </button>`}).join("")}</div>`;
