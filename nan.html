@@ -626,7 +626,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.37.0"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.37.1"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -2629,7 +2629,7 @@ function newsSeen(){try{localStorage.setItem(SEEN_KEY,CHANGES[0][0])}catch(e){}c
 function newsDot(){let s="";try{s=localStorage.getItem(SEEN_KEY)||""}catch(e){}const d=$("newDot");if(d)d.hidden=s===CHANGES[0][0]}
 const FB={kind:"idea",msg:"",note:"",busy:false};
 const FBK=[["idea","💡 Idea"],["bug","🐞 Bug"],["confusing","🤔 Confusing"],["other","💬 Other"]];
-function toggleNews(on){const el=$("newsView"),b=$("newsBtn");on=on==null?el.hidden:on;el.hidden=!on;b.setAttribute("aria-expanded",on);if(on){renderNews();try{el.scrollIntoView({block:"start",behavior:"smooth"})}catch(e){}}}
+function toggleNews(on){const el=$("newsView"),b=$("newsBtn");on=on==null?el.hidden:on;el.hidden=!on;b.setAttribute("aria-expanded",on);if(on)renderNews()}
 function renderNews(){const el=$("newsView");if(!el)return;newsSeen();
   el.innerHTML=`<div class="calc fbbox" id="fbBox"><h3>Suggestions box</h3>
     <p>Got an idea, found a bug, or something's hard to follow? Tell Nan. Every message gets read.</p>
