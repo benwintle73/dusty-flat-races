@@ -359,6 +359,10 @@ details.race>summary.rsum .rchev{align-self:center}
 .crhead p{margin:4px 0}
 .crpast{margin-top:10px}.crpast>summary .rchev{margin-left:auto}
 /* v2.38: add to home screen */
+.a2s{list-style:none;padding:0!important;counter-reset:a2}.a2s li{display:grid;grid-template-columns:22px 38px minmax(0,1fr);align-items:center;gap:8px;margin:7px 0;counter-increment:a2}
+.a2s li::before{content:counter(a2);font:700 17px/1 var(--led);color:var(--ink2);text-align:center}
+.ib{display:inline-grid;place-items:center;width:36px;height:36px;border-radius:9px;background:#fff;border:1px solid var(--line);color:#0a6cff;box-shadow:0 1px 2px #0002}.ib .ico{width:22px;height:22px}
+.ib.sm{width:26px;height:26px;border-radius:7px;vertical-align:-8px}.ib.sm .ico{width:17px;height:17px}
 .a2wrap{padding-top:10px;padding-bottom:0}
 .a2card{position:relative;background:var(--paper);color:var(--ink);border:2px solid var(--amber);border-radius:12px;padding:12px 14px}
 .a2h{display:flex;align-items:center;gap:12px;padding-right:26px}.a2h img{border-radius:10px;flex:none;box-shadow:0 2px 6px #0004}.a2h b{display:block;font:400 19px/1.1 var(--display);text-transform:uppercase;letter-spacing:.3px}.a2h small{display:block;color:var(--ink2);font-size:14px;margin-top:2px}
@@ -638,7 +642,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.38.1"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.38.2"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -2649,9 +2653,16 @@ const FBK=[["idea","💡 Idea"],["bug","🐞 Bug"],["confusing","🤔 Confusing"
 let A2P=null;
 const isApp=()=>document.documentElement.classList.contains("app")||(()=>{try{return matchMedia("(display-mode: standalone)").matches}catch(e){return false}})();
 const devOS=()=>{const u=navigator.userAgent||"";return /iPhone|iPad|iPod/.test(u)||(/Macintosh/.test(u)&&navigator.maxTouchPoints>1)?"ios":/Android/.test(u)?"android":"other"};
-function a2Steps(os){return os==="ios"?`<ol><li>Open this page in <b>Safari</b>.</li><li>Tap the <b>Share</b> button (the square with an arrow pointing up).</li><li>Scroll down and tap <b>Add to Home Screen</b>, then <b>Add</b>.</li></ol>`
-  :os==="android"?`<ol><li>Open this page in <b>Chrome</b>.</li><li>Tap the <b>⋮</b> menu in the top right.</li><li>Tap <b>Add to Home screen</b> (or <b>Install app</b>), then <b>Install</b>.</li></ol>`
-  :`<p><b>iPhone:</b> in Safari, tap Share, then Add to Home Screen.</p><p><b>Android:</b> in Chrome, tap the ⋮ menu, then Add to Home screen.</p>`}
+// small drawings of the buttons people need to find
+const ICO={
+ share:`<svg viewBox="0 0 24 24" class="ico" aria-hidden="true"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 10H6a1.5 1.5 0 0 0-1.5 1.5v8A1.5 1.5 0 0 0 6 21h12a1.5 1.5 0 0 0 1.5-1.5v-8A1.5 1.5 0 0 0 18 10h-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`,
+ add:`<svg viewBox="0 0 24 24" class="ico" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 8v8M8 12h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`,
+ safari:`<svg viewBox="0 0 24 24" class="ico" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="m15.5 8.5-2 5-5 2 2-5z" fill="currentColor"/></svg>`,
+ dots:`<svg viewBox="0 0 24 24" class="ico" aria-hidden="true"><circle cx="12" cy="5" r="2" fill="currentColor"/><circle cx="12" cy="12" r="2" fill="currentColor"/><circle cx="12" cy="19" r="2" fill="currentColor"/></svg>`,
+ install:`<svg viewBox="0 0 24 24" class="ico" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="2.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7.5v7M9 11.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`};
+function a2Steps(os){return os==="ios"?`<ol class="a2s"><li><span class="ib">${ICO.safari}</span><span>Open this page in <b>Safari</b>.</span></li><li><span class="ib">${ICO.share}</span><span>Tap the <b>Share</b> button at the bottom of Safari (or ••• then Share).</span></li><li><span class="ib">${ICO.add}</span><span>Scroll down, tap <b>Add to Home Screen</b>, then <b>Add</b>.</span></li></ol>`
+  :os==="android"?`<ol class="a2s"><li><span class="ib">${ICO.safari}</span><span>Open this page in <b>Chrome</b>.</span></li><li><span class="ib">${ICO.dots}</span><span>Tap the <b>menu</b> in the top right.</span></li><li><span class="ib">${ICO.install}</span><span>Tap <b>Add to Home screen</b> (or <b>Install app</b>), then <b>Install</b>.</span></li></ol>`
+  :`<p><b>iPhone:</b> in Safari, tap Share <span class="ib sm">${ICO.share}</span> then Add to Home Screen <span class="ib sm">${ICO.add}</span>.</p><p><b>Android:</b> in Chrome, tap the menu <span class="ib sm">${ICO.dots}</span> then Add to Home screen <span class="ib sm">${ICO.install}</span>.</p>`}
 function a2Html(card){const os=devOS();return `${card?`<button class="a2x" data-a2x aria-label="Not now">✕</button>`:""}<div class="a2h"><img src="icons/icon-192.png" alt="" width="44" height="44"><div><b>Put Nan on your home screen</b><small>Opens full screen like an app, one tap away.</small></div></div>
   ${A2P?`<button class="ffload a2go" data-a2go>Install Nan's Tips</button>`:a2Steps(os)}${card?`<button class="linkbtn a2no" data-a2x>Not now</button>`:""}`}
 function showA2(){const el=$("a2hs");if(!el)return;let snooze=0;try{snooze=+localStorage.getItem("otr-a2hs")||0}catch(e){}
