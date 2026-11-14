@@ -410,7 +410,7 @@ body.landrace #bigbtn{display:none}
 <script>
 "use strict";
 /* ---------- helpers ---------- */
-const APP_VERSION="2.42.1"; // bump on every release; shown after the title
+const APP_VERSION="2.42.2"; // bump on every release; shown after the title
 const $=id=>document.getElementById(id);
 let RNG=Math.random;
 const mulberry=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
@@ -1447,45 +1447,44 @@ function turnEnv(m,D){const {a}=dogTurn(D),s0=Math.max(30,a-32),s1=a+8;if(m<=s0|
    for it from its box: a wide runner drawn inside crosses the field, which is where the first-turn bumping comes from.
    Anyone running down the runner in front in its lane swings out to get round. */
 function laneSpan(){const D=S.race.dist;return S.race.dogs?[12,Math.max(55,dogTurn(D).a)]:S.race.harness?[90,320]:[Math.min(120,D*.08),Math.min(420,D*.3)]}
-function updateLanes(pos){
-  // OV: how long a runner is as drawn, in metres of track (a horse 8m, a pacer and sulky 9m, a dog 2.4m): any two
-  // runners closer than that along the track must be in different lanes, so nobody is drawn running through anybody
-  if(!R||!pos)return;const f=S.race.field,n=f.length,dg=S.race.dogs,hn=S.race.harness,NL=dg?8:n,OV=dg?2.4:hn?9:8,D=S.race.dist;
-  if(!R.ln||R.lnT===undefined||R.t<R.lnT-.01){R.ln=f.map(h=>h.barrier-1);R.tg=f.map(h=>h.barrier-1);R.lp=pos.slice();R.lnT=R.t;
-    R.pref=f.map(h=>{const r=(strHash(h.name+"|line")%100)/100;return dg?(r<.45?0:r<.8?3:6):(!hn&&h.style!=="back"&&h.style!=="front"&&r<.45?1:0)})}
-  const dt=R.t-R.lnT;if(dt<=0)return;
-  const vel=pos.map((p,k)=>(p-R.lp[k])/dt);R.lp=pos.slice();R.lnT=R.t;
-  const [a,b]=laneSpan(),lead=Math.max(...pos),w=clamp((lead-a)/(b-a),0,1),e=w*w*(3-2*w);
-  const home=!dg&&D-lead<(hn?380:420),ct=home?.12:.35; // in the run home more of them pull out to run at the leaders
-  const hi=hn?(D-lead<700?2:1):NL-1;
-  const o=[...f.keys()].sort((x,y)=>pos[y]-pos[x]),placed=[],prev=R.ln.slice();
-  for(const k of o){
-    const near=(l,m)=>placed.some(j=>R.tg[j]===l&&pos[j]-pos[k]<m&&pos[j]-pos[k]>-OV*.5);
-    const chasing=l=>placed.some(j=>R.tg[j]===l&&pos[j]>pos[k]&&pos[j]-pos[k]<OV*(home?4:3)&&vel[k]-vel[j]>ct);
-    const busy=(l,m)=>near(l,m)||chasing(l);
-    // the lowest lane this runner wants: a dog's running line; a gallops midfielder sitting one out behind cover
-    let lo=dg?R.pref[k]:0;
-    if(!dg&&R.pref[k]===1&&!home&&placed.some(j=>R.tg[j]===0&&pos[j]>pos[k]&&pos[j]-pos[k]<OV*3))lo=1;
-    // the run home in the gallops: the ones in with a chance fan out across the track for a clear run
-    if(home&&!hn&&placed.length&&lead-pos[k]<14)lo=Math.max(lo,placed.filter(j=>lead-pos[j]<14).length%3);
-    lo=Math.min(lo,hi);
-    const cur=R.tg[k];let t=cur,inner=lo;while(inner<hi&&busy(inner,OV*1.4))inner++;
-    if(inner<cur||cur<lo||cur>hi)t=inner;else if(busy(cur,OV)){t=lo;while(t<hi&&busy(t,OV))t++}
-    R.tg[k]=t;placed.push(k);
-    const goal=(1-e)*(f[k].barrier-1)+e*t;
-    R.ln[k]+=(goal-R.ln[k])*Math.min(1,dt*(dg?2.4:1.3));
+/* The whole race's lanes are planned once, when it starts, from where every runner will be (the race is already run by
+   then), so a runner that's going to pass another starts going round in good time and drifts across smoothly, never
+   jumps, and holds its line. OV: how long a runner is as drawn, in metres of track (a horse 8m, a pacer and sulky 9m, a
+   dog 2.4m): two runners closer than that are in different lanes. */
+function planLanes(){
+  const f=S.race.field,n=f.length,dg=S.race.dogs,hn=S.race.harness,NL=dg?8:n,OV=dg?2.4:hn?9:8,D=S.race.dist;
+  const sd=.2,T=R.sim.dt*(R.sim.trace.length-1),steps=Math.ceil(T/sd)+1,P=[];for(let i=0;i<steps;i++)P.push(horsePositions(i*sd));
+  const pref=f.map(h=>{const r=(strHash(h.name+"|line")%100)/100;return dg?(r<.45?0:r<.8?3:6):(!hn&&h.style!=="back"&&h.style!=="front"&&r<.45?1:0)});
+  const [a,b]=laneSpan(),LV=dg?1.6:.6,HOLD=dg?1:3,AH=Math.round((dg?1.2:2.6)/sd); // look-ahead: time to get out of the way
+  let tg=f.map(h=>h.barrier-1),at=f.map(()=>-99),ln=f.map(h=>h.barrier-1);const L=f.map(()=>[]),TG=f.map(()=>[]);
+  for(let i=0;i<steps;i++){
+    const pos=P[i],fut=P[Math.min(steps-1,i+AH)],lead=Math.max(...pos),w=clamp((lead-a)/(b-a),0,1),e=w*w*(3-2*w),t=i*sd;
+    const home=!dg&&D-lead<(hn?380:420),hi=NL-1;
+    const o=[...f.keys()].sort((x,y)=>pos[y]-pos[x]),placed=[],nt=tg.slice();
+    for(const k of o){
+      // a lane is taken if someone placed ahead is in it within a length now, or will be within a length in the look-ahead
+      const taken=l=>placed.some(j=>nt[j]===l&&((pos[j]-pos[k]<OV&&pos[j]-pos[k]>-OV)||(fut[j]-fut[k]<OV&&fut[j]-fut[k]>-OV)));
+      // moving in also needs room behind: nobody (from the last step) about to be cut off
+      const roomBehind=l=>!o.some(j=>j!==k&&!placed.includes(j)&&tg[j]===l&&pos[k]-pos[j]>=0&&pos[k]-pos[j]<OV*1.5);
+      let lo=dg?pref[k]:0;
+      if(!dg&&pref[k]===1&&!home&&placed.some(j=>nt[j]===0&&pos[j]>pos[k]&&pos[j]-pos[k]<OV*3))lo=1;
+      if(home&&!hn&&placed.length&&lead-pos[k]<14)lo=Math.max(lo,placed.filter(j=>lead-pos[j]<14).length%3);
+      lo=Math.min(lo,hi);const cur=tg[k];let c=cur;
+      // it can only get to a lane if every lane on the way is clear too (no going through anyone)
+      const clear=(x,y,cut=true)=>{for(let l=Math.min(x,y);l<=Math.max(x,y);l++)if(l!==cur&&(taken(l)||cut&&!roomBehind(l)))return false;return true};
+      const settled=lead>=a; // out of the gates: everyone keeps their draw until then
+      if(taken(cur)||cur>hi){for(let d=1;d<NL;d++){if(cur+d<NL+2&&clear(cur,cur+d,false)){c=cur+d;break}if(cur-d>=0&&clear(cur,cur-d,false)){c=cur-d;break}}} // run up on: the nearest clear lane
+      else if(settled&&t-at[k]>=HOLD){for(let l=lo;l<cur;l++)if(clear(l,cur)){c=l;break}if(cur<lo&&clear(cur,lo))c=lo}
+      if(c!==cur)at[k]=t;nt[k]=c;placed.push(k);
+    }
+    tg=nt;
+    for(const k of f.keys()){const goal=tg[k];ln[k]+=clamp((goal-ln[k])*Math.min(1,sd*1.4),-LV*sd,LV*sd);L[k].push(ln[k]);TG[k].push(tg[k])}
   }
-  // Solid runners: front to back, a runner can't be within a lane of any runner it overlaps along the track. Those runners
-  // block bands of lanes; it keeps to the open stretch of lanes it was already in (it can't go through anyone to get to
-  // another), as near to where it wants to be as it can. If it's been run up on and has no room, it's eased to the nearest gap.
-  const done=[],GAP=.92,TOP=NL+1;
-  for(const k of o){
-    const bl=done.filter(j=>Math.abs(pos[j]-pos[k])<OV).map(j=>[R.ln[j]-GAP,R.ln[j]+GAP]).sort((x,y)=>x[0]-y[0]);
-    const free=[];let lo=0;for(const [x0,x1] of bl){if(x0>lo)free.push([lo,x0]);lo=Math.max(lo,x1)}if(lo<TOP)free.push([lo,TOP]);
-    const p0=prev[k];let seg=free.find(([x0,x1])=>p0>=x0&&p0<=x1);
-    if(!seg)seg=free.slice().sort((x,y)=>Math.min(Math.abs(p0-x[0]),Math.abs(p0-x[1]))-Math.min(Math.abs(p0-y[0]),Math.abs(p0-y[1])))[0];
-    R.ln[k]=clamp(R.ln[k],seg[0],seg[1]);done.push(k);
-  }
+  R.plan={sd,L,TG};
+}
+function updateLanes(){
+  if(!R||!R.sim)return;if(!R.plan)planLanes();const {sd,L,TG}=R.plan,fi=R.t/sd,i=clamp(Math.floor(fi),0,L[0].length-2),u=clamp(fi-i,0,1);
+  R.ln=L.map(a=>a[i]+(a[i+1]-a[i])*u);R.tg=TG.map(a=>a[Math.min(a.length-1,Math.round(fi))]);
 }
 const laneOf=k=>R&&R.ln?R.ln[k]:S.race.field[k].barrier-1;
 function drawHorses(camX,pos,now){
