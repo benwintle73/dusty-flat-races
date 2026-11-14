@@ -638,7 +638,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.38.0"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.38.1"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -2623,6 +2623,7 @@ function renderBets(){
 let BKBUSY=false;
 /* ---------- What's new: the update history, plus the suggestions box ---------- */
 const CHANGES=[
+ ["2.38.1","14 Nov","Tidier game page",["In the game, Quick tips rows line up like Nan's race cards, the button back here says Back to Nan's Tips, and the header sits below the iPhone clock in the home-screen app."]],
  ["2.38.0","14 Nov","Put Nan on your home screen",["A card shows how to add Nan's Tips to your iPhone or Android home screen, with one-tap Install where Chrome allows it. Tap Not now to hide it for two weeks; the steps are always here in What's new."]],
  ["2.37.2","14 Nov","Easier reading at the bottom",["Where Nan gets her gossip and Nan's record fold away: tap a heading to open it. Gran's line got a polish."]],
  ["2.37.0","14 Nov","Full form",["Tap Form on any runner for everything FormFav has: every start in its recent form, career, track, distance and condition records with win and place rates, every box or barrier, its class rating, and flags like Lightly Raced."]],
