@@ -431,7 +431,7 @@ details.codebox{margin-top:10px;border-top:1px dashed var(--line);padding-top:6p
 .rec.rc .betline{margin-top:6px;padding-top:6px;border-top:1px dashed var(--line)}
 .cgrid{display:grid;grid-template-columns:46px minmax(0,1fr);gap:6px;align-items:start;margin:6px 0}.cgrid>.calc-l{line-height:40px}
 @media (max-width:560px){#recordView .sumgrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}#recordView .sum{padding:8px 10px}#recordView .sum h3{font-size:15px}#recordView .sum .big{font-size:23px}#recordView .sum .big small{display:block;font-size:13px;margin-top:2px}#recordView .sum p{font-size:12px;line-height:1.3}}.cgrid .calc-l{width:auto}
-.cg{display:grid;gap:5px}.cg6{grid-template-columns:repeat(6,minmax(0,1fr))}.cg4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.cg{display:grid;gap:5px}.cg6{grid-template-columns:repeat(6,minmax(0,1fr))}.cg4{grid-template-columns:repeat(4,minmax(0,1fr))}.cg5{grid-template-columns:repeat(5,minmax(0,1fr))}
 .cg button{background:var(--paper2);color:var(--ink);border:1px solid var(--line);min-height:40px;padding:2px 3px;font:700 15px/1.1 var(--led);cursor:pointer;min-width:0}
 .cg button[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
 .cg .calc-own{min-width:0}.cg .calc-own input{width:100%;min-width:0;min-height:40px}
@@ -660,7 +660,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.40.4"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.40.5"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -2044,12 +2044,18 @@ document.addEventListener("toggle",e=>{const d=e.target;if(d.matches&&d.matches(
 
 /* ---------- Nan's record ---------- */
 const NAN_URL=SB+"/otr-nan";
-const REC={sum:null,date:null,day:{},code:"all",res:"all",bet:"win",stake:5};
+const REC={sum:null,date:null,day:{},code:"all",res:"all",bet:"win",stake:5,who:"nan",alt:{}};
 /* ---------- backing Nan after the fact: what a bet on her picks would have returned (tote dividends, per $1) ---------- */
 const BETS=[["win","Win","her top pick to win"],["place","Place","her top pick to place"],["ew","Each way","her top pick, win and place (2 bets)"],["quinella","Quinella","her top 2, either order"],["exacta","Exacta","her top 2 in order"],["trifecta","Trifecta","her top 3 in order"],["tribox","Trifecta box","her top 3, any order (6 bets)"],["first4","First 4","her top 4 in order"]];
 const nkey=v=>String(v||"").toLowerCase().replace(/[^a-z0-9]/g,"");
+// the other tipsters' saved picks for a race (top 3 from 14 November, top pick only before), loaded per day from otr-tips
+const BACKERS=[["nan","Nan","her"],["pop","Pop","his"],["bob","Bob","his"],["gran","Gran","her"],["panel","Panel","its"]];
+function altPicks(r,who){const d=REC.alt[r.date];return d&&d[r.id]&&d[r.id][who]||null}
+function loadAlt(date){if(REC.who==="nan"||!date)return;if(date==="week"){weekDates().forEach(loadAlt);return}if(REC.alt[date]!==undefined)return;REC.alt[date]=null;
+  getJSON(`${TIPS_URL}?picks=${date}`).then(j=>{REC.alt[date]=j.picks||{}}).catch(()=>{delete REC.alt[date]}).finally(renderRecord)}
 function betOut(r,type,st){
-  if(!r.settled_at||!r.result||r.result.status==="abandoned"||r.won===null)return null;
+  if(!r.settled_at||!r.result||r.result.status==="abandoned"||r.won===null&&REC.who==="nan")return null;
+  if(REC.who!=="nan")return betOutFor(r,altPicks(r,REC.who),type,st);
   const R0=r.result,fin=(R0.fin||[]).slice().sort((a,b)=>a.pos-b.pos),order=fin.map(x=>nkey(x.name)),picks=r.picks.map(x=>nkey(x.name)),exo=R0.exo||{},scr=(R0.scr||[]).map(nkey);
   const need=n=>picks.length>=n&&!picks.slice(0,n).some(x=>scr.includes(x));
   const pay=(hit,d,cost)=>({cost,back:hit?(d?st*d:null):0,hit});
@@ -2063,6 +2069,27 @@ function betOut(r,type,st){
     case "trifecta":if(!need(3)||order.length<3)return null;return pay(picks.slice(0,3).every((x,i)=>x===order[i]),exo.trifecta,st);
     case "tribox":if(!need(3)||order.length<3)return null;return pay(picks.slice(0,3).every(x=>order.slice(0,3).includes(x)),exo.trifecta,6*st);
     case "first4":if(!need(4)||order.length<4)return null;return pay(picks.slice(0,4).every((x,i)=>x===order[i]),exo.first4,st);
+  }
+  return null;
+}
+// the same bets on another tipster's picks, settled from the race's official result
+function betOutFor(r,names,type,st){
+  if(!names||!names.length||!r.result||r.result.status==="abandoned")return null;
+  const R0=r.result,fin=(R0.fin||[]).slice().sort((a,b)=>a.pos-b.pos),order=fin.map(x=>nkey(x.name)),picks=names.map(nkey),exo=R0.exo||{},scr=(R0.scr||[]).map(nkey),P=R0.pos||{};
+  const posOf=k=>+(P[k]??P[k+"nz"]??(order.indexOf(k)+1||0))||0,eq=(a,b)=>a===b||a+"nz"===b||a===b+"nz";
+  const need=n=>picks.length>=n&&!picks.slice(0,n).some(x=>scr.includes(x));
+  const pay=(hit,d,cost)=>({cost,back:hit?(d?st*d:null):0,hit});
+  if(scr.includes(picks[0])||!fin.length)return null;
+  const p0=posOf(picks[0]),pp=R0.pp||3,winD=fin[0]&&fin[0].win,plD=(fin.find(x=>eq(nkey(x.name),picks[0]))||{}).place,placed=p0>0&&p0<=pp;
+  switch(type){
+    case "win":return pay(p0===1,winD,st);
+    case "place":return pay(placed,plD,st);
+    case "ew":{const w=pay(p0===1,winD,st),p=pay(placed,plD,st);return {cost:2*st,back:w.back===null||p.back===null?null:w.back+p.back,hit:w.hit||p.hit}}
+    case "quinella":if(!need(2)||order.length<2)return null;return pay(picks.slice(0,2).every(x=>order.slice(0,2).some(o=>eq(x,o))),exo.quinella,st);
+    case "exacta":if(!need(2)||order.length<2)return null;return pay(eq(picks[0],order[0])&&eq(picks[1],order[1]),exo.exacta,st);
+    case "trifecta":if(!need(3)||order.length<3)return null;return pay(picks.slice(0,3).every((x,i)=>eq(x,order[i])),exo.trifecta,st);
+    case "tribox":if(!need(3)||order.length<3)return null;return pay(picks.slice(0,3).every(x=>order.slice(0,3).some(o=>eq(x,o))),exo.trifecta,6*st);
+    case "first4":if(!need(4)||order.length<4)return null;return pay(picks.slice(0,4).every((x,i)=>eq(x,order[i])),exo.first4,st);
   }
   return null;
 }
@@ -2111,16 +2138,20 @@ function recRow(r){
 }
 function betLine(r){
   const o=betOut(r,REC.bet,REC.stake),name=BETS.find(b=>b[0]===REC.bet)[1];if(!o)return "";
-  return `<div class="betline ${o.hit?(o.back===null?"":"win"):"lose"}">${money(o.cost)} ${name.toLowerCase()}: ${o.hit?(o.back===null?"won, but no dividend recorded":`back <b>${money(o.back)}</b> (${o.back-o.cost>=0?"+":""}${money(o.back-o.cost)})`):`lost ${money(o.cost)}`}</div>`;
+  const bk=BACKERS.find(b=>b[0]===REC.who),alt=REC.who!=="nan"?altPicks(r,REC.who):null,n=REC.bet==="first4"?4:/tri/.test(REC.bet)?3:/quin|exac/.test(REC.bet)?2:1;
+  const on=alt?` on ${bk[1]}'s ${n>1?"top "+n:"pick"} (${alt.slice(0,n).map(escH).join(", ")})`:"";
+  return `<div class="betline ${o.hit?(o.back===null?"":"win"):"lose"}">${money(o.cost)} ${name.toLowerCase()}${on}: ${o.hit?(o.back===null?"won, but no dividend recorded":`back <b>${money(o.back)}</b> (${o.back-o.cost>=0?"+":""}${money(o.back-o.cost)})`):`lost ${money(o.cost)}`}</div>`;
 }
 function renderCalc(rows){
   let cost=0,back=0,n=0,hits=0,unk=0;for(const r of rows){const o=betOut(r,REC.bet,REC.stake);if(!o)continue;if(o.hit&&o.back===null){unk++;continue}n++;cost+=o.cost;back+=o.back;if(o.hit)hits++}
-  const b=BETS.find(x=>x[0]===REC.bet),prof=back-cost;
-  $("recCalc").innerHTML=`<h3>If you'd backed Nan</h3>
+  const b=BETS.find(x=>x[0]===REC.bet),prof=back-cost,bk=BACKERS.find(x=>x[0]===REC.who),what=b[2].replace(/^her /,bk[2]+" ");
+  const loading=REC.who!=="nan"&&(REC.date==="week"?weekDates():[REC.date]).some(d=>!REC.alt[d]);
+  $("recCalc").innerHTML=`<h3>If you'd backed ${bk[1]==="Panel"?"the Panel":bk[1]}</h3>
+    <div class="cgrid"><span class="calc-l">Tipster</span><div class="cg cg5">${BACKERS.map(([k,l])=>`<button data-backer="${k}" aria-pressed="${REC.who===k}">${l}</button>`).join("")}</div></div>
     <div class="cgrid"><span class="calc-l">Stake</span><div class="cg cg6">${[1,5,10,20,50].map(v=>`<button data-stake="${v}" aria-pressed="${REC.stake===v}">$${v}</button>`).join("")}<label class="calc-own">$<input id="stakeIn" type="number" min="0.5" step="0.5" inputmode="decimal" value="${REC.stake}" aria-label="Your own stake"></label></div></div>
     <div class="cgrid"><span class="calc-l">Bet</span><div class="cg cg4">${BETS.map(([k,l])=>`<button data-bet="${k}" aria-pressed="${REC.bet===k}">${l}</button>`).join("")}</div></div>
-    <div class="calc-out">${n?`<b>${money(REC.stake)} ${b[1].toLowerCase()}</b> on ${b[2]}, in the ${n} race${n>1?"s":""} below: staked <b>${money(cost)}</b>, back <b>${money(back)}</b>, <b class="${prof>=0?"plus":"minus"}">${prof>=0?"+":""}${money(prof)}</b> (${hits} collect${hits===1?"":"s"}).`:"No settled races to bet on with these filters yet."}${unk?` ${unk} winning bet${unk>1?"s":""} left out: no dividend recorded.`:""}
-      <small>Official tote dividends per $1, after the fact. Scratched picks are refunds and don't count. ${REC.res!=="all"?"A results filter is on, so this only counts those races.":""}</small></div>`;
+    <div class="calc-out">${n?`<b>${money(REC.stake)} ${b[1].toLowerCase()}</b> on ${what}, in the ${n} race${n>1?"s":""} below: staked <b>${money(cost)}</b>, back <b>${money(back)}</b>, <b class="${prof>=0?"plus":"minus"}">${prof>=0?"+":""}${money(prof)}</b> (${hits} collect${hits===1?"":"s"}).`:loading?"Loading their picks…":REC.who!=="nan"&&n===0&&/quin|exac|tri|first/.test(REC.bet)?`${bk[1]}'s 2nd, 3rd and 4th picks are only kept from Saturday 14 November${REC.bet==="first4"?", and only the top 3":""}, so there's nothing to settle here yet.`:"No settled races to bet on with these filters yet."}${unk?` ${unk} winning bet${unk>1?"s":""} left out: no dividend recorded.`:""}
+      <small>Official tote dividends per $1, after the fact. Scratched picks are refunds and don't count. ${REC.who!=="nan"?`Only races ${bk[1]==="Panel"?"the Panel":bk[1]} tipped count. `:""}${REC.res!=="all"?"A results filter is on (it goes by Nan's result), so this only counts those races.":""}</small></div>`;
 }
 /* ---------- Tipster leaderboard: Nan v Pop v Bob v Gran v the Panel, level $10 win bets on each top pick, and how the top three picks ran ---------- */
 const PANEL_START="2026-11-13",BOARD={rows:null,today:null,per:"today",code:"all",view:"top",how:false};
@@ -2676,6 +2707,7 @@ function renderBets(){
 let BKBUSY=false;
 /* ---------- What's new: the update history, plus the suggestions box ---------- */
 const CHANGES=[
+ ["2.40.5","14 Nov","Back any tipster",["\"If you'd backed Nan\" now lets you pick Nan, Pop, Bob, Gran or the Panel and see how every bet type would have gone on their picks. Nan's still the default. The race cards show whose picks the bet was on. Exotic bets on the others go back to Saturday 14 November, when their 2nd and 3rd picks started being kept."]],
  ["2.40.4","14 Nov","The call stays on, sideways",["With your phone turned sideways during a race, the race call now sits under the running order, so you can follow every word while the track fills the screen."]],
  ["2.40.3","14 Nov","Turn your phone for the race",["Turn your phone sideways during a race and the track locks to the screen, as big as it fits, with the running order underneath. Turn it back and you're right where you were."]],
  ["2.40.2","14 Nov","10 at a time, or the lot",["The races list now shows 10 at a time everywhere, including when you pick a meeting or search: tap Show 10 more, or Show all for the whole lot. Show all is remembered, and Show 10 at a time takes you back. Nan's record list works the same way."]],
@@ -3100,11 +3132,12 @@ document.addEventListener("click",e=>{
   if(e.target.closest("[data-rmoreall]")){REC.all=true;return renderRecord()}
   if(e.target.closest("[data-rless]")){REC.all=false;REC.cap=PAGE;renderRecord();const el=$("recList");if(el&&el.getBoundingClientRect().top<0)el.scrollIntoView({block:"start"});return}
   if(e.target.closest("[data-rmore]")){REC.cap=(REC.cap||PAGE)+PAGE;return renderRecord()}
-  const d=e.target.closest("[data-rday]");if(d){REC.cap=PAGE;REC.date=d.dataset.rday;renderRecord();loadDay(REC.date,REC.date===(REC.sum&&REC.sum.today))}
+  const d=e.target.closest("[data-rday]");if(d){REC.cap=PAGE;REC.date=d.dataset.rday;loadAlt(REC.date);renderRecord();loadDay(REC.date,REC.date===(REC.sum&&REC.sum.today))}
   const c=e.target.closest("[data-rcode]");if(c){REC.cap=PAGE;REC.code=c.dataset.rcode;renderRecord()}
   const rf=e.target.closest("[data-rres]");if(rf){REC.cap=PAGE;REC.res=rf.dataset.rres;renderRecord()}
   const sk=e.target.closest("[data-stake]");if(sk){REC.stake=+sk.dataset.stake;renderRecord()}
   const bt=e.target.closest("[data-bet]");if(bt){REC.bet=bt.dataset.bet;renderRecord()}
+  const bw=e.target.closest("[data-backer]");if(bw){REC.who=bw.dataset.backer;loadAlt(REC.date);renderRecord()}
 });
 document.addEventListener("keydown",e=>{if(e.key!=="Enter")return;if(e.target.id==="siPin"||e.target.id==="siName")signIn();else if(e.target.id==="pinIn")savePin();else if(e.target.id==="rsName")forgotPin();else if(e.target.id==="rsPin"||e.target.id==="rsCode")resetPin();else if(e.target.id==="emIn")saveEmail()});
 document.addEventListener("change",e=>{if(e.target.id==="stakeIn"){const v=Math.round(Math.max(.5,Math.min(10000,+e.target.value||1))*2)/2;REC.stake=v;renderRecord()}});
