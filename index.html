@@ -410,7 +410,7 @@ body.landrace #bigbtn{display:none}
 <script>
 "use strict";
 /* ---------- helpers ---------- */
-const APP_VERSION="2.41.6"; // bump on every release; shown after the title
+const APP_VERSION="2.41.7"; // bump on every release; shown after the title
 const $=id=>document.getElementById(id);
 let RNG=Math.random;
 const mulberry=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
@@ -1294,6 +1294,8 @@ function stadium(u,rx,ry,off){
   return {x:hs-s,y:R0,a:Math.PI/2,end:false};
 }
 function stadiumPath(c,cx,cy,rx,ry,off){const r=ry+off,hs=rx-ry;c.beginPath();c.moveTo(cx+hs,cy+r);c.lineTo(cx-hs,cy+r);c.arc(cx-hs,cy,r,Math.PI/2,Math.PI*1.5);c.lineTo(cx+hs,cy-r);c.arc(cx+hs,cy,r,-Math.PI/2,Math.PI/2);c.closePath()}
+// the dog track: the same shape, sized so the turn the dogs run (dogTurn) is exactly the far end, in the right place
+function dogGeo(D){const T=dogTurn(D),lap=.25/(1-(T.a+T.b)/2/D),ry=230,f=Math.min(.45,(T.b-T.a)*lap/D),hs=clamp((Math.PI*ry/f-2*Math.PI*ry)/4,0,2.5*ry);return {lap,rx:hs+ry,ry}} // straights no longer than 2.5 times the end radius: the turn then sits inside the end
 // is the leader on one of the two ends (the sharp corners)?
 const onEnd=p=>stadium((1-p)*lapOf(),640,280,0).end;
 // the turns of this race in metres, worked out once: deep enough into the turn (a sharper cut for the big gallops oval),
@@ -1307,10 +1309,9 @@ function raceTurns(){
   return R.turns=out;
 }
 function drawAerial(pos,now){
-  const dg=S.race.dogs,lap=dg?(()=>{const T=dogTurn(S.race.dist);return .25/(1-(T.a+T.b)/2/S.race.dist)})():lapOf(),rx=dg?520:640,ry=dg?230:280,tw=dg?84:96,LANE=tw*.86;
-  const point=dg?(p,lane)=>{const a=Math.PI/2+(1-p)*lap*6.2832,r=lane*LANE-LANE/2;return {x:Math.cos(a)*(rx+r),y:Math.sin(a)*(ry+r*.8),a}}
-    :(p,lane)=>stadium((1-p)*lap,rx,ry,lane*LANE-LANE/2);
-  const ring=(off,offY)=>{if(dg){out.beginPath();out.ellipse(0,0,rx+off,ry+offY,0,0,7)}else stadiumPath(out,0,0,rx,ry,off)};
+  const dg=S.race.dogs,G=dg?dogGeo(S.race.dist):{lap:lapOf(),rx:640,ry:280},lap=G.lap,rx=G.rx,ry=G.ry,tw=dg?84:96,LANE=tw*.86;
+  const point=(p,lane)=>stadium((1-p)*lap,rx,ry,lane*LANE-LANE/2);
+  const ring=off=>stadiumPath(out,0,0,rx,ry,off);
   const lead=Math.max(...pos)/S.race.dist,c=point(lead-.012,.5),P=palette();
   out.fillStyle=css(mix(P.turfB,[40,92,48],.5));out.fillRect(0,0,W,H);
   const Z=dg?2:1,trk=dg?"#c39a64":css(P.turfA),trk2=dg?"#a9804c":css(P.turfB); // dogs: a sand track, zoomed in on the pack
@@ -1318,7 +1319,7 @@ function drawAerial(pos,now){
   out.fillStyle=css(mix(P.turfA,[66,120,60],.35));ring(-tw/2,-tw*.4);out.fill();
   out.fillStyle="#3a86b8";out.beginPath();out.ellipse(-60,10,260,100,0,0,7);out.fill();out.fillStyle="rgba(150,210,240,.45)";out.beginPath();out.ellipse(-90,-10,170,48,0,0,7);out.fill();
   out.fillStyle="#2f5740";for(let i=0;i<70;i++){const a=hash(i)*6.28,r=.58+hash(i+4)*.3,px=Math.cos(a)*rx*r,py=Math.sin(a)*ry*r;if(Math.abs(px+60)<290&&Math.abs(py-10)<120)continue;out.beginPath();out.arc(px,py,8+hash(i+8)*8,0,7);out.fill()}
-  const ey=dg?tw*.4:tw/2; // how far the rails sit from the middle of the track, top and bottom
+  const ey=tw/2; // how far the rails sit from the middle of the track
   out.lineWidth=tw;out.strokeStyle=trk;ring(0,0);out.stroke();
   out.globalAlpha=.35;out.strokeStyle=trk2;out.setLineDash([70,70]);ring(0,0);out.stroke();out.setLineDash([]);out.globalAlpha=1;
   out.strokeStyle="#f6f2e8";out.lineWidth=2.5;ring(-tw/2,-tw*.4);out.stroke();ring(tw/2,tw*.4);out.stroke();
@@ -1477,11 +1478,12 @@ function drawRain(now){
 function drawOval(pos){
   const X=10,Y=8,MW=96,MH=44,cx=X+MW/2,cy=Y+MH/2,rx=38,ry=14;
   out.fillStyle="rgba(15,12,8,.72)";out.fillRect(X,Y,MW,MH);
-  const dg=S.race.dogs;out.strokeStyle="#c9b283";out.lineWidth=1.5;if(dg){out.beginPath();out.ellipse(cx,cy,rx,ry,0,0,7)}else stadiumPath(out,cx,cy,rx,ry,0);out.stroke();
-  out.fillStyle="#fff";out.fillRect(cx-.5,cy+ry-3,1.5,6);
-  const lap=dg?clamp(S.race.dist/2900,.3,.97):lapOf();
-  S.race.field.forEach((h,k)=>{const p=clamp((pos?pos[k]:0)/S.race.dist,0,1),a=Math.PI/2+(1-p)*lap*6.2832,q=dg?null:stadium((1-p)*lap,rx,ry,0);
-    const x=dg?cx+Math.cos(a)*rx:cx+q.x,y=dg?cy+Math.sin(a)*ry:cy+q.y;
+  // the same track shape as the overhead view, shrunk to fit the box
+  const G=S.race.dogs?dogGeo(S.race.dist):{lap:lapOf(),rx:640,ry:280},sc=Math.min(rx/G.rx,ry/G.ry),mrx=G.rx*sc,mry=G.ry*sc,lap=G.lap;
+  out.strokeStyle="#c9b283";out.lineWidth=1.5;stadiumPath(out,cx,cy,mrx,mry,0);out.stroke();
+  out.fillStyle="#fff";out.fillRect(cx-.5,cy+mry-3,1.5,6);
+  S.race.field.forEach((h,k)=>{const p=clamp((pos?pos[k]:0)/S.race.dist,0,1),q=stadium((1-p)*lap,mrx,mry,0);
+    const x=cx+q.x,y=cy+q.y;
     if(S.bets.some(b=>b.sel.includes(k))){out.fillStyle="#ffe07a";out.fillRect(x-3,y-3,6,6)}
     out.fillStyle=silkOf(h,k)[0];out.fillRect(x-2,y-2,4,4)});
 }
