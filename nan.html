@@ -660,7 +660,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.43.4"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.43.6"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -2707,6 +2707,7 @@ function renderBets(){
 let BKBUSY=false;
 /* ---------- What's new: the update history, plus the suggestions box ---------- */
 const CHANGES=[
+ ["2.43.6","15 Nov","No more dragging middles, and the track map stays",["The middle of a race never runs slower than the even pace races used to run at; the burst out of the gate and the run home come on top of it. Harness races run quicker throughout, with the middle about 11% quicker than before.","The little track map in the top left now stays up all race, and at the turns the window from above sits just under it. Results are unchanged."]],
  ["2.43.4","15 Nov","The distance stays put, and a smoother pace",["The distance to go no longer jumps across the screen at the turns: it stays where it is, and the window from above now sits lower on the left, under it.","The changes of pace through a race are gentler, so the middle of a race never drags. The harness middle is much quicker than it was. Results are unchanged."]],
  ["2.43.2","15 Nov","Races run at a real pace",["The field now speeds up and eases off through a race the way real racing does. Gallops: a sharp break, then sprints stay quick and turn into a sustained sprint home, middle distances settle into a rhythm and wind up from 600m out, and stayers settle more and grind home from 800m. Harness: a quick burst for position, a slow middle once the leader has control, then a quicker last 800m and the quickest last 400m. Dogs: explosive out of the boxes, steadier through the turn, then they run home. Legs keep time with it. Each race still takes the same time overall, and results are unchanged."]],
  ["2.43.1","15 Nov","Tidier race readout",["A little more room between the track map and the distance to go. When the window from above comes up at the turns, the distance moves across clear of it instead of being covered."]],
