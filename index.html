@@ -52,6 +52,12 @@ html.app{background:var(--tote)}html.app .wrap{padding-top:calc(46px + env(safe-
 .nt2-x{font-size:13px;color:#6b6352;display:flex;flex-wrap:wrap;align-items:center;gap:4px}.nt2-x .sc{min-width:22px;height:22px;font-size:13px}
 .nt2 .off-pend{font-size:16px}
 .mast{display:flex;flex-wrap:wrap;gap:6px 22px;align-items:center;background:var(--tote);border:3px solid var(--tote2);padding:8px 14px}
+.verbtn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:84px;background:var(--tote2);color:var(--amber);border:2px solid var(--amber);border-radius:10px;padding:7px 8px 6px;cursor:pointer;animation:vglow 2.4s ease-in-out infinite}
+.verbtn b{font:700 19px/1 var(--led);letter-spacing:.3px}.verbtn small{font:600 11px/1 var(--led);text-transform:uppercase;letter-spacing:1px;color:var(--paper)}
+@keyframes vglow{0%,100%{box-shadow:0 0 0 0 #ffb52e00;border-color:var(--amber-dim)}50%{box-shadow:0 0 12px 2px #ffb52e66;border-color:var(--amber)}}
+.verbtn.new{background:var(--amber);color:var(--tote);border-color:#fff3cd;animation:vflash 1s ease-in-out infinite}.verbtn.new small{color:var(--tote)}
+@keyframes vflash{50%{background:#ffd27a;box-shadow:0 0 16px 4px #ffb52e99}}
+.mbtns{flex:none;display:flex;gap:8px;align-items:stretch}.mbtns .verbtn,.mbtns .homebtn{min-height:58px;box-sizing:border-box}
 .mtop{display:flex;align-items:center;justify-content:space-between;gap:10px;flex:1 1 100%;min-width:0}
 .homebtn{flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:72px;padding:6px 10px 5px;background:var(--tote2);color:var(--amber);border:2px solid var(--amber);border-radius:10px;text-decoration:none;box-shadow:0 0 10px #ffb52e33}
 .homebtn svg{width:24px;height:24px}.homebtn small{font:600 11px/1 var(--led);text-transform:uppercase;letter-spacing:1px;color:var(--paper)}
@@ -298,7 +304,7 @@ canvas{width:100%;height:auto;display:block}
 <body>
 <div class="wrap">
   <header class="mast">
-    <div class="mtop"><h1>Off To The Races <span class="ver" id="ver"></span></h1><a class="homebtn" id="homeBtn" href="nan.html" onclick="this.href='nan.html?v='+(window.APP_VERSION||Date.now())"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 11 12 4l8.5 7M6 9.5V20h4.5v-5.5h3V20H18V9.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><small>Home</small></a></div>
+    <div class="mtop"><h1>Off To The Races</h1><div class="mbtns"><button class="verbtn" id="refBtn" aria-label="Refresh to get the latest version"><b id="verTxt"></b><small id="verSub">Refresh</small></button><a class="homebtn" id="homeBtn" href="nan.html" onclick="this.href='nan.html?v='+(window.APP_VERSION||Date.now())"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 11 12 4l8.5 7M6 9.5V20h4.5v-5.5h3V20H18V9.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><small>Home</small></a></div></div>
     <div class="meet" id="meet"></div>
     <div class="led"><small>RACE</small><b id="raceNo"></b></div>
     <div class="led"><small>BANK</small><b id="bank"></b></div>
@@ -361,7 +367,7 @@ canvas{width:100%;height:auto;display:block}
 <script>
 "use strict";
 /* ---------- helpers ---------- */
-const APP_VERSION="2.39.3"; // bump on every release; shown after the title
+const APP_VERSION="2.39.4"; // bump on every release; shown after the title
 const $=id=>document.getElementById(id);
 let RNG=Math.random;
 const mulberry=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
@@ -2668,7 +2674,13 @@ document.addEventListener("visibilitychange",()=>{
 });
 window.addEventListener("online",()=>{if(AUTH&&SYNC.dirty)cloudPush()});
 
-$("ver").textContent="v"+APP_VERSION;
+$("verTxt").textContent="v"+APP_VERSION;
+// Refresh, as on Nan's Tips: reload from the server, skipping any cached copy; it lights up when a newer version is out
+async function checkVersion(){try{const t=await fetch(location.pathname+"?vc="+Date.now(),{cache:"no-store"}).then(r=>r.text()),m=t.match(new RegExp("APP_VERSION"+"=\x22(\\d[0-9.]*)\x22"));
+  if(m&&m[1]!==APP_VERSION){$("refBtn").classList.add("new");$("verTxt").textContent="v"+m[1];$("verSub").textContent="New · tap"}}catch(e){}}
+setInterval(checkVersion,3*60e3);document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")checkVersion()});setTimeout(checkVersion,4000);
+$("refBtn").addEventListener("click",()=>{$("verSub").textContent="Loading…";const u=new URL(location.href);u.searchParams.set("play","1");u.searchParams.set("r",Date.now());location.replace(u.href)});
+try{const u=new URL(location.href);if(u.searchParams.has("r")){u.searchParams.delete("r");history.replaceState(null,"",u.pathname+u.search+u.hash)}}catch(e){}
 /* ---------- boot ---------- */
 function start(data){
   load(data);
