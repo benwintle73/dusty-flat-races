@@ -367,7 +367,7 @@ canvas{width:100%;height:auto;display:block}
 <script>
 "use strict";
 /* ---------- helpers ---------- */
-const APP_VERSION="2.39.4"; // bump on every release; shown after the title
+const APP_VERSION="2.39.5"; // bump on every release; shown after the title
 const $=id=>document.getElementById(id);
 let RNG=Math.random;
 const mulberry=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
@@ -389,13 +389,14 @@ const JOCKS=["T. Bilby","A. Currawong","S. Wombat","R. Quoll","K. Dunnart","M. E
 const COATS=[["#6b3a1e","#1f130c"],["#8a4a22","#4b2412"],["#3a2316","#120b08"],["#9b9690","#4a4744"],["#a35a24","#d9b078"],["#2a2526","#0c0a0a"]];
 const SILKS=[["#d8342a","#fff"],["#f4f1e6","#111"],["#2a62c9","#fff"],["#f2c92b","#111"],["#2a9a55","#fff"],["#1b1b22","#f2c92b"],["#ef7d22","#111"],["#ec7fb0","#111"],["#25b5c4","#111"]];
 const TIERS=[
- {name:"Country",need:0,max:500,theme:0,cup:["The Goldfields Cup",2400],tracks:["Dusty Flat","Goat Creek","Mount Misery","Wattle Gully","Lake Nowhere","Bullock Bend"]},
- {name:"Provincial",need:3000,max:2000,theme:1,cup:["The Riverbend Cup",2400],tracks:["Riverbend Park","Kingfisher Downs","Sandy Reach"]},
+ {name:"Country",need:0,max:500,theme:0,cup:["The Mitre 10 Cup",2400],tracks:["Dusty Flat","Goat Creek","Mount Misery","Wattle Gully","Lake Nowhere","Bullock Bend"]},
+ {name:"Provincial",need:3000,max:2000,theme:1,cup:["The No Limits Health Clubs Cup",2400],tracks:["Riverbend Park","Kingfisher Downs","Sandy Reach"]},
  {name:"Metro",need:12000,max:10000,theme:2,cup:["The Royal Parade Stakes",2400],tracks:["Royal Parade","Harbour Heath","Southbank Park"]},
  {name:"Spring Carnival",need:60000,max:100000,theme:3,cup:["The Championship Cup",3200],tracks:["Championship Park"]}];
 const CHAMP=250000;
 const TRACKS=TIERS.flatMap(t=>t.tracks);
-const RACES=[["Servo Pie Maiden",1000],["Hot Chips Handicap",1200],["CWA Scone Plate",1400],["Shire Council Sprint",1200],["Ute Muster Mile",1600],["Tuckshop Stakes",1800],["Publican's Purse",2000],["Cup",2400]];
+// race sponsors: local Maryborough, Victoria businesses (same distances as always)
+const RACES=[["No Limits 24/7 Maiden",1000],["Bull & Mouth Hotel Handicap",1200],["Rejuven8 Beauty Studio Plate",1400],["Milo Cafe Sprint",1200],["Professionals Maryborough Mile",1600],["LPM Finance Stakes",1800],["Park Hotel Purse",2000],["Cup",2400]];
 const NAN=["Says it winked at her.","She liked the socks on the jockey.","Her hairdresser's cousin knows the farrier.","Picked it with a hatpin.","It's the same name as her first budgie."];
 const RANK=[[0,"Mug punter"],[1,"Hanging on"],[1.25,"Handy on the punt"],[2,"Sharp at the rails"],[4,"Bookies know your face"]];
 const ratingName=r=>(r<=4?"Good ":r<=7?"Soft ":"Heavy ")+r;
@@ -683,7 +684,7 @@ function buildSheet(h,idx,opt={}){
 const DOG_NAMES=["Zoomies","Couch Potato","Rapid Rissole","Lure Me In","Snoot Boop","Sir Sniffsalot","Sock Thief","Biscuit Bandit","Tail Spin","Squeaky Toy","Lounge Lizard","Bin Night Bandit","Noodle Legs","Fast Eddie","Treat Yo Self","Bark Twain","Hot Dog Harry","Kibble Krusher","Leash Lightning","Slipper Snatcher","Puppacino","Ute Tray Rider","Ballarat Blur","Maryborough Missile","Goldfields Gus","Ziggy Zoom","Walkies Wendy","Brindle Bob","Nan's Footstool","Sunbeam Snoozer","Postie's Nightmare","Ball Is Life","Zoom Zoom Zara","Tea Towel Thief","Doona Hog","Squirrel Alert","Head Tilt","Belly Rubz","Muddy Paws","Fetch Me Later","Pavlova Pinch","Smoko Sprinter"];
 const DOG_TRAINERS=["S. Pike","D. Nolan","K. McPhee","T. Byrne","R. Hart","J. Tran","G. Walsh","B. Doyle","M. Reid","L. Kowalski","S. O'Toole","T. Farrell"];
 const DOG_TRACKS=["Dusty Flat Dogs","Goat Creek Lure Park","Wattle Gully Greyhounds","Mount Misery Dogs","Bullock Bend Raceway"];
-const DOG_RACES=[["Couch Potato Maiden",300],["Bin Night Stakes",400],["Squeaky Toy Sprint",450],["Sausage Sizzle Stake",515],["Snoot Boop Handicap",520],["Sock Thief Plate",595],["Lounge Lizard Mile",600],["The Golden Lure",715]];
+const DOG_RACES=[["Lucy Bakes Maiden",300],["Class Kitchen Bakery Stakes",400],["No Limits 24/7 Sprint",450],["BURGZ Stake",515],["Station Cafe Handicap",520],["LPM Finance Plate",595],["Bull & Mouth Mile",600],["The Rejuven8 Golden Lure",715]];
 const DOG_NAN=["Says it looked at her sausage roll.","It has the same ears as her old kelpie.","She likes the colour of its rug.","Her neighbour's nephew walks it.","Reckons it smiled at her."];
 const DOG_STYLE={front:"Early speed",mid:"Midfield",back:"Strong finisher"};
 // Australian rug colours by box: 2 is black and white stripes, drawn as stripes on the dog and on the number tags.
@@ -829,7 +830,7 @@ const HN_DRIVERS=["K. Pizzuto","L. Justice","G. Rennie","J. McCarthy","C. Alford
 const HN_TRAINERS=["E. Stewart","A. Tritton","D. Aiken","K. Gath","B. Cole","G. Bull","T. French","M. Purdon","J. Payne","S. Lang"];
 const HN_TRACKS=["Dusty Flat Paceway","Goat Creek Trots","Wattle Gully Harness","Bullock Bend Paceway","Mount Misery Trots"];
 // [name, distance, mobile start, trotters]
-const HN_RACES=[["Maiden Mobile Pace",1609,1,0],["Servo Pie Pace",1720,1,0],["Bush Telegraph Trot",2150,1,1],["Tin Shed Handicap",2240,0,0],["Ute Muster Pace",1780,1,0],["Road Train Pace",2190,1,0],["Shearers' Standing Start",2650,0,0],["The Golden Sulky",2575,1,0]];
+const HN_RACES=[["No Limits 24/7 Maiden Pace",1609,1,0],["Milo Cafe Pace",1720,1,0],["Daily Dose Trot",2150,1,1],["Mitre 10 Handicap",2240,0,0],["Professionals Maryborough Pace",1780,1,0],["Bull & Mouth Hotel Pace",2190,1,0],["Park Hotel Standing Start",2650,0,0],["The No Limits Health Clubs Golden Sulky",2575,1,0]];
 /* Nan's sayings: a different line for each race (picked from the race and runner, so it doesn't change on a re-render) */
 const NAN_SAYS={
   all:["Nan's been doing the form since the wireless days. Trust her.","Nan put the coin jar on this one.","Nan's knitting needles pointed straight at this one.","Nan reckons you could throw a blanket over the rest.","Nan read the form twice and had a biscuit. Decision made.","Nan's not one to brag, but she had the last three.","Nan says get on before the bookies wake up.","Nan wouldn't put her teeth in for anything else in this race.","The crossword answer this morning was this one's name. Nan says that's no coincidence.","Nan says the numbers don't lie, and neither does Nan.","Nan's lucky cardigan is on. You've been warned.","The whole bridge club is on this one. Don't tell them Nan told you.","Nan's had a cuppa and a long hard look. This is the one.","Nan says if this one loses, she's taking up lawn bowls.","Nan watched the replays in her dressing gown. Worth it.","Nan doesn't do favourites. Except this one. And you, love.","Nan says it'd have to fall over to lose. Touch wood.","Nan reckons the rest are running for second.","Nan's been right before. Don't ask how often she's been wrong.","Nan says she's got a feeling in her waters about this one.","Nan's hip has been twinging all morning. That's always a good sign.","Nan says back it, and if it loses, blame Pop.","Nan's already planning what to do with the winnings. Mostly bingo.","Nan says this one's been flying under the radar. Not any more.","Horses for courses, love. This one loves this course.","Straight from the horse's mouth. Well, the trainer's cousin's.","Nan says hold your horses, then back this one.","A dark horse? Nan's had the torch on it all week.","Fair dinkum, Nan reckons this is the good thing of the day.","Nan's calling it a smokey. Don't tell the bookies.","Nan says she'll be apples. Mostly.","Give it a burl, love. Nan has.","Nan says don't be a galah, back the form.","Nan's not a mug punter. Not since 1987, anyway.","Nan reckons it's the get out stakes for her purse.","Nan says the others are plodders. This one's a bolter.","Nan's backing it for a gorilla. In buttons.","Nan says a good thing's a good thing until it isn't. This one is.","Nan says this one could win from the back of Bourke.","Heaps of chances, says Nan. Mostly this one's.","Nan put her glasses on for this one. Twice.","Nan says the arvo's looking up already.","Nan says it's got a touch of class. Like Nan.","Nan says a dead heat would be rude. It'll win clear.","Nan's not saying it's a cert. But she's not not saying it."],
