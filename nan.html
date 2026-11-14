@@ -358,6 +358,13 @@ details.race>summary.rsum .rchev{align-self:center}
 .crwhy{font-style:italic;color:var(--ink2);margin:4px 0}
 .crhead p{margin:4px 0}
 .crpast{margin-top:10px}.crpast>summary .rchev{margin-left:auto}
+/* v2.38: add to home screen */
+.a2wrap{padding-top:10px;padding-bottom:0}
+.a2card{position:relative;background:var(--paper);color:var(--ink);border:2px solid var(--amber);border-radius:12px;padding:12px 14px}
+.a2h{display:flex;align-items:center;gap:12px;padding-right:26px}.a2h img{border-radius:10px;flex:none;box-shadow:0 2px 6px #0004}.a2h b{display:block;font:400 19px/1.1 var(--display);text-transform:uppercase;letter-spacing:.3px}.a2h small{display:block;color:var(--ink2);font-size:14px;margin-top:2px}
+.a2card ol{margin:10px 0 4px;padding-left:22px;font-size:15px;line-height:1.45}.a2card p{margin:6px 0;font-size:15px}
+.a2x{position:absolute;top:8px;right:8px;width:30px;height:30px;border-radius:50%;border:0;background:var(--paper2);color:var(--ink);font-size:15px;cursor:pointer}
+.a2go{width:100%;margin-top:10px;min-height:46px;border-radius:8px;font-size:16px}.a2no{margin-top:4px;font-size:14px}.a2in{margin-top:10px}
 /* v2.37: full form */
 .runs{margin:6px 0 8px}.runs small{display:block;color:var(--ink2);font-size:12px}.runs-r{display:flex;flex-wrap:wrap;gap:4px;margin:4px 0}
 .rn{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:30px;height:38px;border-radius:6px;background:var(--paper2);border:1px solid var(--line)}
@@ -465,6 +472,7 @@ details.srcs{margin-top:16px}details.srcs>.allow,details.srcs #allow>.allow{marg
 <body>
 <header class="mast"><h1>Nan's Tips</h1><span class="sub" id="sub"><span>Loading</span><span>today's races…</span></span><button class="verbtn" id="refBtn" aria-label="Refresh to get the latest version"><b id="verTxt"></b><small id="verSub">Refresh</small></button><a href="./?play=1">Play Off To The Races &#9656;</a><button class="newsbtn" id="newsBtn" aria-expanded="false">What's new<i id="newDot" hidden></i></button></header>
 <section id="newsView" class="wrap newsp" hidden></section>
+<div id="a2hs" class="wrap a2wrap" hidden></div>
 <main class="wrap">
   <div class="view"><button data-view="tips" aria-pressed="true">Today's tips</button><button data-view="races" aria-pressed="false">Races</button><button data-view="record" aria-pressed="false">Tipsters</button><button data-view="punters" aria-pressed="false">Punters</button><button data-view="bets" aria-pressed="false">My bets</button><button data-view="cricket" aria-pressed="false">Cricket</button></div>
   <section id="tipsView">
@@ -630,7 +638,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.37.2"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.38.0"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -2615,6 +2623,7 @@ function renderBets(){
 let BKBUSY=false;
 /* ---------- What's new: the update history, plus the suggestions box ---------- */
 const CHANGES=[
+ ["2.38.0","14 Nov","Put Nan on your home screen",["A card shows how to add Nan's Tips to your iPhone or Android home screen, with one-tap Install where Chrome allows it. Tap Not now to hide it for two weeks; the steps are always here in What's new."]],
  ["2.37.2","14 Nov","Easier reading at the bottom",["Where Nan gets her gossip and Nan's record fold away: tap a heading to open it. Gran's line got a polish."]],
  ["2.37.0","14 Nov","Full form",["Tap Form on any runner for everything FormFav has: every start in its recent form, career, track, distance and condition records with win and place rates, every box or barrier, its class rating, and flags like Lightly Raced."]],
  ["2.36.0","14 Nov","What's new and the suggestions box",["What's new: every update listed in one place. Tap it under the refresh button to open it, tap again to close it.","Suggestions box: send Nan an idea, a bug, or anything that's confusing."]],
@@ -2634,6 +2643,22 @@ function newsSeen(){try{localStorage.setItem(SEEN_KEY,CHANGES[0][0])}catch(e){}c
 function newsDot(){let s="";try{s=localStorage.getItem(SEEN_KEY)||""}catch(e){}const d=$("newDot");if(d)d.hidden=s===CHANGES[0][0]}
 const FB={kind:"idea",msg:"",note:"",busy:false};
 const FBK=[["idea","💡 Idea"],["bug","🐞 Bug"],["confusing","🤔 Confusing"],["other","💬 Other"]];
+/* "Put Nan on your home screen": a small card for people still in the browser, with steps for their phone.
+   Android Chrome gets a one-tap Install button when it offers one. Hidden in the home-screen app; "Not now" hides it for 2 weeks. */
+let A2P=null;
+const isApp=()=>document.documentElement.classList.contains("app")||(()=>{try{return matchMedia("(display-mode: standalone)").matches}catch(e){return false}})();
+const devOS=()=>{const u=navigator.userAgent||"";return /iPhone|iPad|iPod/.test(u)||(/Macintosh/.test(u)&&navigator.maxTouchPoints>1)?"ios":/Android/.test(u)?"android":"other"};
+function a2Steps(os){return os==="ios"?`<ol><li>Open this page in <b>Safari</b>.</li><li>Tap the <b>Share</b> button (the square with an arrow pointing up).</li><li>Scroll down and tap <b>Add to Home Screen</b>, then <b>Add</b>.</li></ol>`
+  :os==="android"?`<ol><li>Open this page in <b>Chrome</b>.</li><li>Tap the <b>⋮</b> menu in the top right.</li><li>Tap <b>Add to Home screen</b> (or <b>Install app</b>), then <b>Install</b>.</li></ol>`
+  :`<p><b>iPhone:</b> in Safari, tap Share, then Add to Home Screen.</p><p><b>Android:</b> in Chrome, tap the ⋮ menu, then Add to Home screen.</p>`}
+function a2Html(card){const os=devOS();return `${card?`<button class="a2x" data-a2x aria-label="Not now">✕</button>`:""}<div class="a2h"><img src="icons/icon-192.png" alt="" width="44" height="44"><div><b>Put Nan on your home screen</b><small>Opens full screen like an app, one tap away.</small></div></div>
+  ${A2P?`<button class="ffload a2go" data-a2go>Install Nan's Tips</button>`:a2Steps(os)}${card?`<button class="linkbtn a2no" data-a2x>Not now</button>`:""}`}
+function showA2(){const el=$("a2hs");if(!el)return;let snooze=0;try{snooze=+localStorage.getItem("otr-a2hs")||0}catch(e){}
+  if(isApp()||Date.now()<snooze){el.hidden=true;return}el.innerHTML=`<div class="a2card">${a2Html(true)}</div>`;el.hidden=false}
+window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();A2P=e;showA2()});
+window.addEventListener("appinstalled",()=>{A2P=null;const el=$("a2hs");if(el)el.hidden=true});
+document.addEventListener("click",async e=>{if(e.target.closest("[data-a2x]")){try{localStorage.setItem("otr-a2hs",Date.now()+14*864e5)}catch(_){}$("a2hs").hidden=true;return}
+  if(e.target.closest("[data-a2go]")&&A2P){A2P.prompt();try{await A2P.userChoice}catch(_){}A2P=null;showA2()}});
 function toggleNews(on){const el=$("newsView"),b=$("newsBtn");on=on==null?el.hidden:on;el.hidden=!on;b.setAttribute("aria-expanded",on);if(on)renderNews()}
 function renderNews(){const el=$("newsView");if(!el)return;newsSeen();
   el.innerHTML=`<div class="calc fbbox" id="fbBox"><h3>Suggestions box</h3>
@@ -2642,6 +2667,7 @@ function renderNews(){const el=$("newsView");if(!el)return;newsSeen();
     <textarea id="fbMsg" maxlength="1000" rows="4" placeholder="${FB.kind==="bug"?"What happened, and what were you doing?":FB.kind==="confusing"?"Which bit, and what did you expect?":"What would you like to see?"}">${escH(FB.msg)}</textarea>
     <div class="fbrow"><small>${SYNC.name?`Sent as ${escH(SYNC.name)}`:"Sent without a name. Pick one under My bets if you'd like a reply."}</small><button class="ffload" data-fbsend ${FB.busy?"disabled":""}>${FB.busy?"Sending…":"Send to Nan"}</button></div>
     ${FB.note?`<p class="loanmsg">${FB.note}</p>`:""}</div>
+    ${isApp()?"":`<div class="calc a2card a2in">${a2Html(false)}</div>`}
     <h3 class="bgrp">What's new</h3>
     ${CHANGES.map(([v,d,t,items],i)=>`<div class="chg${i===0?" latest":""}"><div class="chg-h"><b>${escH(t)}</b><span>v${v} · ${d}</span></div><ul>${items.map(x=>`<li>${escH(x)}</li>`).join("")}</ul></div>`).join("")}`}
 async function sendFeedback(){const m=(($("fbMsg")||{}).value||"").trim();FB.msg=m;
@@ -3014,7 +3040,7 @@ async function checkVersion(){try{const t=await fetch(location.pathname+"?vc="+D
 setInterval(checkVersion,3*60e3);document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")checkVersion()});setTimeout(checkVersion,4000);
 $("refBtn").addEventListener("click",()=>{$("verSub").textContent="Loading…";const u=new URL(location.href);u.searchParams.set("r",Date.now());if(ST.view&&ST.view!=="tips")u.hash=ST.view;location.replace(u.href)});
 try{const u=new URL(location.href);if(u.searchParams.has("r")){u.searchParams.delete("r");history.replaceState(null,"",u.pathname+u.search+u.hash)}}catch(e){}
-newsDot();$("newsBtn").addEventListener("click",()=>toggleNews());
+newsDot();showA2();$("newsBtn").addEventListener("click",()=>toggleNews());
 loadAll();
 setInterval(()=>{for(const k in LIMIT)if(Date.now()-LIMIT[k]>10*60e3&&!BUSY[k])delete CARDS[k];pump();if(!document.querySelector("details.run[open]"))render()},60e3);
 </script>
