@@ -410,7 +410,7 @@ body.landrace #bigbtn{display:none}
 <script>
 "use strict";
 /* ---------- helpers ---------- */
-const APP_VERSION="2.41.0"; // bump on every release; shown after the title
+const APP_VERSION="2.41.1"; // bump on every release; shown after the title
 const $=id=>document.getElementById(id);
 let RNG=Math.random;
 const mulberry=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
@@ -1279,8 +1279,19 @@ function drawDoors(camX,open){
     g.fillStyle="#17120c";g.fillRect(x-6,y-h-14,14,9);digits(g,l+1,x-4+(l+1<10?3:0),y-h-12,"#ffd889");
   }
 }
+// how much of the oval a race covers: gallops up to most of one lap; harness tracks are short, so two or more laps
+const lapOf=()=>S.race.harness?clamp(S.race.dist/1000,1,2.8):clamp(S.race.dist/2900,.3,.97);
+// how far into a turn the leader is (0 on a straight, 1 at the top of a turn), on the same oval the overhead view draws
+const turnCos=p=>Math.abs(Math.cos(Math.PI/2+(1-p)*lapOf()*6.2832));
+// the turns of this race in metres, worked out once: deep enough into the turn (a sharper cut for the big gallops oval),
+// not in the first 150m (or 10%) after the jump or the last 330m, and long enough not to flicker
+function raceTurns(){
+  if(R.turns)return R.turns;const D=S.race.dist,th=S.race.harness?.78:.9,out=[];let a=null;
+  for(let i=0;i<=2000;i++){const p=i/2000,on=p*D>Math.max(150,.1*D)&&D*(1-p)>330&&turnCos(p)>th;if(on&&a===null)a=p*D;if(!on&&a!==null){if(p*D-a>=120)out.push([a,p*D]);a=null}}
+  return R.turns=out;
+}
 function drawAerial(pos,now){
-  const dg=S.race.dogs,lap=dg?(()=>{const T=dogTurn(S.race.dist);return .25/(1-(T.a+T.b)/2/S.race.dist)})():clamp(S.race.dist/2900,.3,.97),rx=dg?520:640,ry=dg?230:280,tw=dg?84:96,LANE=tw*.86;
+  const dg=S.race.dogs,lap=dg?(()=>{const T=dogTurn(S.race.dist);return .25/(1-(T.a+T.b)/2/S.race.dist)})():lapOf(),rx=dg?520:640,ry=dg?230:280,tw=dg?84:96,LANE=tw*.86;
   const point=(p,lane)=>{const a=Math.PI/2+(1-p)*lap*6.2832,r=lane*LANE-LANE/2;return {x:Math.cos(a)*(rx+r),y:Math.sin(a)*(ry+r*.8),a}};
   const lead=Math.max(...pos)/S.race.dist,c=point(lead-.012,.5),P=palette();
   out.fillStyle=css(mix(P.turfB,[40,92,48],.5));out.fillRect(0,0,W,H);
@@ -1325,9 +1336,25 @@ function drawAerial(pos,now){
   out.textAlign="left";out.textBaseline="alphabetic";
   out.restore();
 }
+/* How the race unfolds on screen. The simulation decides the result; on its own it tends to keep the early leader in
+   front the whole way. So the running is shaped (drawing only): runners who'll finish down the track tend to go forward
+   early and fade, the ones who'll finish over the top tend to settle back and come late, and everyone wanders a little
+   in between. The shaping is zero at the jump and fades out completely by 88% of the trip, so the run home, the
+   finishing order and the margins are exactly the simulation's. */
+function raceShape(){
+  if(R.shape)return R.shape;
+  const n=R.sim.order.length,D=S.race.dist,rank=[];R.sim.order.forEach((k,i)=>rank[k]=i);
+  const A=clamp(D*.013,5,28);
+  return R.shape=Array.from({length:n},(_,k)=>({go:(n>1?rank[k]/(n-1)-.5:0)*A*(.6+Math.random()*.8),w:A*(.18+Math.random()*.22),f:1.2+Math.random()*1.6,ph:Math.random()*6.283}));
+}
+function shapeAt(sh,p){
+  if(p<=0||p>=.88)return 0;
+  const inn=clamp(p/.12,0,1),out=clamp((.88-p)/.2,0,1),env=inn*inn*(3-2*inn)*out*out*(3-2*out);
+  return env*(sh.go*Math.sin(Math.PI*clamp(p/.88,0,1))+sh.w*Math.sin(sh.f*6.283*p+sh.ph));
+}
 function horsePositions(t){
-  const tr=R.sim.trace,fl=t/R.sim.dt,i=clamp(Math.floor(fl),0,tr.length-2),u=clamp(fl-i,0,1);
-  return tr[i].map((v,k)=>v+(tr[i+1][k]-v)*u);
+  const tr=R.sim.trace,fl=t/R.sim.dt,i=clamp(Math.floor(fl),0,tr.length-2),u=clamp(fl-i,0,1),D=S.race.dist,sh=raceShape();
+  return tr[i].map((v,k)=>{const x=v+(tr[i+1][k]-v)*u;return Math.max(0,x+shapeAt(sh[k],x/D))});
 }
 /* The whip in the straight (drawing only: the race and its result don't change). Within the rules, and well inside them:
    Gallops (Australian Rules of Racing): before the 100m, at most 5 strikes and never in consecutive strides; in the last
@@ -1520,12 +1547,11 @@ function frame(now){
     progress=lead/S.race.dist;
     doors=R.preUntil?0:clamp((now-(R.jumpAt||0))/180,0,1);
     if(!reduced){
-      const hasTurn=S.race.dist>=1100&&!R.photoOn&&!S.race.dogs;
+      const hasTurn=!R.photoOn&&!S.race.dogs&&!R.settled;
       if(S.race.dogs&&!R.photoOn&&!R.settled){const T=dogTurn(S.race.dist),L=lead,B=26;
         if(L>T.a&&L<T.b)aerial=true;else if(L>T.a-B&&L<=T.a)bend=(L-(T.a-B))/B;else if(L>=T.b&&L<T.b+B)bend=1-(L-T.b)/B}
-      if(hasTurn&&progress>.46&&progress<.74&&!R.settled)aerial=true;
-      else if(hasTurn&&progress>.36&&progress<=.46)bend=(progress-.36)/.1;
-      else if(hasTurn&&progress>=.74&&progress<.84)bend=1-(progress-.74)/.1;
+      // gallops and harness: the overhead view at every turn (not the jump, and never in the run home)
+      if(hasTurn)for(const [a,b] of raceTurns()){if(lead>a&&lead<b)aerial=true;else if(lead>a-60&&lead<=a)bend=(lead-(a-60))/60;else if(lead>=b&&lead<b+60)bend=1-(lead-b)/60}
       if(R.preUntil){zoom=1.3;fxF=.97;fy=.72}
       else if(R.jumpAt&&now-R.jumpAt<1400){const u=(now-R.jumpAt)/1400;zoom=1+.3*(1-u);fxF=.97-.35*u;fy=.72-.07*u}
       else if(!R.photoOn&&!R.settled&&S.race.dist-Math.max(...pos)<=320)fin=true;
