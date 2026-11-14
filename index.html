@@ -410,7 +410,7 @@ body.landrace #bigbtn{display:none}
 <script>
 "use strict";
 /* ---------- helpers ---------- */
-const APP_VERSION="2.42.2"; // bump on every release; shown after the title
+const APP_VERSION="2.42.3"; // bump on every release; shown after the title
 const $=id=>document.getElementById(id);
 let RNG=Math.random;
 const mulberry=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
@@ -621,7 +621,8 @@ const HN_SPEED=.92;
 // dogs are about as fast as the gallopers (70 km/h) and get there quicker: their races play at the same speed-up from real
 // time as the gallops (a 1200m gallop takes about 72s for real and about 32s here), so a 515m dog race takes about 15s
 const DOG_REAL=.45;
-const RACE_PACE=.8,GAIT_MS=Math.round(48/RACE_PACE),DOG_GAIT_MS=34; // dog legs cycle to match how fast the ground goes by
+// WATCH: every race plays this much longer, all codes alike (the speeds against each other stay the same); legs cycle to match
+const WATCH=1.3,RACE_PACE=.8,GAIT_MS=Math.round(48/RACE_PACE*WATCH),DOG_GAIT_MS=Math.round(34*WATCH); // dog legs cycle to match how fast the ground goes by
 function buildSheet(h,idx,opt={}){
   const sheet=document.createElement("canvas");sheet.width=FW*(FR+1);sheet.height=FH;
   const out=sheet.getContext("2d");
@@ -2444,7 +2445,7 @@ function startRace(){
   audio();bookOpen=false;resOpen=false;renderNav();
   const sim=isGold()?goldSim(S.gold,S.idx,S.race,true):S.mode==="daily"?withSeed(S.seed+S.idx*131,()=>simulate(S.race.field,S.race,true)):simulate(S.race.field,S.race,true);
   const fin=sim.order.map(k=>sim.fin[k]);
-  R={preUntil:performance.now()+2300,jumpAt:0,sim,t:0,rate:RACE_PACE*(S.race.dogs?(S.race.dist/16.5)/(DOG_REAL*(S.race.dist/16.4+1.2))/RACE_PACE:S.race.harness?(S.race.dist/17)/((20+(S.race.dist-1000)*.03)/HN_SPEED):(S.race.dist/17)/(20+(S.race.dist-1000)*.03)),running:true,last:performance.now(),called:0,photoDone:false,settled:false,lastHoof:0,evI:0,
+  R={preUntil:performance.now()+2300,jumpAt:0,sim,t:0,rate:RACE_PACE*(S.race.dogs?(S.race.dist/16.5)/(DOG_REAL*(S.race.dist/16.4+1.2))/RACE_PACE:S.race.harness?(S.race.dist/17)/((20+(S.race.dist-1000)*.03)/HN_SPEED):(S.race.dist/17)/(20+(S.race.dist-1000)*.03))/WATCH,running:true,last:performance.now(),called:0,photoDone:false,settled:false,lastHoof:0,evI:0,
      isPhoto:fin[1]-fin[0]<.11,startPos:null,p70:null,winCalled:false};
   S.phase="race";cam=-340;particles=[];R.whip=[];bigSync();if(document.body.classList.contains("bigrace")){try{document.querySelector(".stage").scrollIntoView({block:"start",behavior:"smooth"})}catch(e){}}
   renderAll();
