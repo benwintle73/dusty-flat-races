@@ -295,6 +295,7 @@ body{padding-bottom:calc(100px + env(safe-area-inset-bottom))}
 .payrow{border-top:1px dashed var(--line);margin-top:10px;padding-top:2px}
 .nan-loan .bb-grid button{background:var(--paper2);color:var(--ink);border:1px solid var(--line);min-height:42px;font:700 16px/1 var(--led);cursor:pointer}.nan-loan .bb-grid button[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}.nan-loan .bb-grid button:disabled{opacity:.4}
 .lact{display:grid;grid-template-columns:118px minmax(0,1fr);gap:5px;margin-top:5px}.lact .ffload{min-height:44px;font:700 17px/1 var(--led)}.lact .paynan{background:var(--good);color:#fff}
+details.bhow{border-top:1px solid var(--line);margin-top:8px}details.bhow>summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;font-weight:700;font-size:17px}details.bhow>summary::-webkit-details-marker{display:none}details.bhow>summary span{color:var(--muted,#7a6a4f)}details.bhow[open]>summary span{transform:rotate(90deg)}.bhow dl{margin:0 0 6px;display:grid;grid-template-columns:max-content 1fr;gap:6px 14px;font-size:15px;line-height:1.4}.bhow dt{font-weight:700}.bhow dd{margin:0}@media (max-width:560px){.bhow dl{grid-template-columns:1fr;gap:2px}.bhow dd{margin-bottom:8px}}
 .bwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
 @media (max-width:560px){.btable{font-size:14px}.btable th,.btable td{padding:5px 3px}.btable th{font-size:12px;line-height:1.15}.board h3{font-size:22px}}
 details.race>summary.rsum{grid-template-columns:minmax(0,1fr) 14px;gap:0 8px;align-items:center;padding:8px 10px}
@@ -539,7 +540,7 @@ details.srcs{margin-top:16px}details.srcs>.allow,details.srcs #allow>.allow{marg
     <p><b>Pop</b> trusts the computer. He&rsquo;s trusted it since it tipped him a $21 winner in 1998. He still brings it up.</p>
     <p><b>Bob</b> gets his tips from a bloke at the pub. The bloke&rsquo;s wrong a fair bit. Bob remains completely confident in him.</p>
     <p><b>Gran</b> backs the favourite. Every race. Every time. Roughies, she says, are for people who like their disappointment with a little suspense.</p>
-    <p><b>The Panel</b> averages everyone&rsquo;s tips and calls it teamwork. Whoever&rsquo;s been tipping best gets the loudest voice, which keeps the meetings short. If it goes wrong, they&rsquo;ll be holding another one.</p>
+    <p><b>The Panel</b> averages everyone&rsquo;s tips and calls it teamwork. Whoever&rsquo;s been tipping best lately gets the loudest voice, re-checked after every result, which keeps the meetings short. If it goes wrong, they&rsquo;ll be holding another one.</p>
     <p>Tap a race to see the field. Tap a runner to see what Nan thinks. She&rsquo;ll explain her reasoning. She won&rsquo;t promise to be right.</p>
     <details class="fsec"><summary><h4>Where Nan gets her gossip</h4><span class="rchev">&#9656;</span></summary>
     <h5>Horses</h5>
@@ -659,7 +660,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.40.0"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.40.1"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -886,7 +887,7 @@ function renderFollow(){
 /* ---------- The panel: other tipsters beside Nan ----------
    Pop's Tips: FormFav's prediction model. Bob's Tips: Krok's KrokBot model (Bob's mate Davo and his beer-coaster system, as far as the jokes go). Gran's Tips: the bookmaker market (Gran follows the money).
    The Panel's pick averages every tipster's chance for each runner, so all the feeds' data has a say, each weighted by
-   how that tipster's top picks have gone in the code over the last 30 days (TIPS.w, from otr-tips). */
+   how that tipster's top picks have gone in the code lately, re-weighed after every result (TIPS.w, from otr-tips). */
 const TIPS_URL=SB+"/otr-tips",TIPS={w:null,bob:{},bobAt:0,pop:{},map:{},asked:new Set(),askedMap:new Set(),busy:false};
 const WHO={all:"Everyone",nan:"Nan",pop:"Pop",bob:"Bob",gran:"Gran"};
 // tipsters the punter has switched off (Nan is always on); saved on this device
@@ -2115,7 +2116,7 @@ function renderCalc(rows){
       <small>Official tote dividends per $1, after the fact. Scratched picks are refunds and don't count. ${REC.res!=="all"?"A results filter is on, so this only counts those races.":""}</small></div>`;
 }
 /* ---------- Tipster leaderboard: Nan v Pop v Bob v Gran v the Panel, level $10 win bets on each top pick, and how the top three picks ran ---------- */
-const PANEL_START="2026-11-13",BOARD={rows:null,today:null,per:"today",code:"all",view:"top"};
+const PANEL_START="2026-11-13",BOARD={rows:null,today:null,per:"today",code:"all",view:"top",how:false};
 async function loadBoard(){try{const j=await getJSON(TIPS_URL+"?board=1");BOARD.rows=j.rows||[];BOARD.today=j.today}catch(e){BOARD.rows=BOARD.rows||[]}renderBoard()}
 function renderBoard(){const el=$("board");if(!el)return;if(!BOARD.rows){el.innerHTML='<h3>Tipster leaderboard</h3><p>Loading…</p>';return}
   const t=BOARD.today||REC_TODAY(),yd=new Date(Date.parse(t+"T12:00:00")-864e5).toISOString().slice(0,10),from=BOARD.per==="today"?t:BOARD.per==="yday"?yd:BOARD.per==="week"?new Date(Date.parse(t+"T12:00:00")-6*864e5).toISOString().slice(0,10):BOARD.per==="month"?t.slice(0,8)+"01":PANEL_START;
@@ -2134,7 +2135,7 @@ function renderBoard(){const el=$("board");if(!el)return;if(!BOARD.rows){el.inne
     return top3?`<tr class="${i===0?"lead":""}">${lab}<td>${a.r3}</td><td>${rate(a.w3,a.r3)}</td><td>${rate(a.pl,a.b)}</td><td>${rate(a.p2,a.b2)}</td><td>${rate(a.p3,a.b3)}</td></tr>`
       :`<tr class="${i===0?"lead":""}">${lab}<td>${a.b}</td><td>${a.won}</td><td>${a.won?pct(a.won/a.b):"0%"}</td><td>${rate(a.pl,a.b)}</td><td>${div(a.back/a.b)}</td><td class="${a.profit>=0?"plus":"minus"}">${a.profit>=0?"+":"-"}${money(Math.abs(a.profit)).replace("-","")}</td></tr>`};
   const note=top3?`Each tipster's first three picks in every race they rate, judged on the official placings. "Winner in top 3" is how often one of the three won. Nan's go back to the start; Pop, Bob, Gran and the Panel have their 2nd and 3rd picks recorded from Saturday 14 November.`
-    :`Each tipster's top pick in every race they rate, settled on the official result and win dividend. Pop and Bob rate most races; Gran follows the bookies' favourite, wherever prices are up. The Panel blends everyone's chances, giving the most say to whoever's been tipping best in that code over the last 30 days. Nan's tips go back further, so "Since the panel started" is the fair comparison.`;
+    :`Each tipster's top pick in every race they rate, settled on the official result and win dividend. Pop and Bob rate most races; Gran follows the bookies' favourite, wherever prices are up. The Panel blends everyone's chances, giving the most say to whoever's been tipping best in that code lately. Nan's tips go back further, so "Since the panel started" is the fair comparison.`;
   el.innerHTML=`<h3>Tipster leaderboard</h3>
     <div class="bb-grid bd-per">${chip("per","today","Today",BOARD.per)}${chip("per","yday","Yesterday",BOARD.per)}${chip("per","week","Last 7 days",BOARD.per)}${chip("per","month","This month",BOARD.per)}${chip("per","since","Since the panel started",BOARD.per)}</div>
     <div class="bb-grid bd-code">${chip("code","all","All codes",BOARD.code)}${chip("code","H","Horses",BOARD.code)}${chip("code","D","Dogs",BOARD.code)}${chip("code","N","Harness",BOARD.code)}</div>
@@ -2142,7 +2143,15 @@ function renderBoard(){const el=$("board");if(!el)return;if(!BOARD.rows){el.inne
     ${agg.some(a=>n(a))||BOARD.per!=="week"?`<div class="bwrap"><table class="btable${top3?" b3":""}"><thead><tr>${head}</tr></thead><tbody>
       ${agg.map(row).join("")}</tbody></table></div>
       <p class="calc-out"><small>${agg[0]&&n(agg[0])?`${agg[0].w==="panel"?"The Panel is":W[agg[0].w]+" is"} in front. `:""}${note}${wait.length&&!top3?` ${wait.join(", ")} fill${wait.length>1?"":"s"} in as races get official results (10 to 30 minutes after each race).`:""}</small></p>`
-      :`<p>No settled races for the tipsters in this period yet. Results come in through the day.</p>`}`}
+      :`<p>No settled races for the tipsters in this period yet. Results come in through the day.</p>`}
+    <details class="bhow"${BOARD.how?" open":""}><summary>How each tipster picks <span>&#9656;</span></summary><dl>
+      <dt>Nan</dt><dd>Horses: she starts with the bookies' price, then moves each horse up or down on its last four runs. Dogs and harness: her own form study, no bookies' prices at all. Career wins and placings, the last five runs, how it goes at the track and distance, and the box or barrier.</dd>
+      <dt>Pop</dt><dd>His computer rates every runner's chance from its full form and the race conditions, before the race. Pop backs whatever it puts on top. He doesn't argue with it.</dd>
+      <dt>Bob</dt><dd>Davo's system: a second computer rating, then the speed map (who'll lead, who'll sit back, and whether too many want the front) and how each barrier or box has gone at that track. Bob backs the top of the beer coaster.</dd>
+      <dt>Gran</dt><dd>The bookies' favourite, the shortest price in the race. No form, no fuss.</dd>
+      <dt>Panel</dt><dd>Everyone's chances for every runner, blended. Whoever's top picks have been winning lately in that code gets the biggest say, and it re-weighs after every result, so a tipster on a hot streak gets listened to the same day.</dd>
+    </dl><p class="calc-out"><small>All tips are locked in before the jump. Where the form and prices come from is under "Where Nan gets her gossip" at the bottom of the page.</small></p></details>`}
+document.addEventListener("toggle",e=>{if(e.target.matches&&e.target.matches("details.bhow"))BOARD.how=e.target.open},true);
 document.addEventListener("click",e=>{const p=e.target.closest("[data-boardper]"),c=e.target.closest("[data-boardcode]"),v=e.target.closest("[data-boardview]");if(v){BOARD.view=v.dataset.boardview;renderBoard()}if(p){BOARD.per=p.dataset.boardper;renderBoard()}if(c){BOARD.code=c.dataset.boardcode;renderBoard()}});
 function renderRecord(){
   const s=REC.sum;if(!s)return;
@@ -2660,6 +2669,7 @@ function renderBets(){
 let BKBUSY=false;
 /* ---------- What's new: the update history, plus the suggestions box ---------- */
 const CHANGES=[
+ ["2.40.1","14 Nov","How they pick, and a Panel that keeps up",["The tipster leaderboard now explains how each tipster picks: tap \"How each tipster picks\" under the table.","The Panel re-weighs everyone after every result instead of over 30 days. The most recent races count most, so a tipster on a hot streak gets a bigger say the same day."]],
  ["2.40.0","14 Nov","Top 3 picks, and a smarter Panel",["The tipster leaderboard has a new Top 3 picks view: how often the winner was in each tipster's first three, and how often their 1st, 2nd and 3rd picks ran a place. Nan's go back to the start; Pop, Bob and Gran's 2nd and 3rd picks are recorded from today.","The Panel now has a row on the leaderboard too, and it's smarter. Instead of giving everyone an equal say, it listens hardest to whoever's top picks have been landing in that code over the last 30 days, and it keeps re-checking as results come in. On the races so far, that's the market and the models for the dogs and harness, and Nan for the horses."]],
  ["2.39.8","14 Nov","Some respond to the whip",["Riders now reach for the whip as their horse is about to find a bit more, so you see the crack and then the lift. A horse that's had enough gets the odd one and doesn't respond. When one really kicks, the caller says so. The race itself is the same as ever."]],
  ["2.39.7","14 Nov","Dogs on the ground, and a bigger turn",["The dogs' paws now land on the track every stride, with only a little lift when they're airborne. They jump cleanly out of the boxes and only start gently bumping for position as they near the turn, which is now further out and longer, so you see more of it from above before the view drops back for the straight. Dog races also run a little longer."]],
