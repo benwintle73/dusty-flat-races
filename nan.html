@@ -245,7 +245,7 @@ details.follow p{margin:0 12px 8px;font-size:15px;color:#d9c9a3}
 .talk{background:#fff8e6;border:1px solid var(--line);padding:6px 10px 4px;margin:4px 0 8px;color:var(--ink)}.talk h4{margin:2px 0 6px}
 .tk-r{display:grid;grid-template-columns:44px 40px minmax(0,1fr);gap:6px;align-items:baseline;padding:5px 0;border-top:1px dashed #0002;font-size:14px;line-height:1.35}.tk-r:first-of-type{border-top:0}
 .tk-r b{font:700 13px/1 var(--led);text-transform:uppercase;letter-spacing:.4px}.tk-o{font:700 14px/1 var(--led);color:var(--ink2);text-align:right}.tk-r span:last-child{font-style:italic;color:#5b4520}
-.bd-per{grid-template-columns:repeat(6,minmax(0,1fr));margin:6px 0 5px}.bd-per button{grid-column:span 2;line-height:1.1}.bd-per button:nth-child(-n+2){grid-column:span 3}.bd-code{margin-bottom:8px}@media (min-width:700px){.bd-per{grid-template-columns:repeat(5,minmax(0,1fr))}.bd-per button,.bd-per button:nth-child(-n+2){grid-column:auto}}
+.bd-per{grid-template-columns:repeat(6,minmax(0,1fr));margin:6px 0 5px}.bd-per button{grid-column:span 2;line-height:1.1}.bd-per button:nth-child(-n+2){grid-column:span 3}.bd-code{margin-bottom:5px}.bd-view{grid-template-columns:repeat(2,minmax(0,1fr));margin-bottom:8px}@media (min-width:700px){.bd-per{grid-template-columns:repeat(5,minmax(0,1fr))}.bd-per button,.bd-per button:nth-child(-n+2){grid-column:auto}}
 .tip .rest{display:block;font-size:14px;color:var(--ink2);margin-top:2px}.worder .tw{min-width:52px}
 .wchk input{width:16px;height:16px;margin:0;accent-color:var(--amber)}.wchk:not(.on){opacity:.6}
 .tgwrap{overflow-x:auto}.tgrid{width:100%;border-collapse:collapse;font-size:15px}
@@ -539,7 +539,7 @@ details.srcs{margin-top:16px}details.srcs>.allow,details.srcs #allow>.allow{marg
     <p><b>Pop</b> trusts the computer. He&rsquo;s trusted it since it tipped him a $21 winner in 1998. He still brings it up.</p>
     <p><b>Bob</b> gets his tips from a bloke at the pub. The bloke&rsquo;s wrong a fair bit. Bob remains completely confident in him.</p>
     <p><b>Gran</b> backs the favourite. Every race. Every time. Roughies, she says, are for people who like their disappointment with a little suspense.</p>
-    <p><b>The Panel</b> averages everyone&rsquo;s tips and calls it teamwork. If it goes wrong, they&rsquo;ll be holding a meeting.</p>
+    <p><b>The Panel</b> averages everyone&rsquo;s tips and calls it teamwork. Whoever&rsquo;s been tipping best gets the loudest voice, which keeps the meetings short. If it goes wrong, they&rsquo;ll be holding another one.</p>
     <p>Tap a race to see the field. Tap a runner to see what Nan thinks. She&rsquo;ll explain her reasoning. She won&rsquo;t promise to be right.</p>
     <details class="fsec"><summary><h4>Where Nan gets her gossip</h4><span class="rchev">&#9656;</span></summary>
     <h5>Horses</h5>
@@ -659,7 +659,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.39.8"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.40.0"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -885,8 +885,9 @@ function renderFollow(){
 }
 /* ---------- The panel: other tipsters beside Nan ----------
    Pop's Tips: FormFav's prediction model. Bob's Tips: Krok's KrokBot model (Bob's mate Davo and his beer-coaster system, as far as the jokes go). Gran's Tips: the bookmaker market (Gran follows the money).
-   The Panel's pick averages every tipster's chance for each runner, so all the feeds' data has a say. */
-const TIPS_URL=SB+"/otr-tips",TIPS={bob:{},bobAt:0,pop:{},map:{},asked:new Set(),askedMap:new Set(),busy:false};
+   The Panel's pick averages every tipster's chance for each runner, so all the feeds' data has a say, each weighted by
+   how that tipster's top picks have gone in the code over the last 30 days (TIPS.w, from otr-tips). */
+const TIPS_URL=SB+"/otr-tips",TIPS={w:null,bob:{},bobAt:0,pop:{},map:{},asked:new Set(),askedMap:new Set(),busy:false};
 const WHO={all:"Everyone",nan:"Nan",pop:"Pop",bob:"Bob",gran:"Gran"};
 // tipsters the punter has switched off (Nan is always on); saved on this device
 let OFF=(()=>{try{return new Set(JSON.parse(localStorage.getItem("otr-nan-off")||"[]").filter(w=>["pop","bob","gran"].includes(w)))}catch(e){return new Set()}})();
@@ -1893,7 +1894,9 @@ function whoOrderHtml(r){const w=ST.who;if(w==="all"||w==="nan")return "";const 
   const all=topN(r,t,99),ord=n=>n+(["th","st","nd","rd"][n%100>10&&n%100<14?0:n%10]||"th");
   return `<div class="panel worder"><h4>${WHO[w]}'s order</h4>${all.map((x,i)=>`<div class="tip" data-hlbet="${escH(r.id)}|${x.no}"><span class="tw">${ord(i+1)}</span>${cloth(x.no,r.code,x.box)} <b>${escH(x.name)}</b> ${pct(x.p)}<small>${escH(talkFor(w,r,ranked(r).map(y=>y.u).find(y=>y.no===x.no)||x,i+1,all.length))}</small></div>`).join("")}<p class="tnote">Tap a runner to bet on it. Nan's own order is below.</p></div>`}
 function panelOf(r){const ts=tipsters(r);if(ts.length<2)return null;const rk=ranked(r),tot=new Map();
-  for(const u of rk.map(x=>x.u)){let s=0;for(const t of ts)s+=t.chance.get(nkey(u.name))||0;tot.set(nkey(u.name),s/ts.length)}
+  // each tipster weighted by how their top picks have gone in this code lately (worked out on the server from settled results)
+  const ws=(TIPS.w&&TIPS.w[r.code])||{},wt=t=>ws[t.who]??1,sw=ts.reduce((a,t)=>a+wt(t),0)||1;
+  for(const u of rk.map(x=>x.u)){let s=0;for(const t of ts)s+=(t.chance.get(nkey(u.name))||0)*wt(t);tot.set(nkey(u.name),s/sw)}
   const best=[...tot.entries()].sort((a,b)=>b[1]-a[1])[0],u=rk.map(x=>x.u).find(x=>nkey(x.name)===best[0]);
   return {ts,pick:{no:u.no,name:u.name,box:u.box,p:best[1]},agree:ts.filter(t=>nkey(t.pick.name)===best[0]).length}}
 function panelLine(r){const pn=panelOf(r);if(!pn)return "";const o=pn.ts.filter(t=>t.who!=="nan");
@@ -1904,9 +1907,9 @@ function panelHtml(r){const pn=panelOf(r),ts=pn?pn.ts:tipsters(r);if(!ts.length)
   let prow="";if(pn){const tot=new Map();for(const u of ranked(r).map(x=>x.u)){let v=0;for(const t of pn.ts)v+=t.chance.get(nkey(u.name))||0;tot.set(nkey(u.name),v/pn.ts.length)}
     const top=topN(r,{chance:tot},4);prow=`<tr class="prow"><th>Panel<small>${pn.agree} of ${pn.ts.length} have it on top</small></th>${[0,1,2,3].map(k=>cell(top[k])).join("")}</tr>`}
   return `<div class="panel"><h4>The tipsters</h4><div class="tgwrap"><table class="tgrid"><thead><tr><th></th><th>1st</th><th>2nd</th><th>3rd</th><th>4th</th></tr></thead><tbody>${ts.map(row).join("")}${prow}</tbody></table></div>
-    ${mapHtml(r)}${ts.length<4?`<p class="tnote">${[!OFF.has("pop")&&!TIPS.pop[popKey(r)]?"Pop's still thinking":"",!OFF.has("bob")&&!bobFor(r)?"Bob hasn't rated this race":"",!OFF.has("gran")&&!tipsters0(r,"gran")?"Gran's waiting for the bookies to put prices up":""].filter(Boolean).join(" · ")}</p>`:""}<p class="tnote">Tap any runner to bet on it. The Panel averages everyone's chances.</p></div>`}
+    ${mapHtml(r)}${ts.length<4?`<p class="tnote">${[!OFF.has("pop")&&!TIPS.pop[popKey(r)]?"Pop's still thinking":"",!OFF.has("bob")&&!bobFor(r)?"Bob hasn't rated this race":"",!OFF.has("gran")&&!tipsters0(r,"gran")?"Gran's waiting for the bookies to put prices up":""].filter(Boolean).join(" · ")}</p>`:""}<p class="tnote">Tap any runner to bet on it. The Panel averages everyone's chances, giving the most say to whoever's been tipping best.</p></div>`}
 async function loadBob(){const ds=[...new Set(RACES.map(r=>r.date))].slice(0,2);let changed=false;
-  for(const d of ds){try{const j=await getJSON(TIPS_URL+"?date="+d);if(j.bob){TIPS.bob[d]=j.bob;changed=true}}catch(e){}}
+  for(const d of ds){try{const j=await getJSON(TIPS_URL+"?date="+d);if(j.w)TIPS.w=j.w;if(j.bob){TIPS.bob[d]=j.bob;changed=true}}catch(e){}}
   TIPS.bobAt=Date.now();if(changed)render()}
 async function pumpPop(){if(TIPS.busy)return;const now=Date.now();
   const want=RACES.filter(r=>Date.parse(r.jump)>now-60e3&&(!TIPS.asked.has(popKey(r))||Date.parse(r.jump)<now+3*3600e3&&!TIPS.askedMap.has(popKey(r)))).sort((a,b)=>{const oa=document.querySelector(`details.race[data-id="${CSS.escape(a.id)}"][open]`)?0:1,ob=document.querySelector(`details.race[data-id="${CSS.escape(b.id)}"][open]`)?0:1;return oa-ob||Date.parse(a.jump)-Date.parse(b.jump)}),more=want.length>48;want.length=Math.min(want.length,48);
@@ -2111,23 +2114,36 @@ function renderCalc(rows){
     <div class="calc-out">${n?`<b>${money(REC.stake)} ${b[1].toLowerCase()}</b> on ${b[2]}, in the ${n} race${n>1?"s":""} below: staked <b>${money(cost)}</b>, back <b>${money(back)}</b>, <b class="${prof>=0?"plus":"minus"}">${prof>=0?"+":""}${money(prof)}</b> (${hits} collect${hits===1?"":"s"}).`:"No settled races to bet on with these filters yet."}${unk?` ${unk} winning bet${unk>1?"s":""} left out: no dividend recorded.`:""}
       <small>Official tote dividends per $1, after the fact. Scratched picks are refunds and don't count. ${REC.res!=="all"?"A results filter is on, so this only counts those races.":""}</small></div>`;
 }
-/* ---------- Tipster leaderboard: Nan v Pop v Bob v Gran, level $10 win bets on each one's top pick ---------- */
-const PANEL_START="2026-11-13",BOARD={rows:null,today:null,per:"today",code:"all"};
+/* ---------- Tipster leaderboard: Nan v Pop v Bob v Gran v the Panel, level $10 win bets on each top pick, and how the top three picks ran ---------- */
+const PANEL_START="2026-11-13",BOARD={rows:null,today:null,per:"today",code:"all",view:"top"};
 async function loadBoard(){try{const j=await getJSON(TIPS_URL+"?board=1");BOARD.rows=j.rows||[];BOARD.today=j.today}catch(e){BOARD.rows=BOARD.rows||[]}renderBoard()}
 function renderBoard(){const el=$("board");if(!el)return;if(!BOARD.rows){el.innerHTML='<h3>Tipster leaderboard</h3><p>Loading…</p>';return}
   const t=BOARD.today||REC_TODAY(),yd=new Date(Date.parse(t+"T12:00:00")-864e5).toISOString().slice(0,10),from=BOARD.per==="today"?t:BOARD.per==="yday"?yd:BOARD.per==="week"?new Date(Date.parse(t+"T12:00:00")-6*864e5).toISOString().slice(0,10):BOARD.per==="month"?t.slice(0,8)+"01":PANEL_START;
-  const to=BOARD.per==="yday"?yd:"9999";const rows=BOARD.rows.filter(r=>r.date>=from&&r.date<=to&&(BOARD.code==="all"||r.code===BOARD.code)),W={nan:"Nan",pop:"Pop",bob:"Bob",gran:"Gran"};
-  const agg=Object.keys(W).map(w=>{const rs=rows.filter(r=>r.who===w),b=rs.reduce((a,r)=>a+ +r.bets,0),won=rs.reduce((a,r)=>a+ +r.won,0),pl=rs.reduce((a,r)=>a+ +r.placed,0),back=rs.reduce((a,r)=>a+ +r.back,0);return {w,b,won,pl,back,profit:10*(back-b)}}).sort((a,b)=>(b.b>0)-(a.b>0)||b.profit-a.profit||b.won/(b.b||1)-a.won/(a.b||1));
-  const wait=agg.filter(a=>!a.b).map(a=>W[a.w]);
+  const to=BOARD.per==="yday"?yd:"9999";const rows=BOARD.rows.filter(r=>r.date>=from&&r.date<=to&&(BOARD.code==="all"||r.code===BOARD.code)),W={nan:"Nan",pop:"Pop",bob:"Bob",gran:"Gran",panel:"Panel"};
+  const sum=(rs,f)=>rs.reduce((a,r)=>a+(+r[f]||0),0),top3=BOARD.view==="top3";
+  const agg=Object.keys(W).map(w=>{const rs=rows.filter(r=>r.who===w),b=sum(rs,"bets"),back=sum(rs,"back");
+    return {w,b,won:sum(rs,"won"),pl:sum(rs,"placed"),back,profit:10*(back-b),b2:sum(rs,"bets2"),p2:sum(rs,"placed2"),b3:sum(rs,"bets3"),p3:sum(rs,"placed3"),r3:sum(rs,"races3"),w3:sum(rs,"won3")}});
+  const n=a=>top3?a.r3:a.b,rate=(x,d)=>!d?"–":x===d?"100%":x?pct(x/d):"0%";
+  agg.sort(top3?(a,b)=>(b.r3>0)-(a.r3>0)||b.w3/(b.r3||1)-a.w3/(a.r3||1)||(b.p2+b.p3)/(b.b2+b.b3||1)-(a.p2+a.p3)/(a.b2+a.b3||1):(a,b)=>(b.b>0)-(a.b>0)||b.profit-a.profit||b.won/(b.b||1)-a.won/(a.b||1));
+  const wait=agg.filter(a=>!n(a)).map(a=>W[a.w]);
   const chip=(k,v,l,cur)=>`<button data-board${k}="${v}" aria-pressed="${cur===v}">${l}</button>`;
+  const head=top3?`<th></th><th>Tipster</th><th>Races</th><th title="How often the winner was one of their top three picks">Winner in top 3</th><th title="Their top pick finished in the places">1st pick placed</th><th title="Their second pick finished in the places">2nd pick placed</th><th title="Their third pick finished in the places">3rd pick placed</th>`
+    :`<th></th><th>Tipster</th><th>Bets</th><th>Won</th><th>Win %</th><th>Place %</th><th title="Average return for every $1 bet">$1 back</th><th title="Profit or loss betting $10 on every top pick">$10 bets</th>`;
+  const row=(a,i)=>{const lab=`<td>${i===0?"👑":i+1}</td><td><b>${W[a.w]}</b></td>`;
+    if(!n(a))return `<tr>${lab}<td colspan="${top3?5:6}" style="text-align:left"><small>${a.w==="panel"||top3&&a.w!=="nan"?"Recording since Saturday 14 November. Fills in as results come in.":"Tips are in. Waiting on the first official results."}</small></td></tr>`;
+    return top3?`<tr class="${i===0?"lead":""}">${lab}<td>${a.r3}</td><td>${rate(a.w3,a.r3)}</td><td>${rate(a.pl,a.b)}</td><td>${rate(a.p2,a.b2)}</td><td>${rate(a.p3,a.b3)}</td></tr>`
+      :`<tr class="${i===0?"lead":""}">${lab}<td>${a.b}</td><td>${a.won}</td><td>${a.won?pct(a.won/a.b):"0%"}</td><td>${rate(a.pl,a.b)}</td><td>${div(a.back/a.b)}</td><td class="${a.profit>=0?"plus":"minus"}">${a.profit>=0?"+":"-"}${money(Math.abs(a.profit)).replace("-","")}</td></tr>`};
+  const note=top3?`Each tipster's first three picks in every race they rate, judged on the official placings. "Winner in top 3" is how often one of the three won. Nan's go back to the start; Pop, Bob, Gran and the Panel have their 2nd and 3rd picks recorded from Saturday 14 November.`
+    :`Each tipster's top pick in every race they rate, settled on the official result and win dividend. Pop and Bob rate most races; Gran follows the bookies' favourite, wherever prices are up. The Panel blends everyone's chances, giving the most say to whoever's been tipping best in that code over the last 30 days. Nan's tips go back further, so "Since the panel started" is the fair comparison.`;
   el.innerHTML=`<h3>Tipster leaderboard</h3>
     <div class="bb-grid bd-per">${chip("per","today","Today",BOARD.per)}${chip("per","yday","Yesterday",BOARD.per)}${chip("per","week","Last 7 days",BOARD.per)}${chip("per","month","This month",BOARD.per)}${chip("per","since","Since the panel started",BOARD.per)}</div>
     <div class="bb-grid bd-code">${chip("code","all","All codes",BOARD.code)}${chip("code","H","Horses",BOARD.code)}${chip("code","D","Dogs",BOARD.code)}${chip("code","N","Harness",BOARD.code)}</div>
-    ${agg.some(a=>a.b)||BOARD.per!=="week"?`<div class="bwrap"><table class="btable"><thead><tr><th></th><th>Tipster</th><th>Bets</th><th>Won</th><th>Win %</th><th>Place %</th><th title="Average return for every $1 bet">$1 back</th><th title="Profit or loss betting $10 on every top pick">$10 bets</th></tr></thead><tbody>
-      ${agg.map((a,i)=>!a.b?`<tr><td>${i+1}</td><td><b>${W[a.w]}</b></td><td colspan="6"><small>Tips are in. Waiting on the first official results.</small></td></tr>`:`<tr class="${i===0?"lead":""}"><td>${i===0?"👑":i+1}</td><td><b>${W[a.w]}</b></td><td>${a.b}</td><td>${a.won}</td><td>${a.won?pct(a.won/a.b):"0%"}</td><td>${a.pl===a.b?"100%":a.pl?pct(a.pl/a.b):"0%"}</td><td>${div(a.back/a.b)}</td><td class="${a.profit>=0?"plus":"minus"}">${a.profit>=0?"+":"-"}${money(Math.abs(a.profit)).replace("-","")}</td></tr>`).join("")}</tbody></table></div>
-      <p class="calc-out"><small>${agg[0]&&agg[0].b?`${W[agg[0].w]} is in front. `:""}${wait.length?`${wait.join(", ")} started tipping at midday on Friday 13 November, so ${wait.length>1?"their rows fill":"that row fills"} in as those races get official results (10 to 30 minutes after each race). `:""}Each tipster's top pick in every race they rate, settled on the official result and win dividend. Pop and Bob rate most races; Gran follows the bookies' favourite, wherever prices are up. Nan's tips go back further, so "Since the panel started" is the fair comparison.</small></p>`
+    <div class="bb-grid bd-view">${chip("view","top","Top pick",BOARD.view)}${chip("view","top3","Top 3 picks",BOARD.view)}</div>
+    ${agg.some(a=>n(a))||BOARD.per!=="week"?`<div class="bwrap"><table class="btable${top3?" b3":""}"><thead><tr>${head}</tr></thead><tbody>
+      ${agg.map(row).join("")}</tbody></table></div>
+      <p class="calc-out"><small>${agg[0]&&n(agg[0])?`${agg[0].w==="panel"?"The Panel is":W[agg[0].w]+" is"} in front. `:""}${note}${wait.length&&!top3?` ${wait.join(", ")} fill${wait.length>1?"":"s"} in as races get official results (10 to 30 minutes after each race).`:""}</small></p>`
       :`<p>No settled races for the tipsters in this period yet. Results come in through the day.</p>`}`}
-document.addEventListener("click",e=>{const p=e.target.closest("[data-boardper]"),c=e.target.closest("[data-boardcode]");if(p){BOARD.per=p.dataset.boardper;renderBoard()}if(c){BOARD.code=c.dataset.boardcode;renderBoard()}});
+document.addEventListener("click",e=>{const p=e.target.closest("[data-boardper]"),c=e.target.closest("[data-boardcode]"),v=e.target.closest("[data-boardview]");if(v){BOARD.view=v.dataset.boardview;renderBoard()}if(p){BOARD.per=p.dataset.boardper;renderBoard()}if(c){BOARD.code=c.dataset.boardcode;renderBoard()}});
 function renderRecord(){
   const s=REC.sum;if(!s)return;
   const days=s.days||[],all=days.flatMap(d=>Object.values(d.codes)),byCode=k=>days.map(d=>d.codes[k]).filter(Boolean);
@@ -2644,6 +2660,7 @@ function renderBets(){
 let BKBUSY=false;
 /* ---------- What's new: the update history, plus the suggestions box ---------- */
 const CHANGES=[
+ ["2.40.0","14 Nov","Top 3 picks, and a smarter Panel",["The tipster leaderboard has a new Top 3 picks view: how often the winner was in each tipster's first three, and how often their 1st, 2nd and 3rd picks ran a place. Nan's go back to the start; Pop, Bob and Gran's 2nd and 3rd picks are recorded from today.","The Panel now has a row on the leaderboard too, and it's smarter. Instead of giving everyone an equal say, it listens hardest to whoever's top picks have been landing in that code over the last 30 days, and it keeps re-checking as results come in. On the races so far, that's the market and the models for the dogs and harness, and Nan for the horses."]],
  ["2.39.8","14 Nov","Some respond to the whip",["Riders now reach for the whip as their horse is about to find a bit more, so you see the crack and then the lift. A horse that's had enough gets the odd one and doesn't respond. When one really kicks, the caller says so. The race itself is the same as ever."]],
  ["2.39.7","14 Nov","Dogs on the ground, and a bigger turn",["The dogs' paws now land on the track every stride, with only a little lift when they're airborne. They jump cleanly out of the boxes and only start gently bumping for position as they near the turn, which is now further out and longer, so you see more of it from above before the view drops back for the straight. Dog races also run a little longer."]],
  ["2.39.6","14 Nov","Dogs that cover the ground",["The dogs' legs now match how fast they move: the track on screen is longer for dog races, so each stride covers a greyhound's worth of ground, like the horses. Leg speed and results are the same."]],
