@@ -660,7 +660,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.40.3"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.40.4"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -2676,6 +2676,7 @@ function renderBets(){
 let BKBUSY=false;
 /* ---------- What's new: the update history, plus the suggestions box ---------- */
 const CHANGES=[
+ ["2.40.4","14 Nov","The call stays on, sideways",["With your phone turned sideways during a race, the race call now sits under the running order, so you can follow every word while the track fills the screen."]],
  ["2.40.3","14 Nov","Turn your phone for the race",["Turn your phone sideways during a race and the track locks to the screen, as big as it fits, with the running order underneath. Turn it back and you're right where you were."]],
  ["2.40.2","14 Nov","10 at a time, or the lot",["The races list now shows 10 at a time everywhere, including when you pick a meeting or search: tap Show 10 more, or Show all for the whole lot. Show all is remembered, and Show 10 at a time takes you back. Nan's record list works the same way."]],
  ["2.40.1","14 Nov","How they pick, and a Panel that keeps up",["The tipster leaderboard now explains how each tipster picks: tap \"How each tipster picks\" under the table.","The Panel re-weighs everyone after every result instead of over 30 days. The most recent races count most, so a tipster on a hot streak gets a bigger say the same day."]],
