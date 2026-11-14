@@ -410,7 +410,7 @@ body.landrace #bigbtn{display:none}
 <script>
 "use strict";
 /* ---------- helpers ---------- */
-const APP_VERSION="2.41.7"; // bump on every release; shown after the title
+const APP_VERSION="2.41.8"; // bump on every release; shown after the title
 const $=id=>document.getElementById(id);
 let RNG=Math.random;
 const mulberry=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
@@ -615,6 +615,9 @@ function coatOf(h){const opts=LOOK_OF[h.coat%LOOK_OF.length]||[0];return COAT_LO
 const K=2.4,BW=47,BH=40,SW=Math.round(BW*K),SH=Math.round(BH*K),FR=10,STAND=FR,LOG=1.45,SS=1.5,FW=Math.round(SW*SS),FH=Math.round(SH*SS),GS=LOG/1.2;
 // Original motion from main: every joint follows one sine wave per stride, 10 frames, a frame every 48ms.
 // races play 25% slower than they used to (RACE_PACE), and the legs slow to match so nobody skates
+// harness horses pace or trot, they can't gallop: about 20% slower than the gallops (48-56 km/h against 70-72), so on screen a
+// harness race goes at 80% of the speed of a gallop over the same distance
+const HN_SPEED=.8;
 const RACE_PACE=.8,DOG_PACE=.62,GAIT_MS=Math.round(48/RACE_PACE),DOG_GAIT_MS=38; // dog leg speed held where it looks right; dogs play a further 25% slower
 function buildSheet(h,idx,opt={}){
   const sheet=document.createElement("canvas");sheet.width=FW*(FR+1);sheet.height=FH;
@@ -2377,7 +2380,7 @@ function startRace(){
   audio();bookOpen=false;resOpen=false;renderNav();
   const sim=isGold()?goldSim(S.gold,S.idx,S.race,true):S.mode==="daily"?withSeed(S.seed+S.idx*131,()=>simulate(S.race.field,S.race,true)):simulate(S.race.field,S.race,true);
   const fin=sim.order.map(k=>sim.fin[k]);
-  R={preUntil:performance.now()+2300,jumpAt:0,sim,t:0,rate:RACE_PACE*(S.race.dogs?DOG_PACE*(S.race.dist/16.5)/(12+(S.race.dist-300)*.012):S.race.harness?(S.race.dist/17)/(28+(S.race.dist-1600)*.014):(S.race.dist/17)/(20+(S.race.dist-1000)*.03)),running:true,last:performance.now(),called:0,photoDone:false,settled:false,lastHoof:0,evI:0,
+  R={preUntil:performance.now()+2300,jumpAt:0,sim,t:0,rate:RACE_PACE*(S.race.dogs?DOG_PACE*(S.race.dist/16.5)/(12+(S.race.dist-300)*.012):S.race.harness?(S.race.dist/17)/((20+(S.race.dist-1000)*.03)/HN_SPEED):(S.race.dist/17)/(20+(S.race.dist-1000)*.03)),running:true,last:performance.now(),called:0,photoDone:false,settled:false,lastHoof:0,evI:0,
      isPhoto:fin[1]-fin[0]<.11,startPos:null,p70:null,winCalled:false};
   S.phase="race";cam=-340;particles=[];R.whip=[];bigSync();if(document.body.classList.contains("bigrace")){try{document.querySelector(".stage").scrollIntoView({block:"start",behavior:"smooth"})}catch(e){}}
   renderAll();
