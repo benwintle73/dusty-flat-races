@@ -410,7 +410,7 @@ body.landrace #bigbtn{display:none}
 <script>
 "use strict";
 /* ---------- helpers ---------- */
-const APP_VERSION="2.43.4"; // bump on every release; shown after the title
+const APP_VERSION="2.43.5"; // bump on every release; shown after the title
 const $=id=>document.getElementById(id);
 let RNG=Math.random;
 const mulberry=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
@@ -617,7 +617,7 @@ const K=2.4,BW=47,BH=40,SW=Math.round(BW*K),SH=Math.round(BH*K),FR=10,STAND=FR,L
 // races play 25% slower than they used to (RACE_PACE), and the legs slow to match so nobody skates
 // harness horses pace or trot, they can't gallop: about 20% slower than the gallops (48-56 km/h against 70-72), so on screen a
 // harness race goes at 80% of the speed of a gallop over the same distance
-const HN_SPEED=.92;
+const HN_SPEED=.98;
 // dogs are about as fast as the gallopers (70 km/h) and get there quicker: their races play at the same speed-up from real
 // time as the gallops (a 1200m gallop takes about 72s for real and about 32s here), so a 515m dog race takes about 15s
 const DOG_REAL=.45;
@@ -1492,9 +1492,10 @@ let HUDPIP=false;
    a steadier rhythm and the run starts before the straight (600m out); stayers (2400m+) settle more and grind home from 800m.
    Harness: a quick burst to find a spot, a slow middle once the leader has control, then the last 800m quicker and the
    last 400m quickest of all. Dogs: explosive out of the boxes, steadier through the turn, then they run home. */
-// the swings are kept gentle (PACE_DEPTH of the full shape), so the slow middle never drags
-const PACE_DEPTH=.5;
-function paceShape(code,D,x){return 1+(paceShape0(code,D,x)-1)*PACE_DEPTH}
+// the bursts keep most of their kick (PACE_DEPTH), but no stretch of a race ever drops below PACE_FLOOR of normal speed,
+// (the speed every race used to run at all the way), so the middle never drags: the bursts come on top of it
+const PACE_DEPTH=.85,PACE_FLOOR=1,PACE_LONGER=1;
+function paceShape(code,D,x){return Math.max(PACE_FLOOR,1+(paceShape0(code,D,x)-1)*PACE_DEPTH)}
 function paceShape0(code,D,x){ // x = metres the leader has run
   const go=D-x,sm=(a,b,v)=>{const t=clamp((v-a)/(b-a),0,1);return t*t*(3-2*t)};
   if(code==="D")return .9+.35*(1-sm(0,90,x))-.1*sm(90,180,x)+.12*sm(D*.55,D*.8,x);
@@ -1506,8 +1507,7 @@ function paceShape0(code,D,x){ // x = metres the leader has run
 }
 function paceMul(){
   if(!R||!S.race)return 1;const D=S.race.dist,code=S.race.dogs?"D":S.race.harness?"N":"H";
-  if(!R.paceK){let t=0;for(let x=0;x<D;x+=5)t+=5/paceShape(code,D,x);R.paceK=t/D} // keep the race's overall time the same
-  const lead=R.lead??0;return lead>=D?1:paceShape(code,D,lead)*R.paceK;
+  const lead=R.lead??0;return (lead>=D?1:paceShape(code,D,lead))/PACE_LONGER;
 
 }
 function updateLanes(){
