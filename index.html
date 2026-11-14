@@ -165,8 +165,6 @@ canvas{width:100%;height:auto;display:block}
 .reset{background:none;border:0;color:var(--ink2);text-decoration:underline;min-height:40px;justify-self:start;padding:0}
 #hud{position:absolute;inset:8px 8px auto 8px;display:none;justify-content:space-between;align-items:flex-start;pointer-events:none;line-height:1}
 #hudrem{font:700 clamp(26px,5vw,44px)/1 var(--led);color:#fff;text-shadow:0 2px 0 #000;margin-left:clamp(104px,24%,172px)}
-/* picture in picture at the turns: the distance moves clear of the window from above */
-#hud.pip #hudrem{margin-left:calc(36% + 12px)}
 #hudrem small{display:block;font:600 clamp(12px,1.8vw,16px)/1.2 var(--led);color:#f0d9a8}
 #hudrem.final{color:var(--amber);animation:pulse .6s ease-in-out infinite alternate}
 #hudrem.final small::before{content:"FINAL 200M · ";color:#fff}
@@ -412,7 +410,7 @@ body.landrace #bigbtn{display:none}
 <script>
 "use strict";
 /* ---------- helpers ---------- */
-const APP_VERSION="2.43.2"; // bump on every release; shown after the title
+const APP_VERSION="2.43.4"; // bump on every release; shown after the title
 const $=id=>document.getElementById(id);
 let RNG=Math.random;
 const mulberry=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
@@ -1494,10 +1492,13 @@ let HUDPIP=false;
    a steadier rhythm and the run starts before the straight (600m out); stayers (2400m+) settle more and grind home from 800m.
    Harness: a quick burst to find a spot, a slow middle once the leader has control, then the last 800m quicker and the
    last 400m quickest of all. Dogs: explosive out of the boxes, steadier through the turn, then they run home. */
-function paceShape(code,D,x){ // x = metres the leader has run
+// the swings are kept gentle (PACE_DEPTH of the full shape), so the slow middle never drags
+const PACE_DEPTH=.5;
+function paceShape(code,D,x){return 1+(paceShape0(code,D,x)-1)*PACE_DEPTH}
+function paceShape0(code,D,x){ // x = metres the leader has run
   const go=D-x,sm=(a,b,v)=>{const t=clamp((v-a)/(b-a),0,1);return t*t*(3-2*t)};
   if(code==="D")return .9+.35*(1-sm(0,90,x))-.1*sm(90,180,x)+.12*sm(D*.55,D*.8,x);
-  if(code==="N")return .86+.32*(1-sm(60,340,x))-.08*sm(340,700,x)+.2*(1-sm(400,800,go))+.14*(1-sm(150,400,go));
+  if(code==="N")return .92+.26*(1-sm(60,340,x))-.04*sm(340,700,x)+.16*(1-sm(400,800,go))+.12*(1-sm(150,400,go));
   const sprint=D<=1400,stay=D>=2400;
   if(sprint)return .82+.32*sm(0,120,x)-.1*sm(250,600,x)+.12*(1-sm(150,450,go));
   if(stay)return .82+.24*sm(0,150,x)-.18*sm(300,800,x)+.2*(1-sm(300,800,go));
@@ -1507,6 +1508,7 @@ function paceMul(){
   if(!R||!S.race)return 1;const D=S.race.dist,code=S.race.dogs?"D":S.race.harness?"N":"H";
   if(!R.paceK){let t=0;for(let x=0;x<D;x+=5)t+=5/paceShape(code,D,x);R.paceK=t/D} // keep the race's overall time the same
   const lead=R.lead??0;return lead>=D?1:paceShape(code,D,lead)*R.paceK;
+
 }
 function updateLanes(){
   if(!R||!R.sim)return;if(!R.plan)planLanes();const {sd,L,TG}=R.plan,fi=R.t/sd,i=clamp(Math.floor(fi),0,L[0].length-2),u=clamp(fi-i,0,1);
@@ -1689,14 +1691,13 @@ function frame(now){
     else if(S.race.harness&&(!pos||R.t<6)){g.fillStyle="#f4f1e6";g.fillRect(-camX+4,laneY(0)-34,2,laneY(S.race.field.length-1)-laneY(0)+38)}
     drawParticles(camX);
   };
-  if(aerial!==HUDPIP){HUDPIP=aerial;$("hud").classList.toggle("pip",aerial)}
   if(aerial){
     // picture in picture at the turns: the side-on view fills the screen with the field over on the right, and the view
     // from above sits in a small square framed window on the left
     const lead=Math.max(...pos);side(lead*PX-OS-W*.86);out.setTransform(1,0,0,1,0,0); // the side-on camera moved on so the leader is near the right edge
     out.drawImage(offC,OSP,0,W*RES,HPX,0,0,W*RES,HPX);
     out.setTransform(RES,0,0,RES,0,0);
-    const IW=Math.round(H*.66),IH=IW,ix=10,iy=Math.round((H-IH)/2)+6; // a square window, about two thirds of the height
+    const IW=Math.round(H*.62),IH=IW,ix=10,iy=H-IH-8; // a square window, about two thirds of the height, low on the left so the distance above it never moves or gets covered
     out.fillStyle="rgba(0,0,0,.35)";out.fillRect(ix+3,iy+4,IW,IH);
     out.save();out.beginPath();out.rect(ix,iy,IW,IH);out.clip();out.translate(ix+IW/2-W/2,iy+IH/2-H/2);drawAerial(pos,now);out.restore();
     out.strokeStyle="#f2c94c";out.lineWidth=2;out.strokeRect(ix,iy,IW,IH);
