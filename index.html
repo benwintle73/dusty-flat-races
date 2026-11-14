@@ -410,7 +410,7 @@ body.landrace #bigbtn{display:none}
 <script>
 "use strict";
 /* ---------- helpers ---------- */
-const APP_VERSION="2.42.8"; // bump on every release; shown after the title
+const APP_VERSION="2.43.0"; // bump on every release; shown after the title
 const $=id=>document.getElementById(id);
 let RNG=Math.random;
 const mulberry=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
@@ -823,6 +823,7 @@ function buildRealDog(){
   const field=rs.map((u,i)=>({name:u.name,no:u.no,box:u.box,barrier:u.box,reserve:!!u.reserve,q:.5,sta:.8,style:"mid",wet:.5,cons:.6,form:u.form||"",runs:[],dg:u,
     jock:u.trainer||"Trainer TBC",sex:u.sex||"",coat:strHash(u.name)%DOG_COATS.length,weight:56,win:ladder(1/(p[i]*1.13)),silk:{c:RUGS[u.box-1][0],a:RUGS[u.box-1][1],p:0}}));
   const race={title:card.name||`Race ${card.race}`,realNo:card.race,dist:card.distance||400,rating:4,trackLabel:"Good",field,placeN:field.length>=8?3:2,no:S.idx+1,cls:card.cls,dogs:true,realDogs:true,jump:card.jump};
+  withMob(race,"D",S.rd.date,S.rd.track,card.race);
   if(field.length>=2)calibrate(race);
   const best=field.slice().sort((a,b)=>a.win-b.win)[0];
   race.tip=best?{name:best.name,no:best.no,why:"Best of the form. "+nanSays("D",`${S.rd.slug}|${card.race}|${best.name}`)}:null;
@@ -974,6 +975,7 @@ function buildRealHarness(){
     jock:u.driver||"Driver TBC",trainer:u.trainer||"",sex:u.sex||"",age:u.age,coat:strHash(u.name)%COATS.length,weight:56,win:ladder(1/(p[i]*1.14)),silk:{c:SILKS[i%SILKS.length][0],a:SILKS[i%SILKS.length][1],p:strHash(u.name)%6},trot}));
   const rating=/slow|heavy/i.test(card.cond||"")?7:4;
   const race={title:card.name||`Race ${card.race}`,realNo:card.race,dist:card.distance||1609,rating,trackLabel:card.cond||"Good",field,placeN:field.length>=8?3:2,no:S.idx+1,cls:card.cls,harness:true,realHarness:true,mobile,trot,jump:card.jump};
+  withMob(race,"N",S.rh.date,S.rh.track,card.race);
   if(field.length>=2)calibrate(race);
   const best=field.slice().sort((a,b)=>a.win-b.win)[0];
   race.tip=best?{name:best.name,no:best.no,why:"Best of the form and the draw. "+nanSays("N",`${S.rh.slug}|${card.race}|${best.name}`)}:null;
@@ -1780,8 +1782,42 @@ const silkOf=(h,k)=>h.silk?[h.silk.c,h.silk.a]:SILKS[k%SILKS.length];
 const inkOn=hex=>{const n=parseInt(hex.slice(1),16);return ((n>>16)*.3+(n>>8&255)*.59+(n&255)*.11)>140?"#111":"#fff"};
 const realStyle=l=>/lead/i.test(l||"")?"front":/^on pace|^pace/i.test(l||"")?"front":/back|off pace/i.test(l||"")?"back":"mid";
 function trackRating(t){const m=String(t||"").match(/(\d+)/);if(m)return clamp(+m[1],1,10);if(/heavy/i.test(t||""))return 8;if(/soft/i.test(t||""))return 6;return 4}
+/* Real races are simulated off everything the form guides say. Before each real race runs (from 90 minutes before the
+   jump) the tips server keeps, for every runner: The Mob's chance (Nan's FormFav form and ratings, Pop's FormFav model,
+   Bob's Krok model with its speed map, and Gran's market, blended by who's been winning); the market now and when it was
+   first seen (who's being backed); and Krok's speed map (how each one is expected to settle). The simulated race leans
+   on The Mob's chances and the market moves, and each runner races in the position the speed map gives it. Without them
+   (further out from the jump) it runs on the market and form as before. */
+const MOB={},MOBAT={},MOB_URL="https://nkkhbtrrytctpfwjenrz.supabase.co/functions/v1/otr-tips";
+const okey2=v=>String(v||"").toLowerCase().replace(/[^a-z0-9]/g,""),ofirst=v=>String(v||"").toLowerCase().replace(/[^a-z]+/g," ").trim().split(" ")[0];
+function loadMob(date,then){
+  if(!date)return;if(MOB[date]&&Date.now()-MOBAT[date]<4*60e3){if(then)then();return}MOBAT[date]=Date.now();
+  fetch(`${MOB_URL}?mob=${date}`).then(r=>r.json()).then(j=>{if(j&&j.races){MOB[date]=j.races;if(then)then()}}).catch(()=>{});
+}
+function mobFor(code,date,venue,no){
+  const rs=MOB[date];if(!rs)return null;
+  return Object.values(rs).find(x=>x.code===code&&+x.race===+no&&ofirst(x.venue)===ofirst(venue))||null;
+}
+// the Mob's lean on a simulated real race: chances, money and the speed map
+function applyMob(race,tp){
+  const m=race.mob,f=race.field;if(!m)return tp;
+  const get=(o,h)=>{if(!o)return null;for(const k in o)if(okey2(k)===okey2(h.name))return o[k];return null};
+  let adj=tp.slice();
+  if(m.ch){const mp=f.map(h=>get(m.ch,h)),have=mp.filter(x=>x>0).length;
+    if(have>=f.length*.6)adj=adj.map((p,i)=>Math.pow(p,.45)*Math.pow(Math.max(.004,mp[i]||.004),.55))}
+  if(m.mk&&m.op)adj=adj.map((p,i)=>{const a=get(m.mk,f[i]),b=get(m.op,f[i]);return a&&b?p*Math.pow(clamp(a/b,.6,1.7),.5):p}); // firming in the market: being backed
+  const map=m.map||[],n=f.length;
+  f.forEach(h=>{const u=map.find(x=>okey2(x.name)===okey2(h.name));if(!u)return;
+    const st=String(u.style||"").toUpperCase();h.style=Number(u.settle)>0?(u.settle<=Math.max(2,n*.25)?"front":u.settle>=n*.67?"back":"mid"):st==="L"||st==="P"||st==="O"?"front":st==="B"?"back":"mid"});
+  const sum=adj.reduce((a,x)=>a+x,0);race.mobbed=true;return adj.map(x=>x/sum);
+}
+// attach the form guides' view to a real race, and when it turns up later, run the race off it (if nobody's racing it)
+function withMob(race,code,date,venue,no){
+  race.mob=mobFor(code,date,venue,no);
+  if(!race.mob)loadMob(date,()=>{const r=S.race;if(r===race&&!race.mob&&S.phase==="bet"&&!R&&mobFor(code,date,venue,no)){buildRace();renderAll()}});
+}
 function calibrate(race){
-  const f=race.field,n=f.length,sum=f.reduce((a,h)=>a+1/h.win,0),market=f.map(h=>(1/h.win)/sum),tp=applyForm(race,market);
+  const f=race.field,n=f.length,sum=f.reduce((a,h)=>a+1/h.win,0),market=f.map(h=>(1/h.win)/sum),tp=applyMob(race,applyForm(race,market));
   f.forEach((h,i)=>h.q=.5+.17*Math.log(tp[i]*n));
   const N=200,ITS=12;let pl=new Array(n).fill(0);
   for(let it=0;it<ITS;it++){
@@ -1798,6 +1834,7 @@ function buildReal(){
   field.slice().sort((a,b)=>a._b-b._b).forEach((h,i)=>h.barrier=i+1);
   field.forEach((h,i)=>h.realBarrier=src.runners[i].barrier);
   const race={title:src.name,realNo:src.number,dist:src.distance||1400,rating:trackRating(src.track),trackLabel:src.track?ratingLabel(src.track):"Track TBC",field,placeN:n>=8?3:2,no:S.idx+1,cls:src.cls,feature:!!src.feature};
+  withMob(race,"H",S.real.date,S.real.venue,src.number);
   calibrate(race);
   const best=field.slice().sort((a,b)=>a.win-b.win)[0];
   race.tip={name:best.name,no:best.no,why:"Market favourite. "+nanSays("H",`${src.name}|${src.number}|${best.name}`)};
@@ -1814,7 +1851,7 @@ function renderPicker(){
   const list=(picker.meetings||[]).map((m,i)=>`<button class="runner" data-m="${i}" style="grid-template-columns:minmax(0,1fr) auto"><span><span class="rname">${m.venue}</span><br><span class="rmeta">${m.state?m.state+" · ":""}${m.date} · ${m.races.length} races${m.metro?" · Metro":""}${m.races.some(r=>r.feature)?" · ★ Form guide":""}</span></span><span class="odds" style="font-size:22px">Play</span></button>`).join("");
   c.innerHTML=`<h2>Real Races</h2><div class="conds"><span>Real horses, jockeys and prices</span></div>
   ${picker.loading?"<div>Loading the card...</div>":picker.err?`<div>${picker.err}</div>`:list?`<div class="runners">${list}</div>`:"<div>No meetings are loaded yet. Try again soon.</div>"}
-  <div class="tip">Races are simulated from real market prices, barriers, weights and running style, plus full form on the race marked ★. Results are not the actual race result.</div>
+  <div class="tip">Races are simulated from everything the form guides say: real market prices and who's being backed, barriers, weights, the speed map, full form, and The Mob's blend of the family's tips. The simulated result is not the actual race result.</div>
   <div class="tip">${dataCredit()}</div>
   <button class="big next" id="pb">Back</button>`;
   $("pb").onclick=()=>{picker=null;renderCard()};
