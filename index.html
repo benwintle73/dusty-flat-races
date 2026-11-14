@@ -410,7 +410,7 @@ body.landrace #bigbtn{display:none}
 <script>
 "use strict";
 /* ---------- helpers ---------- */
-const APP_VERSION="2.42.6"; // bump on every release; shown after the title
+const APP_VERSION="2.42.7"; // bump on every release; shown after the title
 const $=id=>document.getElementById(id);
 let RNG=Math.random;
 const mulberry=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
@@ -1665,11 +1665,11 @@ function frame(now){
   };
   if(aerial){
     // picture in picture at the turns: the side-on view fills the screen with the field over on the right, and the view
-    // from above sits in a framed window over the left two thirds
-    const lead=Math.max(...pos);side(lead*PX-OS-W*.92);out.setTransform(1,0,0,1,0,0); // the side-on camera moved on so the leader is near the right edge
+    // from above sits in a small square framed window on the left
+    const lead=Math.max(...pos);side(lead*PX-OS-W*.86);out.setTransform(1,0,0,1,0,0); // the side-on camera moved on so the leader is near the right edge
     out.drawImage(offC,OSP,0,W*RES,HPX,0,0,W*RES,HPX);
     out.setTransform(RES,0,0,RES,0,0);
-    const IW=Math.round(W*2/3),IH=Math.round(H*.8),ix=8,iy=Math.round((H-IH)/2);
+    const IW=Math.round(H*.66),IH=IW,ix=10,iy=Math.round((H-IH)/2)+6; // a square window, about two thirds of the height
     out.fillStyle="rgba(0,0,0,.35)";out.fillRect(ix+3,iy+4,IW,IH);
     out.save();out.beginPath();out.rect(ix,iy,IW,IH);out.clip();out.translate(ix+IW/2-W/2,iy+IH/2-H/2);drawAerial(pos,now);out.restore();
     out.strokeStyle="#f2c94c";out.lineWidth=2;out.strokeRect(ix,iy,IW,IH);
