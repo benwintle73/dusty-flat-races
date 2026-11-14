@@ -646,7 +646,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.38.5"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.38.6"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -2631,6 +2631,7 @@ function renderBets(){
 let BKBUSY=false;
 /* ---------- What's new: the update history, plus the suggestions box ---------- */
 const CHANGES=[
+ ["2.38.6","14 Nov","Big races on the computer",["On a computer, the game now fills the whole screen like this page. When a race jumps, the track goes big and fills the width; tap Smaller to shrink it, and it goes back to normal when betting opens on the next race. Phones are unchanged."]],
  ["2.38.5","14 Nov","Game page looks like home",["In the game, a Home button sits top right and brings you back here. The game's tips tab is called Nan's Tips again, and its buttons match this page."]],
  ["2.38.4","14 Nov","Always the latest",["Both pages check for a newer version when they open and update themselves. The game's Quick tips fit the screen in portrait."]],
  ["2.38.3","14 Nov","Steadier pages",["Pages no longer slide sideways on a phone, and Play Off To The Races always opens the latest game."]],
