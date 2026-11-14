@@ -361,7 +361,7 @@ canvas{width:100%;height:auto;display:block}
 <script>
 "use strict";
 /* ---------- helpers ---------- */
-const APP_VERSION="2.38.7"; // bump on every release; shown after the title
+const APP_VERSION="2.38.8"; // bump on every release; shown after the title
 const $=id=>document.getElementById(id);
 let RNG=Math.random;
 const mulberry=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
@@ -558,7 +558,8 @@ const LOOK_OF=[[0,7,1],[0,2,7],[1,6,3],[4,8,4],[2,9,3],[5,6,1]];
 function coatOf(h){const opts=LOOK_OF[h.coat%LOOK_OF.length]||[0];return COAT_LOOKS[opts[strHash(h.name)%opts.length]]}
 const K=2.4,BW=47,BH=40,SW=Math.round(BW*K),SH=Math.round(BH*K),FR=10,STAND=FR,LOG=1.45,SS=1.5,FW=Math.round(SW*SS),FH=Math.round(SH*SS),GS=LOG/1.2;
 // Original motion from main: every joint follows one sine wave per stride, 10 frames, a frame every 48ms.
-const GAIT_MS=48,DOG_GAIT_MS=26;
+// races play 25% slower than they used to (RACE_PACE), and the legs slow to match so nobody skates
+const RACE_PACE=.8,GAIT_MS=Math.round(48/RACE_PACE),DOG_GAIT_MS=Math.round(26/RACE_PACE);
 function buildSheet(h,idx,opt={}){
   const sheet=document.createElement("canvas");sheet.width=FW*(FR+1);sheet.height=FH;
   const out=sheet.getContext("2d");
@@ -1025,48 +1026,53 @@ function buildDogSheet(h,idx){
   for(let f=0;f<=FR;f++){
     const tmp=document.createElement("canvas");tmp.width=FW;tmp.height=FH;
     const c=tmp.getContext("2d");c.scale(SS,SS);
-    const stand=f===STAND,ph=stand?0:f/FR*6.2832;
-    // double-suspension (rotary) gallop. cos(ph)=1: fully stretched, fronts reaching forward, hinds pushed back.
-    // cos(ph)=-1: gathered, back arched, hinds swung forward under the chest past the fronts. Airborne at both.
-    const cs=stand?0:Math.cos(ph),ext=Math.max(0,cs),arch=Math.max(0,-cs);
-    const bob=stand?0:-1.4*Math.abs(cs)+.7;
-    const hipX=13+3.4*arch-1.6*ext,shX=31-1.2*arch+.9*ext,by=19+bob+.6*arch,top=by-5.2-2.4*arch;
-    const leg=(hx,hy,th,fl,L1,L2,col,front)=>{
-      const kx=hx+Math.sin(th)*L1,ky=hy+Math.cos(th)*L1,sh=front?th-fl:th+fl,fx=kx+Math.sin(sh)*L2,fy=ky+Math.cos(sh)*L2;
-      line(c,hx*K,hy*K,kx*K,ky*K,front?3.6:4.4,col);line(c,kx*K,ky*K,fx*K,fy*K,2.6,col);
-      c.save();c.translate(fx*K,fy*K);c.rotate(sh);c.fillStyle=shade(col,.8);c.fillRect(-2.5,-.5,5,3.4);c.restore();
+    const stand=f===STAND,p=stand?0:f/FR,T=6.2832;
+    // Double-suspension (rotary) gallop, cycle p from 0 to 1, dog facing right. Angles are from straight down, + = forward.
+    // p=0: stretched out in the air, fronts reaching forward and hinds pushed back. p=.5: gathered in the air, back arched,
+    // hinds swung forward under the chest. Fronts land around .15-.35, hinds around .65-.85.
+    const cs=stand?0:Math.cos(p*T),ext=Math.max(0,cs),arch=Math.max(0,-cs);
+    const bob=stand?0:-1.1*Math.cos(2*p*T);
+    const hipX=10+3.6*arch-1.4*ext,shX=33-1.4*arch+1*ext,by=20+bob,top=by-4.4-1.6*arch;
+    const leg=(hx,hy,a1,a2,L1,L2,col,w)=>{
+      const kx=hx+Math.sin(a1)*L1,ky=hy+Math.cos(a1)*L1,fx=kx+Math.sin(a2)*L2,fy=ky+Math.cos(a2)*L2;
+      line(c,hx*K,hy*K,kx*K,ky*K,w,col);line(c,kx*K,ky*K,fx*K,fy*K,2.4,col);
+      c.save();c.translate(fx*K,fy*K);c.rotate(-a2);c.fillStyle=shade(col,.8);c.fillRect(-.6,-1,4.4,2.4);c.restore();
     };
-    // the pair moves almost together; o is the small lead/trail offset
-    const fore=(o,col)=>{const q=ph-o,cc=Math.cos(q),sn=Math.sin(q);
-      leg(shX,by+2,stand?.05:.1+.95*cc,stand?.15:.12+1.35*Math.max(0,-sn),6,6.6,col,true)};
-    const hind=(o,col)=>{const q=ph-o,cc=Math.cos(q),sn=Math.sin(q);
-      leg(hipX,by,stand?-.1:-.15-1.0*cc,stand?.35:.3+1.1*Math.max(0,sn),6.4,7,col,false)};
-    // far legs
-    fore(.35,far);hind(.3,far);
+    // front leg: swings forward folded (wrist tucked, foot up behind the elbow), lands straight, sweeps back under the body
+    const fore=(o,col)=>{const q=stand?0:p-o,cq=Math.cos(q*T),fold=stand?0:1.5*Math.max(0,Math.sin((q-.5)*T));
+      const up=stand?.06:.18+.62*cq,lo=up-fold+(stand?0:.25*Math.max(0,cq));
+      leg(shX-.6,by+2.4,up,lo,6.2,6.6,col,3.4)};
+    // hind leg: drives back from the hip, then swings forward under the chest with the hock flexed
+    const hind=(o,col)=>{const q=stand?0:p-o,cq=Math.cos(q*T),flex=stand?.35:.45+.65*Math.max(0,Math.sin(q*T));
+      const up=stand?-.2:-.12-.78*cq,lo=up+flex;
+      leg(hipX+.6,by+.4,up,lo,7.4,6.6,col,4.4)};
+    // far legs (a touch behind the near ones)
+    fore(.07,far);hind(.07,far);
     // tail: long and thin, streaming back with a curl
-    const tw=stand?0:-cs*1.6;
-    c.strokeStyle=coat.b;c.lineWidth=1.6*K/2.4;c.lineCap="round";c.beginPath();c.moveTo((hipX-3)*K,(top+2)*K);c.quadraticCurveTo((hipX-9)*K,(top+5+tw)*K,(hipX-13)*K,(top+3+tw*1.8)*K);c.stroke();
-    // body: deep chest, tucked waist, rounded rump
-    polyFill(c,P([[hipX-3,top+1],[hipX+2,top-.6],[(hipX+shX)/2,top-.4-1.2*arch],[shX-2,top-.4],[shX+2.5,top+1.6],[shX+3.4,by+3.6],[shX,by+6],[shX-5,by+5.6],[(hipX+shX)/2+1,by+1.6+1.6*arch],[hipX+3,by+1.8],[hipX-2.6,by+1]]),coat.b);
-    polyFill(c,P([[shX-5,by+5.4],[shX,by+5.8],[shX+3,by+3.6],[shX+1,by+4.6]]),dark);
-    if(coat.d&&!coat.patch)for(let i=0;i<9;i++){const x=hipX-1+i*((shX-hipX+2)/9);line(c,x*K,(top+.6)*K,(x-.8)*K,(by+3.2)*K,1,coat.d)}
-    if(coat.patch){polyFill(c,P([[hipX-2,top+.6],[hipX+5,top],[hipX+6,by+1],[hipX-1.5,by+.8]]),coat.d);polyFill(c,P([[shX-1,top-.2],[shX+3,top+1.4],[shX+3,by],[shX-2,by-1]]),coat.d)}
-    // racing rug in the box colour, number on the side
-    const rx0=hipX+1.6,rx1=shX-1.2;
-    polyFill(c,P([[rx0,top+.2],[rx1,top-.2],[rx1+.4,by+2.6],[rx0+.4,by+2.2]]),rug,true);
-    if(box===2){c.fillStyle="#111";for(let y=top+.8;y<by+2.4;y+=1.6)c.fillRect(rx0*K,y*K,(rx1-rx0+.4)*K,.75*K)}
-    polyFill(c,P([[rx0,top+.2],[rx1,top-.2],[rx1,top+.7],[rx0,top+1.1]]),shade(rug==="#ffffff"?"#dddddd":rug,.75),true);
-    {const cx=(rx0+rx1)/2,cy=(top+by+2.4)/2;c.fillStyle=box===2?"#f4f1e6":"rgba(0,0,0,0)";if(box===2){c.beginPath();c.arc(cx*K,cy*K,3*K,0,7);c.fill()}
-      c.fillStyle=box===2?"#111":ink;c.font=`700 ${Math.round(5.6*K)}px "Barlow Condensed",Arial,sans-serif`;c.textAlign="center";c.textBaseline="middle";c.fillText(String(box),cx*K,(cy+.2)*K);c.textAlign="left"}
-    // neck and narrow head, reaching forward when stretched out
-    const reach=stand?-1.6:1.6*ext-1*arch,hx=shX+5.4+reach,hy=top-3.2+(stand?-2.2:.8*arch);
-    polyFill(c,P([[shX-1.6,top+.6],[shX+2.2,top-1.4],[hx-1,hy-1.2],[hx+1,hy+1.6],[shX+3.4,by+1]]),coat.b);
-    polyFill(c,P([[hx-2.4,hy-1.6],[hx+1.4,hy-2.2],[hx+6.4,hy+.1],[hx+6.2,hy+1.3],[hx+1.2,hy+2.2],[hx-2,hy+1.4]]),coat.b);
-    polyFill(c,P([[hx-1.8,hy-1.6],[hx-.2,hy-3],[hx+.8,hy-1.8]]),dark);
-    c.fillStyle="#0c0a09";c.fillRect(Math.round((hx+1.2)*K),Math.round((hy-.9)*K),3,3);
+    const tw=stand?0:-cs*1.4;
+    c.strokeStyle=coat.b;c.lineWidth=1.5*K/2.4;c.lineCap="round";c.beginPath();c.moveTo((hipX-2)*K,(top+1.6)*K);c.quadraticCurveTo((hipX-8)*K,(top+3.6+tw)*K,(hipX-13)*K,(top+2+tw*1.6)*K);c.stroke();
+    // body: long and low, deep chest up front, tucked waist, rounded rump
+    const mid=(hipX+shX)/2;
+    polyFill(c,P([[hipX-2.4,top+1.2],[hipX+1.4,top-.3],[mid,top-.6-1.4*arch],[shX-2,top-.2],[shX+2.2,top+1.4],[shX+3.2,by+3.4],[shX+.6,by+5.6],[shX-4.6,by+5.2],[mid+2.4,by+1.6+1.2*arch],[mid-2,by+.6],[hipX+3.6,by+1.6],[hipX-1.8,by+1.2]]),coat.b);
+    polyFill(c,P([[shX-4.6,by+5],[shX+.4,by+5.4],[shX+2.8,by+3.4],[shX+.8,by+4.4]]),dark);
+    if(coat.d&&!coat.patch)for(let i=0;i<10;i++){const x=hipX+i*((shX-hipX)/10);line(c,x*K,(top+.6)*K,(x-.7)*K,(by+2.2)*K,1,coat.d)}
+    if(coat.patch){polyFill(c,P([[hipX-1.8,top+.8],[hipX+5,top-.1],[hipX+5.6,by+1.2],[hipX-1.4,by+1]]),coat.d);polyFill(c,P([[shX-1,top-.1],[shX+2.6,top+1.3],[shX+2.4,by],[shX-2,by-.8]]),coat.d)}
+    // racing rug in the box colour over the back, number on the side
+    const rx0=mid-6.2,rx1=mid+5.4,ry0=top-.3-.9*arch,ry1=by+1.6;
+    polyFill(c,P([[rx0,ry0+.3],[rx1,ry0],[rx1+.3,ry1],[rx0+.3,ry1+.2]]),rug,true);
+    if(box===2){c.fillStyle="#111";for(let y=ry0+.8;y<ry1;y+=1.6)c.fillRect(rx0*K,y*K,(rx1-rx0+.3)*K,.75*K)}
+    polyFill(c,P([[rx0,ry0+.3],[rx1,ry0],[rx1,ry0+.9],[rx0,ry0+1.2]]),shade(rug==="#ffffff"?"#dddddd":rug,.75),true);
+    {const cx=(rx0+rx1)/2,cy=(ry0+ry1)/2+.3;if(box===2){c.fillStyle="#f4f1e6";c.beginPath();c.arc(cx*K,cy*K,2.8*K,0,7);c.fill()}
+      c.fillStyle=box===2?"#111":ink;c.font=`700 ${Math.round(5.2*K)}px "Barlow Condensed",Arial,sans-serif`;c.textAlign="center";c.textBaseline="middle";c.fillText(String(box),cx*K,(cy+.2)*K);c.textAlign="left"}
+    // neck and narrow head stretched forward, about level with the back; a little higher when standing
+    const reach=stand?-1:1.2*ext-.6*arch,hx=shX+6.2+reach,hy=top+.6+(stand?-2.8:.5*arch-.2*ext);
+    polyFill(c,P([[shX-1.8,top+.4],[shX+1.6,top-1],[hx-.8,hy-1.3],[hx+.6,hy+1.5],[shX+3.2,by+1.4]]),coat.b);
+    polyFill(c,P([[hx-2.2,hy-1.5],[hx+1.4,hy-2],[hx+6.6,hy+.2],[hx+6.4,hy+1.4],[hx+1.2,hy+2.1],[hx-1.8,hy+1.4]]),coat.b);
+    polyFill(c,P([[hx-1.2,hy-1.5],[hx-4.4,hy-2.4],[hx-2.4,hy-1.2]]),dark);
+    c.fillStyle="#0c0a09";c.fillRect(Math.round((hx+1.2)*K),Math.round((hy-.8)*K),3,3);
     // wire racing muzzle
-    c.strokeStyle="#d9d3c4";c.lineWidth=1;c.beginPath();c.moveTo((hx+2.4)*K,(hy-1.4)*K);c.lineTo((hx+6.8)*K,(hy-.1)*K);c.lineTo((hx+6.6)*K,(hy+1.8)*K);c.lineTo((hx+2.4)*K,(hy+2.2)*K);c.closePath();c.stroke();
-    c.beginPath();c.moveTo((hx+4.4)*K,(hy-.9)*K);c.lineTo((hx+4.4)*K,(hy+2)*K);c.stroke();
+    c.strokeStyle="#d9d3c4";c.lineWidth=1;c.beginPath();c.moveTo((hx+2.6)*K,(hy-1.2)*K);c.lineTo((hx+7)*K,(hy)*K);c.lineTo((hx+6.8)*K,(hy+1.9)*K);c.lineTo((hx+2.6)*K,(hy+2.2)*K);c.closePath();c.stroke();
+    c.beginPath();c.moveTo((hx+4.6)*K,(hy-.7)*K);c.lineTo((hx+4.6)*K,(hy+2.1)*K);c.stroke();
     // near legs, in front of the body
     fore(0,coat.patch?"#ece7dc":hi);hind(0,coat.patch?"#ece7dc":hi);
     c.globalCompositeOperation="source-atop";
@@ -1984,7 +1990,7 @@ function startRace(){
   audio();bookOpen=false;resOpen=false;renderNav();
   const sim=S.mode==="daily"?withSeed(S.seed+S.idx*131,()=>simulate(S.race.field,S.race,true)):simulate(S.race.field,S.race,true);
   const fin=sim.order.map(k=>sim.fin[k]);
-  R={preUntil:performance.now()+2300,jumpAt:0,sim,t:0,rate:S.race.dogs?(S.race.dist/16.5)/(12+(S.race.dist-300)*.012):S.race.harness?(S.race.dist/17)/(28+(S.race.dist-1600)*.014):(S.race.dist/17)/(20+(S.race.dist-1000)*.03),running:true,last:performance.now(),called:0,photoDone:false,settled:false,lastHoof:0,evI:0,
+  R={preUntil:performance.now()+2300,jumpAt:0,sim,t:0,rate:RACE_PACE*(S.race.dogs?(S.race.dist/16.5)/(12+(S.race.dist-300)*.012):S.race.harness?(S.race.dist/17)/(28+(S.race.dist-1600)*.014):(S.race.dist/17)/(20+(S.race.dist-1000)*.03)),running:true,last:performance.now(),called:0,photoDone:false,settled:false,lastHoof:0,evI:0,
      isPhoto:fin[1]-fin[0]<.11,startPos:null,p70:null,winCalled:false};
   S.phase="race";cam=-340;particles=[];bigSync();if(document.body.classList.contains("bigrace")){try{document.querySelector(".stage").scrollIntoView({block:"start",behavior:"smooth"})}catch(e){}}
   renderAll();
