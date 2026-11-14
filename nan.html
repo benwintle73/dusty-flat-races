@@ -660,7 +660,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.40.5"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.40.6"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -2169,11 +2169,11 @@ function renderBoard(){const el=$("board");if(!el)return;if(!BOARD.rows){el.inne
   const head=top3?`<th></th><th>Tipster</th><th>Races</th><th title="How often the winner was one of their top three picks">Winner in top 3</th><th title="Their top pick finished in the places">1st pick placed</th><th title="Their second pick finished in the places">2nd pick placed</th><th title="Their third pick finished in the places">3rd pick placed</th>`
     :`<th></th><th>Tipster</th><th>Bets</th><th>Won</th><th>Win %</th><th>Place %</th><th title="Average return for every $1 bet">$1 back</th><th title="Profit or loss betting $10 on every top pick">$10 bets</th>`;
   const row=(a,i)=>{const lab=`<td>${i===0?"👑":i+1}</td><td><b>${W[a.w]}</b></td>`;
-    if(!n(a))return `<tr>${lab}<td colspan="${top3?5:6}" style="text-align:left"><small>${a.w==="panel"||top3&&a.w!=="nan"?"Recording since Saturday 14 November. Fills in as results come in.":"Tips are in. Waiting on the first official results."}</small></td></tr>`;
+    if(!n(a))return `<tr>${lab}<td colspan="${top3?5:6}" style="text-align:left"><small>${top3&&a.w!=="nan"?"Recording since Saturday 14 November. Fills in as results come in.":"Tips are in. Waiting on the first official results."}</small></td></tr>`;
     return top3?`<tr class="${i===0?"lead":""}">${lab}<td>${a.r3}</td><td>${rate(a.w3,a.r3)}</td><td>${rate(a.pl,a.b)}</td><td>${rate(a.p2,a.b2)}</td><td>${rate(a.p3,a.b3)}</td></tr>`
       :`<tr class="${i===0?"lead":""}">${lab}<td>${a.b}</td><td>${a.won}</td><td>${a.won?pct(a.won/a.b):"0%"}</td><td>${rate(a.pl,a.b)}</td><td>${div(a.back/a.b)}</td><td class="${a.profit>=0?"plus":"minus"}">${a.profit>=0?"+":"-"}${money(Math.abs(a.profit)).replace("-","")}</td></tr>`};
   const note=top3?`Each tipster's first three picks in every race they rate, judged on the official placings. "Winner in top 3" is how often one of the three won. Nan's go back to the start; Pop, Bob, Gran and the Panel have their 2nd and 3rd picks recorded from Saturday 14 November.`
-    :`Each tipster's top pick in every race they rate, settled on the official result and win dividend. Pop and Bob rate most races; Gran follows the bookies' favourite, wherever prices are up. The Panel blends everyone's chances, giving the most say to whoever's been tipping best in that code lately. Nan's tips go back further, so "Since the panel started" is the fair comparison.`;
+    :`Each tipster's top pick in every race they rate, settled on the official result and win dividend. Pop and Bob rate most races; Gran follows the bookies' favourite, wherever prices are up. The Panel blends everyone's chances, giving the most say to whoever's been tipping best in that code lately. Its picks before 5pm on Saturday 14 November were worked out afterwards from each tipster's saved ratings, using only the results known before each race. Nan's tips go back further, so "Since the panel started" is the fair comparison.`;
   el.innerHTML=`<h3>Tipster leaderboard</h3>
     <div class="bb-grid bd-per">${chip("per","today","Today",BOARD.per)}${chip("per","yday","Yesterday",BOARD.per)}${chip("per","week","Last 7 days",BOARD.per)}${chip("per","month","This month",BOARD.per)}${chip("per","since","Since the panel started",BOARD.per)}</div>
     <div class="bb-grid bd-code">${chip("code","all","All codes",BOARD.code)}${chip("code","H","Horses",BOARD.code)}${chip("code","D","Dogs",BOARD.code)}${chip("code","N","Harness",BOARD.code)}</div>
@@ -2707,6 +2707,7 @@ function renderBets(){
 let BKBUSY=false;
 /* ---------- What's new: the update history, plus the suggestions box ---------- */
 const CHANGES=[
+ ["2.40.6","14 Nov","The Panel's back catalogue",["The Panel now has a record going back to Friday 13 November, like everyone else. Its earlier picks were worked out from each tipster's saved ratings, weighting them only on results known before each race, so no peeking."]],
  ["2.40.5","14 Nov","Back any tipster",["\"If you'd backed Nan\" now lets you pick Nan, Pop, Bob, Gran or the Panel and see how every bet type would have gone on their picks. Nan's still the default. The race cards show whose picks the bet was on. Exotic bets on the others go back to Saturday 14 November, when their 2nd and 3rd picks started being kept."]],
  ["2.40.4","14 Nov","The call stays on, sideways",["With your phone turned sideways during a race, the race call now sits under the running order, so you can follow every word while the track fills the screen."]],
  ["2.40.3","14 Nov","Turn your phone for the race",["Turn your phone sideways during a race and the track locks to the screen, as big as it fits, with the running order underneath. Turn it back and you're right where you were."]],
