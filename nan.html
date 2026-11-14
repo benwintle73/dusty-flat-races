@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <script>/* Never stay on an old saved copy: when the page opens, ask the server which version is current and reload once if this copy is older. */
-(function(){try{var mine=null;document.addEventListener("DOMContentLoaded",function(){var m=document.documentElement.innerHTML.match(/NAN_VERSION="([^"]+)"/);mine=m&&m[1];if(!mine)return;
- fetch(location.pathname+"?vc="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){var n=(t.match(/NAN_VERSION="([^"]+)"/)||[])[1];
+(function(){try{var mine=null;document.addEventListener("DOMContentLoaded",function(){var m=document.documentElement.innerHTML.match(new RegExp("NAN_VERSION"+"=\x22(\\d[0-9.]*)\x22"));mine=m&&m[1];if(!mine)return;
+ fetch(location.pathname+"?vc="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){var n=(t.match(new RegExp("NAN_VERSION"+"=\x22(\\d[0-9.]*)\x22"))||[])[1];
   if(n&&n!==mine&&sessionStorage.getItem("otr-rl")!==n){sessionStorage.setItem("otr-rl",n);var u=new URL(location.href);u.searchParams.set("v",n);location.replace(u.href)}}).catch(function(){})})}catch(e){}})();</script>
 <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
@@ -646,7 +646,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.38.4"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.38.5"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -2631,6 +2631,7 @@ function renderBets(){
 let BKBUSY=false;
 /* ---------- What's new: the update history, plus the suggestions box ---------- */
 const CHANGES=[
+ ["2.38.5","14 Nov","Game page looks like home",["In the game, a Home button sits top right and brings you back here. The game's tips tab is called Nan's Tips again, and its buttons match this page."]],
  ["2.38.4","14 Nov","Always the latest",["Both pages check for a newer version when they open and update themselves. The game's Quick tips fit the screen in portrait."]],
  ["2.38.3","14 Nov","Steadier pages",["Pages no longer slide sideways on a phone, and Play Off To The Races always opens the latest game."]],
  ["2.38.1","14 Nov","Tidier game page",["In the game, Quick tips rows line up like Nan's race cards, the button back here says Back to Nan's Tips, and the header sits below the iPhone clock in the home-screen app."]],
@@ -3053,7 +3054,7 @@ setInterval(refreshAllow,120e3);
 // Refresh: reload from the server, skipping any cached copy, and come back to the same tab
 $("verTxt").textContent="v"+NAN_VERSION;$("playLink").href="./?play=1&v="+NAN_VERSION; // a new version always opens the new game, not a cached copy
 // a newer version on the server lights the badge up: checked every 3 minutes and whenever the app comes back to the front
-async function checkVersion(){try{const t=await fetch(location.pathname+"?vc="+Date.now(),{cache:"no-store"}).then(r=>r.text()),m=t.match(/NAN_VERSION="([^"]+)"/);
+async function checkVersion(){try{const t=await fetch(location.pathname+"?vc="+Date.now(),{cache:"no-store"}).then(r=>r.text()),m=t.match(new RegExp("NAN_VERSION"+"=\x22(\\d[0-9.]*)\x22"));
   if(m&&m[1]!==NAN_VERSION){$("refBtn").classList.add("new");$("verTxt").textContent="v"+m[1];$("verSub").textContent="New · tap"}}catch(e){}}
 setInterval(checkVersion,3*60e3);document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")checkVersion()});setTimeout(checkVersion,4000);
 $("refBtn").addEventListener("click",()=>{$("verSub").textContent="Loading…";const u=new URL(location.href);u.searchParams.set("r",Date.now());if(ST.view&&ST.view!=="tips")u.hash=ST.view;location.replace(u.href)});
