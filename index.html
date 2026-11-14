@@ -410,7 +410,7 @@ body.landrace #bigbtn{display:none}
 <script>
 "use strict";
 /* ---------- helpers ---------- */
-const APP_VERSION="2.41.9"; // bump on every release; shown after the title
+const APP_VERSION="2.42.0"; // bump on every release; shown after the title
 const $=id=>document.getElementById(id);
 let RNG=Math.random;
 const mulberry=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
@@ -617,7 +617,7 @@ const K=2.4,BW=47,BH=40,SW=Math.round(BW*K),SH=Math.round(BH*K),FR=10,STAND=FR,L
 // races play 25% slower than they used to (RACE_PACE), and the legs slow to match so nobody skates
 // harness horses pace or trot, they can't gallop: about 20% slower than the gallops (48-56 km/h against 70-72), so on screen a
 // harness race goes at 80% of the speed of a gallop over the same distance
-const HN_SPEED=.8;
+const HN_SPEED=.92;
 // dogs are about as fast as the gallopers (70 km/h) and get there quicker: their races play at the same speed-up from real
 // time as the gallops (a 1200m gallop takes about 72s for real and about 32s here), so a 515m dog race takes about 15s
 const DOG_REAL=.45;
@@ -1343,9 +1343,9 @@ function drawAerial(pos,now){
   out.fillStyle="#fff";out.fillRect(-1,ry-ey,3,ey*2);
   const f=S.race.field,idx=[...f.keys()].sort((a,b)=>pos[a]-pos[b]),tags=[];
   for(const k of idx){
-    const h=f[k],p=clamp(pos[k]/S.race.dist,0,1),pt=point(p,(h.barrier-.5)/f.length),tang=pt.a-Math.PI/2+Math.PI;
+    const h=f[k],p=clamp(pos[k]/S.race.dist,0,1),pt=point(p,(laneOf(k)+.5)/f.length),tang=pt.a-Math.PI/2+Math.PI;
     if(dg){ // greyhound from above: crowding the rail through the turn, rug in the box colour
-      const T=dogTurn(S.race.dist),u=clamp((pos[k]-T.a)/(T.b-T.a),0,1),pull=Math.sin(Math.PI*u)*.55,lane=(h.barrier-.5)/8*(1-pull)+.04*pull,q=point(p,lane),ta=q.a-Math.PI/2+Math.PI,box=h.box||h.no||k+1,[rug,ink]=RUGS[(box-1)%8],coat=DOG_COATS[(h.coat||0)%DOG_COATS.length].b;
+      const T=dogTurn(S.race.dist),u=clamp((pos[k]-T.a)/(T.b-T.a),0,1),pull=Math.sin(Math.PI*u)*.25,lane=(laneOf(k)+.5)/8*(1-pull)+.04*pull,q=point(p,lane),ta=q.a-Math.PI/2+Math.PI,box=h.box||h.no||k+1,[rug,ink]=RUGS[(box-1)%8],coat=DOG_COATS[(h.coat||0)%DOG_COATS.length].b;
       const wob=Math.sin(now/90+k*2.1)*1.6*Math.sin(Math.PI*u),st=Math.sin(now/45+k)*2.2;
       out.save();out.translate(q.x,q.y+wob);out.rotate(ta+Math.PI);out.scale(.7,.7);
       out.fillStyle="rgba(0,0,0,.22)";out.beginPath();out.ellipse(1,2,15,4.5,0,0,7);out.fill();
@@ -1435,10 +1435,50 @@ function drawWhip(W,x,top,now,h,k){
    is shown stumbling and knocked sideways; at the turn the caller says so. */
 function dogTurn(D){const a=Math.min(95,D*.27);return {a,b:a+Math.min(140,D*.42)}}
 function turnEnv(m,D){const {a}=dogTurn(D),s0=Math.max(30,a-32),s1=a+8;if(m<=s0||m>=s1)return 0;const u=(m-s0)/(s1-s0),e=u<.3?u/.3:u>.8?(1-u)/.2:1;return e*e*(3-2*e)}
+/* Racing lines (drawing only: the race and its result come from the simulation, as always). Lanes count out from the
+   inside rail (0 = on the rail) and ease from one to the next; at the start everyone keeps their draw, then settles.
+   Gallops: the field works across to the rail in running order. A runner level with another sits outside it, so they
+   often go two abreast (three wide when it's tight, without cover). Some midfielders like to sit one out, one back
+   behind a horse on the rail (cover). Backmarkers drop in on the rail. In the straight anyone running at the leaders
+   pulls out to get a clear run.
+   Harness: two lines, the leader and trail along the rail and the outside line beside them (the death seat outside the
+   leader); late in the race the outside line can be pressed three wide.
+   Dogs: each dog has its own running line (railer, middle or wide, set from its name so it's always the same) and heads
+   for it from its box: a wide runner drawn inside crosses the field, which is where the first-turn bumping comes from.
+   Anyone running down the runner in front in its lane swings out to get round. */
+function laneSpan(){const D=S.race.dist;return S.race.dogs?[12,Math.max(55,dogTurn(D).a)]:S.race.harness?[90,320]:[Math.min(120,D*.08),Math.min(420,D*.3)]}
+function updateLanes(pos){
+  if(!R||!pos)return;const f=S.race.field,n=f.length,dg=S.race.dogs,hn=S.race.harness,NL=dg?8:n,OV=dg?1.1:hn?3.2:2.6,D=S.race.dist;
+  if(!R.ln||R.lnT===undefined||R.t<R.lnT-.01){R.ln=f.map(h=>h.barrier-1);R.tg=f.map(h=>h.barrier-1);R.lp=pos.slice();R.lnT=R.t;
+    R.pref=f.map(h=>{const r=(strHash(h.name+"|line")%100)/100;return dg?(r<.45?0:r<.8?3:6):(!hn&&h.style!=="back"&&h.style!=="front"&&r<.45?1:0)})}
+  const dt=R.t-R.lnT;if(dt<=0)return;
+  const vel=pos.map((p,k)=>(p-R.lp[k])/dt);R.lp=pos.slice();R.lnT=R.t;
+  const [a,b]=laneSpan(),lead=Math.max(...pos),w=clamp((lead-a)/(b-a),0,1),e=w*w*(3-2*w);
+  const home=!dg&&D-lead<(hn?380:420),ct=home?.12:.35; // in the run home more of them pull out to run at the leaders
+  const hi=hn?(D-lead<700?2:1):NL-1;
+  const o=[...f.keys()].sort((x,y)=>pos[y]-pos[x]),placed=[];
+  for(const k of o){
+    const near=(l,m)=>placed.some(j=>R.tg[j]===l&&pos[j]-pos[k]<m&&pos[j]-pos[k]>-OV*.5);
+    const chasing=l=>placed.some(j=>R.tg[j]===l&&pos[j]>pos[k]&&pos[j]-pos[k]<OV*(home?4:3)&&vel[k]-vel[j]>ct);
+    const busy=(l,m)=>near(l,m)||chasing(l);
+    // the lowest lane this runner wants: a dog's running line; a gallops midfielder sitting one out behind cover
+    let lo=dg?R.pref[k]:0;
+    if(!dg&&R.pref[k]===1&&!home&&placed.some(j=>R.tg[j]===0&&pos[j]>pos[k]&&pos[j]-pos[k]<OV*3))lo=1;
+    // the run home in the gallops: the ones in with a chance fan out across the track for a clear run
+    if(home&&!hn&&placed.length&&lead-pos[k]<14)lo=Math.max(lo,placed.filter(j=>lead-pos[j]<14).length%3);
+    lo=Math.min(lo,hi);
+    const cur=R.tg[k];let t=cur,inner=lo;while(inner<hi&&busy(inner,OV*1.4))inner++;
+    if(inner<cur||cur<lo||cur>hi)t=inner;else if(busy(cur,OV)){t=lo;while(t<hi&&busy(t,OV))t++}
+    R.tg[k]=t;placed.push(k);
+    const goal=(1-e)*(f[k].barrier-1)+e*t;
+    R.ln[k]+=(goal-R.ln[k])*Math.min(1,dt*(dg?2.4:1.3));
+  }
+}
+const laneOf=k=>R&&R.ln?R.ln[k]:S.race.field[k].barrier-1;
 function drawHorses(camX,pos,now){
-  const f=S.race.field,idx=[...f.keys()].sort((a,b)=>f[a].barrier-f[b].barrier);
+  const f=S.race.field,idx=[...f.keys()].sort((a,b)=>laneOf(a)-laneOf(b));
   for(const k of idx){
-    const h=f[k],y=laneY(h.barrier-1),run=pos&&R&&!R.preUntil&&pos[k]>.3,moving=run&&R.running&&!R.photoOn;
+    const h=f[k],y=laneY(laneOf(k)),run=pos&&R&&!R.preUntil&&pos[k]>.3,moving=run&&R.running&&!R.photoOn;
     const x=(pos?pos[k]:0)*PX-camX-LW+2;
     const roll=S.race.harness&&S.race.mobile&&R&&R.preUntil&&pos;const nf=sheets[k].nf||FR,ff=roll?(Math.floor(now/GAIT_MS)+k*3)%FR:run&&(R.running||R.photoOn)?(R.photoOn?(S.race.dogs?6:3):S.race.dogs?Math.floor(((now/(DOG_GAIT_MS*FR))+k*.37)%1*nf):(Math.floor(now/GAIT_MS)+k*3)%FR):nf;
     const sw=moving&&!S.race.dogs?Math.sin(now/260+k):0;
@@ -1448,7 +1488,7 @@ function drawHorses(camX,pos,now){
       // smooth sideways drift towards the rail; a real bump (neighbouring lanes coming together) gives a small nudge
       // away that settles back, and the bumped dog flicks its head away. Subtle, not ping-pong.
       const J=R.jost||(R.jost=[]),st=J[k]||(J[k]={o:0,v:0,lt:now,hit:-1e9,hd:0,touch:{}}),dt=Math.min(.05,Math.max(0,(now-st.lt)/1000));st.lt=now;
-      if(e>0){for(let j=0;j<f.length;j++){if(j===k)continue;const gap=Math.abs(pos[j]-m),lane=f[j].barrier-h.barrier;
+      if(e>0){for(let j=0;j<f.length;j++){if(j===k)continue;const gap=Math.abs(pos[j]-m),lane=Math.round(laneOf(j)-laneOf(k));
           if(Math.abs(lane)===1&&gap<.9){if(!st.touch[j]){st.touch[j]=1;const dir=lane>0?-1:1;st.v+=16*dir*e;st.hit=now;st.hd=dir;
               if(moving&&!reduced)particles.push({x:x+camX+LW*.5,y:y+st.o,vx:-Math.random()*.8,vy:-Math.random()*.9-.3,life:10+Math.random()*8,s:2})}}
           else if(gap>1.3||Math.abs(lane)!==1)st.touch[j]=0}}
@@ -1457,7 +1497,7 @@ function drawHorses(camX,pos,now){
       const age=(now-st.hit)/1000;if(age<.5)rot+=.045*st.hd*(1-age/.5);
       const ev=R.sim.events.find(q=>q.k===k);
       if(ev&&R.t>=ev.t&&R.t<ev.t+1.4){const u=(R.t-ev.t)/1.4,hit=Math.sin(Math.PI*Math.min(1,u*1.6));
-        rot+=.32*hit;dy+=7*hit*(h.barrier>4?1:-1)+4*hit;
+        rot+=.32*hit;dy+=7*hit*(laneOf(k)>3?1:-1)+4*hit;
         if(moving&&!reduced&&u<.4)for(let i=0;i<3;i++)particles.push({x:x+camX+LW*.6,y:y+dy,vx:-Math.random()*2,vy:-Math.random()*2-.6,life:16+Math.random()*12,s:2+Math.floor(Math.random()*3)})}}
     if(S.race.dogs&&dy)dy=Math.max(laneY(0)-1-y,dy); // never over the inside rail
     const Wk=pos&&run&&R&&R.running?whipStep(k,h,pos,now):null; // every runner, on screen or not
@@ -1526,7 +1566,7 @@ function finalFrame(pos,camX,on){
   const f=S.race.field,o=orderAt(pos),lead=pos[o[0]],D=S.race.dist;
   const grp=o.filter((k,i)=>i<4||pos[k]>=lead-30);
   let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;
-  for(const k of grp){const x=pos[k]*PX-camX,y=laneY(f[k].barrier-1);x0=Math.min(x0,x-LW-10);x1=Math.max(x1,x+30);y0=Math.min(y0,y-LH-34);y1=Math.max(y1,y+10)}
+  for(const k of grp){const x=pos[k]*PX-camX,y=laneY(laneOf(k));x0=Math.min(x0,x-LW-10);x1=Math.max(x1,x+30);y0=Math.min(y0,y-LH-34);y1=Math.max(y1,y+10)}
   x1=Math.min(x1,VW);x0=Math.max(0,Math.min(x0,x1-60));
   const ease=clamp((320-(D-lead))/120,0,1),fit=clamp(Math.min(W/(x1-x0),H/(y1-y0)),1,1.5),target=on?1+(fit-1)*ease:1;
   const cx=(x0+x1)/2,cy=(y0+y1)/2;
@@ -1576,7 +1616,7 @@ function frame(now){
     else if(R.preUntil){
       if(now>=R.preUntil){R.preUntil=0;R.jumpAt=now;R.last=now;tone(1250,.6,0,"square",.07);say(S.race.dogs?`The lids are up in the <b>${S.race.title}</b>!`:S.race.harness?(S.race.mobile?`The mobile pulls away and they're racing in the <b>${S.race.title}</b>!`:`They're away from the stand in the <b>${S.race.title}</b>!`):`And they're away in the <b>${S.race.title}</b>!`)}
     }else if(R.running){const dt=Math.min(.1,(now-R.last)/1000);R.last=now;R.t+=dt*R.rate;tick(now)}
-    pos=horsePositions(R.t);
+    pos=horsePositions(R.t);updateLanes(pos);
     if(R.running&&R.t>=R.sim.dt*(R.sim.trace.length-2)){R.running=false;if(R.replay){R.replay=false;R.circleAt=now+700}}
     const lead=Math.max(...pos),fx=S.race.dist*PX,target=Math.min(lead*PX-345,fx-300);
     cam+=(target-cam)*.12;
@@ -1593,7 +1633,7 @@ function frame(now){
       else if(R.jumpAt&&now-R.jumpAt<1400){const u=(now-R.jumpAt)/1400;zoom=1+.3*(1-u);fxF=.97-.35*u;fy=.72-.07*u}
       else if(!R.photoOn&&!R.settled&&S.race.dist-Math.max(...pos)<=320)fin=true;
     }
-    if(zoom>1&&!R.preUntil&&progress>.5){const f=S.race.field,o=orderAt(pos);fy=clamp((laneY(f[o[0]].barrier-1)-20-40)/120,.2,1)}
+    if(zoom>1&&!R.preUntil&&progress>.5){const f=S.race.field,o=orderAt(pos);fy=clamp((laneY(laneOf(o[0]))-20-40)/120,.2,1)}
   }else{cam=-340;zoom=reduced?1:1.3;fxF=.97;fy=.72}
   let camX=cam-OS;
   if(R&&R.photoOn)camX=S.race.dist*PX-240-OS;
@@ -1613,7 +1653,7 @@ function frame(now){
     out.setTransform(1,0,0,1,0,0);
     if(R&&R.photoOn){
       const s=R.sim,a=S.race.field[s.order[0]],b=S.race.field[s.order[1]];
-      const ya=laneY(a.barrier-1),yb=laneY(b.barrier-1),y0=Math.min(ya,yb)-LH-8,y1=Math.max(ya,yb)+10;
+      const ya=laneY(laneOf(s.order[0])),yb=laneY(laneOf(s.order[1])),y0=Math.min(ya,yb)-LH-8,y1=Math.max(ya,yb)+10;
       const ph=clamp(Math.max(118,y1-y0),118,H),pw=ph*W/H,top=clamp((y0+y1)/2-ph/2,0,H-ph),left=clamp(OS+240-pw/2,0,VW-pw);
       out.drawImage(offC,left*RES,top*RES,pw*RES,ph*RES,0,0,VPX,HPX);
     }else if(bend>.02){
