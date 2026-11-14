@@ -410,7 +410,7 @@ body.landrace #bigbtn{display:none}
 <script>
 "use strict";
 /* ---------- helpers ---------- */
-const APP_VERSION="2.41.7"; // bump on every release; shown after the title
+const APP_VERSION="2.41.9"; // bump on every release; shown after the title
 const $=id=>document.getElementById(id);
 let RNG=Math.random;
 const mulberry=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
@@ -615,7 +615,13 @@ function coatOf(h){const opts=LOOK_OF[h.coat%LOOK_OF.length]||[0];return COAT_LO
 const K=2.4,BW=47,BH=40,SW=Math.round(BW*K),SH=Math.round(BH*K),FR=10,STAND=FR,LOG=1.45,SS=1.5,FW=Math.round(SW*SS),FH=Math.round(SH*SS),GS=LOG/1.2;
 // Original motion from main: every joint follows one sine wave per stride, 10 frames, a frame every 48ms.
 // races play 25% slower than they used to (RACE_PACE), and the legs slow to match so nobody skates
-const RACE_PACE=.8,DOG_PACE=.62,GAIT_MS=Math.round(48/RACE_PACE),DOG_GAIT_MS=38; // dog leg speed held where it looks right; dogs play a further 25% slower
+// harness horses pace or trot, they can't gallop: about 20% slower than the gallops (48-56 km/h against 70-72), so on screen a
+// harness race goes at 80% of the speed of a gallop over the same distance
+const HN_SPEED=.8;
+// dogs are about as fast as the gallopers (70 km/h) and get there quicker: their races play at the same speed-up from real
+// time as the gallops (a 1200m gallop takes about 72s for real and about 32s here), so a 515m dog race takes about 15s
+const DOG_REAL=.45;
+const RACE_PACE=.8,GAIT_MS=Math.round(48/RACE_PACE),DOG_GAIT_MS=34; // dog legs cycle to match how fast the ground goes by
 function buildSheet(h,idx,opt={}){
   const sheet=document.createElement("canvas");sheet.width=FW*(FR+1);sheet.height=FH;
   const out=sheet.getContext("2d");
@@ -1154,7 +1160,10 @@ function buildDogSheet(h,idx){
 /* ---------- renderer ---------- */
 // PX: screen pixels per metre of track. Dogs get a longer track on screen so each stride covers about the same
 // ground as a real greyhound's (about 2.4 sprite lengths), with leg speed and the race itself unchanged.
-const DOG_PX=31;let PX=6;
+/* Dogs are drawn about the same size as the horses but are less than half as long, so a metre is drawn smaller for
+   them than it would be at their size (17px against the horses' 6px for a body 2.4 times longer): a 515m dog race
+   then covers about as many of a dog's lengths as a 1200m race does of a horse's, as it does at a real track. */
+const DOG_PX=17;let PX=6;
 const cv=$("c"),RES=2,W=480,H=236,OS=60,VW=W+OS*2,LW=Math.round(BW*LOG),LH=Math.round(BH*LOG);
 const out=cv.getContext("2d");out.imageSmoothingEnabled=true;out.imageSmoothingQuality="high";
 const offC=document.createElement("canvas");offC.width=Math.round(VW*RES);offC.height=Math.round(H*RES);
@@ -1296,8 +1305,12 @@ function stadium(u,rx,ry,off){
 function stadiumPath(c,cx,cy,rx,ry,off){const r=ry+off,hs=rx-ry;c.beginPath();c.moveTo(cx+hs,cy+r);c.lineTo(cx-hs,cy+r);c.arc(cx-hs,cy,r,Math.PI/2,Math.PI*1.5);c.lineTo(cx+hs,cy-r);c.arc(cx+hs,cy,r,-Math.PI/2,Math.PI/2);c.closePath()}
 // the dog track: the same shape, sized so the turn the dogs run (dogTurn) is exactly the far end, in the right place
 function dogGeo(D){const T=dogTurn(D),lap=.25/(1-(T.a+T.b)/2/D),ry=230,f=Math.min(.45,(T.b-T.a)*lap/D),hs=clamp((Math.PI*ry/f-2*Math.PI*ry)/4,0,2.5*ry);return {lap,rx:hs+ry,ry}} // straights no longer than 2.5 times the end radius: the turn then sits inside the end
+/* Each code's track at the same scale (about 1.1px a metre round the rail), so the tracks feel the right size against
+   each other: a gallops lap is about 2900m, a harness lap about 1000m (a much smaller, tighter track, with the shape of a
+   real one: ends of about 100m radius joined by short straights). The dogs' track is sized from their turn. */
+const trackGeo=()=>S.race.dogs?dogGeo(S.race.dist):S.race.harness?{lap:lapOf(),rx:211,ry:114}:{lap:lapOf(),rx:640,ry:280};
 // is the leader on one of the two ends (the sharp corners)?
-const onEnd=p=>stadium((1-p)*lapOf(),640,280,0).end;
+const onEnd=p=>{const G=trackGeo();return stadium((1-p)*G.lap,G.rx,G.ry,0).end};
 // the turns of this race in metres, worked out once: deep enough into the turn (a sharper cut for the big gallops oval),
 // not in the first 150m (or 10%) after the jump or the last 330m, and long enough not to flicker
 function raceTurns(){
@@ -1309,7 +1322,7 @@ function raceTurns(){
   return R.turns=out;
 }
 function drawAerial(pos,now){
-  const dg=S.race.dogs,G=dg?dogGeo(S.race.dist):{lap:lapOf(),rx:640,ry:280},lap=G.lap,rx=G.rx,ry=G.ry,tw=dg?84:96,LANE=tw*.86;
+  const dg=S.race.dogs,G=trackGeo(),lap=G.lap,rx=G.rx,ry=G.ry,tw=dg?84:96,LANE=tw*.86;
   const point=(p,lane)=>stadium((1-p)*lap,rx,ry,lane*LANE-LANE/2);
   const ring=off=>stadiumPath(out,0,0,rx,ry,off);
   const lead=Math.max(...pos)/S.race.dist,c=point(lead-.012,.5),P=palette();
@@ -1317,8 +1330,10 @@ function drawAerial(pos,now){
   const Z=dg?2:1,trk=dg?"#c39a64":css(P.turfA),trk2=dg?"#a9804c":css(P.turfB); // dogs: a sand track, zoomed in on the pack
   out.save();out.translate(W/2,H/2);out.scale(Z,Z);out.translate(-c.x,-c.y);
   out.fillStyle=css(mix(P.turfA,[66,120,60],.35));ring(-tw/2,-tw*.4);out.fill();
-  out.fillStyle="#3a86b8";out.beginPath();out.ellipse(-60,10,260,100,0,0,7);out.fill();out.fillStyle="rgba(150,210,240,.45)";out.beginPath();out.ellipse(-90,-10,170,48,0,0,7);out.fill();
-  out.fillStyle="#2f5740";for(let i=0;i<70;i++){const a=hash(i)*6.28,r=.58+hash(i+4)*.3,px=Math.cos(a)*rx*r,py=Math.sin(a)*ry*r;if(Math.abs(px+60)<290&&Math.abs(py-10)<120)continue;out.beginPath();out.arc(px,py,8+hash(i+8)*8,0,7);out.fill()}
+  // the lake and trees in the infield, shrunk to fit the smaller harness track
+  const kx=Math.min(1,rx/640),ky=Math.min(1,ry/280),kr=Math.min(kx,ky);
+  out.fillStyle="#3a86b8";out.beginPath();out.ellipse(-60*kx,10*ky,260*kx,100*ky,0,0,7);out.fill();out.fillStyle="rgba(150,210,240,.45)";out.beginPath();out.ellipse(-90*kx,-10*ky,170*kx,48*ky,0,0,7);out.fill();
+  out.fillStyle="#2f5740";for(let i=0;i<70;i++){const a=hash(i)*6.28,r=.58+hash(i+4)*.3,px=Math.cos(a)*(rx-tw/2)*r,py=Math.sin(a)*(ry-tw/2)*r;if(Math.abs(px+60*kx)<290*kx&&Math.abs(py-10*ky)<120*ky)continue;out.beginPath();out.arc(px,py,(8+hash(i+8)*8)*Math.max(.5,kr),0,7);out.fill()}
   const ey=tw/2; // how far the rails sit from the middle of the track
   out.lineWidth=tw;out.strokeStyle=trk;ring(0,0);out.stroke();
   out.globalAlpha=.35;out.strokeStyle=trk2;out.setLineDash([70,70]);ring(0,0);out.stroke();out.setLineDash([]);out.globalAlpha=1;
@@ -1479,7 +1494,7 @@ function drawOval(pos){
   const X=10,Y=8,MW=96,MH=44,cx=X+MW/2,cy=Y+MH/2,rx=38,ry=14;
   out.fillStyle="rgba(15,12,8,.72)";out.fillRect(X,Y,MW,MH);
   // the same track shape as the overhead view, shrunk to fit the box
-  const G=S.race.dogs?dogGeo(S.race.dist):{lap:lapOf(),rx:640,ry:280},sc=Math.min(rx/G.rx,ry/G.ry),mrx=G.rx*sc,mry=G.ry*sc,lap=G.lap;
+  const G=trackGeo(),sc=Math.min(rx/G.rx,ry/G.ry),mrx=G.rx*sc,mry=G.ry*sc,lap=G.lap;
   out.strokeStyle="#c9b283";out.lineWidth=1.5;stadiumPath(out,cx,cy,mrx,mry,0);out.stroke();
   out.fillStyle="#fff";out.fillRect(cx-.5,cy+mry-3,1.5,6);
   S.race.field.forEach((h,k)=>{const p=clamp((pos?pos[k]:0)/S.race.dist,0,1),q=stadium((1-p)*lap,mrx,mry,0);
@@ -2377,7 +2392,7 @@ function startRace(){
   audio();bookOpen=false;resOpen=false;renderNav();
   const sim=isGold()?goldSim(S.gold,S.idx,S.race,true):S.mode==="daily"?withSeed(S.seed+S.idx*131,()=>simulate(S.race.field,S.race,true)):simulate(S.race.field,S.race,true);
   const fin=sim.order.map(k=>sim.fin[k]);
-  R={preUntil:performance.now()+2300,jumpAt:0,sim,t:0,rate:RACE_PACE*(S.race.dogs?DOG_PACE*(S.race.dist/16.5)/(12+(S.race.dist-300)*.012):S.race.harness?(S.race.dist/17)/(28+(S.race.dist-1600)*.014):(S.race.dist/17)/(20+(S.race.dist-1000)*.03)),running:true,last:performance.now(),called:0,photoDone:false,settled:false,lastHoof:0,evI:0,
+  R={preUntil:performance.now()+2300,jumpAt:0,sim,t:0,rate:RACE_PACE*(S.race.dogs?(S.race.dist/16.5)/(DOG_REAL*(S.race.dist/16.4+1.2))/RACE_PACE:S.race.harness?(S.race.dist/17)/((20+(S.race.dist-1000)*.03)/HN_SPEED):(S.race.dist/17)/(20+(S.race.dist-1000)*.03)),running:true,last:performance.now(),called:0,photoDone:false,settled:false,lastHoof:0,evI:0,
      isPhoto:fin[1]-fin[0]<.11,startPos:null,p70:null,winCalled:false};
   S.phase="race";cam=-340;particles=[];R.whip=[];bigSync();if(document.body.classList.contains("bigrace")){try{document.querySelector(".stage").scrollIntoView({block:"start",behavior:"smooth"})}catch(e){}}
   renderAll();

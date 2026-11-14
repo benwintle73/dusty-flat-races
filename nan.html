@@ -660,7 +660,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.41.7"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.41.9"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -2707,6 +2707,7 @@ function renderBets(){
 let BKBUSY=false;
 /* ---------- What's new: the update history, plus the suggestions box ---------- */
 const CHANGES=[
+ ["2.41.9","14 Nov","Horses, harness and dogs at the right speed and size against each other",["The gallops stay as they are. Harness horses can't gallop, so they now run at 80% of the gallops' speed (they were running quicker than the gallops).","The harness track from above is now a small, tight track, a third the size of the gallops track, because a harness lap is about 1000m against about 2900m. So the field doesn't whip round the bends any more.","Dogs are as fast as the gallopers and quicker away, and their races are short: a 515m dog race now plays in about 15 seconds instead of about 30, and a metre of track is drawn to match the dogs' size. Results are unchanged."]],
  ["2.41.7","14 Nov","A proper dog track too",["The dogs' overhead view and track map are now a real track shape as well, two straights and two round ends, with the turn they run sitting right on the far end. Results are unchanged."]],
  ["2.41.6","14 Nov","Overhead only on the sharp ends, and in the right place",["The view from above now only comes in on the two sharp ends of the track, never the long sides, and it matches where the field really is. The little track map was putting harness runners in the wrong spot; it now agrees with the overhead view.","The overhead track is now shaped like a real one, two straights and two round ends, so the field goes round the turns at an even pace instead of whipping round a tight point. Results are unchanged."]],
  ["2.41.5","14 Nov","A bit less time overhead",["The view from above now comes in for a short spell at the middle of each turn, then back to side-on: about a quarter of a race instead of about half. Results are unchanged."]],
