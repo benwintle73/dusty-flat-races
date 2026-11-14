@@ -25,7 +25,7 @@
   --body:"IBM Plex Sans Condensed","Arial Narrow",Arial,sans-serif;
 }
 *{box-sizing:border-box}
-html,body{margin:0;background:#0e2b1a;color:var(--paper);font-family:var(--body)}
+html,body{max-width:100%;overflow-x:hidden;overflow-x:clip;overscroll-behavior-x:none;margin:0;background:#0e2b1a;color:var(--paper);font-family:var(--body)}
 button,select{font:inherit}
 a{color:inherit}
 .wrap{max-width:1000px;margin:0 auto;padding:12px}
@@ -474,7 +474,7 @@ details.srcs{margin-top:16px}details.srcs>.allow,details.srcs #allow>.allow{marg
 </style>
 </head>
 <body>
-<header class="mast"><h1>Nan's Tips</h1><span class="sub" id="sub"><span>Loading</span><span>today's races…</span></span><button class="verbtn" id="refBtn" aria-label="Refresh to get the latest version"><b id="verTxt"></b><small id="verSub">Refresh</small></button><a href="./?play=1">Play Off To The Races &#9656;</a><button class="newsbtn" id="newsBtn" aria-expanded="false">What's new<i id="newDot" hidden></i></button></header>
+<header class="mast"><h1>Nan's Tips</h1><span class="sub" id="sub"><span>Loading</span><span>today's races…</span></span><button class="verbtn" id="refBtn" aria-label="Refresh to get the latest version"><b id="verTxt"></b><small id="verSub">Refresh</small></button><a href="./?play=1" id="playLink">Play Off To The Races &#9656;</a><button class="newsbtn" id="newsBtn" aria-expanded="false">What's new<i id="newDot" hidden></i></button></header>
 <section id="newsView" class="wrap newsp" hidden></section>
 <div id="a2hs" class="wrap a2wrap" hidden></div>
 <main class="wrap">
@@ -642,7 +642,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.38.2"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.38.3"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -2627,6 +2627,7 @@ function renderBets(){
 let BKBUSY=false;
 /* ---------- What's new: the update history, plus the suggestions box ---------- */
 const CHANGES=[
+ ["2.38.3","14 Nov","Steadier pages",["Pages no longer slide sideways on a phone, and Play Off To The Races always opens the latest game."]],
  ["2.38.1","14 Nov","Tidier game page",["In the game, Quick tips rows line up like Nan's race cards, the button back here says Back to Nan's Tips, and the header sits below the iPhone clock in the home-screen app."]],
  ["2.38.0","14 Nov","Put Nan on your home screen",["A card shows how to add Nan's Tips to your iPhone or Android home screen, with one-tap Install where Chrome allows it. Tap Not now to hide it for two weeks; the steps are always here in What's new."]],
  ["2.37.2","14 Nov","Easier reading at the bottom",["Where Nan gets her gossip and Nan's record fold away: tap a heading to open it. Gran's line got a polish."]],
@@ -3045,7 +3046,7 @@ if(location.hash==="#record")setView("record");else if(location.hash==="#races")
 function refreshAllow(){clearTimeout(refreshAllow.t);refreshAllow.t=setTimeout(()=>getJSON(SB+"/otr-nan?follow=1").then(j=>{ALLOW=j.allowance||ALLOW;CREDITS=j.credits||CREDITS;$("allow").innerHTML=creditsHtml(CREDITS);$("srcsN").innerHTML=srcsLine()}).catch(()=>{}),1500)}
 setInterval(refreshAllow,120e3);
 // Refresh: reload from the server, skipping any cached copy, and come back to the same tab
-$("verTxt").textContent="v"+NAN_VERSION;
+$("verTxt").textContent="v"+NAN_VERSION;$("playLink").href="./?play=1&v="+NAN_VERSION; // a new version always opens the new game, not a cached copy
 // a newer version on the server lights the badge up: checked every 3 minutes and whenever the app comes back to the front
 async function checkVersion(){try{const t=await fetch(location.pathname+"?vc="+Date.now(),{cache:"no-store"}).then(r=>r.text()),m=t.match(/NAN_VERSION="([^"]+)"/);
   if(m&&m[1]!==NAN_VERSION){$("refBtn").classList.add("new");$("verTxt").textContent="v"+m[1];$("verSub").textContent="New · tap"}}catch(e){}}
