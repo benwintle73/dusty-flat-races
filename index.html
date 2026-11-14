@@ -1253,6 +1253,12 @@ function horsePositions(t){
   const tr=R.sim.trace,fl=t/R.sim.dt,i=clamp(Math.floor(fl),0,tr.length-2),u=clamp(fl-i,0,1);
   return tr[i].map((v,k)=>v+(tr[i+1][k]-v)*u);
 }
+/* The first turn in a dog race: purely how it's drawn, the race itself (and its result) is the same.
+   A little after the jump the field swings into the turn: dogs lean in, crowd towards the rail, bunch up as they
+   head away from the camera, and jostle and bump each other for position. A dog the race engine checks (held up)
+   is shown stumbling and knocked sideways; at the turn the caller says so. */
+function dogTurn(D){const a=Math.min(75,D*.18);return {a,b:a+Math.min(115,D*.34)}}
+function turnEnv(m,D){const {a,b}=dogTurn(D);if(m<=a||m>=b)return 0;const u=(m-a)/(b-a),e=u<.25?u/.25:u>.75?(1-u)/.25:1;return e*e*(3-2*e)}
 function drawHorses(camX,pos,now){
   const f=S.race.field,idx=[...f.keys()].sort((a,b)=>f[a].barrier-f[b].barrier);
   for(const k of idx){
@@ -1260,9 +1266,22 @@ function drawHorses(camX,pos,now){
     const x=(pos?pos[k]:0)*PX-camX-LW+2;
     const roll=S.race.harness&&S.race.mobile&&R&&R.preUntil&&pos;const nf=sheets[k].nf||FR,ff=roll?(Math.floor(now/GAIT_MS)+k*3)%FR:run&&(R.running||R.photoOn)?(R.photoOn?(S.race.dogs?6:3):S.race.dogs?Math.floor(((now/(DOG_GAIT_MS*FR))+k*.37)%1*nf):(Math.floor(now/GAIT_MS)+k*3)%FR):nf;
     const sw=moving&&!S.race.dogs?Math.sin(now/260+k):0;
+    // dogs: the first turn (lean, crowd the rail, jostle) and any real check from the race engine (stumble, knocked aside)
+    let dy=0,rot=0,sc=1;
+    if(S.race.dogs&&pos&&run){const D=S.race.dist,m=pos[k],e=turnEnv(m,D);
+      if(e>0){dy=(laneY(0)-y)*.42*e+Math.sin(now/95+k*1.9)*2.2*e;rot=-.07*e;sc=1-.08*e;
+        for(let j=0;j<f.length;j++){if(j===k)continue;const gap=Math.abs(pos[j]-m),lane=Math.abs(f[j].barrier-h.barrier);
+          if(gap<1.6&&lane<=2){const push=(1.6-gap)/1.6*e*(f[j].barrier>h.barrier?-1:1);dy+=push*5*(1+Math.sin(now/60+k+j));rot+=push*.05;
+            if(moving&&!reduced&&Math.random()<.08)particles.push({x:x+camX+LW*.5,y:y+dy,vx:-Math.random()*1.2,vy:-Math.random()*1.4-.4,life:12+Math.random()*10,s:2+Math.floor(Math.random()*2)})}}}
+      const ev=R.sim.events.find(q=>q.k===k);
+      if(ev&&R.t>=ev.t&&R.t<ev.t+1.4){const u=(R.t-ev.t)/1.4,hit=Math.sin(Math.PI*Math.min(1,u*1.6));
+        rot+=.32*hit;dy+=7*hit*(h.barrier>4?1:-1)+4*hit;
+        if(moving&&!reduced&&u<.4)for(let i=0;i<3;i++)particles.push({x:x+camX+LW*.6,y:y+dy,vx:-Math.random()*2,vy:-Math.random()*2-.6,life:16+Math.random()*12,s:2+Math.floor(Math.random()*3)})}}
+    if(S.race.dogs&&dy)dy=Math.max(laneY(0)-1-y,dy); // never over the inside rail
     if(x>-LW-10&&x<VW+4){
-      g.fillStyle="rgba(10,30,15,.3)";g.beginPath();if(S.race.dogs)g.ellipse(x+LW*.52,y+sw*.5,LW*.3,2.4,0,0,7);else if(S.race.harness)g.ellipse(x+LW*.55,y+sw*.5,LW*.42,3,0,0,7);else g.ellipse(x+LW/2,y+sw*.5,LW/2-6,3,0,0,7);g.fill();
-      g.drawImage(sheets[k],ff*FW,0,FW,FH,x,y-LH+3+sw,LW,LH);
+      g.fillStyle="rgba(10,30,15,.3)";g.beginPath();if(S.race.dogs)g.ellipse(x+LW*.52,y+dy+sw*.5,LW*.3*sc,2.4,0,0,7);else if(S.race.harness)g.ellipse(x+LW*.55,y+sw*.5,LW*.42,3,0,0,7);else g.ellipse(x+LW/2,y+sw*.5,LW/2-6,3,0,0,7);g.fill();
+      if(rot||sc!==1||dy){g.save();g.translate(x+LW*.55,y+dy+3-LH*.35);g.rotate(rot);g.scale(sc,sc);g.drawImage(sheets[k],ff*FW,0,FW,FH,-LW*.55,-LH*.65,LW,LH);g.restore()}
+      else g.drawImage(sheets[k],ff*FW,0,FW,FH,x,y-LH+3+sw,LW,LH);
       if(moving&&!reduced&&Math.random()<.65)particles.push({x:x+camX+8+Math.random()*10,y:y,vx:-Math.random()*1.3-.3,vy:-Math.random()*.7-.1,life:10+Math.random()*14,s:1+Math.floor(Math.random()*3)});
     }
   }
@@ -2009,11 +2028,12 @@ function tick(now){
   if(now-R.lastHoof>115&&p<1.02){R.lastHoof=now;tone(110+Math.random()*30,.03,0,"square",.012)}
   crowdLevel(p<.7?.05:.05+.2*clamp((p-.7)/.3,0,1));
   const ev=R.sim.events[R.evI];
-  if(ev&&R.t>=ev.t&&p<1){R.evI++;say(`${nm(ev.k)} has been held up and loses ground!`)}
+  if(ev&&R.t>=ev.t&&p<1){R.evI++;const atTurn=S.race.dogs&&turnEnv(pos[ev.k],D)>0;say(atTurn?`${nm(ev.k)} is knocked sideways at the turn and loses ground!`:S.race.dogs?`${nm(ev.k)} is checked and loses ground!`:`${nm(ev.k)} has been held up and loses ground!`)}
+  if(S.race.dogs&&!R.turnCalled&&lead>=dogTurn(D).a){R.turnCalled=true;say(`Into the turn and they're bumping for the rail! ${nm(o[0])} just in front.`)}
   const stages=[
     [.1,()=>`${nm(o[0])} shows out early from ${nm(o[1])}.`],
-    [.3,()=>`Settling down, ${nm(o[0])} leads ${nm(o[1])}, then ${nm(o[2])}. Last is ${nm(o[o.length-1])}.`],
-    [.55,()=>`${Math.round((D-lead)/100)*100}m to run. ${nm(o[0])} still there, ${nm(o[1])} tracking.`],
+    [S.race.dogs?Math.min(.62,dogTurn(D).b/D+.02):.3,()=>`${S.race.dogs?"Out of the turn and settling down":"Settling down"}, ${nm(o[0])} leads ${nm(o[1])}, then ${nm(o[2])}. Last is ${nm(o[o.length-1])}.`],
+    [S.race.dogs?.66:.55,()=>`${Math.round((D-lead)/100)*100}m to run. ${nm(o[0])} still there, ${nm(o[1])} tracking.`],
     [.72,()=>{R.p70=o;return `Into the straight! ${nm(o[0])} from ${nm(o[1])} and ${nm(o[2])}.`+(me!==null?` Your runner is ${posStr(o,me)}.`:"")}],
     [.88,()=>{const g=R.p70?o.slice(0,5).sort((a,b)=>(o.indexOf(a)-R.p70.indexOf(a))-(o.indexOf(b)-R.p70.indexOf(b)))[0]:o[1];return g===o[0]?`${nm(o[0])} is kicking clear!`:`${nm(g)} is flying home! ${nm(o[0])} tries to hold on.`}],
     [.97,()=>pos[o[0]]-pos[o[1]]<3?`${nm(o[0])} and ${nm(o[1])} locked together!`:`${nm(o[0])} has it won.`]
