@@ -367,7 +367,7 @@ canvas{width:100%;height:auto;display:block}
 <script>
 "use strict";
 /* ---------- helpers ---------- */
-const APP_VERSION="2.39.6"; // bump on every release; shown after the title
+const APP_VERSION="2.39.7"; // bump on every release; shown after the title
 const $=id=>document.getElementById(id);
 let RNG=Math.random;
 const mulberry=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
@@ -571,7 +571,7 @@ function coatOf(h){const opts=LOOK_OF[h.coat%LOOK_OF.length]||[0];return COAT_LO
 const K=2.4,BW=47,BH=40,SW=Math.round(BW*K),SH=Math.round(BH*K),FR=10,STAND=FR,LOG=1.45,SS=1.5,FW=Math.round(SW*SS),FH=Math.round(SH*SS),GS=LOG/1.2;
 // Original motion from main: every joint follows one sine wave per stride, 10 frames, a frame every 48ms.
 // races play 25% slower than they used to (RACE_PACE), and the legs slow to match so nobody skates
-const RACE_PACE=.8,DOG_PACE=.75,GAIT_MS=Math.round(48/RACE_PACE),DOG_GAIT_MS=Math.round(26/RACE_PACE/Math.sqrt(DOG_PACE)); // dogs play a further 25% slower
+const RACE_PACE=.8,DOG_PACE=.62,GAIT_MS=Math.round(48/RACE_PACE),DOG_GAIT_MS=38; // dog leg speed held where it looks right; dogs play a further 25% slower
 function buildSheet(h,idx,opt={}){
   const sheet=document.createElement("canvas");sheet.width=FW*(FR+1);sheet.height=FH;
   const out=sheet.getContext("2d");
@@ -1036,7 +1036,7 @@ const DFR=20;
 // keyframes at p = 0, 1/8 ... 7/8. Leg angles are from straight down, + = forward; f = upper, l = lower segment.
 const DOG_KEYS={
   flex:[0,.2,.55,.9,1,.75,.4,.12],          // spine: 0 stretched flat, 1 fully arched
-  bob: [-1.3,.2,.7,-.2,-1,.3,.7,-.4],        // body height (- = up): high in both suspensions
+  air: [1.4,0,0,.3,1.1,0,0,.3],            // how far the lowest paw is off the ground: only in the two suspensions
   ff:  [1.05,.55,-.15,-.65,-.35,.3,.7,.98], fl:[1.15,.5,-.2,-1,-1.8,-1.1,-.15,.75],  // fore leg: swings forward with the paw tucked up
   hf:  [-1.05,-.7,-.15,.55,1,.65,.05,-.6],    hl:[-1.35,-.3,.55,.9,.75,.45,-.1,-.95]  // hind leg
 };
@@ -1053,9 +1053,16 @@ function buildDogSheet(h,idx){
     const tmp=document.createElement("canvas");tmp.width=FW;tmp.height=FH;
     const c=tmp.getContext("2d");c.scale(SS,SS);
     const stand=f===DFR,p=stand?0:f/DFR;
-    const fl=stand?.15:dogKey("flex",p),bob=stand?0:dogKey("bob",p)*.8;
+    const fl=stand?.15:dogKey("flex",p);
     // the shoulders stay put; the hips slide forward and the loin rises as the spine arches
-    const shX=33,hipX=9+5.6*fl,by=20+bob,top=by-4.6,arch=3.4*fl;
+    const shX=33,hipX=9+5.6*fl,arch=3.4*fl;
+    // body height comes from the legs: a paw in stance sits right on the ground line, and the dog only lifts a little in
+    // the two suspensions (the sprite's ground is 3px above its bottom edge)
+    const GROUND=BH-3/LOG-.3,footY=(y0,a1,a2,L1,L2)=>y0+Math.cos(a1)*L1+Math.cos(a2)*L2+1.2;
+    const low=b0=>stand?Math.max(footY(b0+2.6,.05,.05,6.2,6.6),footY(b0+.8-.6*fl,-.25,.25,7.4,6.6)):Math.max(
+      ...[0,.07].map(l=>footY(b0+2.6,dogKey("ff",p-l),dogKey("fl",p-l),6.2,6.6)),
+      ...[0,.06].map(l=>footY(b0+.8-.6*fl,dogKey("hf",p-l),dogKey("hl",p-l),7.4,6.6)));
+    const by=20+(GROUND-(stand?0:Math.max(0,dogKey("air",p)))-low(20)),bob=by-20,top=by-4.6;
     const leg=(hx,hy,a1,a2,L1,L2,col,w)=>{
       const kx=hx+Math.sin(a1)*L1,ky=hy+Math.cos(a1)*L1,fx=kx+Math.sin(a2)*L2,fy=ky+Math.cos(a2)*L2;
       line(c,hx*K,hy*K,kx*K,ky*K,w,col);line(c,kx*K,ky*K,fx*K,fy*K,2.3,col);
@@ -1103,7 +1110,7 @@ function buildDogSheet(h,idx){
 /* ---------- renderer ---------- */
 // PX: screen pixels per metre of track. Dogs get a longer track on screen so each stride covers about the same
 // ground as a real greyhound's (about 2.4 sprite lengths), with leg speed and the race itself unchanged.
-const DOG_PX=26;let PX=6;
+const DOG_PX=31;let PX=6;
 const cv=$("c"),RES=2,W=480,H=236,OS=60,VW=W+OS*2,LW=Math.round(BW*LOG),LH=Math.round(BH*LOG);
 const out=cv.getContext("2d");out.imageSmoothingEnabled=true;out.imageSmoothingQuality="high";
 const offC=document.createElement("canvas");offC.width=Math.round(VW*RES);offC.height=Math.round(H*RES);
@@ -1318,8 +1325,8 @@ function drawWhip(W,x,top,now,h,k){
    A little after the jump the field swings into the turn: dogs lean in, crowd towards the rail, bunch up as they
    head away from the camera, and jostle and bump each other for position. A dog the race engine checks (held up)
    is shown stumbling and knocked sideways; at the turn the caller says so. */
-function dogTurn(D){const a=Math.min(75,D*.18);return {a,b:a+Math.min(115,D*.34)}}
-function turnEnv(m,D){const {a}=dogTurn(D),s0=a-60,s1=a+12;if(m<=s0||m>=s1)return 0;const u=(m-s0)/(s1-s0),e=u<.3?u/.3:u>.8?(1-u)/.2:1;return e*e*(3-2*e)}
+function dogTurn(D){const a=Math.min(95,D*.27);return {a,b:a+Math.min(140,D*.42)}}
+function turnEnv(m,D){const {a}=dogTurn(D),s0=Math.max(30,a-32),s1=a+8;if(m<=s0||m>=s1)return 0;const u=(m-s0)/(s1-s0),e=u<.3?u/.3:u>.8?(1-u)/.2:1;return e*e*(3-2*e)}
 function drawHorses(camX,pos,now){
   const f=S.race.field,idx=[...f.keys()].sort((a,b)=>f[a].barrier-f[b].barrier);
   for(const k of idx){
@@ -1330,10 +1337,16 @@ function drawHorses(camX,pos,now){
     // dogs: the first turn (lean, crowd the rail, jostle) and any real check from the race engine (stumble, knocked aside)
     let dy=0,rot=0,sc=1;
     if(S.race.dogs&&pos&&run){const D=S.race.dist,m=pos[k],e=turnEnv(m,D);
-      if(e>0){dy=(laneY(0)-y)*.42*e+Math.sin(now/95+k*1.9)*2.2*e;rot=-.07*e;sc=1-.08*e;
-        for(let j=0;j<f.length;j++){if(j===k)continue;const gap=Math.abs(pos[j]-m),lane=Math.abs(f[j].barrier-h.barrier);
-          if(gap<1.6&&lane<=2){const push=(1.6-gap)/1.6*e*(f[j].barrier>h.barrier?-1:1);dy+=push*5*(1+Math.sin(now/60+k+j));rot+=push*.05;
-            if(moving&&!reduced&&Math.random()<.08)particles.push({x:x+camX+LW*.5,y:y+dy,vx:-Math.random()*1.2,vy:-Math.random()*1.4-.4,life:12+Math.random()*10,s:2+Math.floor(Math.random()*2)})}}}
+      // smooth sideways drift towards the rail; a real bump (neighbouring lanes coming together) gives a small nudge
+      // away that settles back, and the bumped dog flicks its head away. Subtle, not ping-pong.
+      const J=R.jost||(R.jost=[]),st=J[k]||(J[k]={o:0,v:0,lt:now,hit:-1e9,hd:0,touch:{}}),dt=Math.min(.05,Math.max(0,(now-st.lt)/1000));st.lt=now;
+      if(e>0){for(let j=0;j<f.length;j++){if(j===k)continue;const gap=Math.abs(pos[j]-m),lane=f[j].barrier-h.barrier;
+          if(Math.abs(lane)===1&&gap<.9){if(!st.touch[j]){st.touch[j]=1;const dir=lane>0?-1:1;st.v+=16*dir*e;st.hit=now;st.hd=dir;
+              if(moving&&!reduced)particles.push({x:x+camX+LW*.5,y:y+st.o,vx:-Math.random()*.8,vy:-Math.random()*.9-.3,life:10+Math.random()*8,s:2})}}
+          else if(gap>1.3||Math.abs(lane)!==1)st.touch[j]=0}}
+      const target=(laneY(0)-y)*.3*e;st.v+=((target-st.o)*14-st.v*6.5)*dt;st.o+=st.v*dt;
+      dy=st.o;rot=-.035*e;sc=1-.06*e;
+      const age=(now-st.hit)/1000;if(age<.5)rot+=.045*st.hd*(1-age/.5);
       const ev=R.sim.events.find(q=>q.k===k);
       if(ev&&R.t>=ev.t&&R.t<ev.t+1.4){const u=(R.t-ev.t)/1.4,hit=Math.sin(Math.PI*Math.min(1,u*1.6));
         rot+=.32*hit;dy+=7*hit*(h.barrier>4?1:-1)+4*hit;
