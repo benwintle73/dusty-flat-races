@@ -367,7 +367,7 @@ canvas{width:100%;height:auto;display:block}
 <script>
 "use strict";
 /* ---------- helpers ---------- */
-const APP_VERSION="2.39.7"; // bump on every release; shown after the title
+const APP_VERSION="2.39.8"; // bump on every release; shown after the title
 const $=id=>document.getElementById(id);
 let RNG=Math.random;
 const mulberry=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
@@ -1292,6 +1292,9 @@ function horsePositions(t){
    Harness (AHRR 156): a wrist-only flick with a rein in each hand, with a clear pause between flicks; here only in the
    last 200m and at most 12 in all (stewards look at more than 20 there).
    Not every rider uses it: some ride hands and heels all the way, and a leader that's clear doesn't need it. */
+function surge(k){if(!R||!R.sim)return 0;const t=R.t,A=horsePositions(Math.max(0,t-1.5)),B=horsePositions(t),C=horsePositions(t+1.5);
+  const g=B.map((b,j)=>(C[j]-b)/1.5-(b-A[j])/1.5),med=[...g].sort((x,y)=>x-y)[g.length>>1];return g[k]-med} // how much this one is about to pick up, against the field
+function whipGo(k,W){const g=surge(k);if(g>.11){W.resp=W.resp||{};W.resp.k=k;W.resp.at=R.t;W.resp.g=g;return true}return Math.random()<.012} // about to surge: go now; otherwise only now and then
 function whipStep(k,h,pos,now){
   if(!R||!R.whip||R.photoOn||S.race.dogs)return null;
   const D=S.race.dist,m=pos[k],rem=D-m;if(m>=D)return null;
@@ -1303,10 +1306,10 @@ function whipStep(k,h,pos,now){
   const since=now-W.last;
   if(hn){if(rem>200||W.n>=12)return W;
     const gap=W.burst>0&&W.burst<3?280:1150;        // flicks in twos and threes, then a clear pause
-    if(since>gap){W.last=now;W.n++;W.burst=W.burst>=2+(W.style%2)?0:W.burst+1;setTimeout(()=>whipCrack(true),140)}}
+    if(since>gap&&(W.burst>0||whipGo(k,W))){W.last=now;W.n++;W.burst=W.burst>=2+(W.style%2)?0:W.burst+1;setTimeout(()=>whipCrack(true),140)}}
   else if(rem>100){if(rem>350||W.pre>=2+(W.style%4))return W;  // 2 to 5 before the 100m (the limit is 5)
-    if(since>1300){W.last=now;W.pre++;setTimeout(()=>whipCrack(false),150)}}            // never in consecutive strides (a stride is about 0.6s here)
-  else{if(W.fin>=6)return W;if(since>820){W.last=now;W.fin++;setTimeout(()=>whipCrack(false),150)}}
+    if(since>1300&&whipGo(k,W)){W.last=now;W.pre++;setTimeout(()=>whipCrack(false),150)}}            // never in consecutive strides (a stride is about 0.6s here)
+  else{if(W.fin>=6)return W;if(since>820&&whipGo(k,W)){W.last=now;W.fin++;setTimeout(()=>whipCrack(false),150)}}
   return W}
 function drawWhip(W,x,top,now,h,k){
   if(!W||now-W.last>300)return;const u=(now-W.last)/300,sx=LW/BW,sy=LH/BH,X=v=>x+v*sx,Y=v=>top+v*sy;
@@ -2126,6 +2129,7 @@ function tick(now){
     tone(880,.18,0);tone(880,.18,.3);
     return;
   }
+  if(!S.race.dogs&&R.whip&&!R.respCalled&&!R.winCalled&&p>.7&&p<.95){for(const W of R.whip){if(W&&W.resp&&R.t-W.resp.at<1.2&&W.resp.g>.15&&o.indexOf(W.resp.k)<4){R.respCalled=true;say(`${nm(W.resp.k)} responds to the ${S.race.harness?"driver":"whip"}!`);break}}}
   if(!R.winCalled&&R.t>=f1&&!R.isPhoto)fireWinnerCall();
   if(!R.settled&&R.t>=f3+.8)settle();
 }

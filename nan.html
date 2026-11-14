@@ -659,7 +659,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.39.7"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.39.8"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -2644,6 +2644,7 @@ function renderBets(){
 let BKBUSY=false;
 /* ---------- What's new: the update history, plus the suggestions box ---------- */
 const CHANGES=[
+ ["2.39.8","14 Nov","Some respond to the whip",["Riders now reach for the whip as their horse is about to find a bit more, so you see the crack and then the lift. A horse that's had enough gets the odd one and doesn't respond. When one really kicks, the caller says so. The race itself is the same as ever."]],
  ["2.39.7","14 Nov","Dogs on the ground, and a bigger turn",["The dogs' paws now land on the track every stride, with only a little lift when they're airborne. They jump cleanly out of the boxes and only start gently bumping for position as they near the turn, which is now further out and longer, so you see more of it from above before the view drops back for the straight. Dog races also run a little longer."]],
  ["2.39.6","14 Nov","Dogs that cover the ground",["The dogs' legs now match how fast they move: the track on screen is longer for dog races, so each stride covers a greyhound's worth of ground, like the horses. Leg speed and results are the same."]],
  ["2.39.5","14 Nov","Local races",["The game's own races are now sponsored by Maryborough locals: No Limits 24/7, the Bull & Mouth Hotel, Rejuven8 Beauty Studio, Milo Cafe, Professionals Maryborough, LPM Finance, Daily Dose, the Park Hotel, Lucy Bakes, Class Kitchen Bakery, BURGZ, the Station Cafe and Mitre 10. The country Cup is now the Mitre 10 Cup."]],
