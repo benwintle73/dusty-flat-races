@@ -660,7 +660,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.41.0"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.41.1"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -2707,6 +2707,7 @@ function renderBets(){
 let BKBUSY=false;
 /* ---------- What's new: the update history, plus the suggestions box ---------- */
 const CHANGES=[
+ ["2.41.1","14 Nov","More happening in the running, and every turn from above",["Races unfold more like the real thing: some go forward early and fade, others settle back and come late, so the order changes on the way round and the early leader doesn't just win. The run home, the finishing order and every result are exactly as before.","Horses and harness now cut to the overhead view at every turn, not just once: long gallops show both turns, and the harness shows each turn on every lap. The view always comes back down for the run home."]],
  ["2.41.0","14 Nov","Show or hide the real meetings",["Tap \"Real meetings today\" to fold the whole list away, or open it again. It remembers your choice. Inside, meetings that have finished for the day tuck under \"Finished\", so you only see the ones still racing."]],
  ["2.40.9","14 Nov","Crowd off",["There's a Crowd button in the corner of the track. Tap it to turn the crowd cheering off (or back on). The race caller and the whips keep going, and it remembers your choice."]],
  ["2.40.8","14 Nov","A tidier menu",["The game's menu is cleaned up: four sections up top (Races, Nan's Tips, Results, My Book), then Horses, Dogs or Harness, then one neat list of meetings for that code.","Our own meetings are events now too: Dusty Flat Races (plus the Daily $1,000), Dusty Flat Dogs and Dusty Flat Paceway sit at the top of each list. Real meetings follow, soonest first, each showing its next race. Tomorrow's are folded away until you want them."]],
