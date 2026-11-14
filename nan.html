@@ -660,7 +660,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.41.1"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.41.2"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -2707,6 +2707,7 @@ function renderBets(){
 let BKBUSY=false;
 /* ---------- What's new: the update history, plus the suggestions box ---------- */
 const CHANGES=[
+ ["2.41.2","14 Nov","New Goldfields meetings every day",["Every day there's a new horse, harness and dog meeting of our own, at made-up Goldfields venues like Talbot Showgrounds, Lake Victoria Greyhounds and Station Square Paceway, with local sponsors (Maryborough Glass and Glazing has a race at every meeting). They're at the top of each code's meeting list.","New runners every day, with names that borrow from real runners' names but are never the same. Runners come back on later days and remember how they've run: their form carries over.","Play a meeting whenever you like, race after race. Play it right through before you can replay it. Earlier days' meetings are kept under \"Earlier Goldfields meetings\".","Everyone gets the same card and the same results. The Goldfields meetings have their own bank, starting at $1,000. Career, Daily $1,000 and the real meetings are unchanged."]],
  ["2.41.1","14 Nov","More happening in the running, and every turn from above",["Races unfold more like the real thing: some go forward early and fade, others settle back and come late, so the order changes on the way round and the early leader doesn't just win. The run home, the finishing order and every result are exactly as before.","Horses and harness now cut to the overhead view at every turn, not just once: long gallops show both turns, and the harness shows each turn on every lap. The view always comes back down for the run home."]],
  ["2.41.0","14 Nov","Show or hide the real meetings",["Tap \"Real meetings today\" to fold the whole list away, or open it again. It remembers your choice. Inside, meetings that have finished for the day tuck under \"Finished\", so you only see the ones still racing."]],
  ["2.40.9","14 Nov","Crowd off",["There's a Crowd button in the corner of the track. Tap it to turn the crowd cheering off (or back on). The race caller and the whips keep going, and it remembers your choice."]],
