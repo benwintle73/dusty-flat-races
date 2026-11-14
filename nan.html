@@ -660,7 +660,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.43.0"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.43.1"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -2707,6 +2707,7 @@ function renderBets(){
 let BKBUSY=false;
 /* ---------- What's new: the update history, plus the suggestions box ---------- */
 const CHANGES=[
+ ["2.43.1","15 Nov","Tidier race readout",["A little more room between the track map and the distance to go. When the window from above comes up at the turns, the distance moves across clear of it instead of being covered."]],
  ["2.43.0","15 Nov","Real races simulated from the form guides",["In the game, the simulation of a real race (horses, dogs and harness) now leans on everything we pull in: The Mob's blend of Nan's, Pop's, Bob's and Gran's tips (FormFav's form and model, Krok's model, the market), who's being backed (the price now against when we first saw it), and Krok's speed map, so each runner races in the position it's expected to settle. It kicks in from about 90 minutes before the jump. The simulation still isn't the real result: My Book bets are paid on the official one."]],
  ["2.42.8","15 Nov","Best Bets is now The Mob",["The blended tip, everyone's chances thrown in together and listening hardest to whoever's been winning, is now called The Mob. Its highlight card is \"The Mob's pick\". Same pick, new name."]],
  ["2.42.7","14 Nov","A smaller, square window from above",["The view from above at the turns is now a smaller square window on the left, so more of the side-on view shows."]],
