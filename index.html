@@ -6,8 +6,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script>try{if(navigator.standalone||matchMedia("(display-mode: standalone)").matches)document.documentElement.classList.add("app")}catch(e){}</script>
 <script>/* Never stay on an old saved copy: when the page opens, ask the server which version is current and reload once if this copy is older. */
-(function(){try{var mine=null;document.addEventListener("DOMContentLoaded",function(){var m=document.documentElement.innerHTML.match(/APP_VERSION="([^"]+)"/);mine=m&&m[1];if(!mine)return;
- fetch(location.pathname+"?vc="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){var n=(t.match(/APP_VERSION="([^"]+)"/)||[])[1];
+(function(){try{var mine=null;document.addEventListener("DOMContentLoaded",function(){var m=document.documentElement.innerHTML.match(new RegExp("APP_VERSION"+"=\x22(\\d[0-9.]*)\x22"));mine=m&&m[1];if(!mine)return;
+ fetch(location.pathname+"?vc="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){var n=(t.match(new RegExp("APP_VERSION"+"=\x22(\\d[0-9.]*)\x22"))||[])[1];
   if(n&&n!==mine&&sessionStorage.getItem("otr-rl")!==n){sessionStorage.setItem("otr-rl",n);var u=new URL(location.href);u.searchParams.set("v",n);location.replace(u.href)}}).catch(function(){})})}catch(e){}})();</script>
 <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
@@ -52,6 +52,9 @@ html.app{background:var(--tote)}html.app .wrap{padding-top:calc(46px + env(safe-
 .nt2-x{font-size:13px;color:#6b6352;display:flex;flex-wrap:wrap;align-items:center;gap:4px}.nt2-x .sc{min-width:22px;height:22px;font-size:13px}
 .nt2 .off-pend{font-size:16px}
 .mast{display:flex;flex-wrap:wrap;gap:6px 22px;align-items:center;background:var(--tote);border:3px solid var(--tote2);padding:8px 14px}
+.mtop{display:flex;align-items:center;justify-content:space-between;gap:10px;flex:1 1 100%;min-width:0}
+.homebtn{flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:72px;padding:6px 10px 5px;background:var(--tote2);color:var(--amber);border:2px solid var(--amber);border-radius:10px;text-decoration:none;box-shadow:0 0 10px #ffb52e33}
+.homebtn svg{width:24px;height:24px}.homebtn small{font:600 11px/1 var(--led);text-transform:uppercase;letter-spacing:1px;color:var(--paper)}
 .mast h1{margin:0;font:400 clamp(26px,4vw,38px)/1 var(--display);color:var(--amber);letter-spacing:.8px;text-transform:uppercase}
 .mast h1 .ver{font:600 15px/1 var(--led);text-transform:none;letter-spacing:.5px;color:var(--amber-dim);vertical-align:middle;margin-left:4px}
 .mast .meet{font:600 20px/1.1 var(--led);color:var(--amber-dim);flex:1 1 200px}
@@ -196,8 +199,8 @@ canvas{width:100%;height:auto;display:block}
 .feat{background:var(--red);color:#fff;font:700 15px/1 var(--led);letter-spacing:.5px;padding:4px 7px;align-self:center;text-transform:uppercase}
 .nav{display:grid;gap:5px;background:var(--tote);border:3px solid var(--tote2);padding:7px}
 .nav div{display:flex;flex-wrap:wrap;gap:4px}
-.nav button{background:var(--tote2);border:0;color:var(--paper);min-height:42px;padding:0 12px;font:700 18px/1 var(--led)}
-.nav button[aria-pressed=true]{background:var(--amber);color:var(--tote)}
+.nav button{background:var(--tote2);border:2px solid var(--amber-dim);color:var(--paper);min-height:46px;padding:0 12px;font:400 19px/1 var(--display);letter-spacing:.6px;text-transform:uppercase}
+.nav button[aria-pressed=true]{background:var(--amber);color:var(--tote);border-color:var(--amber)}
 .nav button:disabled{opacity:.5;cursor:not-allowed}
 .nav button.alt{background:none;border:2px solid var(--amber-dim);color:var(--amber);margin-left:auto}
 @media (max-width:560px){.nav div{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}.nav button,.nav a.navlink{padding:0 4px;font-size:17px;justify-content:center;text-align:center}.nav button.alt{margin-left:0}.nav a.navlink{grid-column:1/-1}}
@@ -286,7 +289,7 @@ canvas{width:100%;height:auto;display:block}
 <body>
 <div class="wrap">
   <header class="mast">
-    <h1>Off To The Races <span class="ver" id="ver"></span></h1>
+    <div class="mtop"><h1>Off To The Races <span class="ver" id="ver"></span></h1><a class="homebtn" id="homeBtn" href="nan.html" onclick="this.href='nan.html?v='+(window.APP_VERSION||Date.now())"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 11 12 4l8.5 7M6 9.5V20h4.5v-5.5h3V20H18V9.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg><small>Home</small></a></div>
     <div class="meet" id="meet"></div>
     <div class="led"><small>RACE</small><b id="raceNo"></b></div>
     <div class="led"><small>BANK</small><b id="bank"></b></div>
@@ -349,7 +352,7 @@ canvas{width:100%;height:auto;display:block}
 <script>
 "use strict";
 /* ---------- helpers ---------- */
-const APP_VERSION="2.38.4"; // bump on every release; shown after the title
+const APP_VERSION="2.38.5"; // bump on every release; shown after the title
 const $=id=>document.getElementById(id);
 let RNG=Math.random;
 const mulberry=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
@@ -1712,7 +1715,7 @@ function renderTips(){
         ${p.quick?`<div class="nt-q">${QUICKG[x.code]&&QUICKG[x.code].priceOnly?'<span class="qtag">Price only</span> market prices from Krok (no form) ':'<span class="qtag">Quick form</span> market and recent form from PuntersEdge '}${TIPWANT[x.code+x.slug]||followed(x)?"":`<button class="tk-load" data-tipload="${x.code}|${escH(x.slug)}">Load full form</button>`}</div>`:""}
         ${p.scr&&p.scr.length?`<div class="nt2-x">Scratched: ${p.scr.map(u=>cloth(u.no,x.code,u.box,"x")).join("")}</div>`:""}`;
     return `<div class="nt2">${head}${body}</div>`};
-  c.innerHTML=`<h2>Quick tips</h2><div class="conds"><span>Nan's top picks for today's real races, in start order. Tap Bet to play that race here.</span></div>
+  c.innerHTML=`<h2>Nan's Tips</h2><div class="conds"><span>Nan's top picks for today's real races, in start order. Tap Bet to run that race here. Her full page is under Home.</span></div>
   
   ${creditsHtml(CREDITS)}
   <div class="tabs off-days">${[["all","All"],["H","Horses"],["D","Dogs"],["N","Harness"]].map(([k,l])=>`<button data-tipf="${k}" aria-pressed="${TIPF===k}">${l}</button>`).join("")}</div>
@@ -1720,7 +1723,7 @@ function renderTips(){
   ${rough?`<div class="tip"><b>Nan's Roughie:</b> ${tag(rough.x)} · ${cloth(rough.u.no,rough.x.code,rough.u.box)} <b>${escH(rough.u.name)}</b> ${div(rough.u.price)}</div>`:""}
   ${waiting?`<div class="off-meta">Nan is still reading the form for ${waiting} race${waiting>1?"s":""}…</div>`:""}
   ${TIPL.length?`<div class="res-day">${TIPL.map(row).join("")}</div>`:'<div class="tip">No more real races today. Nan will be back tomorrow.</div>'}
-  <div class="tip">Nan's picks come from the market and recent form for horses, and from form and the draw for dogs and harness. Dog and harness meetings Nan follows load by themselves: every meeting while credits allow, otherwise the ones you choose on the Nan's Tips page. For fun only.</div>
+  <div class="tip">Nan's picks come from the market and recent form for horses, and from form and the draw for dogs and harness. Dog and harness meetings Nan follows load by themselves: every meeting while credits allow, otherwise the ones you choose on her full page (Home, top right). For fun only.</div>
   <button class="reset" data-tipclose="1">Back to the race</button>`;
 }
 function openTips(){tipsOpen=true;resOpen=false;resSel=null;bookOpen=false;loadFollow();loadQuick();loadDogMeets();loadHarnessMeets();renderNav();renderCard();$("card").scrollIntoView({block:"start"})}
@@ -1739,7 +1742,7 @@ function renderNav(){
   let groups="",cur=S.mode==="real"?`${S.realIdx},${S.idx}`:"";
   MEETS.forEach((m,mi)=>{groups+=`<optgroup label="${dayName(m.date)} · ${m.venue}">`+m.races.map((r,ri)=>{const k=raceKey(m,r.number),done=RS[k]&&RS[k].done;return `<option value="${mi},${ri}" ${cur===mi+","+ri?"selected":""}>R${r.number} ${timeOf(r.jump)} ${r.name}${r.feature?" ★":""}${done?" (result in)":closed(r.jump)?" (closed)":""}</option>`}).join("")+`</optgroup>`});
   const pend=pendingCount();
-  $("nav").innerHTML=`<div><button data-nav="career" aria-pressed="${S.mode==="career"&&!bookOpen&&!resOpen}">Career</button><button data-nav="daily" aria-pressed="${S.mode==="daily"&&!bookOpen&&!resOpen}" ${S.mode!=="daily"&&dd!==undefined?"disabled":""}>${dd!==undefined&&S.mode!=="daily"?"Daily "+money(dd):"Daily"}</button><button data-nav="horses" aria-pressed="${S.mode==="real"&&!bookOpen&&!resOpen}">Horses</button><button data-nav="dogs" aria-pressed="${S.mode==="dogs"&&!bookOpen&&!resOpen}">Dogs</button><button data-nav="harness" aria-pressed="${S.mode==="harness"&&!bookOpen&&!resOpen}">Harness</button><button data-nav="tips" aria-pressed="${tipsOpen&&!resOpen&&!bookOpen}">Quick tips</button><a class="navlink" href="nan.html?v=${APP_VERSION}">&#9666; Back to Nan's Tips</a><button data-nav="results" aria-pressed="${resOpen}">Results</button><button data-nav="book" aria-pressed="${bookOpen}">My Book${pend?` (${pend})`:""}</button>${S.mode!=="daily"?'<button class="alt" data-nav="restart">Restart meet</button>':""}</div>
+  $("nav").innerHTML=`<div><button data-nav="career" aria-pressed="${S.mode==="career"&&!bookOpen&&!resOpen}">Career</button><button data-nav="daily" aria-pressed="${S.mode==="daily"&&!bookOpen&&!resOpen}" ${S.mode!=="daily"&&dd!==undefined?"disabled":""}>${dd!==undefined&&S.mode!=="daily"?"Daily "+money(dd):"Daily"}</button><button data-nav="horses" aria-pressed="${S.mode==="real"&&!bookOpen&&!resOpen}">Horses</button><button data-nav="dogs" aria-pressed="${S.mode==="dogs"&&!bookOpen&&!resOpen}">Dogs</button><button data-nav="harness" aria-pressed="${S.mode==="harness"&&!bookOpen&&!resOpen}">Harness</button><button data-nav="tips" aria-pressed="${tipsOpen&&!resOpen&&!bookOpen}">Nan's Tips</button><button data-nav="results" aria-pressed="${resOpen}">Results</button><button data-nav="book" aria-pressed="${bookOpen}">My Book${pend?` (${pend})`:""}</button>${S.mode!=="daily"?'<button class="alt" data-nav="restart">Restart meet</button>':""}</div>
   ${ntgHtml()}${dogNavHtml()}${harnessNavHtml()}${S.mode!=="real"?"":[...new Set(MEETS.map(m=>m.date))].map(d=>`<div class="meets"><span>${d===REAL_TODAY?"Today":"Tomorrow"===dayRel(d)?"Tomorrow":dayName(d)}</span>${MEETS.map((m,mi)=>m.date!==d?"":`<button data-meet="${mi}" aria-pressed="${S.mode==="real"&&mi===S.realIdx&&!bookOpen&&!resOpen}">${m.venue}</button>`).join("")}</div>`).join("")+`<label class="pick"><span>All races</span><select id="racesel" ${MEETS.length?"":"disabled"}>${cur?"":`<option value="" selected>${MEETS.length?"Pick a race":meetsFailed?"Real races only load on the public game site":"Loading races"}</option>`}${groups}</select></label>`}`;
 }
 /* Tabs stay put. A click in the tab bar used to scroll the page to the track or the card, and the bar itself changes
