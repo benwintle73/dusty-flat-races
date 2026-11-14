@@ -660,7 +660,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.40.1"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.40.2"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -731,6 +731,11 @@ function loadForm(r){
 }
 
 /* ---------- page ---------- */
+// "10 at a time" or "the whole lot" under a long list. cap: how many are showing (Infinity = all); k: the data- prefix the buttons use
+const PAGE=10;let ALLRACES=false;try{ALLRACES=localStorage.getItem("otr:allraces")==="1"}catch(e){}
+const setAll=v=>{ALLRACES=v;try{localStorage.setItem("otr:allraces",v?"1":"0")}catch(e){}};
+function pager(total,shown,k){const left=total-shown;if(left>0)return `<div class="morerow"><button class="more" data-${k}more>Show ${Math.min(PAGE,left)} more <small>(${left} to go)</small></button>${left>PAGE?`<button class="more all" data-${k}moreall>Show all</button>`:""}</div>`;
+  return total>PAGE&&shown>PAGE?`<div class="morerow"><button class="more all" data-${k}less>Show ${PAGE} at a time</button></div>`:""}
 // when the form isn't in yet: a short line on the race card and a longer one inside, a different pair for each race
 const NOFORM=[
  ["Nan's lost her glasses. Form soon.","Nan can't find her reading glasses. They're on her head. Nobody's told her. The form will be in later today and she'll pick it then."],
@@ -1998,14 +2003,16 @@ function render(){
   const waiting=RACES.filter(r=>r.code!=="H"&&!CARDS[r.code+r.slug]&&wanted(r)).length;
   if(waiting&&!$("status").textContent.startsWith("Nan couldn't"))$("status").textContent=`Nan is still reading the form for ${waiting} race${waiting>1?"s":""}…`;
   else if($("status").textContent.startsWith("Nan is still"))$("status").textContent="";
-  // races still to run come first; only the next few are shown until "Show more" (the full list is a long scroll)
-  const showAll=ST.more||ST.meet!=="all"||!!ST.q,cap=ST.cap||10,shown=showAll?list:list.slice(0,cap);
-  $("races").innerHTML=list.length?shown.map(r=>raceCard(r,open,tag)).join("")+(list.length>shown.length?`<div class="morerow"><button class="more" data-more>Show ${Math.min(10,list.length-shown.length)} more <small>(${list.length-shown.length} to go)</small></button>${list.length-shown.length>10?`<button class="more all" data-moreall>Show all</button>`:""}</div>`:"")
+  // races still to run come first, 10 at a time with "Show 10 more", or the whole lot once "Show all" is picked (remembered)
+  const cap=ALLRACES?Infinity:(ST.cap||PAGE),shown=list.slice(0,cap);
+  $("races").innerHTML=list.length?shown.map(r=>raceCard(r,open,tag)).join("")+pager(list.length,shown.length,"")
     :`<div class="empty">${!RACES.length?"No real races found for today yet.":ST.q?`No meetings match "${escH(ST.q)}".`:ST.fav?"None of your saved meetings have races to show.":'No races to show. Tick "Show jumped" or pick another code.'}</div>`;
   for(const k of openRun){const [id,no]=k.split("#");const d=[...document.querySelectorAll(`details.race[data-id="${CSS.escape(id)}"] details.run`)].find(x=>x.querySelector(".no").textContent===no);if(d)d.open=true}
 }
 document.addEventListener("click",e=>{const b=e.target.closest("[data-code]");if(b){ST.code=b.dataset.code;ST.cap=10;render()}});
-document.addEventListener("click",e=>{if(e.target.closest("[data-moreall]")){ST.cap=1e9;return render()}const b=e.target.closest("[data-more]");if(!b)return;ST.cap=(ST.cap||10)+10;render()});
+document.addEventListener("click",e=>{if(e.target.closest("[data-moreall]")){setAll(true);return render()}
+  if(e.target.closest("[data-less]")){setAll(false);ST.cap=PAGE;render();const el=$("races");if(el&&el.getBoundingClientRect().top<0)el.scrollIntoView({block:"start"});return}
+  const b=e.target.closest("[data-more]");if(!b)return;ST.cap=(ST.cap||PAGE)+PAGE;render()});
 document.addEventListener("click",e=>{const b=e.target.closest("[data-who]");if(b){ST.who=b.dataset.who;try{localStorage.setItem("otr-nan-who",ST.who)}catch(e){}render()}});
 document.addEventListener("change",e=>{const c=e.target.closest("[data-tipon]");if(!c)return;if(c.checked)OFF.delete(c.dataset.tipon);else OFF.add(c.dataset.tipon);try{localStorage.setItem("otr-nan-off",JSON.stringify([...OFF]))}catch(e){}render()});
 try{const w=localStorage.getItem("otr-nan-who");if(w&&WHO[w])ST.who=w}catch(e){}
@@ -2171,7 +2178,7 @@ function renderRecord(){
   renderCalc(rows);
   $("recDay").innerHTML=t.bets?`${wk?"Last 7 days":new Date(REC.date+"T12:00:00").toLocaleDateString("en-AU",{weekday:"long",day:"numeric",month:"long"})}: <b>${t.won} winner${t.won===1?"":"s"} from ${t.bets}</b> (${Math.round(100*t.won/t.bets)}%), ${t.placed} placed, $1 a pick ${t.back-t.staked>=0?"+":""}${money(t.back-t.staked)}.${t.settled<t.races?` ${t.races-t.settled} still waiting on results.`:""}`
     :rows.length?"Results aren't in yet for this day.":"";
-  $("recList").innerHTML=rows.length?(REC.res!=="all"?`<div class="note">${rows.length} race${rows.length>1?"s":""}: ${RESF.find(x=>x[0]===REC.res)[1].toLowerCase()}</div>`:"")+rows.map(recRow).join(""):`<div class="empty">${coded.length&&REC.res!=="all"?"No races match that result filter.":`Nothing recorded for ${REC.code==="all"?"this day":CODE[REC.code].toLowerCase()+" this day"}.`}</div>`;
+  $("recList").innerHTML=rows.length?(REC.res!=="all"?`<div class="note">${rows.length} race${rows.length>1?"s":""}: ${RESF.find(x=>x[0]===REC.res)[1].toLowerCase()}</div>`:"")+rows.slice(0,REC.all?Infinity:(REC.cap||PAGE)).map(recRow).join("")+pager(rows.length,Math.min(rows.length,REC.all?Infinity:(REC.cap||PAGE)),"r"):`<div class="empty">${coded.length&&REC.res!=="all"?"No races match that result filter.":`Nothing recorded for ${REC.code==="all"?"this day":CODE[REC.code].toLowerCase()+" this day"}.`}</div>`;
 }
 
 /* ---------- My bets: virtual bets on real races, $1,000 to start, paid at official tote dividends ---------- */
@@ -2669,6 +2676,7 @@ function renderBets(){
 let BKBUSY=false;
 /* ---------- What's new: the update history, plus the suggestions box ---------- */
 const CHANGES=[
+ ["2.40.2","14 Nov","10 at a time, or the lot",["The races list now shows 10 at a time everywhere, including when you pick a meeting or search: tap Show 10 more, or Show all for the whole lot. Show all is remembered, and Show 10 at a time takes you back. Nan's record list works the same way."]],
  ["2.40.1","14 Nov","How they pick, and a Panel that keeps up",["The tipster leaderboard now explains how each tipster picks: tap \"How each tipster picks\" under the table.","The Panel re-weighs everyone after every result instead of over 30 days. The most recent races count most, so a tipster on a hot streak gets a bigger say the same day."]],
  ["2.40.0","14 Nov","Top 3 picks, and a smarter Panel",["The tipster leaderboard has a new Top 3 picks view: how often the winner was in each tipster's first three, and how often their 1st, 2nd and 3rd picks ran a place. Nan's go back to the start; Pop, Bob and Gran's 2nd and 3rd picks are recorded from today.","The Panel now has a row on the leaderboard too, and it's smarter. Instead of giving everyone an equal say, it listens hardest to whoever's top picks have been landing in that code over the last 30 days, and it keeps re-checking as results come in. On the races so far, that's the market and the models for the dogs and harness, and Nan for the horses."]],
  ["2.39.8","14 Nov","Some respond to the whip",["Riders now reach for the whip as their horse is about to find a bit more, so you see the crack and then the lift. A horse that's had enough gets the odd one and doesn't respond. When one really kicks, the caller says so. The race itself is the same as ever."]],
@@ -3087,9 +3095,12 @@ function setView(v,focus){
 document.addEventListener("click",e=>{
   if(e.target.closest("[data-review]"))return setView("bets","slipBox");
   const v=e.target.closest("[data-view]");if(v)return setView(v.dataset.view);
-  const d=e.target.closest("[data-rday]");if(d){REC.date=d.dataset.rday;renderRecord();loadDay(REC.date,REC.date===(REC.sum&&REC.sum.today))}
-  const c=e.target.closest("[data-rcode]");if(c){REC.code=c.dataset.rcode;renderRecord()}
-  const rf=e.target.closest("[data-rres]");if(rf){REC.res=rf.dataset.rres;renderRecord()}
+  if(e.target.closest("[data-rmoreall]")){REC.all=true;return renderRecord()}
+  if(e.target.closest("[data-rless]")){REC.all=false;REC.cap=PAGE;renderRecord();const el=$("recList");if(el&&el.getBoundingClientRect().top<0)el.scrollIntoView({block:"start"});return}
+  if(e.target.closest("[data-rmore]")){REC.cap=(REC.cap||PAGE)+PAGE;return renderRecord()}
+  const d=e.target.closest("[data-rday]");if(d){REC.cap=PAGE;REC.date=d.dataset.rday;renderRecord();loadDay(REC.date,REC.date===(REC.sum&&REC.sum.today))}
+  const c=e.target.closest("[data-rcode]");if(c){REC.cap=PAGE;REC.code=c.dataset.rcode;renderRecord()}
+  const rf=e.target.closest("[data-rres]");if(rf){REC.cap=PAGE;REC.res=rf.dataset.rres;renderRecord()}
   const sk=e.target.closest("[data-stake]");if(sk){REC.stake=+sk.dataset.stake;renderRecord()}
   const bt=e.target.closest("[data-bet]");if(bt){REC.bet=bt.dataset.bet;renderRecord()}
 });
