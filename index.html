@@ -361,7 +361,7 @@ canvas{width:100%;height:auto;display:block}
 <script>
 "use strict";
 /* ---------- helpers ---------- */
-const APP_VERSION="2.39.0"; // bump on every release; shown after the title
+const APP_VERSION="2.39.1"; // bump on every release; shown after the title
 const $=id=>document.getElementById(id);
 let RNG=Math.random;
 const mulberry=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
@@ -1253,6 +1253,41 @@ function horsePositions(t){
   const tr=R.sim.trace,fl=t/R.sim.dt,i=clamp(Math.floor(fl),0,tr.length-2),u=clamp(fl-i,0,1);
   return tr[i].map((v,k)=>v+(tr[i+1][k]-v)*u);
 }
+/* The whip in the straight (drawing only: the race and its result don't change). Within the rules, and well inside them:
+   Gallops (Australian Rules of Racing): before the 100m, at most 5 strikes and never in consecutive strides; in the last
+   100m at the rider's discretion, only while the horse is in contention (here capped at 6, at least a stride apart).
+   Harness (AHRR 156): a wrist-only flick with a rein in each hand, with a clear pause between flicks; here only in the
+   last 200m and at most 12 in all (stewards look at more than 20 there).
+   Not every rider uses it: some ride hands and heels all the way, and a leader that's clear doesn't need it. */
+function whipStep(k,h,pos,now){
+  if(!R||!R.whip||R.photoOn||S.race.dogs)return null;
+  const D=S.race.dist,m=pos[k],rem=D-m;if(m>=D)return null;
+  const W=R.whip[k]||(R.whip[k]={pre:0,fin:0,n:0,last:-1e9,burst:0,style:strHash(h.name+"|whip")%100});
+  const hn=S.race.harness;if(W.style<(hn?35:28))return null; // hands and heels
+  const lead=Math.max(...pos),rest=pos.filter((_,j)=>j!==k),second=rest.length?Math.max(...rest):0;
+  if(m===lead&&m-second>6)return W;                // clear in front: no need
+  const place=pos.filter(v=>v>m).length;if(lead-m>(hn?30:20)&&place>4)return W; // not in contention (more than ~8 lengths back and out of the first five)
+  const since=now-W.last;
+  if(hn){if(rem>200||W.n>=12)return W;
+    const gap=W.burst>0&&W.burst<3?280:1150;        // flicks in twos and threes, then a clear pause
+    if(since>gap){W.last=now;W.n++;W.burst=W.burst>=2+(W.style%2)?0:W.burst+1}}
+  else if(rem>100){if(rem>350||W.pre>=2+(W.style%4))return W;  // 2 to 5 before the 100m (the limit is 5)
+    if(since>1300){W.last=now;W.pre++}}            // never in consecutive strides (a stride is about 0.6s here)
+  else{if(W.fin>=6)return W;if(since>820){W.last=now;W.fin++}}
+  return W}
+function drawWhip(W,x,top,now,h,k){
+  if(!W||now-W.last>300)return;const u=(now-W.last)/300,sx=LW/BW,sy=LH/BH,X=v=>x+v*sx,Y=v=>top+v*sy;
+  const silk=(h.silk?h.silk.c:SILKS[k%SILKS.length][0]);
+  g.lineCap="round";
+  if(S.race.harness){ // wrist flick: the whip tip lifts a little and drops, hands stay on the reins
+    const f=Math.sin(Math.PI*u),hx=12.4,hy=18.4;g.strokeStyle="#3a2a1c";g.lineWidth=1.4;g.beginPath();g.moveTo(X(hx),Y(hy));g.quadraticCurveTo(X(30),Y(15-4*f),X(43),Y(19.6-5.5*f));g.stroke();return}
+  // gallops: whip hand comes up and back, then down onto the hindquarters
+  const up=u<.45?u/.45:1-(u-.45)/.55,hit=u>.4&&u<.62;
+  const hx=31-4*up,hy=10-4.5*up,tx=hit?11:hx-6-4*up,ty=hit?14:hy-5-2*up;
+  g.strokeStyle=silk;g.lineWidth=Math.max(2,4*sx/2.4);g.beginPath();g.moveTo(X(26.5),Y(7));g.lineTo(X(hx),Y(hy));g.stroke();
+  g.fillStyle="#e9e3d4";g.fillRect(X(hx)-2,Y(hy)-2,4,4);
+  g.strokeStyle="#2a1d12";g.lineWidth=1.6;g.beginPath();g.moveTo(X(hx),Y(hy));g.lineTo(X(tx),Y(ty));g.stroke();
+  if(hit){g.strokeStyle="rgba(255,255,255,.7)";g.lineWidth=1;g.beginPath();g.arc(X(11),Y(14),4,0,7);g.stroke()}}
 /* The first turn in a dog race: purely how it's drawn, the race itself (and its result) is the same.
    A little after the jump the field swings into the turn: dogs lean in, crowd towards the rail, bunch up as they
    head away from the camera, and jostle and bump each other for position. A dog the race engine checks (held up)
@@ -1278,10 +1313,11 @@ function drawHorses(camX,pos,now){
         rot+=.32*hit;dy+=7*hit*(h.barrier>4?1:-1)+4*hit;
         if(moving&&!reduced&&u<.4)for(let i=0;i<3;i++)particles.push({x:x+camX+LW*.6,y:y+dy,vx:-Math.random()*2,vy:-Math.random()*2-.6,life:16+Math.random()*12,s:2+Math.floor(Math.random()*3)})}}
     if(S.race.dogs&&dy)dy=Math.max(laneY(0)-1-y,dy); // never over the inside rail
+    const Wk=pos&&run&&R&&R.running?whipStep(k,h,pos,now):null; // every runner, on screen or not
     if(x>-LW-10&&x<VW+4){
       g.fillStyle="rgba(10,30,15,.3)";g.beginPath();if(S.race.dogs)g.ellipse(x+LW*.52,y+dy+sw*.5,LW*.3*sc,2.4,0,0,7);else if(S.race.harness)g.ellipse(x+LW*.55,y+sw*.5,LW*.42,3,0,0,7);else g.ellipse(x+LW/2,y+sw*.5,LW/2-6,3,0,0,7);g.fill();
       if(rot||sc!==1||dy){g.save();g.translate(x+LW*.55,y+dy+3-LH*.35);g.rotate(rot);g.scale(sc,sc);g.drawImage(sheets[k],ff*FW,0,FW,FH,-LW*.55,-LH*.65,LW,LH);g.restore()}
-      else g.drawImage(sheets[k],ff*FW,0,FW,FH,x,y-LH+3+sw,LW,LH);
+      else{g.drawImage(sheets[k],ff*FW,0,FW,FH,x,y-LH+3+sw,LW,LH);if(Wk)drawWhip(Wk,x,y-LH+3+sw,now,h,k)}
       if(moving&&!reduced&&Math.random()<.65)particles.push({x:x+camX+8+Math.random()*10,y:y,vx:-Math.random()*1.3-.3,vy:-Math.random()*.7-.1,life:10+Math.random()*14,s:1+Math.floor(Math.random()*3)});
     }
   }
@@ -2016,7 +2052,7 @@ function startRace(){
   const fin=sim.order.map(k=>sim.fin[k]);
   R={preUntil:performance.now()+2300,jumpAt:0,sim,t:0,rate:RACE_PACE*(S.race.dogs?(S.race.dist/16.5)/(12+(S.race.dist-300)*.012):S.race.harness?(S.race.dist/17)/(28+(S.race.dist-1600)*.014):(S.race.dist/17)/(20+(S.race.dist-1000)*.03)),running:true,last:performance.now(),called:0,photoDone:false,settled:false,lastHoof:0,evI:0,
      isPhoto:fin[1]-fin[0]<.11,startPos:null,p70:null,winCalled:false};
-  S.phase="race";cam=-340;particles=[];bigSync();if(document.body.classList.contains("bigrace")){try{document.querySelector(".stage").scrollIntoView({block:"start",behavior:"smooth"})}catch(e){}}
+  S.phase="race";cam=-340;particles=[];R.whip=[];bigSync();if(document.body.classList.contains("bigrace")){try{document.querySelector(".stage").scrollIntoView({block:"start",behavior:"smooth"})}catch(e){}}
   renderAll();
   if(S.race.dogs){[[330,.5],[392,.6]].reduce((w,[f,d])=>{tone(f,d,w,"sawtooth",.025);return w+d*.8},0)}else bugle();startCrowd();
   say(S.race.dogs?`They're in the boxes for the <b>${S.race.title}</b>. Here comes the lure...`:S.race.harness?(S.race.mobile?`The mobile's moving for the <b>${S.race.title}</b>. They're gathering behind the gate...`:`They're lining up for a standing start in the <b>${S.race.title}</b>...`):`They're loading for the <b>${S.race.title}</b>...`);
