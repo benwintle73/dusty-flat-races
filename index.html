@@ -262,6 +262,31 @@ body.landrace #bigbtn{display:none}
 .off-days,.off-meets{margin:6px 0}
 .nextgo button[data-ntg]{background:var(--amber);color:var(--tote);border:0;min-height:44px;padding:0 12px;font:400 18px/1 var(--display);letter-spacing:.5px;text-transform:uppercase;white-space:nowrap}
 #ntgsel{flex:1;min-width:0;width:100%;min-height:44px;background:var(--paper);color:var(--ink);border:0;font:600 17px/1.1 var(--led);padding:0 8px;text-overflow:ellipsis}
+/* the menu: sections, codes, then a tidy meeting list */
+.nav .nsec,.nav .ncode{display:grid;gap:5px}
+.nav .nsec{grid-template-columns:repeat(4,minmax(0,1fr))}
+.nav .ncode{grid-template-columns:repeat(3,minmax(0,1fr))}
+.nav .nsec button,.nav .ncode button{padding:0 4px;justify-content:center;text-align:center}
+.nav .ncode button{min-height:40px;font-size:17px;background:none}
+.nav .ncode button[aria-pressed=true]{background:var(--paper);color:var(--tote);border-color:var(--paper)}
+.nav .mhead{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-top:4px;border-top:1px solid var(--tote2);padding-top:7px}
+.nav .mhead span,.nav .mtom summary span{font:700 16px/1 var(--led);color:var(--amber);text-transform:uppercase;letter-spacing:.6px}
+.nav .mhead small,.nav .mtom summary small{font:600 14px/1 var(--led);color:var(--amber-dim)}
+.nav .mts{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:5px}
+.nav button.mt{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:3px;min-height:50px;padding:5px 10px;text-align:left;text-transform:none;letter-spacing:0}
+.nav button.mt b{font:400 17px/1.05 var(--display);text-transform:uppercase;letter-spacing:.4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;max-width:100%}
+.nav button.mt small{font:600 13px/1 var(--led);color:var(--amber)}
+.nav button.mt[aria-pressed=true] small{color:var(--tote)}
+.nav button.mt.game{border-style:dashed}
+.nav button.mt.done{opacity:.6}
+.nav .mnote{margin:0;font:600 15px/1.3 var(--led);color:var(--amber-dim)}
+.nav .mtom summary{list-style:none;cursor:pointer;display:flex;align-items:baseline;justify-content:space-between;padding:6px 0;border-top:1px solid var(--tote2)}
+.nav .mtom summary::-webkit-details-marker{display:none}
+.nav .mtom summary span::after{content:" \25B8";color:var(--amber-dim)}
+.nav .mtom[open] summary span::after{content:" \25BE"}
+.nav .mrestart{display:flex;align-items:center;justify-content:space-between;gap:8px;font:700 16px/1 var(--led);color:var(--amber)}
+.nav .mrestart button.alt{margin-left:0;min-height:40px;font-size:16px}
+@media (max-width:560px){.nav .nsec,.nav .ncode{display:grid}.nav .nsec{grid-template-columns:repeat(4,minmax(0,1fr))}.nav .nsec button{font-size:15px;letter-spacing:.2px;min-height:44px}.nav .mts{grid-template-columns:repeat(2,minmax(0,1fr))}.nav button.mt{padding:5px 8px}.nav button.mt b{font-size:16px}}
 .nav a.navlink{display:inline-flex;align-items:center;background:var(--red);color:#fff;min-height:42px;padding:0 12px;font:700 18px/1 var(--led);text-decoration:none}
 .nt-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;background:#fff8e6;border:1px solid #bda97f;color:var(--ink);padding:8px 10px}
 .nt-row .off-meta{color:#4a4336}
@@ -375,7 +400,7 @@ body.landrace #bigbtn{display:none}
 <script>
 "use strict";
 /* ---------- helpers ---------- */
-const APP_VERSION="2.40.7"; // bump on every release; shown after the title
+const APP_VERSION="2.40.8"; // bump on every release; shown after the title
 const $=id=>document.getElementById(id);
 let RNG=Math.random;
 const mulberry=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
@@ -1865,14 +1890,55 @@ $("card").addEventListener("click",e=>{
 });
 
 function pendingCount(){return BOOK.tickets.filter(t=>t.status==="pending").length}
-function renderNav(){
-  const dd=(S.dailyDone||(S.career&&S.career.dailyDone)||{})[dayKey()];
-  let groups="",cur=S.mode==="real"?`${S.realIdx},${S.idx}`:"";
-  MEETS.forEach((m,mi)=>{groups+=`<optgroup label="${dayName(m.date)} · ${m.venue}">`+m.races.map((r,ri)=>{const k=raceKey(m,r.number),done=RS[k]&&RS[k].done;return `<option value="${mi},${ri}" ${cur===mi+","+ri?"selected":""}>R${r.number} ${timeOf(r.jump)} ${r.name}${r.feature?" ★":""}${done?" (result in)":closed(r.jump)?" (closed)":""}</option>`}).join("")+`</optgroup>`});
-  const pend=pendingCount();
-  $("nav").innerHTML=`<div><button data-nav="career" aria-pressed="${S.mode==="career"&&!bookOpen&&!resOpen}">Career</button><button data-nav="daily" aria-pressed="${S.mode==="daily"&&!bookOpen&&!resOpen}" ${S.mode!=="daily"&&dd!==undefined?"disabled":""}>${dd!==undefined&&S.mode!=="daily"?"Daily "+money(dd):"Daily"}</button><button data-nav="horses" aria-pressed="${S.mode==="real"&&!bookOpen&&!resOpen}">Horses</button><button data-nav="dogs" aria-pressed="${S.mode==="dogs"&&!bookOpen&&!resOpen}">Dogs</button><button data-nav="harness" aria-pressed="${S.mode==="harness"&&!bookOpen&&!resOpen}">Harness</button><button data-nav="tips" aria-pressed="${tipsOpen&&!resOpen&&!bookOpen}">Nan's Tips</button><button data-nav="results" aria-pressed="${resOpen}">Results</button><button data-nav="book" aria-pressed="${bookOpen}">My Book${pend?` (${pend})`:""}</button>${S.mode!=="daily"?'<button class="alt" data-nav="restart">Restart meet</button>':""}</div>
-  ${ntgHtml()}${dogNavHtml()}${harnessNavHtml()}${S.mode!=="real"?"":[...new Set(MEETS.map(m=>m.date))].map(d=>`<div class="meets"><span>${d===REAL_TODAY?"Today":"Tomorrow"===dayRel(d)?"Tomorrow":dayName(d)}</span>${MEETS.map((m,mi)=>m.date!==d?"":`<button data-meet="${mi}" aria-pressed="${S.mode==="real"&&mi===S.realIdx&&!bookOpen&&!resOpen}">${m.venue}</button>`).join("")}</div>`).join("")+`<label class="pick"><span>All races</span><select id="racesel" ${MEETS.length?"":"disabled"}>${cur?"":`<option value="" selected>${MEETS.length?"Pick a race":meetsFailed?"Real races only load on the public game site":"Loading races"}</option>`}${groups}</select></label>`}`;
+/* The menu, top to bottom: four sections (Races, Nan's Tips, Results, My Book); in Races, the three codes; Next to go;
+   then the races at the meeting you're on; then the code's meetings as one tidy list, our game meetings first (events
+   like the real ones, just ours), real meetings soonest first with their next race, tomorrow's folded away. */
+let NAV_TOM=false;
+const navCode=()=>S.mode==="dogs"?"D":S.mode==="harness"?"N":"H";
+function meetNext(rs){const now=Date.now(),n=rs.find(r=>Date.parse(r.jump)>now);return n?{t:Date.parse(n.jump),txt:`R${n.number??n.race} ${timeOf(n.jump)}`}:{t:Infinity,txt:"All run"}}
+const mtRow=(attrs,name,sub,on,cls,dis)=>`<button class="mt${cls?" "+cls:""}" ${attrs} aria-pressed="${on}" ${dis?"disabled":""}><b>${name}</b><small>${sub}</small></button>`;
+function meetList(code){
+  const open=!bookOpen&&!resOpen,home=S.mode==="career"?S:S.career||S,dd=(S.dailyDone||(S.career&&S.career.dailyDone)||{})[dayKey()];
+  const realRows=list=>list.map(x=>({...x,n:meetNext(x.races)})).sort((a,b)=>a.n.t-b.n.t||a.name.localeCompare(b.name)).map(x=>mtRow(x.attrs,escH(x.name),x.busy?"Loading…":x.n.txt,x.on,x.n.t===Infinity?"done":"",x.busy)).join("");
+  let game="",today=[],tom=[],note="";
+  if(code==="H"){
+    const tier=TIERS[home.tier||0]||TIERS[0];
+    game=mtRow('data-nav="career"',"Dusty Flat Races",`Game · ${escH(tier.name)} · ${escH(home.track||"")}`,S.mode==="career"&&open,"game")
+      +mtRow('data-nav="daily"',"Daily $1,000",S.mode!=="daily"&&dd!==undefined?`Played today · ${money(dd)}`:"Game · one go a day",S.mode==="daily"&&open,"game",S.mode!=="daily"&&dd!==undefined);
+    MEETS.forEach((m,mi)=>{const x={attrs:`data-meet="${mi}"`,name:m.venue,races:m.races,on:S.mode==="real"&&mi===S.realIdx&&open};(m.date===REAL_TODAY?today:tom).push(x)});
+    if(!MEETS.length)note=meetsFailed?"Real races only load on the public game site.":"Loading today's meetings…";
+  }else if(code==="D"){
+    game=mtRow('data-dgame="1"',"Dusty Flat Dogs",`Game · ${escH((S.rd?(S.gameDog&&S.gameDog.track):S.track)||"")}`,!S.rd&&open,"game");
+    today=dgToday().map(m=>({attrs:`data-dgm="${m.slug}"`,name:m.track,races:m.races||[],on:S.rd&&S.rd.slug===m.slug&&open,busy:dgBusy===m.slug}));
+    if(!today.length)note=dgFailed?"Real dog meetings only load on the public game site.":dgBusy==="list"||!DGM?"Loading today's meetings…":"No real dog meetings today.";
+  }else{
+    game=mtRow('data-hngame="1"',"Dusty Flat Paceway",`Game · ${escH((S.rh?(S.gameHn&&S.gameHn.track):S.track)||"")}`,!S.rh&&open,"game");
+    today=hnToday().map(m=>({attrs:`data-hnm="${m.slug}"`,name:m.track,races:m.races||[],on:S.rh&&S.rh.slug===m.slug&&open,busy:hnBusy===m.slug}));
+    if(!today.length)note=hnFailed?"Real harness meetings only load on the public game site.":hnBusy==="list"||!HNM?"Loading today's meetings…":"No real harness meetings today.";
+  }
+  return `<div class="mhead"><span>Game meetings</span></div><div class="mts">${game}</div>
+    <div class="mhead"><span>Real meetings today</span>${today.length?`<small>${today.length}</small>`:""}</div>${today.length?`<div class="mts">${realRows(today)}</div>`:`<p class="mnote">${note}</p>`}
+    ${tom.length?`<details class="mtom" ${NAV_TOM?"open":""}><summary><span>Tomorrow</span><small>${tom.length} meetings</small></summary><div class="mts">${realRows(tom)}</div></details>`:""}`;
 }
+function raceSel(code){
+  if(bookOpen||resOpen)return "";
+  if(code==="H"&&S.mode==="real"&&S.real){const mi=S.realIdx,m=MEETS[mi];if(!m)return "";
+    return `<label class="pick"><span>${escH(m.venue)}</span><select id="racesel">${m.races.map((r,ri)=>{const k=raceKey(m,r.number),done=RS[k]&&RS[k].done;return `<option value="${mi},${ri}" ${ri===S.idx?"selected":""}>R${r.number} ${timeOf(r.jump)} ${escH(r.name)}${r.feature?" ★":""}${done?" (result in)":closed(r.jump)?" (closed)":""}</option>`}).join("")}</select></label>`}
+  if(code==="D"&&S.rd)return `<label class="pick"><span>${escH(S.track)}</span><select id="dgsel">${S.rd.cards.map((c,i)=>`<option value="${i}" ${i===S.idx?"selected":""}>R${c.race} ${timeOf(c.jump)} ${escH(c.name||"")} ${c.distance?c.distance+"m":""}${closed(c.jump)?" (jumped)":""}</option>`).join("")}</select></label>`;
+  if(code==="N"&&S.rh)return `<label class="pick"><span>${escH(S.track)}</span><select id="hnsel">${S.rh.cards.map((c,i)=>`<option value="${i}" ${i===S.idx?"selected":""}>R${c.race} ${timeOf(c.jump)} ${escH(c.name||"")} ${c.distance?c.distance+"m":""}${closed(c.jump)?" (jumped)":""}</option>`).join("")}</select></label>`;
+  if(S.mode!=="daily"&&S.mode!=="real")return `<div class="mrestart"><span>${escH(S.track||"")} · Race ${(S.idx||0)+1}</span><button class="alt" data-nav="restart">Restart meet</button></div>`;
+  return "";
+}
+function renderNav(){
+  const pend=pendingCount(),racesOn=!tipsOpen&&!resOpen&&!bookOpen,code=navCode();
+  const sec=`<div class="nsec"><button data-nav="races" aria-pressed="${racesOn}">Races</button><button data-nav="tips" aria-pressed="${tipsOpen&&!resOpen&&!bookOpen}">Nan's Tips</button><button data-nav="results" aria-pressed="${resOpen}">Results</button><button data-nav="book" aria-pressed="${bookOpen}">My Book${pend?` (${pend})`:""}</button></div>`;
+  if(!racesOn){$("nav").innerHTML=sec;return}
+  if(code==="D"&&!DGM&&!dgFailed&&!dgBusy)setTimeout(loadDogMeets,0);
+  if(code==="N"&&!HNM&&!hnFailed&&!hnBusy)setTimeout(loadHarnessMeets,0);
+  const codes=`<div class="ncode">${[["horses","H","Horses"],["dogs","D","Dogs"],["harness","N","Harness"]].map(([k,c,l])=>`<button data-nav="${k}" aria-pressed="${code===c}">${l}</button>`).join("")}</div>`;
+  $("nav").innerHTML=sec+codes+ntgHtml()+raceSel(code)+meetList(code);
+}
+document.addEventListener("toggle",e=>{if(e.target.matches&&e.target.matches("details.mtom"))NAV_TOM=e.target.open},true);
 /* Tabs stay put. A click in the tab bar used to scroll the page to the track or the card, and the bar itself changes
    height from mode to mode, so the screen jumped about. For a few seconds after a tab click (long enough for meetings to
    load) those scrolls are skipped and the tab bar is put back where it was on screen. Any click elsewhere ends that. */
@@ -1894,7 +1960,8 @@ $("nav").addEventListener("click",e=>{
   if(b.dataset.nav==="career"){bookOpen=false;if(S.mode==="career")return renderAll();return goCareer()}
   if(b.dataset.nav==="book"){bookOpen=!bookOpen;bookMsg="";settleBook();renderNav();renderCard();if(bookOpen)$("card").scrollIntoView({block:"start"});return}
   if(b.dataset.nav==="daily"){bookOpen=false;if(S.mode==="daily")return renderAll();abortRace();if(S.mode==="real"){const c=S.career;const k={...S};delete k.career;c.realSaved=k;S=c}leaveDogs();leaveHarness();return startDaily()}
-  if(b.dataset.nav==="horses"){bookOpen=false;if(S.mode==="real")return renderAll();return enterHorses()}
+  if(b.dataset.nav==="races"){bookOpen=false;return renderAll()}
+  if(b.dataset.nav==="horses"){bookOpen=false;if(S.mode==="real"||S.mode==="career"||S.mode==="daily")return renderAll();return goCareer()}
   if(b.dataset.nav==="dogs"){bookOpen=false;if(S.mode==="dogs")return renderAll();return enterDogs()}
   if(b.dataset.nav==="harness"){bookOpen=false;if(S.mode==="harness")return renderAll();return enterHarness()}
   if(b.dataset.hnm!==undefined){bookOpen=false;if(S.rh&&S.rh.slug===b.dataset.hnm)return renderAll();return setRealHarness(b.dataset.hnm)}
