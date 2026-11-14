@@ -479,6 +479,15 @@ details.srcs{margin-top:16px}details.srcs>.allow,details.srcs #allow>.allow{marg
 @media (min-width:821px){html:not(.app){background:#0e2b1a}.wrap{max-width:none;padding:12px 24px}
  .mast.mast{box-sizing:border-box;margin:14px 24px 0;border:3px solid var(--tote2);padding:12px 18px!important}
  .view{background:var(--tote);border:3px solid var(--tote2);padding:7px;gap:5px;margin-top:0}.view button{min-height:46px;font-size:19px}}
+/* wide screens: two race cards side by side (an open race takes the full width), and Nan's order in two columns */
+@media (min-width:1100px){
+ .races{grid-template-columns:repeat(2,minmax(0,1fr));align-items:start}
+ .races>details.race[open],.races>:not(details.race){grid-column:1/-1}
+ table.field,table.field thead,table.field tbody{display:block;width:100%}
+ table.field thead tr,table.field thead th{display:block}
+ table.field tbody{column-count:2;column-gap:28px}
+ table.field tbody tr{display:block;break-inside:avoid}table.field tbody td{display:block}
+}
 </style>
 </head>
 <body>
@@ -650,7 +659,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.38.8"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.38.9"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -2635,6 +2644,7 @@ function renderBets(){
 let BKBUSY=false;
 /* ---------- What's new: the update history, plus the suggestions box ---------- */
 const CHANGES=[
+ ["2.38.9","14 Nov","Easier to read on a big screen",["On a wide screen, race cards sit two side by side, so a runner's chance isn't way across the screen from its name. Open a race and it takes the full width, with Nan's order in two columns."]],
  ["2.38.8","14 Nov","Proper greyhounds, longer races",["The dogs in the game have been redrawn: long and low, head stretched out, and a proper double-suspension gallop. Every race, horses, dogs and harness, now runs about 25% longer so you get more of the finish. Results are exactly the same."]],
  ["2.38.7","14 Nov","Same look on the computer",["On a computer, Nan's Tips now looks like the game: it uses the whole screen, with the header in a bordered box."]],
  ["2.38.6","14 Nov","Big races on the computer",["On a computer, the game now fills the whole screen like this page. When a race jumps, the track goes big and fills the width; tap Smaller to shrink it, and it goes back to normal when betting opens on the next race. Phones are unchanged."]],
