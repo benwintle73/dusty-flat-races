@@ -3,6 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<script>/* Never stay on an old saved copy: when the page opens, ask the server which version is current and reload once if this copy is older. */
+(function(){try{var mine=null;document.addEventListener("DOMContentLoaded",function(){var m=document.documentElement.innerHTML.match(/NAN_VERSION="([^"]+)"/);mine=m&&m[1];if(!mine)return;
+ fetch(location.pathname+"?vc="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){var n=(t.match(/NAN_VERSION="([^"]+)"/)||[])[1];
+  if(n&&n!==mine&&sessionStorage.getItem("otr-rl")!==n){sessionStorage.setItem("otr-rl",n);var u=new URL(location.href);u.searchParams.set("v",n);location.replace(u.href)}}).catch(function(){})})}catch(e){}})();</script>
 <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -642,7 +646,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.38.3"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.38.4"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -2627,6 +2631,7 @@ function renderBets(){
 let BKBUSY=false;
 /* ---------- What's new: the update history, plus the suggestions box ---------- */
 const CHANGES=[
+ ["2.38.4","14 Nov","Always the latest",["Both pages check for a newer version when they open and update themselves. The game's Quick tips fit the screen in portrait."]],
  ["2.38.3","14 Nov","Steadier pages",["Pages no longer slide sideways on a phone, and Play Off To The Races always opens the latest game."]],
  ["2.38.1","14 Nov","Tidier game page",["In the game, Quick tips rows line up like Nan's race cards, the button back here says Back to Nan's Tips, and the header sits below the iPhone clock in the home-screen app."]],
  ["2.38.0","14 Nov","Put Nan on your home screen",["A card shows how to add Nan's Tips to your iPhone or Android home screen, with one-tap Install where Chrome allows it. Tap Not now to hide it for two weeks; the steps are always here in What's new."]],
