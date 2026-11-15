@@ -631,6 +631,7 @@ details.nums2{grid-column:1/-1;margin:2px 0 4px}details.nums2>summary{cursor:poi
 @media (max-width:480px){.guide{grid-template-columns:1fr}.guide .ffload{grid-column:1;grid-row:auto}}
 .bb-pm{margin:0 0 8px;padding:6px 10px;background:#fff3cf;border-left:4px solid var(--amber);font-size:14px;font-weight:600}
 .rv-intro{margin:0 0 8px;font-size:15px}
+.why-tabs{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 10px}.why-tabs button{padding:6px 12px;border-radius:999px;border:2px solid var(--amber-dim);background:#fff;color:var(--ink);font-weight:700;font-size:14px;cursor:pointer}.why-tabs button[aria-pressed=true]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
 .nsays:empty,.says:empty,.nt:empty,.pl-q:empty,.tip small:empty{display:none}
 .rv-more .rv-note,.rv-more .rv-help{color:var(--ink)}.rv-more .rv-note{color:var(--ink2)}
 .rv-same{display:flex;align-items:flex-start;gap:10px;width:100%;margin-top:8px;padding:10px;text-align:left;background:var(--paper2,#e6dcc2);border:2px solid var(--amber-dim);color:var(--ink);font:inherit;cursor:pointer}.rv-same[aria-pressed=true]{border-color:var(--ink);background:#fff4d6}
@@ -878,7 +879,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.51.0"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.52.0"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -1079,6 +1080,35 @@ function basicForm(r,x){
     ${formTable([["Career",recTxt(st.overall)],["This track",recTxt(st.track)],["This distance",recTxt(st.dist)],["Track & distance",recTxt(st.td)],["Good",recTxt(st.good)],["Soft",recTxt(st.soft)],["Heavy",recTxt(st.heavy)],["First up",recTxt(st.up1)],["Second up",recTxt(st.up2)]])}
     <p>Starts: wins-seconds-thirds. Form by FormFav.</p>`;
 }
+// "Why … picked": Nan's working, or any other tipster's, then what the others say about that runner
+let WHYW=null,WHYOPEN=null;
+function why1Html(r,x0,n){const ts=tipsters(r),mob=mobOf(r),avail=[...ts.map(t=>t.who),...(mob?["mob"]:[])];
+  let w=WHYW||(ST.who&&ST.who!=="all"?ST.who:"nan");if(!avail.includes(w))w="nan";
+  const t=w==="nan"?null:w==="mob"?mob:ts.find(y=>y.who===w),u=w==="nan"?x0.u:t.pick;
+  const tabs=avail.length>1?`<div class="why-tabs" role="group" aria-label="Whose reasons">${avail.map(k=>`<button data-whyw="${k}" data-whyr="${escH(r.id)}" aria-pressed="${k===w}">${WHO[k]}</button>`).join("")}</div>`:"";
+  return `<details class="why1"${WHYOPEN===r.id?" open":""}><summary><span class="w1l">Why ${WHO[w]} picked</span>${cloth(u.no,r.code,u.box)}<b>${escH(u.name)}</b><span class="rchev">&#9656;</span></summary><div class="why">${tabs}${w==="nan"?whyHtml(r,x0,0,n):whyOther(r,w,t)}${talkBox(r,ranked(r).map(y=>y.u).find(y=>y.no===u.no)||u,w)}</div></details>`}
+// the other tipsters' working, from the numbers they tip off
+function whyOther(r,w,t){const rk=ranked(r),F=rk.map(x=>x.u),uOf=k=>F.find(x=>nkey(x.name)===k)||{},top=topN(r,t,4),p0=top[0];
+  const verdict=`<div class="verdict">${WHO[w]} gives <b>${escH(p0.name)}</b> a <b>${pct(p0.p)}</b> chance, ${{mob:"its",gran:"her"}[w]||"his"} top pick.</div>`;
+  const tbl=(head,rows)=>`<table class="bd"><thead><tr>${head.map((h,i)=>`<th${i?' class="n"':""}>${h}</th>`).join("")}</tr></thead><tbody>${rows.join("")}</tbody></table>`;
+  const nm=x=>`${cloth(x.no,r.code,x.box)} ${escH(x.name)}`;
+  if(w==="pop"){const pp=TIPS.pop[popKey(r)]||{};
+    return `${verdict}<h4>How Pop got there</h4><p>Pop goes with his computer: FormFav&rsquo;s prediction model, which rates every runner from its form and gives each a chance to win.${pp.conf!=null?` It says it&rsquo;s <b>${escH(String(pp.conf))}</b> confident about this race.`:""}</p>
+      ${tbl(["Runner","Model chance"],top.map(x=>`<tr><td>${nm(x)}</td><td class="n">${pct(x.p)}</td></tr>`))}<p>Pop backs whatever the model rates highest.</p>`}
+  if(w==="bob"){const bb=bobFor(r)||[],km=TIPS.map[popKey(r)],mr=km&&km.runners?new Map(km.runners.map(u=>[nkey(u.name),u])):new Map(),raw=new Map(bb.map(u=>[nkey(u.name),u.p])),rs=[...raw.values()].reduce((a,b)=>a+b,0)||1;
+    return `${verdict}<h4>How Bob got there</h4><p>Bob starts from his bloke&rsquo;s numbers: Krok&rsquo;s prediction model, which gives each runner a chance. ${mr.size?"Then he lifts or trims each one for how it&rsquo;s likely to race: where it settles and its draw at this track.":"There&rsquo;s no speed map for this race, so he goes with the model as it is."}</p>
+      ${tbl(["Runner","Model",...(mr.size?["Running","Bob"]:[])],top.map(x=>{const k=nkey(x.name),m=mr.get(k);return `<tr><td>${nm(x)}</td><td class="n">${pct((raw.get(k)||0)/rs)}</td>${mr.size?`<td class="n">${m?`${STYLE_NAME[m.style]||""}${m.f!=null&&m.f!==1?` ×${(+m.f).toFixed(2)}`:""}`:"–"}</td><td class="n">${pct(x.p)}</td>`:""}</tr>`}))}`}
+  if(w==="gran"){const pr=k=>{const u=uOf(k);if(u.win>1)return u.win;const q=quickRace(r),v=q&&(q.runners||[]).find(y=>nkey(y.name)===k);return v&&v.win>1?v.win:null};
+    return `${verdict}<h4>How Gran got there</h4><p>Gran backs the favourite: the runner with the shortest price at the bookies. She turns each price into a chance and takes out the bookies&rsquo; cut, so the field adds up to 100%.</p>
+      ${tbl(["Runner","Price","Gran"],top.map(x=>`<tr><td>${nm(x)}</td><td class="n">${div(pr(nkey(x.name)))}</td><td class="n">${pct(x.p)}</td></tr>`))}`}
+  if(w==="kev"){const kv=kevFor(r)||[],tot=kv.reduce((a,u)=>a+(u.n||0),0);
+    return `${verdict}<h4>How Kev got there</h4><p>Kev goes with whatever most tipsters are on, from PuntHub&rsquo;s Most Tipped list${tot?`: ${tot} tips on this race`:""}. More tips means a bigger chance.</p>
+      ${tbl(["Runner","Tipsters on it","Kev"],top.map(x=>`<tr><td>${nm(x)}</td><td class="n">${kevN(r,x.name)??"–"}</td><td class="n">${pct(x.p)}</td></tr>`))}`}
+  if(w==="mob"){const pn=panelOf(r),ws=(TIPS.w&&TIPS.w[r.code])||{},sw=pn.ts.reduce((a,y)=>a+(ws[y.who]??1),0)||1,k=nkey(p0.name);
+    return `${verdict}<h4>How The Mob got there</h4><p>The Mob adds up everyone&rsquo;s chances for each runner, giving more say to whoever&rsquo;s top picks have been winning lately on ${CODE[r.code].toLowerCase()}. ${pn.agree} of ${pn.ts.length} have ${escH(p0.name)} on top.</p>
+      ${tbl(["Tipster","Their chance","Say"],pn.ts.map(y=>`<tr><td>${WHO[y.who]}</td><td class="n">${pct(y.chance.get(k)||0)}</td><td class="n">${Math.round(100*(ws[y.who]??1)/sw)}%</td></tr>`))}
+      ${tbl(["Runner","The Mob"],top.map(x=>`<tr><td>${nm(x)}</td><td class="n">${pct(x.p)}</td></tr>`))}`}
+  return verdict}
 function whyHtml(r,x,rank,n){
   const top=rank===0;
   const verdict=`<div class="verdict">Nan gives <b>${escH(x.u.name)}</b> a <b>${pct(x.p)}</b> chance, ${top?"her top pick":`her ${["","2nd","3rd"][rank]||(rank+1)+"th"} pick of ${n}`}. ${mkt(r)?`Market price ${div(x.price)}.`:`Her price ${div(x.price)}.`}</div>`;
@@ -1110,7 +1140,7 @@ function raceBody(r){
   const canBet=Date.now()<Date.parse(r.jump);
   const x0=rk[0],oth=whoOrderHtml(r)+panelHtml(r);
   return `<p class="nsays">${escH(catchFor("nan",r))}</p>
-  <details class="why1"><summary><span class="w1l">Why Nan picked</span>${cloth(x0.u.no,r.code,x0.u.box)}<b>${escH(x0.u.name)}</b><span class="rchev">&#9656;</span></summary><div class="why">${talkBox(r,x0.u,"nan")}${whyHtml(r,x0,0,n)}</div></details>
+  ${why1Html(r,x0,n)}
   ${loadBtn}${canBet?builderHtml(r):""}<p class="rmeta">${[r.name,r.dist?r.dist+"m":"",r.cls,r.cond||(r.card&&r.card.cond),r.est?"No market yet: horse prices estimated":""].filter(Boolean).map(escH).join(" · ")}</p>
   <p class="fkey"><b>Chance</b>: how likely Nan rates each runner to win (the field adds up to 100%). <b>${mkt(r)?"Market":"Nan's price"}</b>: what $1 returns if it wins${mkt(r)?`, at the bookies&rsquo; price; <b>Nan&rsquo;s</b> is her own price from her chance, so a market price above hers looks like value and gets a <b>Value</b> tag`:`, worked out from her chance (no bookies&rsquo; prices here)`}. Tap a runner for her reasons and its form.</p>
   <table class="field"><thead><tr><th colspan="3">Nan's order</th></tr></thead><tbody>
@@ -3214,6 +3244,7 @@ document.addEventListener("click",e=>{
 });
 /* ---------- What's new: the update history, plus the suggestions box ---------- */
 const CHANGES=[
+ ["2.52.0","15 Nov","Why anyone picked it",["Open Why Nan picked and tap Pop, Bob, Gran, Kev or The Mob to see how they picked their runner, from the numbers they tip off.","What the tipsters say now comes after the reasons."]],
  ["2.51.0","15 Nov","Fewer jokes, and an off switch",["Nan and the family crack fewer jokes: one line on each race and its top pick, and the tipsters' banter only under Why Nan picked.","Turn them off altogether in Filters & options: untick Funny comments."]],
  ["2.50.4","15 Nov","Profit and loss",["Results says profit or loss, without \"pretend\"."]],
  ["2.50.3","15 Nov","Results, easier on a phone",["Results now opens with one plain line: if you'd put $10 on each tipster's top pick to win, this is how you'd have done.","Tick Only races everyone tipped to compare the tipsters on exactly the same races.","Other bet types and who's best for each code fold away, laid out as cards that fit a phone, with the bet sizes explained."]],
@@ -3660,6 +3691,9 @@ document.addEventListener("click",e=>{const n=e.target.closest("[data-nav]");
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&$("moreMenu")&&!$("moreMenu").hidden){moreMenu(false);const b=document.querySelector('[data-nav="more"]');if(b)b.focus()}});
 if($("jokes"))$("jokes").checked=JOKES;
 document.addEventListener("change",e=>{if(e.target.id!=="jokes")return;JOKES=e.target.checked;try{localStorage.setItem("otr-jokes",JOKES?"on":"off")}catch(_){}TALKC.clear();render();if(ST.view==="punters")renderPlayers()});
+document.addEventListener("click",e=>{const b=e.target.closest("[data-whyw]");if(!b)return;e.preventDefault();WHYW=b.dataset.whyw;WHYOPEN=b.dataset.whyr;
+  const r=RACES.find(x=>x.id===WHYOPEN),d=b.closest(".rbody");if(r&&d)d.innerHTML=raceBody(r)});
+document.addEventListener("toggle",e=>{const d=e.target;if(d.matches&&d.matches("details.why1")){const c=d.closest("details.race");if(!d.open&&c&&WHYOPEN===c.dataset.id)WHYOPEN=null}},true);
 function setView(v,focus){
   if(v==="races")v="tips";
   const was=ST.view;moreMenu(false);
