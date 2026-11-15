@@ -630,14 +630,10 @@ details.nums2{grid-column:1/-1;margin:2px 0 4px}details.nums2>summary{cursor:poi
 .guide ol{margin:4px 0 0;padding-left:20px;font-size:15px}.guide li{margin:2px 0}.guide .ffload{min-height:42px}
 @media (max-width:480px){.guide{grid-template-columns:1fr}.guide .ffload{grid-column:1;grid-row:auto}}
 .bb-pm{margin:0 0 8px;padding:6px 10px;background:#fff3cf;border-left:4px solid var(--amber);font-size:14px;font-weight:600}
-.rv-intro{margin:0 0 8px;font-size:15px}.rv-q{margin:4px 0 8px;font-size:16px;color:var(--paper)}
-.rg-st{display:flex;align-items:center;gap:6px;margin-top:10px;font-weight:700}.rg-st select{min-height:40px;font-size:16px}
-.rg-msg{margin:10px 0 0;padding:8px 10px;background:#e3f1df;color:#1d4d1d;font-weight:600}
-.rg-r{background:var(--paper);color:var(--ink);margin-top:8px;border-left:6px solid var(--amber-dim)}.rg-r.open{border-left-color:var(--amber)}
-.rg-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;width:100%;padding:12px;background:none;border:0;color:inherit;font:inherit;text-align:left;cursor:pointer}.rg-h .cdn{margin-left:auto}
-.rg-f{padding:0 12px}.rg-u{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;align-items:center;gap:8px;padding:8px 0;border-top:1px solid #d9cdb0}.rg-u b{font-size:16px}.rg-p{font-weight:700;color:var(--ink2)}
-.rg-b{min-height:40px;padding:0 12px;background:var(--good,#2e7d32);color:#fff;border:0;font-weight:800;font-size:15px;cursor:pointer}.rg-x{font-size:13px;color:var(--ink2);font-weight:700}
-.rg-more{display:block;width:calc(100% - 24px);margin:6px 12px 12px;min-height:40px;background:none;border:2px solid var(--amber-dim);color:var(--ink);font-weight:700;cursor:pointer}
+.rv-intro{margin:0 0 8px;font-size:15px}
+.rm-h{display:none}body.rmode .rm-h{display:block}.rm-h small{display:block;font:400 15px/1.3 var(--body,inherit);text-transform:none;letter-spacing:0;color:#d9c9a3;margin-top:2px}
+body.rmode #betAll,body.rmode #blkSoon,body.rmode #guide,body.rmode #recStrip,body.rmode #hl,body.rmode #hlnums,body.rmode #srcs{display:none}
+.mnav .mi svg{display:block}.rv-q{margin:4px 0 8px;font-size:16px;color:var(--paper)}
 @media (max-width:420px){.mnav button{font-size:13px;letter-spacing:0}}
 
 .rv-codes{grid-template-columns:repeat(5,minmax(0,1fr))!important}.rv-codes button{font-size:13px;padding-left:2px;padding-right:2px}
@@ -674,7 +670,7 @@ details.about>summary h4{margin:0}details.about details.fsec{margin-top:8px}deta
 <main class="wrap">
   <nav class="mnav" id="mnav" aria-label="Sections">
     <button data-nav="tips" aria-pressed="true"><span class="mi" aria-hidden="true">&#9733;</span>Tips</button>
-    <button data-nav="racing" aria-pressed="false"><span class="mi" aria-hidden="true">&#9654;</span>Racing</button>
+    <button data-nav="racing" aria-pressed="false"><span class="mi" aria-hidden="true"><svg viewBox="0 0 24 24" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><circle cx="12" cy="14" r="7.5"/><path d="M12 14V10M10 3h4M12 3v3.5M18 7l1.5-1.5"/></svg></span>Racing</button>
     <button data-nav="results" aria-pressed="false"><span class="mi" aria-hidden="true">&#9873;</span>Results</button>
     <button data-nav="mine" aria-pressed="false"><span class="mi" aria-hidden="true">&#9998;</span>My stuff</button>
     <button data-nav="more" aria-pressed="false" aria-expanded="false" aria-controls="moreMenu"><span class="mi" aria-hidden="true">&#8943;</span>More<i id="moreDot" hidden></i></button>
@@ -706,6 +702,7 @@ details.about>summary h4{margin:0}details.about details.fsec{margin-top:8px}deta
   <div id="hlnums"></div>
   <div class="note" id="status"></div>
   <div id="multi"></div>
+  <h3 class="bgrp rm-h">Today&rsquo;s racing <small>Tap a race, then <b>Bet on this race</b></small></h3>
   <div class="races" id="races"></div>
   <details class="follow srcs" id="srcs"><summary><span class="fs-l">Data sources &amp; settings</span><span class="fs-n" id="srcsN"></span><span class="rchev">&#9656;</span></summary>
     <div id="allow"></div>
@@ -717,8 +714,7 @@ details.about>summary h4{margin:0}details.about details.fsec{margin-top:8px}deta
   <section id="blkView" hidden></section>
   <section id="cricketView" hidden></section>
   <section id="puntersView" hidden><div class="calc board players" id="players"><h3>Punters' leaderboard</h3><p>Loading…</p></div></section>
-  <section id="racingView" hidden></section>
-  <section id="resultsView" hidden></section>
+    <section id="resultsView" hidden></section>
   <section id="recordView" hidden>
     <div class="note" id="recNote">Loading Nan's record…</div>
     <div class="calc board" id="board"><h3>Tipster leaderboard</h3><p>Loading…</p></div>
@@ -865,7 +861,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.50.0"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.50.1"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -2277,7 +2273,6 @@ function raceCard(r,open,tag){const rk=ranked(r),t=Date.parse(r.jump),gone=t<=Da
     <div class="r-main"><div class="r-title"><span class="r-time">${hm||""}<small>${ap||""}</small></span><b class="r-v">${escH(r.venue)}</b><b class="r-n">R${r.no}</b><i class="rbr"></i><span class="ctag c${r.code}">${CODE_TAG[r.code]}</span>${blkTag(r,rk)}${src}<span class="r-cd">${raceState(r)}</span></div>${pick}${gone?resLine(r):panel}</div>
     <span class="rchev">&#9656;</span></summary><div class="rbody">${open.has(r.id)?raceBody(r):""}</div></details>`}
 function render(){
-  if(ST.view==="racing")renderRacing();
   renderFollow();$("multi").innerHTML=multiHtml();if(typeof slipBar==="function")slipBar();
   $("codes").innerHTML=[["all","All"],["H","Horses"],["N","Harness"],["D","Greys"]].map(([k,l])=>`<button data-code="${k}" aria-pressed="${ST.code===k}">${l}</button>`).join("");
   const meets=[...new Map(RACES.filter(r=>ST.code==="all"||r.code===ST.code).map(r=>[`${r.code}|${r.venue}`,r])).values()].sort((a,b)=>a.venue.localeCompare(b.venue));
@@ -3197,7 +3192,7 @@ document.addEventListener("click",e=>{
 });
 /* ---------- What's new: the update history, plus the suggestions box ---------- */
 const CHANGES=[
- ["2.50.0","15 Nov","A Racing tab",["New Racing tab: every race still to run today in time order. Tap one to see the field, then Back a runner to win. It goes on your slip, and nothing is placed until you confirm.","Other bet types are one tap away and open the race on Tips."]],
+ ["2.50.1","15 Nov","The Racing tab, reworked",["The Racing tab now shows today's races as the usual race cards, nothing else. Open one and press Bet on this race to bet any way you like."]],
  ["2.49.3","15 Nov","Results made plain",["Results now asks one question: if you put $10 on each tipster's top pick in every race, who'd be up? The tipsters are ranked by that, best first."]],
  ["2.49.2","15 Nov","A simpler Results page",["Back anyone's tips at a meeting: pick Nan, Pop, Bob, Gran, Kev or The Mob in the Back box on a track.","Choose who to compare: tap a tipster to leave them out.","Pick All races, Same races (only the races every tipster tipped), Horses, Harness or Greys.","Results now starts with a plain ladder: each tipster's winners, and what $10 on their top pick to win would have made.","Place, quinella, trifecta and first 4, the bet sizes and who to follow by code are tucked under one tap."]],
  ["2.49.1","15 Nov","Results in finishing order",["On Results, each race lists 1st, 2nd, 3rd and 4th one under the other."]],
@@ -3637,41 +3632,15 @@ document.addEventListener("click",e=>{const n=e.target.closest("[data-nav]");
   if(e.target.closest("[data-mclose]"))return moreMenu(false);
   const m=$("moreMenu");if(m&&!m.hidden&&!e.target.closest("#moreMenu"))moreMenu(false)});
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&$("moreMenu")&&!$("moreMenu").hidden){moreMenu(false);const b=document.querySelector('[data-nav="more"]');if(b)b.focus()}});
-// Racing: every race still to run today, plain. Tap one, see the field, back a runner to win (play money, onto the slip).
-const RC={code:"all",open:null,st:5,msg:""};
-function renderRacing(){const el=$("racingView");if(!el)return;const now=Date.now();
-  const list=RACES.filter(r=>(RC.code==="all"||r.code===RC.code)&&Date.parse(r.jump)>now-GRACE).sort((a,b)=>Date.parse(a.jump)-Date.parse(b.jump));
-  const onSlip=new Set(BK.slip.map(t=>t.rk+"|"+(t.type==="win"&&t.sel[0]?t.sel[0].no:"")));
-  const row=r=>{const ms=Date.parse(r.jump)-now,op=RC.open===r.id,[hm,ap]=timeOf(r.jump).split(" ");let body="";
-    if(op){const f=fieldOf(r);
-      body=!f?'<p class="note">Loading the field&hellip;</p>':`<div class="rg-f">${f.map(u=>{const on=onSlip.has(rkey(r)+"|"+u.no);
-        return `<div class="rg-u">${cloth(u.no,r.code,u.box)}<b>${escH(u.name)}</b><span class="rg-p">${u.est?"$"+(+u.est).toFixed(2):""}</span>${ms<=0?'<span class="rg-x">Jumped</span>':on?'<span class="rg-x">On your slip</span>':`<button class="rg-b" data-rcback="${escH(r.id)}|${u.no}">Back $${RC.st}</button>`}</div>`}).join("")}</div>
-        <button class="rg-more" data-rcmore="${escH(r.id)}">Other bet types for this race &#9656;</button>`}
-    return `<div class="rg-r${op?" open":""}"><button class="rg-h" data-rcopen="${escH(r.id)}" aria-expanded="${op}"><span class="r-time">${hm}<small>${ap||""}</small></span><b class="r-v">${escH(r.venue)}</b><b class="r-n">R${r.no}</b><span class="ctag c${r.code}">${CODE_TAG[r.code]}</span><span class="cdn" data-cdn="${escH(r.jump)}" data-rs>${stLabel(ms)}</span></button>${body}</div>`};
-  el.innerHTML=`<div class="calc rc"><p class="rv-intro">Every race still to run today. Tap a race, then <b>Back</b> a runner to win. Play money: it goes on your slip and nothing&rsquo;s placed until you confirm.</p>
-    <div class="bb-grid rs-codes">${[["all","All"],["H","Horses"],["N","Harness"],["D","Greys"]].map(([k,l])=>`<button data-rccode="${k}" aria-pressed="${RC.code===k}">${l}</button>`).join("")}</div>
-    <label class="rg-st">Stake per bet $<select id="rcSt">${[1,2,5,10,20,50].map(n=>`<option ${n===RC.st?"selected":""}>${n}</option>`).join("")}</select></label>
-    ${RC.msg?`<p class="rg-msg" role="status">${RC.msg}</p>`:""}</div>
-    ${list.length?list.map(row).join(""):'<p class="note">No more races today. Tomorrow&rsquo;s show up on Tips under Tomorrow.</p>'}`}
-document.addEventListener("click",e=>{const g=s=>e.target.closest(s);let b;
-  if(b=g("[data-rccode]")){RC.code=b.dataset.rccode;return renderRacing()}
-  if(b=g("[data-rcopen]")){const id=b.dataset.rcopen;RC.open=RC.open===id?null:id;RC.msg="";const r=RACES.find(x=>x.id===id);if(r&&RC.open)want(r);return renderRacing()}
-  if(b=g("[data-rcmore]")){const id=b.dataset.rcmore;setView("tips");openInTips(id);BUILD.id=id;BUILD.sel=[];BUILD.form=null;return render()}
-  if(b=g("[data-rcback]")){const [id,no]=[b.dataset.rcback.slice(0,b.dataset.rcback.lastIndexOf("|")),b.dataset.rcback.slice(b.dataset.rcback.lastIndexOf("|")+1)];
-    const r=RACES.find(x=>x.id===id),f=r&&fieldOf(r),u=f&&f.find(x=>String(x.no)===no);if(!u||Date.parse(r.jump)<=Date.now())return;
-    BK.slip.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,7),rk:rkey(r),code:r.code,date:r.date,venue:r.venue,no:r.no,jump:r.jump,type:"win",stake:RC.st,sel:[{no:u.no,name:u.name,box:u.box}],field:f});
-    saveBK();RC.msg=`Added ${escH(u.name)} to win, $${RC.st}. It&rsquo;s on your slip: press <b>Review &amp; confirm</b> to place it.`;slipBar();return renderRacing()}});
-document.addEventListener("change",e=>{if(e.target.id==="rcSt"){RC.st=+e.target.value;renderRacing()}});
 function setView(v,focus){
   if(v==="races")v="tips";
   const was=ST.view;moreMenu(false);
   document.querySelectorAll("[data-view]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.view===v));paintNav(v);
-  ST.view=v;$("tipsView").hidden=v!=="tips";$("recordView").hidden=v!=="record";$("betsView").hidden=v!=="bets";$("blkView").hidden=v!=="blk";$("cricketView").hidden=v!=="cricket";$("puntersView").hidden=v!=="punters";$("resultsView").hidden=v!=="results";$("racingView").hidden=v!=="racing";
+  ST.view=v;$("tipsView").hidden=v!=="tips"&&v!=="racing";document.body.classList.toggle("rmode",v==="racing");$("recordView").hidden=v!=="record";$("betsView").hidden=v!=="bets";$("blkView").hidden=v!=="blk";$("cricketView").hidden=v!=="cricket";$("puntersView").hidden=v!=="punters";$("resultsView").hidden=v!=="results";
   if(v==="record"){if(!REC.sum)loadRecord();else renderRecord();loadBoard()}
   if(v==="punters"){renderPlayers();loadPlayers()}
-  if(v==="racing")renderRacing();
   if(v==="results"){renderResults();loadResults(RV.date||REC_TODAY())}
-  if(v==="tips"&&was!=="tips")render();
+  if((v==="tips"||v==="racing")&&was!==v)render();
   if(v==="bets"){renderBets();checkOfficial(false);crCheck()}
   if(v==="blk"){renderBlk();checkOfficial(false)}
   if(v==="cricket"){renderCricket();loadCricket(false).then(crCheck)}
