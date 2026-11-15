@@ -336,6 +336,9 @@ details.race>summary.rsum{grid-template-columns:minmax(0,1fr) 14px;gap:0 8px;ali
 .r-main{min-width:0;display:flex;flex-direction:column;gap:5px}
 .r-title{display:flex;align-items:center;gap:7px;min-width:0;white-space:nowrap;padding-bottom:5px;border-bottom:1px solid var(--line)}
 .r-time{flex:none;font:700 19px/1 var(--led);font-variant-numeric:tabular-nums}.r-time small{font-size:13px;margin-left:1px;color:var(--ink2)}
+.ctag{flex:none;font:700 12px/1 var(--led);letter-spacing:.06em;text-transform:uppercase;padding:4px 7px;border-radius:4px;color:#fff;align-self:center}.ctag.cH{background:#2f6b3f}.ctag.cD{background:#8a3f1f}.ctag.cN{background:#2c4f86}
+.rbr{display:none}
+@media (max-width:560px){.r-title{flex-wrap:wrap;row-gap:5px}.r-title .r-v{flex:1 1 0}.rbr{display:block;flex-basis:100%;height:0}.ctag{font-size:11px}}
 .r-title b{font:400 19px/1.05 var(--display);letter-spacing:.3px;text-transform:uppercase}.r-title .r-v{overflow:hidden;text-overflow:ellipsis;min-width:0}.r-title .r-n,.r-title .qtag{flex:none}.r-title .r-n{margin-left:-2px}
 .r-cd{margin-left:auto;flex:none}.r-cd .cdn{font-size:13px;padding:2px 6px}
 .r-top,.r-next,.r-panel{display:flex;align-items:center;gap:6px;min-width:0}
@@ -616,7 +619,7 @@ const SOON=5*60e3,stLabel=ms=>ms<=0?(ms>-GRACE?"Jumped "+upText(ms):"Jumped"):ms
 const cdn=iso=>{const ms=Date.parse(iso)-Date.now();return iso&&ms>-GRACE?` <span class="cdn${ms<120e3?" soon":""}" data-cdn="${iso}">⏱ ${cdText(ms)}</span>`:""};
 setInterval(()=>{for(const el of document.querySelectorAll("[data-cdn]")){const ms=Date.parse(el.dataset.cdn)-Date.now(),rs=el.hasAttribute("data-rs");el.textContent=rs?stLabel(ms):(ms>0&&!el.closest(".r-cd")?"⏱ ":"")+cdText(ms);el.classList.toggle("soon",ms>0&&ms<(rs?SOON:120e3));el.classList.toggle("gone",ms<=0)}},1000);
 const timeOf=iso=>iso?new Date(iso).toLocaleTimeString("en-AU",{hour:"numeric",minute:"2-digit"}).replace(/\s?([ap])\.?m\.?/i,(m,a)=>" "+a.toLowerCase()+"m"):"";
-const CODE={H:"Horses",D:"Dogs",N:"Harness"};
+const CODE={H:"Horses",D:"Dogs",N:"Harness"},CODE_TAG={H:"Horses",D:"Greyhounds",N:"Harness"};
 const ord=n=>n+(["th","st","nd","rd"][(n%100-20)%10]||["th","st","nd","rd"][n%100]||"th");
 
 // Saddlecloth colours: dogs wear their box's rug (1 red, 2 black-and-white, 3 white, 4 blue, 5 yellow, 6 green, 7 black, 8 pink); horses and harness by number
@@ -704,7 +707,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.46.0"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.46.1"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -2015,7 +2018,7 @@ function raceCard(r,open,tag){const rk=ranked(r),t=Date.parse(r.jump),gone=t<=Da
   const panel=pn?`<div class="r-panel"><span class="r-who">The Mob</span>${cloth(pn.pick.no,r.code,pn.pick.box)}${others.map(x=>`<span class="r-t"><small>${escH(x.label.split("'")[0])}</small>${cloth(x.pick.no,r.code,x.pick.box)}</span>`).join("")}<span class="agree a${pn.agree===pn.ts.length?"all":""}">${pn.agree}/${pn.ts.length}<span class="agw"> agree</span></span></div>`:"";
   const src=rk&&r.src==="quick"?`<span class="qtag">${QUICK[r.code]&&QUICK[r.code].priceOnly?"Price only":"Quick form"}</span>`:"";
   return `<details class="race${gone?" jumped":""}" data-id="${escH(r.id)}" ${open.has(r.id)?"open":""}><summary class="rsum">
-    <div class="r-main"><div class="r-title"><span class="r-time">${hm||""}<small>${ap||""}</small></span><b class="r-v">${escH(r.venue)}</b><b class="r-n">R${r.no}</b>${blkTag(r,rk)}${src}<span class="r-cd">${raceState(r)}</span></div>${pick}${panel}</div>
+    <div class="r-main"><div class="r-title"><span class="r-time">${hm||""}<small>${ap||""}</small></span><b class="r-v">${escH(r.venue)}</b><b class="r-n">R${r.no}</b><i class="rbr"></i><span class="ctag c${r.code}">${CODE_TAG[r.code]}</span>${blkTag(r,rk)}${src}<span class="r-cd">${raceState(r)}</span></div>${pick}${panel}</div>
     <span class="rchev">&#9656;</span></summary><div class="rbody">${open.has(r.id)?raceBody(r):""}</div></details>`}
 function render(){
   if(ST.view==="races")renderRaces();
@@ -2819,6 +2822,7 @@ document.addEventListener("click",e=>{
 });
 /* ---------- What's new: the update history, plus the suggestions box ---------- */
 const CHANGES=[
+ ["2.46.1","15 Nov","Horses, Harness or Greyhounds at a glance",["Every race card now has a coloured tag next to the race name saying what it is: Horses (green), Harness (blue) or Greyhounds (brown)."]],
  ["2.46.0","15 Nov","Races: the whole day as cards",["The Races tab now shows every race of the day as cards, just like Today's tips: tap one to open the field, Nan's order and the bet builder. Races still to run come first; the ones that have run fold away under Run today, latest first. Today or Tomorrow, and Horses, Dogs or Harness, as before."]],
  ["2.45.10","15 Nov","Five minutes after the jump",["Jumped races now stay listed for 5 minutes (was 2), still counting up the time since they jumped, so you can open them and see the field."]],
  ["2.45.9","15 Nov","Races hang about after the jump",["A race now stays on Today's tips (and the game's next-to-go list) for 2 minutes after its start time. Its clock keeps going, counting up how long since it jumped (Jumped 0:45 ago). You can still open it and see the runners and the tips; betting is closed. Your bets show the same count-up."]],
