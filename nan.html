@@ -630,16 +630,15 @@ details.nums2{grid-column:1/-1;margin:2px 0 4px}details.nums2>summary{cursor:poi
 .guide ol{margin:4px 0 0;padding-left:20px;font-size:15px}.guide li{margin:2px 0}.guide .ffload{min-height:42px}
 @media (max-width:480px){.guide{grid-template-columns:1fr}.guide .ffload{grid-column:1;grid-row:auto}}
 .bb-pm{margin:0 0 8px;padding:6px 10px;background:#fff3cf;border-left:4px solid var(--amber);font-size:14px;font-weight:600}
-.rv-intro{margin:0 0 8px;font-size:15px}
+.rv-intro{margin:0 0 8px;font-size:15px}.rv-q{margin:4px 0 8px;font-size:16px;color:var(--paper)}
 .rv-codes{grid-template-columns:repeat(5,minmax(0,1fr))!important}.rv-codes button{font-size:13px;padding-left:2px;padding-right:2px}
 .rv-who{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:8px}.rv-who .rv-l{margin-right:4px}.rv-who button{padding:6px 10px;font-size:14px;border:2px solid var(--amber);background:transparent;color:var(--ink);font-weight:700;border-radius:999px}.rv-who button[aria-pressed=true]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
 .rv-lad{list-style:none;margin:6px 0 0;padding:0;background:var(--paper);color:var(--ink)}
-.rv-lad li{display:grid;grid-template-columns:28px minmax(0,1fr) auto auto;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--rule,#d9cdb0)}
+.rv-lad li{display:grid;grid-template-columns:28px minmax(0,1fr) auto;row-gap:2px;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--rule,#d9cdb0)}
 .rv-lad li.lead{background:#fff4d6;border-left:6px solid var(--amber);padding-left:6px}
-.rl-n{font-weight:800;font-size:18px;color:var(--ink2);text-align:center}.rl-w{font-size:17px}.rl-h{font-size:14px;color:var(--ink2);white-space:nowrap;text-transform:none;letter-spacing:normal;font-weight:400}.rl-h b{color:var(--ink);font-size:16px}.rl-p{min-width:78px;text-align:right}
+.rl-n{font-weight:800;font-size:18px;color:var(--ink2);text-align:center}.rl-w{font-size:17px}.rl-h{font-size:14px;color:var(--ink2);white-space:nowrap;grid-column:2;grid-row:2;text-transform:none;letter-spacing:normal;font-weight:400}.rl-h b{color:var(--ink);font-size:16px}.rl-p{min-width:78px;text-align:right;grid-column:3;grid-row:1/3;font-size:18px}.rl-n{grid-row:1/3}
 .rv-more{margin-top:12px;background:var(--paper);color:var(--ink);padding:0 12px 10px}.rv-more>summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:12px 0;font-weight:700;font-size:16px}.rv-more>summary::-webkit-details-marker{display:none}.rv-more[open]>summary .rchev{transform:rotate(90deg)}
 .rv-more .bgrp{color:var(--ink)}
-@media (max-width:420px){.rv-lad li{grid-template-columns:24px minmax(0,1fr) auto;row-gap:2px}.rl-h{grid-column:2}.rl-p{grid-row:1/3;grid-column:3}}
 .blksoon{background:var(--paper);color:var(--ink);border-left:5px solid #c98a00;padding:8px 10px;margin-top:8px}.bs-h{display:block;font:400 18px/1.1 var(--display);letter-spacing:.4px;text-transform:uppercase;color:#8a5d00;margin-bottom:4px}
 .bs-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;align-items:center;width:100%;text-align:left;background:none;border:0;border-top:1px solid var(--line);padding:8px 0;min-height:48px;color:var(--ink);cursor:pointer}
 .bs-r{display:flex;align-items:center;gap:6px;min-width:0}.bs-r b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.bs-w{grid-column:1;font-size:14px;color:var(--ink2)}.bs-go{grid-column:2;grid-row:1/3;font-weight:700;color:var(--good)}
@@ -855,7 +854,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.49.2"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.49.3"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -3090,15 +3089,16 @@ function renderResults(){const WHO=RV_WHO.filter(([w])=>!RV.off.includes(w));con
   const lead=who[0];
   // the plain ladder: winners, and what $10 on each tipster's top pick to win would have made
   const w10=w=>{const t=T[w].win;return t.n&&t.cost?(t.back-t.cost)*10/(t.cost/t.n):0};
-  const lad=have.slice().sort((a,b)=>T[b[0]].win.hit-T[a[0]].win.hit||w10(b[0])-w10(a[0]));
+  const lad=have.slice().sort((a,b)=>w10(b[0])-w10(a[0])||T[b[0]].win.hit-T[a[0]].win.hit);const L0=lad[0],L0v=L0?w10(L0[0]):0;
   const top=!per.length?`<p class="note">${waiting?`No official results in yet: ${waiting} race${waiting>1?"s have":" has"} run and ${waiting>1?"are":"is"} waiting on results.`:"No races have been run yet."}</p>`
     :`<h3 class="bgrp">${week?"Last 7 days":date===today?"Today so far":"How they went"}</h3>${RV.code==="same"?`<p class="rv-note">Only the ${per.length} of ${allN} races that ${tipped.map(([,l])=>l).join(", ")} all tipped.</p>`:""}
-    <ol class="rv-lad">${lad.map(([w,l],i)=>`<li${i===0?' class="lead"':""}><span class="rl-n">${i+1}</span><b class="rl-w">${l}</b><span class="rl-h"><b>${T[w].win.hit}</b> winner${T[w].win.hit===1?"":"s"} from ${T[w].win.n}</span><span class="rl-p">${pm(w10(w))}</span></li>`).join("")}</ol>
-    <p class="rv-note">The amount is what $10 on each tipster&rsquo;s top pick to win would have made or lost, at the official dividends.${waiting?` ${waiting} race${waiting>1?"s":""} still waiting on results.`:""}</p>`;
-  const more=!per.length?"":`<details class="rv-more" ${RV.more?"open":""}><summary>Place, quinella, trifecta and first 4 <span class="rchev">&#9656;</span></summary>
+    <p class="rv-q">If you put <b>$10 on each tipster&rsquo;s top pick</b> in every race, this is what you&rsquo;d be up or down:</p>
+    <ol class="rv-lad">${lad.map(([w,l],i)=>`<li${i===0?' class="lead"':""}><span class="rl-n">${i+1}</span><b class="rl-w">${l}</b><span class="rl-h">${T[w].win.hit} winner${T[w].win.hit===1?"":"s"} in ${T[w].win.n} races</span><span class="rl-p">${pm(w10(w))}</span></li>`).join("")}</ol>
+    <p class="rv-note">${L0v>0?`Best to follow: <b>${L0[1]}</b>.`:"Nobody would be in front."}${lad.some(([w])=>T[w].win.n<T[L0[0]].win.n)?" Some tipsters only tip some races; tap Same races to compare them on the same races.":""}${waiting?` ${waiting} race${waiting>1?"s":""} still waiting on results.`:""}</p>`;
+  const more=!per.length?"":`<details class="rv-more" ${RV.more?"open":""}><summary>Other bets: place, quinella, trifecta, first 4 <span class="rchev">&#9656;</span></summary>
     <p class="rv-note">Every bet type on each tipster&rsquo;s picks: Win and Place on the top pick, Quinella and Exacta on the top two, Trifecta on the top three, First 4 on the top four.</p>
     ${ctl}
-    <div class="rv-lead"><span class="rv-cup" aria-hidden="true">&#127942;</span><div><b>${lead[1]} ${week?"topped the last 7 days":date===today?"is on top today":"topped the day"}</b><small>across every bet type, ${rvStakeTxt()}: ${pm(tot(lead[0]))}</small></div></div>
+
     <div class="rv-tw"><table class="rv-t"><thead><tr><th>Tipster</th>${RV_BT.map(([,l])=>`<th>${l}</th>`).join("")}<th>Total</th></tr></thead><tbody>
     ${who.map(([w,l],i)=>`<tr${i===0?' class="lead"':""}><th>${l}<small>${T[w].races} races</small></th>${RV_BT.map(([b])=>{const t=T[w][b],v=prof(w,b);return `<td${t.n&&v===best(b)?' class="top"':""}>${t.n?`<span class="hits">${t.hit}<small>/${t.n}</small></span>${pm(v)}${t.miss?'<small class="wd">+ div to come</small>':""}`:'<span class="na">–</span>'}</td>`}).join("")}<td class="tt${tot(w)===bestT?" top":""}">${pm(tot(w))}</td></tr>`).join("")}
     </tbody></table></div>
@@ -3185,6 +3185,7 @@ document.addEventListener("click",e=>{
 });
 /* ---------- What's new: the update history, plus the suggestions box ---------- */
 const CHANGES=[
+ ["2.49.3","15 Nov","Results made plain",["Results now asks one question: if you put $10 on each tipster's top pick in every race, who'd be up? The tipsters are ranked by that, best first."]],
  ["2.49.2","15 Nov","A simpler Results page",["Back anyone's tips at a meeting: pick Nan, Pop, Bob, Gran, Kev or The Mob in the Back box on a track.","Choose who to compare: tap a tipster to leave them out.","Pick All races, Same races (only the races every tipster tipped), Horses, Harness or Greys.","Results now starts with a plain ladder: each tipster's winners, and what $10 on their top pick to win would have made.","Place, quinella, trifecta and first 4, the bet sizes and who to follow by code are tucked under one tap."]],
  ["2.49.1","15 Nov","Results in finishing order",["On Results, each race lists 1st, 2nd, 3rd and 4th one under the other."]],
  ["2.49.0","15 Nov","Results on the cards, value, and more",["Once a race has run, its card shows the winner and how Nan's pick went. Nan's record line now starts with today: winners and $1 profit so far.","A Value tag marks a runner when the bookies pay more than Nan's own price, and Firming or Drifting shows which way its price has moved since Nan first saw the market.","Black book runners racing in the next half hour show at the top of Tips. Pick a track and you can back Nan's pick in all its races to come in one go (onto your slip, confirmed as usual).","Results has a Last 7 days view and a Who to follow table: the best tipster on Horses, Harness and Greys. Behind the scenes: page errors are logged quietly, and the old Races page code is gone."]],
