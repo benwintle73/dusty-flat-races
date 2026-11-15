@@ -392,7 +392,7 @@ details.race>summary.rsum .rchev{align-self:center}
 .g-px{text-align:right;font:700 16px/1 var(--led);font-variant-numeric:tabular-nums;white-space:nowrap}.bb-run:disabled{cursor:default;opacity:1}
 .bb-runners.g .g-hd{margin-bottom:-2px}.bb-runners.g .g-hd .bb-run{min-height:0;padding:0 8px;background:none;border-color:transparent;font:600 11px/1 var(--led);text-transform:uppercase;letter-spacing:.5px;color:var(--ink2);cursor:default}.g-hd .bb-run span:nth-child(n+3){text-align:right}
 @media (min-width:700px){.bb-runners.g{grid-template-columns:1fr}}
-.bb-low{margin-top:6px;border-top:1px solid var(--line);padding-top:2px}#racesView [data-bclose],#racesView .bb-multi{display:none}#racesView .bb-act{grid-template-columns:1fr}
+.bb-low{margin-top:6px;border-top:1px solid var(--line);padding-top:2px}
 .crcomp{overflow:hidden;text-overflow:ellipsis;min-width:0}
 .crwhy{font-style:italic;color:var(--ink2);margin:4px 0}
 .crhead p{margin:4px 0}
@@ -3268,7 +3268,7 @@ function setView(v,focus){
   if(v==="record"){if(!REC.sum)loadRecord();else renderRecord();loadBoard()}
   if(v==="punters"){renderPlayers();loadPlayers()}
   if(v==="races"){render()}
-  if(v==="tips"&&was==="races")render();
+  if(was==="races"&&v!=="races"){$("racesView").innerHTML="";if(v==="tips")render()}
   if(v==="bets"){renderBets();checkOfficial(false);crCheck()}
   if(v==="blk"){renderBlk();checkOfficial(false)}
   if(v==="cricket"){renderCricket();loadCricket(false).then(crCheck)}
