@@ -874,7 +874,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.50.3"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.50.4"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -3119,7 +3119,7 @@ function renderResults(){const WHO=RV_WHO.filter(([w])=>!RV.off.includes(w));con
     :`<h3 class="bgrp">${week?"Last 7 days":date===today?"Today so far":"How they went"}</h3>
     <p class="rv-q">If you&rsquo;d put <b>$10 on each tipster&rsquo;s top pick to win</b>, this is how you&rsquo;d have done.</p>
     <p class="rv-note rv-sub">A comparison using past official results, not real bets.${RV.same?` Only the ${per.length} of ${allN} races that ${tipped.map(([,l])=>l).join(", ")} all tipped.`:""}</p>
-    <ol class="rv-lad">${lad.map(([w,l],i)=>`<li${i===0?' class="lead"':""}><span class="rld-n">${i+1}</span><b class="rld-w">${l}</b><span class="rld-h"><b>${T[w].win.hit}</b> win${T[w].win.hit===1?"":"s"} · ${T[w].win.n} race${T[w].win.n===1?"":"s"} tipped</span><span class="rld-p">${pm(w10(w))}<small>${w10(w)>=0?"pretend profit":"pretend loss"}</small></span></li>`).join("")}</ol>
+    <ol class="rv-lad">${lad.map(([w,l],i)=>`<li${i===0?' class="lead"':""}><span class="rld-n">${i+1}</span><b class="rld-w">${l}</b><span class="rld-h"><b>${T[w].win.hit}</b> win${T[w].win.hit===1?"":"s"} · ${T[w].win.n} race${T[w].win.n===1?"":"s"} tipped</span><span class="rld-p">${pm(w10(w))}<small>${w10(w)>=0?"profit":"loss"}</small></span></li>`).join("")}</ol>
     <p class="rv-note">${L0v>0?`Best to follow: <b>${L0[1]}</b>.`:"Nobody would be in front."}${lad.some(([w])=>T[w].win.n<T[L0[0]].win.n)?" Some tipsters only tip some races. Tick <b>Only races everyone tipped</b> to compare them fairly.":""}${waiting?` ${waiting} race${waiting>1?"s":""} still waiting on results.`:""}</p>`;
   const more=!per.length?"":`<details class="rv-more" ${RV.more?"open":""}><summary><span>Other bet types<small>Place, quinella, exacta, trifecta and first 4 on each tipster&rsquo;s picks</small></span><span class="rchev">&#9656;</span></summary>
     <p class="rv-note">Each tipster&rsquo;s picks backed every way: <b>Win</b> and <b>Place</b> on their top pick, <b>Quinella</b> and <b>Exacta</b> on their top two, <b>Trifecta</b> on their top three, <b>First 4</b> on their top four.</p>
@@ -3210,6 +3210,7 @@ document.addEventListener("click",e=>{
 });
 /* ---------- What's new: the update history, plus the suggestions box ---------- */
 const CHANGES=[
+ ["2.50.4","15 Nov","Profit and loss",["Results says profit or loss, without \"pretend\"."]],
  ["2.50.3","15 Nov","Results, easier on a phone",["Results now opens with one plain line: if you'd put $10 on each tipster's top pick to win, this is how you'd have done.","Tick Only races everyone tipped to compare the tipsters on exactly the same races.","Other bet types and who's best for each code fold away, laid out as cards that fit a phone, with the bet sizes explained."]],
  ["2.50.2","15 Nov","Tidier bets",["In your bets, the official result shows full names again, and your runners are highlighted instead of marked YOURS.","Borrow from Nan folds away; it opens by itself while you owe Nan.","Bet buttons just say Bet."]],
  ["2.50.1","15 Nov","The Racing tab, reworked",["The Racing tab now shows today's races as the usual race cards, nothing else. Open one and press Bet on this race to bet any way you like."]],
