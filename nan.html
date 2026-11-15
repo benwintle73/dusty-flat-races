@@ -196,9 +196,9 @@ details.rv-r[open]>summary .rchev{transform:rotate(90deg)}details.rv-r[open]{pad
 .lg-s .picks{margin:2px 0 0}
 .rlist{grid-column:1/-1;margin-top:4px;border-top:1px dashed var(--line);padding-top:6px}
 .rl-h{font:600 12px/1 var(--led);text-transform:uppercase;letter-spacing:.5px;color:var(--ink2);margin-bottom:4px}
-.rl-r{display:grid;grid-template-columns:34px 28px minmax(0,1fr) auto;align-items:center;column-gap:6px;min-height:30px;font-size:15px}
+.rl-r{display:grid;grid-template-columns:34px 28px minmax(0,1fr);align-items:center;column-gap:6px;min-height:30px;font-size:15px}
 .rl-p{font:700 15px/1 var(--led);color:var(--ink2)}.rl-n{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.rl-r.mine .rl-n{font-weight:700;color:var(--ink)}.rl-r i{font:600 11px/1 var(--led);text-transform:uppercase;letter-spacing:.4px;color:var(--ink2);font-style:normal}.lg-w i{font-style:normal;font-weight:700;color:var(--good)}.lg-w i.n{color:#8e3a2c}
+.rl-r.mine{background:#ffe8a3;box-shadow:inset 4px 0 0 var(--amber);margin:1px -6px;padding:0 6px}.rl-r.mine .rl-n{font-weight:800;color:var(--ink)}.rl-r i{font:600 11px/1 var(--led);text-transform:uppercase;letter-spacing:.4px;color:var(--ink2);font-style:normal}.lg-w i{font-style:normal;font-weight:700;color:var(--good)}.lg-w i.n{color:#8e3a2c}
 .rl-note{margin:4px 0 0;font-size:13px;color:var(--ink2)}
 .lg-r{display:grid;grid-template-columns:34px minmax(0,1fr) auto;grid-template-areas:"p v w" ". s s" ". b b";column-gap:6px;row-gap:3px;align-items:center;padding:4px 0;border-bottom:1px solid #0001;font-size:15px}
 .lg-r .rl-p{grid-area:p}.lg-v{grid-area:v;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600}.lg-w{grid-area:w;display:flex;align-items:center;gap:4px}.lg-s{grid-area:s}.lg-b{grid-area:b}
@@ -631,6 +631,7 @@ details.nums2{grid-column:1/-1;margin:2px 0 4px}details.nums2>summary{cursor:poi
 @media (max-width:480px){.guide{grid-template-columns:1fr}.guide .ffload{grid-column:1;grid-row:auto}}
 .bb-pm{margin:0 0 8px;padding:6px 10px;background:#fff3cf;border-left:4px solid var(--amber);font-size:14px;font-weight:600}
 .rv-intro{margin:0 0 8px;font-size:15px}
+details.nan-loan>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px}details.nan-loan>summary::-webkit-details-marker{display:none}details.nan-loan>summary h3{margin:0;white-space:nowrap}.ln-s{margin-left:auto;font-size:14px;color:var(--ink2);white-space:nowrap}details.nan-loan[open]>summary{margin-bottom:10px}details.nan-loan[open]>summary .rchev{transform:rotate(90deg)}
 .rm-h{display:none}body.rmode .rm-h{display:block}.rm-h small{display:block;font:400 15px/1.3 var(--body,inherit);text-transform:none;letter-spacing:0;color:#d9c9a3;margin-top:2px}
 body.rmode #betAll,body.rmode #blkSoon,body.rmode #guide,body.rmode #recStrip,body.rmode #hl,body.rmode #hlnums,body.rmode #srcs{display:none}
 .mnav .mi svg{display:block}.rv-q{margin:4px 0 8px;font-size:16px;color:var(--paper)}
@@ -641,7 +642,7 @@ body.rmode #betAll,body.rmode #blkSoon,body.rmode #guide,body.rmode #recStrip,bo
 .rv-lad{list-style:none;margin:6px 0 0;padding:0;background:var(--paper);color:var(--ink)}
 .rv-lad li{display:grid;grid-template-columns:28px minmax(0,1fr) auto;row-gap:2px;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--rule,#d9cdb0)}
 .rv-lad li.lead{background:#fff4d6;border-left:6px solid var(--amber);padding-left:6px}
-.rl-n{font-weight:800;font-size:18px;color:var(--ink2);text-align:center}.rl-w{font-size:17px}.rl-h{font-size:14px;color:var(--ink2);white-space:nowrap;grid-column:2;grid-row:2;text-transform:none;letter-spacing:normal;font-weight:400}.rl-h b{color:var(--ink);font-size:16px}.rl-p{min-width:78px;text-align:right;grid-column:3;grid-row:1/3;font-size:18px}.rl-n{grid-row:1/3}
+.rld-n{font-weight:800;font-size:18px;color:var(--ink2);text-align:center}.rld-w{font-size:17px}.rld-h{font-size:14px;color:var(--ink2);white-space:nowrap;grid-column:2;grid-row:2;text-transform:none;letter-spacing:normal;font-weight:400}.rld-h b{color:var(--ink);font-size:16px}.rld-p{min-width:78px;text-align:right;grid-column:3;grid-row:1/3;font-size:18px}.rld-n{grid-row:1/3}
 .rv-more{margin-top:12px;background:var(--paper);color:var(--ink);padding:0 12px 10px}.rv-more>summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:12px 0;font-weight:700;font-size:16px}.rv-more>summary::-webkit-details-marker{display:none}.rv-more[open]>summary .rchev{transform:rotate(90deg)}
 .rv-more .bgrp{color:var(--ink)}
 .blksoon{background:var(--paper);color:var(--ink);border-left:5px solid #c98a00;padding:8px 10px;margin-top:8px}.bs-h{display:block;font:400 18px/1.1 var(--display);letter-spacing:.4px;text-transform:uppercase;color:#8a5d00;margin-bottom:4px}
@@ -861,7 +862,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.50.1"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.50.2"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -2295,7 +2296,7 @@ function render(){
   let rough=null;for(const x of live)for(const y of x.rk.slice(1,4)){const pr=x.r.code==="H"?y.u.win:y.price;if(pr>=8&&(!rough||y.p*pr>rough.y.p*rough.pr))rough={x,y,pr}}
   const tag=r=>`${timeOf(r.jump)} · ${escH(r.venue)} R${r.no} · ${CODE[r.code]}`;
   let pbest=null;for(const x of live){const pn=panelOf(x.r);if(pn&&pn.ts.length>=3&&pn.agree>=3&&(!pbest||pn.pick.p>pbest.pn.pick.p))pbest={r:x.r,pn}}
-  const card=o=>`<div class="hl${o.cls?" "+o.cls:""}" data-hlbet="${escH(o.r.id)}|${o.no}"><div class="hl-h"><b>${o.title}</b><small>${tag(o.r)}</small></div>${o.means?`<p class="hl-means">${o.means}</p>`:""}<div class="hl-p">${cloth(o.no,o.r.code,o.box)}<span class="hl-m"><b class="hl-n">${escH(o.name)}</b><span class="hl-s"><b>${pct(o.p)}</b> win chance${o.pr?` · <b>${div(o.pr)}</b> ${o.lbl}`:""}</span></span><button class="betbtn hlbet" aria-label="Play-money bet on ${escH(o.name)}">Bet<small>play money</small></button></div><span class="nsays">${escH(o.says)}</span></div>`;
+  const card=o=>`<div class="hl${o.cls?" "+o.cls:""}" data-hlbet="${escH(o.r.id)}|${o.no}"><div class="hl-h"><b>${o.title}</b><small>${tag(o.r)}</small></div>${o.means?`<p class="hl-means">${o.means}</p>`:""}<div class="hl-p">${cloth(o.no,o.r.code,o.box)}<span class="hl-m"><b class="hl-n">${escH(o.name)}</b><span class="hl-s"><b>${pct(o.p)}</b> win chance${o.pr?` · <b>${div(o.pr)}</b> ${o.lbl}`:""}</span></span><button class="betbtn hlbet" aria-label="Play-money bet on ${escH(o.name)}">Bet</button></div><span class="nsays">${escH(o.says)}</span></div>`;
   const plbl=r=>r.code==="H"||r.src==="quick"?"market":"Nan's price";
   const bestC=best?card({r:best.r,no:best.rk[0].u.no,box:best.rk[0].u.box,name:best.rk[0].u.name,title:"Nan's Best Bet",means:"Her highest chance to win today. Highest chance isn't always best value.",p:best.rk[0].p,pr:best.rk[0].price,lbl:plbl(best.r),says:catchFor("nan",best.r)}):"";
   const roughC=rough?card({r:rough.x.r,no:rough.y.u.no,box:rough.y.u.box,name:rough.y.u.name,title:"Nan's Roughie",means:"A longer price from lower down her order. Riskier, but pays more if it gets up.",p:rough.y.p,pr:rough.pr,lbl:rough.x.r.code==="H"?"market":plbl(rough.x.r),says:nanSays(rough.x.r.code,rough.x.r.id+"|"+rough.y.u.name)}):"";
@@ -2876,7 +2877,7 @@ function buildOk(t){const k=BT[t.type][1];
 }
 function builderHtml(r,G){
   if(BUILD.id!==r.id){const canAdd=MB&&!MB.legs.some(l=>l.id===r.id)&&(MB.type==="allup"?MB.legs.length<8:MB.legs.length<BT[MB.type][1]);
-    return `<button class="betbtn" data-bopen="${escH(r.id)}">Bet on this race<small>play money, not a real bookie bet</small></button>${canAdd?` <button class="betbtn" data-madd="${escH(r.id)}">Add to my ${BT[MB.type][0]}</button>`:""}`}
+    return `<button class="betbtn" data-bopen="${escH(r.id)}">Bet on this race</button>${canAdd?` <button class="betbtn" data-madd="${escH(r.id)}">Add to my ${BT[MB.type][0]}</button>`:""}`}
   const f=fieldOf(r)||[],t=BUILD.type,k=BT[t][1],ex=exotic(t),tk=buildTicket(r),ok=buildOk(tk),cost=t==="ew"?2*BUILD.stake:BUILD.stake;
   const styles=ex?(ordered(t)?[["straight","In this order"],["box","Any order (boxed)"],["standout","Standout"]]:[["straight","Straight"],["box","Boxed"]]):[];
   const marks=n=>BUILD.style==="standout"?BUILD.legs.slice(0,k).map((l,i)=>l.includes(n)?ord(i+1):"").filter(Boolean).join(" "):BUILD.style==="straight"&&k>1&&ordered(t)&&BUILD.sel.includes(n)?ord(BUILD.sel.indexOf(n)+1):"";
@@ -2946,7 +2947,7 @@ function multiTicket0(){return {type:MB.type,stake:MB.stake,legs:MB.legs.map(l=>
 /* a placed multi-race bet */
 function resList(title,rows,code,mine,note){
   return `<div class="rlist"><div class="rl-h">${title}</div>${rows.map(x=>{const me=x.no!=null&&mine.has(x.no);
-    return `<div class="rl-r${me?" mine":""}"><span class="rl-p">${ord(x.pos)}</span>${x.no!=null?cloth(x.no,code,x.box):"<span></span>"}<span class="rl-n">${escH(x.name||"")}</span><i>${me?"yours":""}</i></div>`}).join("")}${note?`<p class="rl-note">${note}</p>`:""}</div>`}
+    return `<div class="rl-r${me?" mine":""}"><span class="rl-p">${ord(x.pos)}</span>${x.no!=null?cloth(x.no,code,x.box):"<span></span>"}<span class="rl-n">${escH(x.name||"")}</span></div>`}).join("")}${note?`<p class="rl-note">${note}</p>`:""}</div>`}
 // the runners in a bet by name: in order for a straight exotic, by place for a standout, as a list for a box
 function pickNames(t,code){code=code||t.code;const f=t.field||[],nm=n=>{const u=f.find(x=>x.no===n)||(t.sel||[]).find(x=>x.no===n)||{};return u.name||""},
     one=(n,box)=>`<span class="pk">${cloth(n,code,box!=null?box:(f.find(u=>u.no===n)||{}).box)}<span>${inBlk(code,nm(n))?'<span class="blkmark">★</span>':""}${escH(nm(n))}</span></span>`;
@@ -2991,10 +2992,11 @@ let MANUAL=null,BKMSG="";
 function manualForm(t){const f=t.field||[],cur=BK.manual[t.rk]||[];
   return `<div class="builder">${[0,1,2,3].map(i=>`<label class="mrow">${ord(i+1)} <select data-mpos="${i}"><option value="">–</option>${[...f].sort((a,b)=>a.no-b.no).map(u=>`<option value="${u.no}" ${cur[i]===u.no?"selected":""}>${u.no}. ${escH(u.name)}</option>`).join("")}</select></label>`).join("")}
     <div class="calc-row"><button class="ffload" data-msave="${escH(t.rk)}">Save my result</button><button data-mclose>Close</button></div><p class="mwarn"><b>Heads up:</b> your result is temporary. When the official result comes in it replaces yours automatically, and if yours was wrong, every bet on this race is re-settled on the official result and your balance changes to match.</p><p class="calc-out"><small>Applies to every bet on this race.</small></p></div>`}
+let LOANOPEN=false;document.addEventListener("toggle",e=>{if(e.target.classList&&e.target.classList.contains("nan-loan"))LOANOPEN=e.target.open},true);
 let CHECKMSG="",LEDGER={per:{}},LOANMSG="",LOANAMT=100,PAYAMT=null;
 const hms=ms=>{ms=Math.max(0,ms);const h=Math.floor(ms/36e5),m=Math.floor(ms%36e5/6e4),s=Math.floor(ms%6e4/1e3);return `${h}h ${String(m).padStart(2,"0")}m ${String(s).padStart(2,"0")}s`};
 function loanHtml(b){const w=loanWindow();
-  return `<div class="calc nan-loan"><h3>Borrow from Nan</h3>
+  return `<details class="calc nan-loan" ${LOANOPEN||b.owed>0||LOANMSG?"open":""}><summary><h3>Borrow from Nan</h3><span class="ln-s">${b.owed>0?`You owe <b class="minus">${money(b.owed)}</b>`:`Up to $${Math.floor(w.left).toLocaleString("en-AU")}`}</span><span class="rchev">&#9656;</span></summary>
     <div class="loan-top"><div><small>You owe Nan</small><b class="${b.owed>0?"minus":""}">${money(b.owed)}</b>${b.owedRun!==b.owed?`<small>${money(b.owedRun)} counting results you entered</small>`:""}</div>
       <div><small>Borrowed in all</small><b>${money(b.borrowed)}</b></div><div><small>Paid back</small><b>${money(b.repaid)}</b></div>
       <div><small>You can borrow now</small><b>${money(w.left)}</b>${w.resets?`<small>Resets in <span id="loanClock" data-at="${w.resets}">${hms(w.resets-Date.now())}</span></small>`:""}</div></div>
@@ -3004,7 +3006,7 @@ function loanHtml(b){const w=loanWindow();
       return `<div class="payrow"><div class="bb-h">Pay Nan back</div><div class="bb-grid">${[50,100,250].map(v=>`<button data-pamt="${v}" aria-pressed="${PAYAMT===v}" ${v>=most?"disabled":""}>$${v}</button>`).join("")}<button data-pamt="all" aria-pressed="${PAYAMT==null}">All</button></div>
         <div class="lact"><label class="bb-own">$<input id="payIn" type="number" min="1" step="1" inputmode="decimal" value="${amt}"></label><button class="ffload paynan" data-lpay ${amt>0?"":"disabled"}>Pay Nan ${money(amt)} now</button></div></div>`})()}
     ${LOANMSG?`<p class="loanmsg">${LOANMSG}</p>`:""}
-    <p class="calc-out"><small>Nan lends up to ${money(LOAN_MAX)} in any 24 hours, in any amounts you like. The 24-hour clock starts the moment you borrow; until it runs out you can only borrow what's left of the ${money(LOAN_MAX)}. Then it resets. Whatever you owe comes out of your next winnings, the whole payout of a winning bet, until Nan is paid back. Refunds for scratchings aren't winnings. You can also pay her back sooner from your balance, any amount, any time.</small></p></div>`}
+    <p class="calc-out"><small>Nan lends up to ${money(LOAN_MAX)} in any 24 hours, in any amounts you like. The 24-hour clock starts the moment you borrow; until it runs out you can only borrow what's left of the ${money(LOAN_MAX)}. Then it resets. Whatever you owe comes out of your next winnings, the whole payout of a winning bet, until Nan is paid back. Refunds for scratchings aren't winnings. You can also pay her back sooner from your balance, any amount, any time.</small></p></details>`}
 function renderBets(){
   const b=balances(),el=$("betsView");if(!el)return;LEDGER=ledger(true);
   const live=BK.tickets.slice().sort((a,b)=>Date.parse(b.jump)-Date.parse(a.jump)),slipCost=BK.slip.reduce((a,t)=>a+costOf(t),0),closedSlip=BK.slip.some(t=>Date.now()>=Date.parse(t.jump));
@@ -3100,7 +3102,7 @@ function renderResults(){const WHO=RV_WHO.filter(([w])=>!RV.off.includes(w));con
   const top=!per.length?`<p class="note">${waiting?`No official results in yet: ${waiting} race${waiting>1?"s have":" has"} run and ${waiting>1?"are":"is"} waiting on results.`:"No races have been run yet."}</p>`
     :`<h3 class="bgrp">${week?"Last 7 days":date===today?"Today so far":"How they went"}</h3>${RV.code==="same"?`<p class="rv-note">Only the ${per.length} of ${allN} races that ${tipped.map(([,l])=>l).join(", ")} all tipped.</p>`:""}
     <p class="rv-q">If you put <b>$10 on each tipster&rsquo;s top pick</b> in every race, this is what you&rsquo;d be up or down:</p>
-    <ol class="rv-lad">${lad.map(([w,l],i)=>`<li${i===0?' class="lead"':""}><span class="rl-n">${i+1}</span><b class="rl-w">${l}</b><span class="rl-h">${T[w].win.hit} winner${T[w].win.hit===1?"":"s"} in ${T[w].win.n} races</span><span class="rl-p">${pm(w10(w))}</span></li>`).join("")}</ol>
+    <ol class="rv-lad">${lad.map(([w,l],i)=>`<li${i===0?' class="lead"':""}><span class="rld-n">${i+1}</span><b class="rld-w">${l}</b><span class="rld-h">${T[w].win.hit} winner${T[w].win.hit===1?"":"s"} in ${T[w].win.n} races</span><span class="rld-p">${pm(w10(w))}</span></li>`).join("")}</ol>
     <p class="rv-note">${L0v>0?`Best to follow: <b>${L0[1]}</b>.`:"Nobody would be in front."}${lad.some(([w])=>T[w].win.n<T[L0[0]].win.n)?" Some tipsters only tip some races; tap Same races to compare them on the same races.":""}${waiting?` ${waiting} race${waiting>1?"s":""} still waiting on results.`:""}</p>`;
   const more=!per.length?"":`<details class="rv-more" ${RV.more?"open":""}><summary>Other bets: place, quinella, trifecta, first 4 <span class="rchev">&#9656;</span></summary>
     <p class="rv-note">Every bet type on each tipster&rsquo;s picks: Win and Place on the top pick, Quinella and Exacta on the top two, Trifecta on the top three, First 4 on the top four.</p>
@@ -3192,6 +3194,7 @@ document.addEventListener("click",e=>{
 });
 /* ---------- What's new: the update history, plus the suggestions box ---------- */
 const CHANGES=[
+ ["2.50.2","15 Nov","Tidier bets",["In your bets, the official result shows full names again, and your runners are highlighted instead of marked YOURS.","Borrow from Nan folds away; it opens by itself while you owe Nan.","Bet buttons just say Bet."]],
  ["2.50.1","15 Nov","The Racing tab, reworked",["The Racing tab now shows today's races as the usual race cards, nothing else. Open one and press Bet on this race to bet any way you like."]],
  ["2.49.3","15 Nov","Results made plain",["Results now asks one question: if you put $10 on each tipster's top pick in every race, who'd be up? The tipsters are ranked by that, best first."]],
  ["2.49.2","15 Nov","A simpler Results page",["Back anyone's tips at a meeting: pick Nan, Pop, Bob, Gran, Kev or The Mob in the Back box on a track.","Choose who to compare: tap a tipster to leave them out.","Pick All races, Same races (only the races every tipster tipped), Horses, Harness or Greys.","Results now starts with a plain ladder: each tipster's winners, and what $10 on their top pick to win would have made.","Place, quinella, trifecta and first 4, the bet sizes and who to follow by code are tucked under one tap."]],
