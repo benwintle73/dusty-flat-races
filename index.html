@@ -82,6 +82,7 @@ canvas{width:100%;height:auto;display:block}
 #betopts{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0 0}#betopts:empty{display:none}
 #betopts button{background:var(--tote2);color:var(--paper);border:0;min-height:36px;padding:2px 10px;font-weight:600;font-size:14px}
 #betopts button[aria-pressed=true]{background:var(--amber);color:var(--tote)}
+#ticket small{font:inherit;font-size:.7em;opacity:.8;margin-left:4px}
 #betopts .lbl{align-self:center;font-size:13px;opacity:.75;margin:0 4px 0 6px}
 .seg button{background:var(--tote2);color:var(--paper);border:0;min-height:44px;padding:2px;font-weight:600;font-size:15px}
 .seg button[aria-pressed=true]{background:var(--amber);color:var(--tote)}
@@ -92,7 +93,7 @@ canvas{width:100%;height:auto;display:block}
 .stake label{font-weight:600}
 #stake{width:92px;min-height:44px;background:#000;color:var(--amber);border:2px solid var(--tote2);font:700 28px/1 var(--led);padding:2px 8px}
 .chip{min-height:44px;min-width:50px;background:var(--tote2);color:var(--paper);border:0;font-weight:600;padding:0 8px}
-.go{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:8px}
+.go{display:grid;grid-template-columns:1fr 1fr;gap:8px}.go #ticket{grid-column:1/-1;order:3}.go #ticket[hidden]{display:none}
 .big{min-height:52px;border:0;font:400 20px/1 var(--display);letter-spacing:.6px;text-transform:uppercase;padding:4px 8px}
 .big.place{background:var(--paper);color:var(--ink)}
 .big.jump{background:var(--red);color:#fff}
@@ -417,7 +418,7 @@ body.landrace #bigbtn{display:none}
 <script>
 "use strict";
 /* ---------- helpers ---------- */
-const APP_VERSION="2.44.0"; // bump on every release; shown after the title
+const APP_VERSION="2.44.1"; // bump on every release; shown after the title
 const $=id=>document.getElementById(id);
 let RNG=Math.random;
 const mulberry=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
@@ -2642,7 +2643,7 @@ function nextRace(){
     }
     save();renderAll();return}
   S.idx++;
-  if(S.ahead&&S.ahead[S.idx]){S.race=S.ahead[S.idx];delete S.ahead[S.idx];S.bets=[];S.sel=[];S.std=[];S.phase="bet";S.result=null;save()} // built earlier for a multi
+  if(S.ahead&&S.ahead[S.idx]&&S.aheadKey===meetKey()){S.race=S.ahead[S.idx];delete S.ahead[S.idx];S.bets=[];S.sel=[];S.std=[];S.phase="bet";S.result=null;save()} // built earlier for a multi
   else if(S.mode==="daily")withSeed(S.seed+S.idx*97,buildRace);else buildRace();renderAll();
   say(`Betting open on the <b>${S.race.title}</b>.`);
 }
@@ -2663,9 +2664,9 @@ function stake(){return Math.max(0,Math.floor(+$("stake").value||0))}
 function silk(h,k,tag){const a=silkOf(h,k)[0],b=h.silk?inkOn(a):SILKS[k%SILKS.length][1];return `<span class="silk" style="background:${rugCss(h)||a};color:${b}">${h.no}${tag?`<i>${tag}</i>`:""}</span>`}
 function renderHeader(){
   $("meet").textContent=isGold()?`Goldfields · ${S.track} · ${dayName(S.gold.date)}`:S.mode==="harness"?(S.rh?`Real Harness · ${S.track} · ${dayName(S.rh.date)}`:`Harness · ${S.track} · Meeting ${S.meeting}`):S.mode==="dogs"?(S.rd?`Real Dogs · ${S.track} · ${dayName(S.rd.date)}`:`Greyhounds · ${S.track} · Meeting ${S.meeting}`):S.mode==="real"?`Real Races · ${S.track} · ${S.real.date}`:S.mode==="daily"?`Daily Meeting ${S.day}`:`${TIERS[S.tier].name} · ${S.track} · Meeting ${S.meeting}`;
-  const dd=(S.dailyDone||{})[dayKey()];const db=$("daily");db.hidden=S.mode!=="career";const rb=$("realbtn");rb.hidden=S.mode!=="career";rb.disabled=S.phase!=="bet"||S.bets.length>0;$("foot").innerHTML=isGold()?"Our own Goldfields meeting: made-up runners at made-up meetings, the same card and the same results for everyone. Play money only.":isHarness()&&S.rh?"Fields and form by FormFav. Odds are game estimates from form and the draw. Play money only. Bets go in My Book and are paid on the official result; the race you watch here is a simulation.":isDogs()&&S.rd?"Fields and form by FormFav. Odds are game estimates from form. Play money only. Bets go in My Book and are paid on the official result; the race you watch here is a simulation.":S.mode==="real"?`${dataCredit()}. Play money only. Bets go in My Book and are paid on the official result; the race you watch here is a simulation.`:"Play money only. No real bets, deposits or prizes.";db.disabled=dd!==undefined||S.phase!=="bet"||S.bets.length>0;db.textContent=dd!==undefined?`Today's daily: ${money(dd)}`:"Play Daily Meeting";
+  const dd=(S.dailyDone||{})[dayKey()];const db=$("daily");db.hidden=S.mode!=="career";const rb=$("realbtn");rb.hidden=S.mode!=="career";rb.disabled=S.phase!=="bet"||S.bets.length>0;$("foot").innerHTML=isGold()?"Our own Goldfields meeting: made-up runners at made-up meetings, the same card and the same results for everyone. Play money only.":isHarness()&&S.rh?"Fields and form by FormFav. Odds are game estimates from form and the draw. Play money only. Place bet uses your game bank and is paid on the simulation you watch; Add to My Book is paid on the official result.":isDogs()&&S.rd?"Fields and form by FormFav. Odds are game estimates from form. Play money only. Place bet uses your game bank and is paid on the simulation you watch; Add to My Book is paid on the official result.":S.mode==="real"?`${dataCredit()}. Play money only. Place bet uses your game bank and is paid on the simulation you watch; Add to My Book is paid on the official result.`:"Play money only. No real bets, deposits or prizes.";db.disabled=dd!==undefined||S.phase!=="bet"||S.bets.length>0;db.textContent=dd!==undefined?`Today's daily: ${money(dd)}`:"Play Daily Meeting";
   $("raceNo").textContent=`${S.race.no}/${lastIdx()+1}`;
-  const onBook=realBet();$("bank").textContent=money(onBook?BOOK.bank:S.bank);$("banklbl").textContent=onBook?"MY BOOK":"BANK";
+  $("bank").textContent=money(S.bank);$("banklbl").textContent="BANK";
 }
 function renderCard(){
   if(bookOpen)return renderBook();
@@ -2804,26 +2805,25 @@ function renderDetail(){
 }
 function renderSlip(){
   const bet=S.phase==="bet";
-  if(realBet()&&!BOOK_TYPES.includes(S.type)){S.type="win";S.sel=S.sel.slice(0,1)}
   const btn=(k,v,off)=>`<button data-t="${k}" aria-pressed="${S.type===k}" ${bet&&!off?"":"disabled"}>${v[0]}</button>`;
-  $("seg").innerHTML=Object.entries(TYPES).filter(([k])=>!isMultiT(k)&&(!realBet()||BOOK_TYPES.includes(k))).map(([k,v])=>btn(k,v)).join("")
-    +(realBet()?"":`<div class="segm">Multis</div>`+Object.entries(TYPES).filter(([k])=>isMultiT(k)).map(([k,v])=>btn(k,v,!multiOK(k))).join(""));
+  $("seg").innerHTML=Object.entries(TYPES).filter(([k])=>!isMultiT(k)).map(([k,v])=>btn(k,v)).join("")
+    +`<div class="segm">Multis</div>`+Object.entries(TYPES).filter(([k])=>isMultiT(k)).map(([k,v])=>btn(k,v,!multiOK(k))).join("");
   $("betopts").innerHTML=!bet?"":isMultiT(S.type)?(()=>{const legs=multiLegs(S.type)||[];
       return (S.type==="allup"?`<span class="lbl">Legs</span>${[2,3,4,5,6].map(n=>`<button data-alln="${n}" aria-pressed="${(S.allN||2)===n}" ${S.idx+n-1>lastIdx()?"disabled":""}>${n}</button>`).join("")}`:"")
         +`<span class="lbl">Pick runners in</span>${legs.map((idx,i)=>{const r=aheadRace(idx);return `<button data-leg="${i}" aria-pressed="${(S.leg||0)===i}">Leg ${i+1} · R${r?r.no:idx+1} (${((S.msel||[])[i]||[]).length})</button>`}).join("")}`})()
-    :isExo(S.type)&&!realBet()?`${["straight","box","standout"].map(st=>`<button data-style="${st}" aria-pressed="${exoStyle()===st}">${st[0].toUpperCase()+st.slice(1)}</button>`).join("")}${exoStyle()==="standout"?`<span class="lbl">Picking</span>${Array.from({length:TYPES[S.type][1]},(_,i)=>`<button data-pos="${i}" aria-pressed="${(S.pos||0)===i}">${["1st","2nd","3rd","4th"][i]} (${((S.std||[])[i]||[]).length})</button>`).join("")}`:""}`:"";
+    :isExo(S.type)?`${["straight","box","standout"].map(st=>`<button data-style="${st}" aria-pressed="${exoStyle()===st}">${st[0].toUpperCase()+st.slice(1)}</button>`).join("")}${exoStyle()==="standout"?`<span class="lbl">Picking</span>${Array.from({length:TYPES[S.type][1]},(_,i)=>`<button data-pos="${i}" aria-pressed="${(S.pos||0)===i}">${["1st","2nd","3rd","4th"][i]} (${((S.std||[])[i]||[]).length})</button>`).join("")}`:""}`:"";
   document.querySelectorAll(".stake button,#stake").forEach(e=>e.disabled=!bet);
   $("bets").innerHTML=S.bets.map((b,i)=>`<li><span>${b.label} · ${money(b.stake)} ${b.combos?`· ${b.combos.length} combos · ${flexi(b)}% flexi`:`at ${div(b.odds)}`}</span>${bet?`<button data-rm="${i}">Remove</button>`:""}</li>`).join("")
     +(S.multis||[]).filter(m=>m.status==="pending").map((m,i)=>`<li><span>${m.label} · ${money(m.stake)} · ${m.combos} combos · ${flexi(m)}% flexi${m.legs.some(l=>l.done)?` · ${m.legs.filter(l=>l.done).length} of ${m.legs.length} legs in`:""}</span>${bet&&!m.legs.some(l=>l.done)&&m.legs[0].idx>=S.idx?`<button data-rmm="${i}">Remove</button>`:""}</li>`).join("");
-  $("jump").textContent=S.phase==="race"?"Skip to result":bet?(realBet()&&!S.bets.length?"Watch a simulation":S.bets.length?"Jump":"Jump with no bet"):"Racing done";
+  $("jump").textContent=S.phase==="race"?"Skip to result":bet?(S.bets.length?"Jump":"Jump with no bet"):"Racing done";
   $("jump").disabled=S.phase!=="bet"&&S.phase!=="race";
-  const rl=realBet();$("ticket").hidden=!rl;$("place").hidden=rl;$("place").textContent="Place bet";$("nan").hidden=!(bet&&(S.mode==="career"||S.mode==="gold")&&S.bank<5&&!S.bets.length);
+  const rl=realBet();$("ticket").hidden=!rl;$("place").hidden=false;$("place").textContent="Place bet";$("nan").hidden=!(bet&&(S.mode==="career"||S.mode==="gold")&&S.bank<5&&!S.bets.length);
   renderDetail();updateHint();
 }
 function updateTicketBtn(){
   const b=$("ticket"),src=bookSrc();if(!src)return;
-  const st=stake(),cost=S.type==="ew"?st*2:st,isClosed=closed(src.jump),ready=S.phase==="bet"&&S.sel.length===TYPES[S.type][1]&&cost>=1&&cost<=BOOK.bank;
-  b.disabled=isClosed||!ready;b.textContent=isClosed?"Betting closed":"Add to My Book";
+  const st=stake(),cost=S.type==="ew"?st*2:st,isClosed=closed(src.jump),book=BOOK_TYPES.includes(S.type)&&exoStyle()==="straight",ready=book&&S.phase==="bet"&&S.sel.length===TYPES[S.type][1]&&cost>=1&&cost<=BOOK.bank;
+  b.disabled=isClosed||!ready;b.innerHTML=isClosed?"Betting closed":book?`Add to My Book <small>${money(BOOK.bank)}</small>`:"My Book: straight bets only";
 }
 function updateHint(){
   updateTicketBtn();
@@ -2839,7 +2839,7 @@ function updateHint(){
     if(st>maxBet()){$("hint").textContent=`${TIERS[S.tier].name} limit is ${money(maxBet())} a bet. Lower the stake.`;return}
     const top=multi?null:Math.max(...cs.map(c=>oddsFor(S.type,c)));
     $("hint").innerHTML=`${n} combination${n>1?"s":""} · <b>${Math.round(unit*10000)/100}% flexi</b> for ${money(st)}${multi?". Pays the winners' prices multiplied, at that share":`. Best combination returns <b>${money(unit*top)}</b>`}`;return}
-  const st=stake(),cost=S.type==="ew"?st*2:st,rb=realBet(),bank=rb?BOOK.bank:S.bank;
+  const st=stake(),cost=S.type==="ew"?st*2:st,rb=false,bank=S.bank;
   const limit=rb?Infinity:maxBet(),ready=S.sel.length===need,afford=cost>=1&&cost<=bank&&cost<=limit;
   btn.disabled=!(ready&&afford);
   if(!ready){
@@ -2858,7 +2858,7 @@ function bigSync(){const land=!!S&&S.phase==="race"&&LAND.matches,was=document.b
   if(was&&!land){try{document.querySelector(".stage").scrollIntoView({block:"start"})}catch(e){}}
   const on=!land&&BIGPREF&&!!S&&(S.phase==="race"||S.phase==="result")&&matchMedia("(min-width:821px)").matches;document.body.classList.toggle("bigrace",on);
   const b=$("bigbtn");if(b){b.textContent=on?"⤡ Smaller":"⤢ Bigger";b.setAttribute("aria-pressed",String(on));b.hidden=!(S&&(S.phase==="race"||S.phase==="result"))}}
-function renderAll(){renderHeader();renderNav();renderCard();renderSlip();bigSync()}
+function renderAll(){pruneMultis();renderHeader();renderNav();renderCard();renderSlip();bigSync()}
 function labelFor(type,sel){
   const f=S.race.field;
   if(TYPES[type][1]===1)return `${TYPES[type][0]} ${f[sel[0]].no}. ${f[sel[0]].name}`;
@@ -2873,11 +2873,11 @@ function curSel(){
   if(isExo(S.type)&&S.style==="standout"){S.std=S.std||[];return S.std[S.pos||0]||(S.std[S.pos||0]=[])}
   return S.sel;
 }
-const exoStyle=()=>isExo(S.type)&&!realBet()?(S.style||"straight"):"straight";
+const exoStyle=()=>isExo(S.type)?(S.style||"straight"):"straight";
 function exoNow(){return exoCombos(S.type,exoStyle(),S.sel,S.std)}
 // a meeting's races ahead of this one, built now so multis can be picked (the same races come up when you get there)
 function aheadRace(i){
-  if(i===S.idx)return S.race;if(i<S.idx||i>lastIdx())return null;S.ahead=S.ahead||{};
+  if(i===S.idx)return S.race;if(S.aheadKey!==meetKey()){S.ahead={};S.aheadKey=meetKey()}if(i<S.idx||i>lastIdx())return null;S.ahead=S.ahead||{};
   if(!S.ahead[i]){
     const keep={idx:S.idx,race:S.race,bets:S.bets,sel:S.sel,phase:S.phase,result:S.result,lastNames:S.lastNames};
     for(let j=S.idx+1;j<=i;j++){if(S.ahead[j]){S.lastNames=S.ahead[j].field.map(h=>h.name);continue}
@@ -2893,13 +2893,13 @@ function multiLegs(type){
   if(type==="ddouble")return run(L-1,2);if(type==="quaddie")return run(L-3,4);if(type==="big6")return run(L-5,6);
   if(type==="allup")return run(c,clamp(S.allN||2,2,6));return null;
 }
-const multiOK=t=>!realBet()&&!!multiLegs(t);
+const multiOK=t=>!!multiLegs(t);
 function multiCombos(){const legs=multiLegs(S.type);if(!legs)return 0;return legs.reduce((a,_,i)=>a*((S.msel||[])[i]||[]).length,1)}
 function placeMulti(st){
   const legs=multiLegs(S.type),n=multiCombos();if(!legs||!n)return false;
   const L=legs.map((idx,i)=>{const r=aheadRace(idx),sel=S.msel[i].slice();return {idx,no:r.no,sel,nos:sel.map(k=>r.field[k].no)}});
   const label=`${TYPES[S.type][0]} ${L.map(l=>l.nos.join(",")).join(" / ")}`;
-  S.multis=S.multis||[];S.multis.push({type:S.type,legs:L,stake:st,unit:st/n,combos:n,label:`${label} (R${L[0].no}–R${L.at(-1).no})`,status:"pending"});
+  S.multis=S.multis||[];S.multis.push({type:S.type,mk:meetKey(),legs:L,stake:st,unit:st/n,combos:n,label:`${label} (R${L[0].no}–R${L.at(-1).no})`,status:"pending"});
   S.bank=Math.round((S.bank-st)*100)/100;S.msel=[];S.leg=0;return true;
 }
 // after each race: legs of multis that ran in it
@@ -2914,6 +2914,15 @@ function settleMultis(race,o){
   return out;
 }
 // a new meeting (or leaving one): multis with legs still to run are refunded, and the races built ahead are dropped
+const meetKey=()=>[S.mode,S.real&&S.mode==="real"?S.real.key:"",isDogs()&&S.rd?S.rd.date+S.rd.slug:"",isHarness()&&S.rh?S.rh.date+S.rh.slug:"",isGold()?S.gold.date+S.gold.slug:"",S.meeting||""].join("|");
+// a multi whose meeting has changed, or whose next leg was skipped over (picking a later real race), is refunded
+function pruneMultis(){
+  if(!S||S.phase!=="bet")return;
+  if(S.aheadKey!==meetKey()){S.ahead={};S.aheadKey=meetKey()}
+  let back=0;S.multis=(S.multis||[]).filter(m=>{if(m.status!=="pending")return false;
+    if(m.mk&&m.mk!==meetKey()||m.legs.some(l=>!l.done&&l.idx<S.idx)){back+=m.stake;return false}return true});
+  if(back){S.bank=Math.round((S.bank+back)*100)/100;save()}
+}
 function clearMeetingBets(refund=true){if(refund)for(const m of S.multis||[])if(m.status==="pending")S.bank=Math.round((S.bank+m.stake)*100)/100;S.multis=[];S.ahead={};S.msel=[];S.leg=0}
 function pendingMultiCost(){return (S.multis||[]).filter(m=>m.status==="pending").reduce((a,m)=>a+m.stake,0)}
 $("ticket").onclick=()=>{
@@ -2947,7 +2956,6 @@ $("card").addEventListener("click",e=>{
     saveBook();renderNav();renderCard();}
 });
 $("place").onclick=()=>{
-  if(realBet())return; // real races: My Book only
   const st=stake(),t=S.type,cost=t==="ew"?st*2:st;
   if(isMultiT(t)){if(st<1||st>S.bank||st>maxBet()||!placeMulti(st))return;audio();tone(660,.05);save();renderAll();say(`Multi on. It's settled race by race.`);return}
   if(isExo(t)&&exoStyle()!=="straight"){const cs=exoNow();if(!cs.length||st<1||st>S.bank||st>maxBet())return;
