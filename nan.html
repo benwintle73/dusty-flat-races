@@ -47,6 +47,14 @@ html.app .mast{padding-top:calc(46px + env(safe-area-inset-top))!important}
 .newsbtn[aria-expanded="true"]{background:var(--amber);color:var(--tote);border-color:var(--amber)}
 .newsbtn i{position:absolute;top:-5px;right:-5px;width:12px;height:12px;border-radius:50%;background:var(--red);box-shadow:0 0 0 2px var(--tote)}
 .newsp{padding-bottom:0}
+.radiobtn{grid-column:1/-1;display:flex;align-items:center;justify-content:center;gap:8px;background:var(--tote2);color:var(--paper);border:2px solid var(--amber-dim);border-radius:10px;min-height:40px;padding:0 12px;font:700 15px/1 var(--led);cursor:pointer}
+.radiobtn b{font-size:12px;transition:transform .2s}.radiobtn[aria-expanded="true"]{background:var(--amber);color:var(--tote);border-color:var(--amber)}.radiobtn[aria-expanded="true"] b{transform:rotate(180deg)}
+.radio h3{margin:0 0 6px}.radio p{margin:0 0 8px}
+.rstations{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px}
+.rst{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto auto;column-gap:10px;align-items:center;background:var(--tote);color:var(--paper);text-decoration:none;padding:10px 12px;border-left:5px solid var(--amber)}
+.rst b{font:400 20px/1.1 var(--display);letter-spacing:.4px;text-transform:uppercase}.rst small{grid-column:1;font-size:14px;opacity:.85;margin-top:3px}
+.rst span{grid-column:2;grid-row:1/3;background:var(--amber);color:var(--tote);font-weight:700;padding:10px 14px;white-space:nowrap}
+.rnote{margin:8px 0 0!important;font-size:14px;color:var(--ink2)}
 .mast .sub{display:flex;flex-direction:column;align-items:center;text-align:center;gap:3px;flex:1 1 auto;min-width:0;line-height:1;align-self:center}
 .mast .sub{white-space:nowrap}@media (max-width:400px){.mast .sub{font-size:17px}}
 .verbtn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:84px;background:var(--tote2);color:var(--amber);border:2px solid var(--amber);border-radius:10px;padding:7px 8px 6px;cursor:pointer;animation:vglow 2.4s ease-in-out infinite}
@@ -506,8 +514,16 @@ details.srcs{margin-top:16px}details.srcs>.allow,details.srcs #allow>.allow{marg
 </style>
 </head>
 <body>
-<header class="mast"><h1>Nan's Tips</h1><span class="sub" id="sub"><span>Loading</span><span>today's races…</span></span><button class="verbtn" id="refBtn" aria-label="Refresh to get the latest version"><b id="verTxt"></b><small id="verSub">Refresh</small></button><a href="./?play=1" id="playLink">Play Off To The Races &#9656;</a><button class="newsbtn" id="newsBtn" aria-expanded="false">What's new<i id="newDot" hidden></i></button></header>
+<header class="mast"><h1>Nan's Tips</h1><span class="sub" id="sub"><span>Loading</span><span>today's races…</span></span><button class="verbtn" id="refBtn" aria-label="Refresh to get the latest version"><b id="verTxt"></b><small id="verSub">Refresh</small></button><a href="./?play=1" id="playLink">Play Off To The Races &#9656;</a><button class="newsbtn" id="newsBtn" aria-expanded="false">What's new<i id="newDot" hidden></i></button><button class="radiobtn" id="radioBtn" aria-expanded="false"><span aria-hidden="true">&#128251;</span> Listen to the races live <b>&#9662;</b></button></header>
 <section id="newsView" class="wrap newsp" hidden></section>
+<section id="radioView" class="wrap newsp" hidden><div class="calc radio"><h3>Listen to the races live</h3>
+  <p>Racing radio calls the races as they run. Tap a station: it opens in a new tab. Start it playing, then come back here. It keeps playing while you read Nan's tips.</p>
+  <div class="rstations">
+    <a class="rst" href="https://www.rsn.net.au/" target="_blank" rel="noopener"><b>RSN 927</b><small>Victoria's racing station. Its RSN Xtra channel carries the Sky Racing race calls from Australia-wide, 10am to 11pm.</small><span>Listen &#9656;</span></a>
+    <a class="rst" href="https://www.skysportsradio.com.au/" target="_blank" rel="noopener"><b>Sky Sports Radio</b><small>NSW's racing station: live calls of the gallops, harness and dogs.</small><span>Listen &#9656;</span></a>
+    <a class="rst" href="https://www.sen.com.au/" target="_blank" rel="noopener"><b>SEN Track</b><small>Racing calls and form talk from SEN.</small><span>Listen &#9656;</span></a>
+  </div>
+  <p class="rnote">Each station plays from its own site or app. We don't host the audio. On a phone, the station's app often works best.</p></div></section>
 <div id="a2hs" class="wrap a2wrap" hidden></div>
 <main class="wrap">
   <div class="view"><button data-view="tips" aria-pressed="true">Today's tips</button><button data-view="races" aria-pressed="false">Races</button><button data-view="record" aria-pressed="false">Tipsters</button><button data-view="punters" aria-pressed="false">Punters</button><button data-view="bets" aria-pressed="false">My bets</button><button data-view="blk" aria-pressed="false">Black book</button><button data-view="cricket" aria-pressed="false">Cricket</button></div>
@@ -675,7 +691,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.45.0"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.45.1"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -2766,6 +2782,7 @@ document.addEventListener("click",e=>{
 });
 /* ---------- What's new: the update history, plus the suggestions box ---------- */
 const CHANGES=[
+ ["2.45.1","15 Nov","Listen to the races live",["New at the top of Nan's page: Listen to the races live. Pick a racing radio station (RSN 927, whose RSN Xtra channel carries the Sky Racing calls, Sky Sports Radio or SEN Track). It opens in a new tab and keeps playing while you come back to Nan's tips."]],
  ["2.45.0","15 Nov","The black book",["A new Black book tab for your favourite runners. Open a runner on Today's tips and tap Add to black book, or find one by name in the Black book tab.","For each runner it shows where it's racing next (with Nan's chance and the price, and a button to open the race) and how your bets on it have gone: bets, staked, returned and profit. Races with one of your runners in them get a ★ on Today's tips. The book is saved with your bets, so it follows your account."]],
  ["2.44.1","15 Nov","Bet on real races in the game again",["In the game, real races (horses, dogs and harness) take game bets again: Place bet uses your game bank and is paid on the simulation you watch, with every bet type, multis included. It's game money, kept apart from your bets here on Nan's page and from the leaderboard.","Add to My Book is still there underneath for a straight bet paid on the official result, and shows My Book's balance."]],
  ["2.44.0","15 Nov","Every bet type in the game",["The game now takes every bet Nan's page does. New: the Duet (two runners both in the first three), and exotics boxed or as a standout (choose runners for each place), flexi when there's more than one combination (your stake is spread across them).","Multis across the meeting: Running Double (this race and the next), Daily Double (the last two races), Treble, Quaddie (the last four), Big 6 (the last six) and All Up (pick how many races). Tap a leg to see that race's field and pick your runners; each leg is settled as it's run and it pays the winners' prices multiplied, at your flexi share. Multis are for game races; real races still take My Book bets."]],
@@ -3248,6 +3265,7 @@ setInterval(checkVersion,3*60e3);document.addEventListener("visibilitychange",()
 $("refBtn").addEventListener("click",()=>{$("verSub").textContent="Loading…";const u=new URL(location.href);u.searchParams.set("r",Date.now());if(ST.view&&ST.view!=="tips")u.hash=ST.view;location.replace(u.href)});
 try{const u=new URL(location.href);if(u.searchParams.has("r")){u.searchParams.delete("r");history.replaceState(null,"",u.pathname+u.search+u.hash)}}catch(e){}
 newsDot();showA2();$("newsBtn").addEventListener("click",()=>toggleNews());
+$("radioBtn").addEventListener("click",()=>{const el=$("radioView"),on=el.hidden;el.hidden=!on;$("radioBtn").setAttribute("aria-expanded",on)});
 loadAll();
 setInterval(()=>{for(const k in LIMIT)if(Date.now()-LIMIT[k]>10*60e3&&!BUSY[k])delete CARDS[k];pump();if(!document.querySelector("details.run[open]"))render()},60e3);
 </script>
