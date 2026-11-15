@@ -585,6 +585,7 @@ details.srcs{margin-top:16px}details.srcs>.allow,details.srcs #allow>.allow{marg
     <p><b>Pop</b> trusts the computer. He&rsquo;s trusted it since it tipped him a $21 winner in 1998. He still brings it up.</p>
     <p><b>Bob</b> gets his tips from a bloke at the pub. The bloke&rsquo;s wrong a fair bit. Bob remains completely confident in him.</p>
     <p><b>Gran</b> backs the favourite. Every race. Every time. Roughies, she says, are for people who like their disappointment with a little suspense.</p>
+    <p><b>Uncle Kev</b> has never read a form guide. He asks around: the pub, the TAB, the servo, a bloke who knows a strapper. Whatever most of them say, Kev says louder.</p>
     <p><b>The Mob</b> throws everyone&rsquo;s tips in together and listens hardest to whoever&rsquo;s been winning, re-checked after every result. It&rsquo;s the family&rsquo;s best guess. That&rsquo;s a low bar, but it clears it.</p>
     <p>Tap a race to see the field. Tap a runner to see what Nan thinks. She&rsquo;ll explain her reasoning. She won&rsquo;t promise to be right.</p>
     <details class="fsec"><summary><h4>Where Nan gets her gossip</h4><span class="rchev">&#9656;</span></summary>
@@ -707,7 +708,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.46.1"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.47.0"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -2855,6 +2856,7 @@ document.addEventListener("click",e=>{
 });
 /* ---------- What's new: the update history, plus the suggestions box ---------- */
 const CHANGES=[
+ ["2.47.0","15 Nov","Uncle Kev joins the table, and no more stuck bets",["Uncle Kev is the new tipster. He tips whatever the most tipsters are on, usually closer to the jump. He's on the race cards, in Whose tips, The Mob and the leaderboard.","Bets no longer get stuck on Waiting on results: a backup results feed fills in missing meetings, abandoned races refund straight away, and any race with no result after two days is refunded."]],
  ["2.46.1","15 Nov","Horses, Harness or Greys at a glance",["Every race card now has a coloured tag next to the race name saying what it is: Horses (green), Harness (blue) or Greys (brown)."]],
  ["2.46.0","15 Nov","Races: the whole day as cards",["The Races tab now shows every race of the day as cards, just like Today's tips: tap one to open the field, Nan's order and the bet builder. Races still to run come first; the ones that have run fold away under Run today, latest first. Today or Tomorrow, and Horses, Dogs or Harness, as before."]],
  ["2.45.10","15 Nov","Five minutes after the jump",["Jumped races now stay listed for 5 minutes (was 2), still counting up the time since they jumped, so you can open them and see the field."]],
