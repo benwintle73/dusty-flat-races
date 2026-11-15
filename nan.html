@@ -644,6 +644,7 @@ details.nums2{grid-column:1/-1;margin:2px 0 4px}details.nums2>summary{cursor:poi
 .bs-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;align-items:center;width:100%;text-align:left;background:none;border:0;border-top:1px solid var(--line);padding:8px 0;min-height:48px;color:var(--ink);cursor:pointer}
 .bs-r{display:flex;align-items:center;gap:6px;min-width:0}.bs-r b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.bs-w{grid-column:1;font-size:14px;color:var(--ink2)}.bs-go{grid-column:2;grid-row:1/3;font-weight:700;color:var(--good)}
 .betall{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:6px 10px;align-items:center;background:#20361f;color:var(--paper);border:1px solid var(--good);border-radius:8px;padding:8px 10px;margin-top:8px}
+#allWho{font:inherit;font-weight:800;padding:2px 6px;border-radius:8px;margin:0 2px}
 .ba-t b{display:block;font-size:16px}.ba-t small{display:block;font-size:13px;color:#cfe3c9}.ba-s{display:flex;align-items:center;gap:4px;font-weight:700}.ba-s select{min-height:42px;font-size:16px}.betall .ffload{min-height:44px}
 @media (max-width:560px){.betall{grid-template-columns:auto minmax(0,1fr)}.ba-t{grid-column:1/-1}}
 .rv-days{grid-template-columns:repeat(8,minmax(0,1fr))!important}@media (max-width:560px){.rv-days{grid-template-columns:repeat(4,minmax(0,1fr))!important}}
@@ -894,14 +895,20 @@ function blkSoonHtml(){const now=Date.now(),soon=[];
   soon.sort((a,b)=>a.t-b.t);if(!soon.length)return "";
   return `<div class="blksoon"><b class="bs-h">&#9733; Your black book: racing soon</b>${soon.slice(0,4).map(({r,x,t})=>`<button class="bs-row" data-blkgo="${escH(r.id)}"><span class="bs-r">${cloth(x.u.no,r.code,x.u.box)}<b>${escH(x.u.name)}</b></span><span class="bs-w">${escH(r.venue)} R${r.no} · <span data-cdn="${escH(r.jump)}">${cdText(t-now)}</span></span><span class="bs-go">Open race &#9656;</span></button>`).join("")}</div>`}
 // a track picked: back Nan's pick in each of its races still to come, in one go (onto the slip, confirmed as usual)
-let ALLST=5;
-function betAllRaces(){if(ST.meet==="all")return [];const now=Date.now(),onSlip=new Set(BK.slip.map(t=>t.rk));
-  return RACES.filter(r=>`${r.code}|${r.venue}`===ST.meet&&Date.parse(r.jump)>now+60e3).map(r=>{let rk;try{rk=ranked(r)}catch(_){rk=null}return rk&&rk[0]&&fieldOf(r)&&!onSlip.has(rkey(r))?{r,x:rk[0]}:null}).filter(Boolean)}
-function betAllHtml(){const L=betAllRaces();if(L.length<2)return "";const v=ST.meet.split("|")[1];
-  return `<div class="betall"><div class="ba-t"><b>Back Nan&rsquo;s pick in all ${L.length} races to come at ${escH(v)}</b><small>Win bets, play money. They go on your slip; nothing&rsquo;s placed until you confirm.</small></div>
+let ALLST=5,ALLWHO=null;
+// whose pick to back: chosen here, else the tipster picked in Whose tips, else Nan
+const allWho=()=>{const w=ALLWHO||(ST.who&&ST.who!=="all"?ST.who:"nan");return OFF.has(w)?"nan":w};
+function betAllRaces(){if(ST.meet==="all")return [];const now=Date.now(),onSlip=new Set(BK.slip.map(t=>t.rk)),w=allWho();
+  return RACES.filter(r=>`${r.code}|${r.venue}`===ST.meet&&Date.parse(r.jump)>now+60e3).map(r=>{if(!fieldOf(r)||onSlip.has(rkey(r)))return null;let u=null;
+    try{if(w==="nan"){const rk=ranked(r);u=rk&&rk[0]&&rk[0].u}else{const t=tipOf(r,w);u=t&&t.pick}}catch(_){u=null}
+    return u?{r,x:{u}}:null}).filter(Boolean)}
+function betAllHtml(){const L=betAllRaces(),w=allWho();if(!L.length&&w==="nan")return "";const v=ST.meet.split("|")[1];
+  const pick=`<select id="allWho" aria-label="Whose pick">${Object.entries(WHO).filter(([k])=>k!=="all"&&!OFF.has(k)).map(([k,l])=>`<option value="${k}" ${k===w?"selected":""}>${l}</option>`).join("")}</select>`;
+  if(!L.length)return `<div class="betall"><div class="ba-t"><b>Back ${pick}&rsquo;s pick at ${escH(v)}</b><small>${escH(WHO[w])} hasn&rsquo;t tipped any races to come here yet.</small></div></div>`;
+  return `<div class="betall"><div class="ba-t"><b>Back ${pick}&rsquo;s pick in ${L.length===1?"the race":`all ${L.length} races`} to come at ${escH(v)}</b><small>Win bets, play money. They go on your slip; nothing&rsquo;s placed until you confirm.</small></div>
     <label class="ba-s">$<select id="allSt" aria-label="Stake per race">${[1,2,5,10,20].map(n=>`<option value="${n}" ${ALLST===n?"selected":""}>${n}</option>`).join("")}</select> each</label>
     <button class="ffload" data-betall>Add ${L.length} bets · ${money(L.length*ALLST)}</button></div>`}
-document.addEventListener("change",e=>{if(e.target.id==="allSt"){ALLST=+e.target.value;$("betAll").innerHTML=betAllHtml()}});
+document.addEventListener("change",e=>{if(e.target.id==="allSt"){ALLST=+e.target.value;$("betAll").innerHTML=betAllHtml()}if(e.target.id==="allWho"){ALLWHO=e.target.value;$("betAll").innerHTML=betAllHtml()}});
 document.addEventListener("click",e=>{if(!e.target.closest("[data-betall]"))return;const L=betAllRaces();if(!L.length)return;
   for(const {r,x} of L){const f=fieldOf(r);BK.slip.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,7),rk:rkey(r),code:r.code,date:r.date,venue:r.venue,no:r.no,jump:r.jump,type:"win",stake:ALLST,sel:[{no:x.u.no,name:x.u.name,box:x.u.box}],field:f})}
   saveBK();$("status").textContent=`Added ${L.length} win bets to your slip. Not placed yet: press Review & confirm at the bottom to place them.`;render()});
@@ -3178,7 +3185,7 @@ document.addEventListener("click",e=>{
 });
 /* ---------- What's new: the update history, plus the suggestions box ---------- */
 const CHANGES=[
- ["2.49.2","15 Nov","A simpler Results page",["Choose who to compare: tap a tipster to leave them out.","Pick All races, Same races (only the races every tipster tipped), Horses, Harness or Greys.","Results now starts with a plain ladder: each tipster's winners, and what $10 on their top pick to win would have made.","Place, quinella, trifecta and first 4, the bet sizes and who to follow by code are tucked under one tap."]],
+ ["2.49.2","15 Nov","A simpler Results page",["Back anyone's tips at a meeting: pick Nan, Pop, Bob, Gran, Kev or The Mob in the Back box on a track.","Choose who to compare: tap a tipster to leave them out.","Pick All races, Same races (only the races every tipster tipped), Horses, Harness or Greys.","Results now starts with a plain ladder: each tipster's winners, and what $10 on their top pick to win would have made.","Place, quinella, trifecta and first 4, the bet sizes and who to follow by code are tucked under one tap."]],
  ["2.49.1","15 Nov","Results in finishing order",["On Results, each race lists 1st, 2nd, 3rd and 4th one under the other."]],
  ["2.49.0","15 Nov","Results on the cards, value, and more",["Once a race has run, its card shows the winner and how Nan's pick went. Nan's record line now starts with today: winners and $1 profit so far.","A Value tag marks a runner when the bookies pay more than Nan's own price, and Firming or Drifting shows which way its price has moved since Nan first saw the market.","Black book runners racing in the next half hour show at the top of Tips. Pick a track and you can back Nan's pick in all its races to come in one go (onto your slip, confirmed as usual).","Results has a Last 7 days view and a Who to follow table: the best tipster on Horses, Harness and Greys. Behind the scenes: page errors are logged quietly, and the old Races page code is gone."]],
  ["2.48.1","15 Nov","Clearer tips",["Each featured pick now says what it means: Nan's Best Bet is her highest chance to win (not always best value), her Roughie is a riskier longer price, and The Mob's pick is everyone's tips combined. What do Chance, Market and Nan's price mean? sits right under them, and inside each race too.","First visit? A three-step guide shows how to find a race and see why Nan picked it. Bet buttons say play money, and so does the betting tool: nothing goes to a bookie.","Results explains it's the tipsters' picks against the official results, and the bet size is now $1 per combo instead of 100%; exotics are Any order or In this order. The sums haven't changed."]],
