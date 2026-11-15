@@ -123,6 +123,20 @@ details.fsec>summary::-webkit-details-marker{display:none}details.fsec>summary h
 .view{display:flex;gap:6px;margin-top:10px}
 .view button{flex:1;min-width:0;background:var(--tote2);color:var(--paper);border:2px solid var(--amber-dim);min-height:48px;font:400 20px/1 var(--display);letter-spacing:.6px;text-transform:uppercase}
 @media (max-width:480px){.view{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.view button{min-height:42px;font-size:18px}}
+@media (max-width:480px){.view button:last-child:nth-child(odd){grid-column:1/-1}}
+.blk-head{display:flex;align-items:center;justify-content:space-between;gap:8px}.blk-head h3{margin:0}
+.blk-add{display:grid;grid-template-columns:minmax(0,1fr);gap:6px;margin-top:8px}.blk-add input{min-height:44px;font-size:17px;padding:0 10px;border:2px solid var(--ink);background:#fff;color:var(--ink);box-sizing:border-box;width:100%}
+.blk-hit{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px;padding:6px 0;border-top:1px solid #0002}.blk-hit small{display:block;color:var(--ink2)}
+.blk{background:var(--paper);color:var(--ink);padding:10px 12px;margin-top:8px;border-top:5px solid var(--amber)}
+.blk-top{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:start}.blk-top b{font:400 22px/1.1 var(--display);letter-spacing:.4px;text-transform:uppercase}.blk-top small{display:block;color:var(--ink2);margin-top:2px}
+.blk-nums{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:8px}.blk-nums div{background:var(--paper2,#efe6cf);padding:6px 8px}.blk-nums small{display:block;font-size:12px;color:var(--ink2);text-transform:uppercase;letter-spacing:.04em}.blk-nums b{font:700 19px/1.2 var(--led)}
+.blk-nums.b3{grid-template-columns:repeat(3,minmax(0,1fr))}.blk-note{margin:8px 0 0;font-size:14px;color:var(--ink2)}.blk-head h3{font:400 22px/1.1 var(--display);letter-spacing:.4px;text-transform:uppercase}
+@media (max-width:420px){.blk-nums:not(.b3){grid-template-columns:repeat(2,minmax(0,1fr))}.blk-nums.b3 b{font-size:16px}}
+.blk-run{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;margin-top:8px;padding:8px;background:#0e2b1a10;border-left:4px solid var(--good)}
+.blk-bets{margin:8px 0 0;padding:0;list-style:none;font-size:15px}.blk-bets li{display:flex;justify-content:space-between;gap:8px;padding:4px 0;border-top:1px solid #0001}
+.blk-star{background:none;border:2px solid var(--amber-dim);color:var(--ink);min-height:40px;padding:0 12px;font-weight:700;font-size:15px;cursor:pointer;margin:6px 0 2px}
+.blk-star[aria-pressed=true]{background:var(--amber);border-color:var(--amber);color:var(--tote)}
+.blkmark{color:#c98a00;margin-right:3px}.r-blk{font-size:13px;font-weight:700;color:#c98a00;margin-left:4px;white-space:nowrap}
 .view button[aria-pressed="true"]{background:var(--amber);color:var(--tote);border-color:var(--amber)}
 [hidden]{display:none!important}
 .sumgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px;margin-top:10px}
@@ -496,7 +510,7 @@ details.srcs{margin-top:16px}details.srcs>.allow,details.srcs #allow>.allow{marg
 <section id="newsView" class="wrap newsp" hidden></section>
 <div id="a2hs" class="wrap a2wrap" hidden></div>
 <main class="wrap">
-  <div class="view"><button data-view="tips" aria-pressed="true">Today's tips</button><button data-view="races" aria-pressed="false">Races</button><button data-view="record" aria-pressed="false">Tipsters</button><button data-view="punters" aria-pressed="false">Punters</button><button data-view="bets" aria-pressed="false">My bets</button><button data-view="cricket" aria-pressed="false">Cricket</button></div>
+  <div class="view"><button data-view="tips" aria-pressed="true">Today's tips</button><button data-view="races" aria-pressed="false">Races</button><button data-view="record" aria-pressed="false">Tipsters</button><button data-view="punters" aria-pressed="false">Punters</button><button data-view="bets" aria-pressed="false">My bets</button><button data-view="blk" aria-pressed="false">Black book</button><button data-view="cricket" aria-pressed="false">Cricket</button></div>
   <section id="tipsView">
   <div class="tabs who" id="whoc"></div>
   <div id="hl"></div>
@@ -521,6 +535,7 @@ details.srcs{margin-top:16px}details.srcs>.allow,details.srcs #allow>.allow{marg
   </details>
   </section>
   <section id="betsView" hidden></section>
+  <section id="blkView" hidden></section>
   <section id="racesView" hidden></section>
   <section id="cricketView" hidden></section>
   <section id="puntersView" hidden><div class="calc board players" id="players"><h3>Punters' leaderboard</h3><p>Loading…</p></div></section>
@@ -660,7 +675,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.44.1"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.45.0"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -848,10 +863,10 @@ function raceBody(r){
   const canBet=Date.now()<Date.parse(r.jump);
   return `<p class="nsays">${escH(catchFor("nan",r))}</p>${whoOrderHtml(r)}${panelHtml(r)}${loadBtn}${canBet?builderHtml(r):""}<p class="rmeta">${[r.name,r.dist?r.dist+"m":"",r.cls,r.cond||(r.card&&r.card.cond),r.est?"No market yet: horse prices estimated":""].filter(Boolean).map(escH).join(" · ")}</p>
   <table class="field"><thead><tr><th colspan="3">Nan's order</th></tr></thead><tbody>
-  ${rk.map((x,i)=>`<tr><td><details class="run${i===0?" top1":""}"><summary><span class="rk">${ord(i+1)}</span>${cloth(x.u.no,r.code,x.u.box,"no")}<span class="nm"><b>${escH(x.u.name)}</b><small>${escH(runSub(r,x.u))}</small><small class="nt">${escH(talkFor("nan",r,x.u,i+1,n))}</small></span>
+  ${rk.map((x,i)=>`<tr><td><details class="run${i===0?" top1":""}"><summary><span class="rk">${ord(i+1)}</span>${cloth(x.u.no,r.code,x.u.box,"no")}<span class="nm"><b>${inBlk(r.code,x.u.name)?'<span class="blkmark">★</span>':""}${escH(x.u.name)}</b><small>${escH(runSub(r,x.u))}</small><small class="nt">${escH(talkFor("nan",r,x.u,i+1,n))}</small></span>
     <span class="pct">${pct(x.p)}<small>chance</small></span><span class="pr">${div(x.price)}<small>${mkt(r)?"market":"Nan's"}</small></span>${mkt(r)?`<span class="pr mk">${div(ladder(1/(x.p*1.13)))}<small>Nan's</small></span>`:"<span></span>"}
     <span class="meter"><i style="width:${Math.round(100*x.p/maxP)}%"></i></span></summary>
-    <div class="why">${talkBox(r,x.u,"nan")}${whyHtml(r,x,i,n)}${fullForm(r,x)}</div></details></td></tr>`).join("")}
+    <div class="why">${blkBtn(r.code,x.u.name)}${talkBox(r,x.u,"nan")}${whyHtml(r,x,i,n)}${fullForm(r,x)}</div></details></td></tr>`).join("")}
   ${(r.scr||[]).map(u=>`<tr><td><div class="scrrow"><span class="rk">SCR</span>${cloth(u.no,r.code,u.box,"no x")}<span class="nm"><s>${escH(u.name)}</s><small>Scratched: no chance from Nan</small><small class="nt">${escH(talkFor("nan",r,u,1,1,true))}</small></span></div></td></tr>`).join("")}
   </tbody></table>`;
 }
@@ -1964,7 +1979,7 @@ function raceCard(r,open,tag){const rk=ranked(r),t=Date.parse(r.jump),gone=t<=Da
   const panel=pn?`<div class="r-panel"><span class="r-who">The Mob</span>${cloth(pn.pick.no,r.code,pn.pick.box)}${others.map(x=>`<span class="r-t"><small>${escH(x.label.split("'")[0])}</small>${cloth(x.pick.no,r.code,x.pick.box)}</span>`).join("")}<span class="agree a${pn.agree===pn.ts.length?"all":""}">${pn.agree}/${pn.ts.length}<span class="agw"> agree</span></span></div>`:"";
   const src=rk&&r.src==="quick"?`<span class="qtag">${QUICK[r.code]&&QUICK[r.code].priceOnly?"Price only":"Quick form"}</span>`:"";
   return `<details class="race${gone?" jumped":""}" data-id="${escH(r.id)}" ${open.has(r.id)?"open":""}><summary class="rsum">
-    <div class="r-main"><div class="r-title"><span class="r-time">${hm||""}<small>${ap||""}</small></span><b class="r-v">${escH(r.venue)}</b><b class="r-n">R${r.no}</b>${src}<span class="r-cd">${raceState(r)}</span></div>${pick}${panel}</div>
+    <div class="r-main"><div class="r-title"><span class="r-time">${hm||""}<small>${ap||""}</small></span><b class="r-v">${escH(r.venue)}</b><b class="r-n">R${r.no}</b>${blkTag(r,rk)}${src}<span class="r-cd">${raceState(r)}</span></div>${pick}${panel}</div>
     <span class="rchev">&#9656;</span></summary><div class="rbody">${open.has(r.id)?raceBody(r):""}</div></details>`}
 function render(){
   if(ST.view==="races")renderRaces();
@@ -2241,14 +2256,14 @@ const SYNC_KEY="otr-nan-sync",BETS_URL=SB+"/otr-bets",CODE_RE=/^[A-HJ-NP-Z2-9]{4
 let SYNC=(()=>{try{const j=JSON.parse(localStorage.getItem(SYNC_KEY));if(j&&CODE_RE.test(j.code))return {rev:0,dirty:false,...j}}catch(e){}return {code:null,rev:0,dirty:true}})(),SYNC_T=0,SYNC_ST="",SYNC_AT=0,SYNC_BUSY=false,SYNC_MSG="";
 function saveSync(){try{localStorage.setItem(SYNC_KEY,JSON.stringify({code:SYNC.code,rev:SYNC.rev,dirty:SYNC.dirty,name:SYNC.name||null,pin:!!SYNC.pin,email:SYNC.email||null}))}catch(e){}}
 function newCode(){const a="ABCDEFGHJKLMNPQRSTUVWXYZ23456789",v=new Uint32Array(8);crypto.getRandomValues(v);const c=[...v].map(x=>a[x%a.length]).join("");return c.slice(0,4)+"-"+c.slice(4)}
-const bkDefaults=b=>({start:1000,topups:0,tickets:[],slip:[],manual:{},manualAt:{},off:{},loans:[],repays:[],...(b||{})});
+const bkDefaults=b=>({start:1000,topups:0,tickets:[],slip:[],manual:{},manualAt:{},off:{},loans:[],repays:[],bb:{},...(b||{})});
 function mergeBK(mine,theirs){const a=bkDefaults(mine),b=bkDefaults(theirs),tk=new Map();
   for(const t of [...b.tickets,...a.tickets]){const o=tk.get(t.id);tk.set(t.id,!o?t:(t.status==="cancelled"||o.status==="cancelled")?{...t,status:"cancelled"}:t)}
   const ids=new Set(tk.keys()),slip=new Map();for(const t of [...b.slip,...a.slip])if(!ids.has(t.id))slip.set(t.id,t);
   const loans=new Map();for(const l of [...b.loans,...a.loans])loans.set(l.at+"|"+l.amount,l);
   const repays=new Map();for(const x of [...(b.repays||[]),...(a.repays||[])])repays.set(x.at+"|"+x.amount,x);
   const manual={...b.manual},manualAt={...b.manualAt};for(const k in a.manual)if(!(k in manual)||(a.manualAt[k]||0)>=(manualAt[k]||0)){manual[k]=a.manual[k];manualAt[k]=a.manualAt[k]}
-  return {...b,...a,start:a.start,topups:Math.max(a.topups||0,b.topups||0),tickets:[...tk.values()],slip:[...slip.values()],repays:[...repays.values()].sort((x,y)=>x.at-y.at),loans:[...loans.values()].sort((x,y)=>x.at-y.at),manual,manualAt,off:{...b.off,...a.off}}}
+  return {...b,...a,start:a.start,topups:Math.max(a.topups||0,b.topups||0),tickets:[...tk.values()],slip:[...slip.values()],repays:[...repays.values()].sort((x,y)=>x.at-y.at),loans:[...loans.values()].sort((x,y)=>x.at-y.at),manual,manualAt,off:{...b.off,...a.off},bb:(()=>{const o={...(b.bb||{})};for(const k in a.bb||{})if(!o[k]||(a.bb[k].at||0)>=(o[k].at||0))o[k]=a.bb[k];return o})()}}
 function adopt(data){BK=bkDefaults(data);try{localStorage.setItem(BK_KEY,JSON.stringify(BK))}catch(e){}LEDGER={per:{}};try{render()}catch(e){}if(ST.view==="bets")renderBets();slipBar()}
 /* The players' leaderboard: what's yours (official balance less what you owe Nan), worked out here and saved with your bets */
 function myStats(){const b=balances(),done=BK.tickets.filter(t=>t.status!=="cancelled").map(settleOf).filter(o=>(o.src==="official"||o.src==="entered")&&["won","lost"].includes(o.state));
@@ -2705,8 +2720,53 @@ function renderBets(){
   slipBar();
 }
 let BKBUSY=false;
+/* ---------- The black book: favourite runners, where they race next, and how our bets on them have gone ----------
+   Saved with your bets (so it follows your account). A bet counts for a runner when the runner is in it, so an exotic
+   or multi with two of them counts for both. */
+const blkKey=(code,name)=>code+"|"+fkey(name);
+const inBlk=(code,name)=>{const e=(BK.bb||{})[blkKey(code,name)];return !!(e&&e.on)};
+const blkList=()=>Object.values(BK.bb||{}).filter(e=>e.on).sort((a,b)=>a.name.localeCompare(b.name));
+function blkSet(code,name,on){BK.bb=BK.bb||{};const k=blkKey(code,name),o=BK.bb[k]||{};BK.bb[k]={name:o.name||name,code,on,at:Date.now(),since:on?(o.on?o.since:Date.now()):o.since};saveBK()}
+const blkBtn=(code,name)=>{const on=inBlk(code,name);return `<button class="blk-star" data-blk="${escH(code)}" data-blkn="${escH(name)}" aria-pressed="${on}">${on?"★ In your black book":"☆ Add to black book"}</button>`};
+function blkTag(r,rk){if(!rk||!blkList().length)return "";const hit=rk.filter(x=>inBlk(r.code,x.u.name));return hit.length?`<span class="r-blk">★ ${escH(hit.map(x=>x.u.name).join(", "))}</span>`:""}
+// every bet with this runner in it
+function blkBets(e){const k=fkey(e.name);
+  return BK.tickets.filter(t=>t.status!=="cancelled"&&t.sport!=="cricket"&&(isMulti(t.type)?(t.legs||[]).some(l=>(l.code||t.code)===e.code&&(l.sel||[]).some(x=>fkey(x.name)===k)):t.code===e.code&&[...(t.sel||[]),...(t.legs||[]).flat().map(n=>((t.field||[]).find(u=>u.no===n)||{}))].some(x=>x&&fkey(x.name)===k)))}
+function blkStats(e){const ts=blkBets(e);let st=0,back=0,setSt=0,open=0,won=0;
+  for(const t of ts){const c=costOf(t),o=settleOf(t);st+=c;if(o.src&&o.pay!=null&&o.state!=="open"&&o.state!=="waiting"&&o.state!=="div"){setSt+=c;back+=o.pay;if(o.pay>0&&o.state==="won")won++}else open++}
+  return {ts,st:r2(st),back:r2(back),profit:r2(back-setSt),open,won}}
+// where the runner is racing (today's and tomorrow's cards that are loaded)
+function blkRuns(e){const k=fkey(e.name),now=Date.now();
+  return RACES.filter(r=>r.code===e.code&&Date.parse(r.jump)>now-60e3).map(r=>{let rk;try{rk=ranked(r)}catch(_){rk=null}const x=rk&&rk.find(x=>fkey(x.u.name)===k);return x?{r,x,n:rk.length}:null}).filter(Boolean).sort((a,b)=>Date.parse(a.r.jump)-Date.parse(b.r.jump))}
+let BLKQ="";
+function blkHits(){const q=fkey(BLKQ);if(q.length<2)return [];const out=[],seen=new Set();
+  for(const r of RACES){let rk;try{rk=ranked(r)}catch(_){rk=null}if(!rk)continue;for(const x of rk){const k=blkKey(r.code,x.u.name);if(seen.has(k)||!fkey(x.u.name).includes(q))continue;seen.add(k);out.push({r,x})}if(out.length>=8)break}
+  return out.slice(0,8)}
+function blkHitsHtml(){const h=blkHits();if(fkey(BLKQ).length<2)return "";if(!h.length)return '<p class="blk-note">No runner by that name in the races loaded. Open a race on Today\'s tips to load its field, or star a runner from there.</p>';
+  return h.map(({r,x})=>`<div class="blk-hit"><span><b>${escH(x.u.name)}</b><small>${CODE[r.code]} · ${escH(r.venue)} R${r.no} · ${timeOf(r.jump)}</small></span>${blkBtn(r.code,x.u.name)}</div>`).join("")}
+function renderBlk(){const el=$("blkView");if(!el)return;const L=blkList();
+  const all=L.map(e=>({e,s:blkStats(e),runs:blkRuns(e)})),tot=all.reduce((a,{s})=>({st:a.st+s.st,back:a.back+s.back,profit:a.profit+s.profit}),{st:0,back:0,profit:0});
+  el.innerHTML=`<div class="calc"><div class="blk-head"><h3>Black book</h3><small>${L.length} runner${L.length===1?"":"s"}</small></div>
+    <p>Keep your favourite runners here: see where they're racing next and what you've won on them. Star a runner from its details on Today's tips, or find one by name.</p>
+    <div class="blk-add"><input id="blkq" type="search" placeholder="Find a runner by name" value="${escH(BLKQ)}" autocomplete="off"><div id="blkHits">${blkHitsHtml()}</div></div></div>
+    ${L.length?`<div class="blk"><div class="blk-head"><h3>All your runners</h3></div><div class="blk-nums b3"><div><small>Bet on them</small><b>${money(r2(tot.st))}</b></div><div><small>Returned</small><b>${money(r2(tot.back))}</b></div><div><small>Profit</small><b class="${tot.profit>=0?"plus":"minus"}">${tot.profit>=0?"+":""}${money(r2(tot.profit))}</b></div></div><p class="blk-note">Settled bets only. A bet counts for every one of your runners in it.</p></div>`:""}
+    ${all.map(({e,s,runs})=>`<div class="blk"><div class="blk-top"><span><b>★ ${escH(e.name)}</b><small>${CODE[e.code]}${e.since?` · in the book since ${new Date(e.since).toLocaleDateString("en-AU",{day:"numeric",month:"short"})}`:""}</small></span><button class="blk-star" data-blk="${escH(e.code)}" data-blkn="${escH(e.name)}" data-blkoff aria-pressed="true">Remove</button></div>
+      ${runs.length?runs.slice(0,2).map(({r,x})=>`<div class="blk-run"><span><b>${Date.parse(r.jump)<=Date.now()?"Racing now":dayRel2(r)+" "+timeOf(r.jump)}</b> · ${escH(r.venue)} R${r.no}${r.dist?` · ${r.dist}m`:""}<br><small>No. ${x.u.no} · Nan gives it ${pct(x.p)} · ${div(x.price)}</small></span><button class="ffload" data-blkgo="${escH(r.id)}">Open race</button></div>`).join(""):'<p class="blk-note">Not in any race loaded for today or tomorrow.</p>'}
+      <div class="blk-nums"><div><small>Bets</small><b>${s.ts.length}</b></div><div><small>Staked</small><b>${money(s.st)}</b></div><div><small>Returned</small><b>${money(s.back)}</b></div><div><small>Profit</small><b class="${s.profit>=0?"plus":"minus"}">${s.profit>=0?"+":""}${money(s.profit)}</b></div></div>
+      ${s.ts.length?`<ul class="blk-bets">${s.ts.slice().sort((a,b)=>Date.parse(b.jump)-Date.parse(a.jump)).slice(0,5).map(t=>{const o=settleOf(t),c=costOf(t);return `<li><span>${new Date(t.jump).toLocaleDateString("en-AU",{day:"numeric",month:"short"})} · ${isMulti(t.type)?BT[t.type][0]:`${escH(t.venue)} R${t.no} · ${BT[t.type][0]}`} · ${money(c)}</span><b class="${o.state==="won"?"plus":o.state==="lost"?"minus":""}">${o.state==="won"?"+"+money(o.pay):o.state==="lost"?"Lost":o.state==="void"?"Refunded":"Running"}</b></li>`}).join("")}</ul>${s.ts.length>5?`<p class="blk-note">Latest 5 of ${s.ts.length}. They're all under My bets.</p>`:""}`:'<p class="blk-note">No bets on it yet.</p>'}
+    </div>`).join("")}`;
+}
+const dayRel2=r=>{const d=new Date(r.jump).toLocaleDateString("en-CA",{timeZone:"Australia/Sydney"}),t=new Date().toLocaleDateString("en-CA",{timeZone:"Australia/Sydney"});return d===t?"Today":d>t?"Tomorrow":""};
+document.addEventListener("input",e=>{if(e.target.id!=="blkq")return;BLKQ=e.target.value;const h=$("blkHits");if(h)h.innerHTML=blkHitsHtml()});
+document.addEventListener("click",e=>{
+  const b=e.target.closest("[data-blk]");
+  if(b){e.preventDefault();blkSet(b.dataset.blk,b.dataset.blkn,b.hasAttribute("data-blkoff")?false:!inBlk(b.dataset.blk,b.dataset.blkn));
+    if(ST.view==="blk")renderBlk();else{document.querySelectorAll(`[data-blk="${b.dataset.blk}"][data-blkn="${CSS.escape(b.dataset.blkn)}"]`).forEach(x=>{const on=inBlk(x.dataset.blk,x.dataset.blkn);x.setAttribute("aria-pressed",on);x.textContent=on?"★ In your black book":"☆ Add to black book"});try{render()}catch(_){}}return}
+  const g=e.target.closest("[data-blkgo]");if(g){setView("races");RS.code="all";RS.id=g.dataset.blkgo;renderRaces();toTop("racesView")}
+});
 /* ---------- What's new: the update history, plus the suggestions box ---------- */
 const CHANGES=[
+ ["2.45.0","15 Nov","The black book",["A new Black book tab for your favourite runners. Open a runner on Today's tips and tap Add to black book, or find one by name in the Black book tab.","For each runner it shows where it's racing next (with Nan's chance and the price, and a button to open the race) and how your bets on it have gone: bets, staked, returned and profit. Races with one of your runners in them get a ★ on Today's tips. The book is saved with your bets, so it follows your account."]],
  ["2.44.1","15 Nov","Bet on real races in the game again",["In the game, real races (horses, dogs and harness) take game bets again: Place bet uses your game bank and is paid on the simulation you watch, with every bet type, multis included. It's game money, kept apart from your bets here on Nan's page and from the leaderboard.","Add to My Book is still there underneath for a straight bet paid on the official result, and shows My Book's balance."]],
  ["2.44.0","15 Nov","Every bet type in the game",["The game now takes every bet Nan's page does. New: the Duet (two runners both in the first three), and exotics boxed or as a standout (choose runners for each place), flexi when there's more than one combination (your stake is spread across them).","Multis across the meeting: Running Double (this race and the next), Daily Double (the last two races), Treble, Quaddie (the last four), Big 6 (the last six) and All Up (pick how many races). Tap a leg to see that race's field and pick your runners; each leg is settled as it's run and it pays the winners' prices multiplied, at your flexi share. Multis are for game races; real races still take My Book bets."]],
  ["2.43.6","15 Nov","No more dragging middles, and the track map stays",["The middle of a race never runs slower than the even pace races used to run at; the burst out of the gate and the run home come on top of it. Harness races run quicker throughout, with the middle about 11% quicker than before.","The little track map in the top left now stays up all race, and at the turns the window from above sits just under it. Results are unchanged."]],
@@ -3144,11 +3204,12 @@ function toTop(id){const el=$(id)||$(ST.view+"View");if(!el)return;try{el.scroll
 function setView(v,focus){
   const was=ST.view;
   document.querySelectorAll("[data-view]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.view===v));
-  ST.view=v;$("racesView").hidden=v!=="races";$("tipsView").hidden=v!=="tips";$("recordView").hidden=v!=="record";$("betsView").hidden=v!=="bets";$("cricketView").hidden=v!=="cricket";$("puntersView").hidden=v!=="punters";
+  ST.view=v;$("racesView").hidden=v!=="races";$("tipsView").hidden=v!=="tips";$("recordView").hidden=v!=="record";$("betsView").hidden=v!=="bets";$("blkView").hidden=v!=="blk";$("cricketView").hidden=v!=="cricket";$("puntersView").hidden=v!=="punters";
   if(v==="record"){if(!REC.sum)loadRecord();else renderRecord();loadBoard()}
   if(v==="punters"){renderPlayers();loadPlayers()}
   if(v==="races"){RS.id=null;renderRaces()}
   if(v==="bets"){renderBets();checkOfficial(false);crCheck()}
+  if(v==="blk"){renderBlk();checkOfficial(false)}
   if(v==="cricket"){renderCricket();loadCricket(false).then(crCheck)}
   slipBar();
   if(focus)toTop(focus); // tab buttons switch in place; only links to a spot (like Review & confirm) scroll
@@ -3175,7 +3236,7 @@ document.addEventListener("change",e=>{if(e.target.id==="stakeIn"){const v=Math.
   pullBK()})();
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")pullBK()});
 setInterval(()=>{if(document.visibilityState==="visible")pullBK()},30e3);
-if(location.hash==="#record")setView("record");else if(location.hash==="#races")setView("races");else if(location.hash==="#punters")setView("punters");else if(location.hash==="#cricket")setView("cricket");else if(location.hash==="#news")toggleNews(true);else if(location.hash==="#bets")setView("bets",BK.slip.length?"slipBox":null);else slipBar();
+if(location.hash==="#record")setView("record");else if(location.hash==="#races")setView("races");else if(location.hash==="#punters")setView("punters");else if(location.hash==="#blk")setView("blk");else if(location.hash==="#cricket")setView("cricket");else if(location.hash==="#news")toggleNews(true);else if(location.hash==="#bets")setView("bets",BK.slip.length?"slipBox":null);else slipBar();
 function refreshAllow(){clearTimeout(refreshAllow.t);refreshAllow.t=setTimeout(()=>getJSON(SB+"/otr-nan?follow=1").then(j=>{ALLOW=j.allowance||ALLOW;CREDITS=j.credits||CREDITS;$("allow").innerHTML=creditsHtml(CREDITS);$("srcsN").innerHTML=srcsLine()}).catch(()=>{}),1500)}
 setInterval(refreshAllow,120e3);
 // Refresh: reload from the server, skipping any cached copy, and come back to the same tab
