@@ -631,6 +631,18 @@ details.nums2{grid-column:1/-1;margin:2px 0 4px}details.nums2>summary{cursor:poi
 @media (max-width:480px){.guide{grid-template-columns:1fr}.guide .ffload{grid-column:1;grid-row:auto}}
 .bb-pm{margin:0 0 8px;padding:6px 10px;background:#fff3cf;border-left:4px solid var(--amber);font-size:14px;font-weight:600}
 .rv-intro{margin:0 0 8px;font-size:15px}
+.rv-more .rv-note,.rv-more .rv-help{color:var(--ink)}.rv-more .rv-note{color:var(--ink2)}
+.rv-same{display:flex;align-items:flex-start;gap:10px;width:100%;margin-top:8px;padding:10px;text-align:left;background:var(--paper2,#e6dcc2);border:2px solid var(--amber-dim);color:var(--ink);font:inherit;cursor:pointer}.rv-same[aria-pressed=true]{border-color:var(--ink);background:#fff4d6}
+.rv-same b{display:block;font-size:16px}.rv-same small{display:block;font-size:13px;color:var(--ink2);margin-top:2px}.rv-box{flex:none;width:24px;height:24px;border:2px solid var(--ink);display:grid;place-items:center;font-weight:900;background:#fff}
+.rv-sub{margin-top:-4px}.rld-p small{display:block;font-size:11px;font-weight:600;color:var(--ink2);text-transform:uppercase;letter-spacing:.3px}
+.rv-more>summary small{display:block;font-weight:400;font-size:13px;color:var(--ink2);margin-top:2px}.rv-help{margin:10px 0 4px;font-size:14px;line-height:1.4}
+.rvcs{display:grid;gap:10px;margin-top:12px}.rvc{border:2px solid #d9cdb0;background:#fffaf0;padding:10px}.rvc.lead{border-color:var(--amber)}
+.rvc-h{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}.rvc-h b{font-size:18px}.rvc-h small{color:var(--ink2);font-size:13px}.rvc-t{margin-left:auto;text-align:right;font-size:17px}.rvc-t small{display:block;font-size:11px;color:var(--ink2);text-transform:uppercase}
+.rvc-g{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:8px}.rvc-c{background:var(--paper);padding:6px 8px;min-width:0}.rvc-c.top{background:#e3f1df}.rvc-l{display:block;font-weight:800;font-size:14px}.rvc-c small{display:block;font-size:12px;color:var(--ink2)}.rvc-c b{font-size:15px}
+@media (max-width:420px){.rvc-g{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.bcxs{display:grid;gap:8px}.bcx{background:#fffaf0;border:2px solid #d9cdb0;padding:8px 10px}.bcx-h b{font-size:17px}.bcx-h small{margin-left:6px;color:var(--ink2);font-size:13px}.bcx-w{font-size:15px;margin-top:2px}.bcx-r{font-size:13px;color:var(--ink2);margin-top:2px}
+.rrts{display:grid;gap:6px;margin-top:6px}.rrt{border-top:1px solid #d9cdb0;padding-top:6px}.rrt-h{display:flex;align-items:center;gap:8px}.rrt-h .rv-pk{display:flex;gap:3px;flex-wrap:wrap}.rrt-h>b:first-child{min-width:64px}.rrt-h>b:last-child{margin-left:auto}
+.rrt-b{display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:4px;font-size:13px}.rrt-b .hit{color:var(--good);font-weight:700}.rrt-b .miss{color:var(--ink2)}
 details.nan-loan>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px}details.nan-loan>summary::-webkit-details-marker{display:none}details.nan-loan>summary h3{margin:0;white-space:nowrap}.ln-s{margin-left:auto;font-size:14px;color:var(--ink2);white-space:nowrap}details.nan-loan[open]>summary{margin-bottom:10px}details.nan-loan[open]>summary .rchev{transform:rotate(90deg)}
 .rm-h{display:none}body.rmode .rm-h{display:block}.rm-h small{display:block;font:400 15px/1.3 var(--body,inherit);text-transform:none;letter-spacing:0;color:#d9c9a3;margin-top:2px}
 body.rmode #betAll,body.rmode #blkSoon,body.rmode #guide,body.rmode #recStrip,body.rmode #hl,body.rmode #hlnums,body.rmode #srcs{display:none}
@@ -862,7 +874,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.50.2"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.50.3"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -3035,8 +3047,8 @@ let BKBUSY=false;
 // bet size: "100" = 100% bets ($1 a combination, so a boxed trifecta costs $6 and pays the full dividend), or a set amount a bet,
 // $1 to $100, spread flexi over its combinations. Exotics boxed (any order) or in the order picked. Remembered on this device.
 const RV=(()=>{let o={};try{o=JSON.parse(localStorage.getItem("otr-rv")||"{}")}catch(e){}
-  return {date:null,code:"all",day:{},picks:{},busy:{},stake:o.stake==="100"||(+o.stake>=1&&+o.stake<=100)?o.stake:"100",box:o.box!==false,off:Array.isArray(o.off)?o.off:[]}})();
-const rvSave=()=>{try{localStorage.setItem("otr-rv",JSON.stringify({stake:RV.stake,box:RV.box,off:RV.off}))}catch(e){}};
+  return {date:null,code:"all",day:{},picks:{},busy:{},stake:o.stake==="100"||(+o.stake>=1&&+o.stake<=100)?o.stake:"100",box:o.box!==false,off:Array.isArray(o.off)?o.off:[],same:!!o.same}})();
+const rvSave=()=>{try{localStorage.setItem("otr-rv",JSON.stringify({stake:RV.stake,box:RV.box,off:RV.off,same:RV.same}))}catch(e){}};
 const rvStakeTxt=()=>RV.stake==="100"?"$1 per combo":`$${+RV.stake} a bet`;
 const RV_WHO=[["nan","Nan"],["pop","Pop"],["bob","Bob"],["gran","Gran"],["kev","Kev"],["panel","The Mob"]];
 const RV_BT=[["win","Win"],["place","Place"],["quin","Quinella"],["exa","Exacta"],["tri","Trifecta"],["f4","First 4"]];
@@ -3070,23 +3082,27 @@ const rvPicks=(r,w,date)=>w==="nan"?(r.picks||[]).map(x=>x.name):(((RV.picks[dat
 function renderResults(){const WHO=RV_WHO.filter(([w])=>!RV.off.includes(w));const el=$("resultsView");if(!el)return;const today=REC_TODAY(),date=RV.date||today;
   const days=rvWeek(),week=date==="week";
   const dl=d=>d===today?"Today":d===days[1]?"Yesterday":new Date(d+"T12:00:00").toLocaleDateString("en-AU",{weekday:"short",day:"numeric"});
-  const head=`<div class="calc rv"><p class="rv-intro">How each tipster went, from the <b>official results</b>.</p><div class="rv-days">${days.map(d=>`<button data-rvday="${d}" aria-pressed="${d===date}">${dl(d)}</button>`).join("")}<button data-rvday="week" aria-pressed="${week}">Last 7 days</button></div>
-    <div class="bb-grid rs-codes rv-codes">${[["all","All races"],["same","Same races"],["H","Horses"],["N","Harness"],["D","Greys"]].map(([k,l])=>`<button data-rvcode="${k}" aria-pressed="${RV.code===k}">${l}</button>`).join("")}</div><div class="rv-who"><span class="rv-l">Compare</span>${RV_WHO.map(([w,l])=>`<button data-rvwho="${w}" aria-pressed="${!RV.off.includes(w)}">${l}</button>`).join("")}</div></div>`;
-  const ctl=`<div class="rv-ctl"><span class="rv-l">Bet size</span><div class="rv-st"><button data-rvst="100" aria-pressed="${RV.stake==="100"}">$1 per combo</button></div></div>
+  const head=`<div class="calc rv"><p class="rv-intro">How the tipsters&rsquo; picks went, checked against the <b>official results</b>. Pick a day:</p><div class="rv-days">${days.map(d=>`<button data-rvday="${d}" aria-pressed="${d===date}">${dl(d)}</button>`).join("")}<button data-rvday="week" aria-pressed="${week}">Last 7 days</button></div>
+    <div class="bb-grid rs-codes">${[["all","All codes"],["H","Horses"],["N","Harness"],["D","Greys"]].map(([k,l])=>`<button data-rvcode="${k}" aria-pressed="${RV.code===k}">${l}</button>`).join("")}</div>
+    <button class="rv-same" data-rvsame aria-pressed="${RV.same}"><span class="rv-box" aria-hidden="true">${RV.same?"&#10003;":""}</span><span><b>Only races everyone tipped</b><small>Compares the tipsters on exactly the same races, so one who only tips a few races can&rsquo;t look better or worse just for that.</small></span></button>
+    <div class="rv-who"><span class="rv-l">Tipsters</span>${RV_WHO.map(([w,l])=>`<button data-rvwho="${w}" aria-pressed="${!RV.off.includes(w)}">${l}</button>`).join("")}</div></div>`;
+  const ctl=`<p class="rv-help"><b>How much on each bet.</b> A <b>combo</b> is one finishing order a bet covers. A trifecta on three runners in any order covers 6 orders, so <b>$1 per combo</b> costs $6 and wins the full dividend. Or pick <b>one amount per bet</b>: it&rsquo;s split across the combos, so you win that share of the dividend.</p>
+    <div class="rv-ctl"><span class="rv-l">Bet size</span><div class="rv-st"><button data-rvst="100" aria-pressed="${RV.stake==="100"}">$1 per combo</button></div></div>
     <div class="rv-ctl"><span class="rv-l">Or per bet</span><div class="rv-st">${[["1","$1"],["5","$5"],["10","$10"],["20","$20"],["50","$50"],["100.0","$100"]].map(([v,l])=>`<button data-rvst="${v}" aria-pressed="${RV.stake===v}">${l}</button>`).join("")}<label class="rv-own">$<input id="rvOwn" type="number" min="1" max="100" step="1" inputmode="numeric" placeholder="Own" value="${!["100","1","5","10","20","50","100.0"].includes(RV.stake)?escH(String(+RV.stake)):""}"></label></div></div>
+    <p class="rv-help"><b>Any order</b>: the tipped runners can finish in any order (a &ldquo;box&rdquo;). <b>In this order</b>: they have to finish exactly as tipped, which costs less but pays less often.</p>
     <div class="rv-ctl"><span class="rv-l">Exotic order</span><div class="rv-st rv-bx"><button data-rvbox="1" aria-pressed="${RV.box}">Any order</button><button data-rvbox="0" aria-pressed="${!RV.box}">In this order</button></div></div>`;
   const got=week?days.filter(d=>RV.day[d]!==undefined&&!RV.busy[d]).length:0;
   const all=week?(got<days.length?undefined:days.flatMap(d=>RV.day[d]||[])):RV.day[date];
   if(all===undefined||(!week&&RV.busy[date]&&!all)){el.innerHTML=head+`<p class="note">Fetching the results…${week?` (${got} of 7 days)`:""}</p>`;return}
   if(all===null){el.innerHTML=head+'<p class="note">Results aren\'t available right now. Try again soon.</p>';return}
-  const races=all.filter(r=>(RV.code==="all"||RV.code==="same"||r.code===RV.code)&&r.result&&((r.result.fin||[]).length||/abandon/i.test(r.result.status||""))).sort((a,b)=>Date.parse(b.jump)-Date.parse(a.jump));
-  const waiting=all.filter(r=>(RV.code==="all"||RV.code==="same"||r.code===RV.code)&&Date.parse(r.jump)<Date.now()&&!(r.result&&((r.result.fin||[]).length||/abandon/i.test(r.result.status||"")))).length;
+  const races=all.filter(r=>(RV.code==="all"||r.code===RV.code)&&r.result&&((r.result.fin||[]).length||/abandon/i.test(r.result.status||""))).sort((a,b)=>Date.parse(b.jump)-Date.parse(a.jump));
+  const waiting=all.filter(r=>(RV.code==="all"||r.code===RV.code)&&Date.parse(r.jump)<Date.now()&&!(r.result&&((r.result.fin||[]).length||/abandon/i.test(r.result.status||"")))).length;
   // the table: each tipster's hits and $10 profit by bet type
   const T={};for(const [w] of WHO){T[w]={races:0};for(const [b] of RV_BT)T[w][b]={n:0,hit:0,back:0,miss:0,cost:0}}
   let per=races.map(r=>{const j={};for(const [w] of WHO)j[w]=rvJudge(r,rvPicks(r,w,r.date||date));return {r,j}});
   // "Same races": only the races every tipster tipped, so they're compared like for like
   const tipped=WHO.filter(([w])=>per.some(x=>x.j[w])),allN=per.length;
-  if(RV.code==="same")per=per.filter(x=>tipped.every(([w])=>x.j[w]));
+  if(RV.same)per=per.filter(x=>tipped.every(([w])=>x.j[w]));
   for(const {j} of per)for(const [w] of WHO){const x=j[w];if(!x)continue;T[w].races++;
       for(const [b] of RV_BT){const y=x[b];if(!y)continue;const t=T[w][b];t.n++;t.cost+=y.cost;if(y.hit){t.hit++;if(y.back==null)t.miss++;else t.back+=y.back}}}
   // the total only counts bet types every tipster had a go at (Nan's top four can make a First 4 when the others' can't)
@@ -3100,24 +3116,23 @@ function renderResults(){const WHO=RV_WHO.filter(([w])=>!RV.off.includes(w));con
   const w10=w=>{const t=T[w].win;return t.n&&t.cost?(t.back-t.cost)*10/(t.cost/t.n):0};
   const lad=have.slice().sort((a,b)=>w10(b[0])-w10(a[0])||T[b[0]].win.hit-T[a[0]].win.hit);const L0=lad[0],L0v=L0?w10(L0[0]):0;
   const top=!per.length?`<p class="note">${waiting?`No official results in yet: ${waiting} race${waiting>1?"s have":" has"} run and ${waiting>1?"are":"is"} waiting on results.`:"No races have been run yet."}</p>`
-    :`<h3 class="bgrp">${week?"Last 7 days":date===today?"Today so far":"How they went"}</h3>${RV.code==="same"?`<p class="rv-note">Only the ${per.length} of ${allN} races that ${tipped.map(([,l])=>l).join(", ")} all tipped.</p>`:""}
-    <p class="rv-q">If you put <b>$10 on each tipster&rsquo;s top pick</b> in every race, this is what you&rsquo;d be up or down:</p>
-    <ol class="rv-lad">${lad.map(([w,l],i)=>`<li${i===0?' class="lead"':""}><span class="rld-n">${i+1}</span><b class="rld-w">${l}</b><span class="rld-h">${T[w].win.hit} winner${T[w].win.hit===1?"":"s"} in ${T[w].win.n} races</span><span class="rld-p">${pm(w10(w))}</span></li>`).join("")}</ol>
-    <p class="rv-note">${L0v>0?`Best to follow: <b>${L0[1]}</b>.`:"Nobody would be in front."}${lad.some(([w])=>T[w].win.n<T[L0[0]].win.n)?" Some tipsters only tip some races; tap Same races to compare them on the same races.":""}${waiting?` ${waiting} race${waiting>1?"s":""} still waiting on results.`:""}</p>`;
-  const more=!per.length?"":`<details class="rv-more" ${RV.more?"open":""}><summary>Other bets: place, quinella, trifecta, first 4 <span class="rchev">&#9656;</span></summary>
-    <p class="rv-note">Every bet type on each tipster&rsquo;s picks: Win and Place on the top pick, Quinella and Exacta on the top two, Trifecta on the top three, First 4 on the top four.</p>
+    :`<h3 class="bgrp">${week?"Last 7 days":date===today?"Today so far":"How they went"}</h3>
+    <p class="rv-q">If you&rsquo;d put <b>$10 on each tipster&rsquo;s top pick to win</b>, this is how you&rsquo;d have done.</p>
+    <p class="rv-note rv-sub">A comparison using past official results, not real bets.${RV.same?` Only the ${per.length} of ${allN} races that ${tipped.map(([,l])=>l).join(", ")} all tipped.`:""}</p>
+    <ol class="rv-lad">${lad.map(([w,l],i)=>`<li${i===0?' class="lead"':""}><span class="rld-n">${i+1}</span><b class="rld-w">${l}</b><span class="rld-h"><b>${T[w].win.hit}</b> win${T[w].win.hit===1?"":"s"} · ${T[w].win.n} race${T[w].win.n===1?"":"s"} tipped</span><span class="rld-p">${pm(w10(w))}<small>${w10(w)>=0?"pretend profit":"pretend loss"}</small></span></li>`).join("")}</ol>
+    <p class="rv-note">${L0v>0?`Best to follow: <b>${L0[1]}</b>.`:"Nobody would be in front."}${lad.some(([w])=>T[w].win.n<T[L0[0]].win.n)?" Some tipsters only tip some races. Tick <b>Only races everyone tipped</b> to compare them fairly.":""}${waiting?` ${waiting} race${waiting>1?"s":""} still waiting on results.`:""}</p>`;
+  const more=!per.length?"":`<details class="rv-more" ${RV.more?"open":""}><summary><span>Other bet types<small>Place, quinella, exacta, trifecta and first 4 on each tipster&rsquo;s picks</small></span><span class="rchev">&#9656;</span></summary>
+    <p class="rv-note">Each tipster&rsquo;s picks backed every way: <b>Win</b> and <b>Place</b> on their top pick, <b>Quinella</b> and <b>Exacta</b> on their top two, <b>Trifecta</b> on their top three, <b>First 4</b> on their top four.</p>
     ${ctl}
-
-    <div class="rv-tw"><table class="rv-t"><thead><tr><th>Tipster</th>${RV_BT.map(([,l])=>`<th>${l}</th>`).join("")}<th>Total</th></tr></thead><tbody>
-    ${who.map(([w,l],i)=>`<tr${i===0?' class="lead"':""}><th>${l}<small>${T[w].races} races</small></th>${RV_BT.map(([b])=>{const t=T[w][b],v=prof(w,b);return `<td${t.n&&v===best(b)?' class="top"':""}>${t.n?`<span class="hits">${t.hit}<small>/${t.n}</small></span>${pm(v)}${t.miss?'<small class="wd">+ div to come</small>':""}`:'<span class="na">–</span>'}</td>`}).join("")}<td class="tt${tot(w)===bestT?" top":""}">${pm(tot(w))}</td></tr>`).join("")}
-    </tbody></table></div>
-    <p class="rv-note">Hits out of bets, and profit or loss on ${RV.stake==="100"?"$1 per combo (a trifecta in any order costs $6, a First 4 in any order $24)":`$${+RV.stake} a bet (spread across the combos when in any order)`}${RV.box?", the exotics in any order":", the exotics in the order picked"}.${left.length?` ${left.join(" and ")} ${left.length>1?"aren't":"isn't"} in the total, as not every tipster had enough picks for ${left.length>1?"them":"it"}.`:""}</p>`;
+    <div class="rvcs">${who.map(([w,l],i)=>`<div class="rvc${i===0?" lead":""}"><div class="rvc-h"><b>${l}</b><small>${T[w].races} race${T[w].races===1?"":"s"} tipped</small><span class="rvc-t">${pm(tot(w))}<small>total</small></span></div>
+      <div class="rvc-g">${RV_BT.map(([b,lb])=>{const t=T[w][b],v=prof(w,b);return `<div class="rvc-c${t.n&&v===best(b)?" top":""}"><span class="rvc-l">${lb}</span>${t.n?`<small>${t.hit} of ${t.n} paid</small>${pm(v)}${t.miss?'<small class="wd">+ dividend to come</small>':""}`:'<small>Not enough picks</small>'}</div>`}).join("")}</div></div>`).join("")}</div>
+    <p class="rv-note"><b>Paid</b> is how many of those bets would have paid out. The amounts are profit or loss after paying for the bets, at ${RV.stake==="100"?"$1 per combo":`$${+RV.stake} a bet`}, ${RV.box?"exotics in any order":"exotics in the order tipped"}. The best for each bet type is shaded.${left.length?` ${left.join(" and ")} ${left.length>1?"aren't":"isn't"} in the total, as not every tipster had enough picks for ${left.length>1?"them":"it"}.`:""}</p></details>`;
   // who to follow on each code: the same sums, one code at a time
-  const byCode=RV.code!=="all"&&RV.code!=="same"||!per.length?"":(()=>{const rows=[["H","Horses"],["N","Harness"],["D","Greys"]].map(([c,l])=>{const rs=per.filter(x=>x.r.code===c);if(!rs.length)return "";
+  const byCode=RV.code!=="all"||!per.length?"":(()=>{const rows=[["H","Horses"],["N","Harness"],["D","Greys"]].map(([c,l])=>{const rs=per.filter(x=>x.r.code===c);if(!rs.length)return "";
       const t={};for(const [w] of WHO){t[w]={n:0,won:0,cost:0,back:0};for(const {j} of rs){const x=j[w];if(!x)continue;t[w].n++;if(x.win&&x.win.hit)t[w].won++;for(const b of fair){const y=x[b];if(y){t[w].cost+=y.cost;t[w].back+=y.back||0}}}}
       const ws=WHO.filter(([w])=>t[w].n).sort((a,b)=>(t[b[0]].back-t[b[0]].cost)-(t[a[0]].back-t[a[0]].cost));if(!ws.length)return "";const [w,lw]=ws[0],v=t[w].back-t[w].cost;
-      return `<tr><th>${l}<small>${rs.length} races</small></th><td class="bc-w"><b>${lw}</b></td><td>${t[w].won}<small>/${t[w].n} winners</small></td><td>${pm(v)}</td><td class="bc-r">${ws.slice(1,3).map(([w2,l2])=>`${l2} ${pm(t[w2].back-t[w2].cost)}`).join(" · ")}</td></tr>`}).filter(Boolean);
-    return rows.length>1?`<h3 class="bgrp">Who to follow, code by code</h3><div class="rv-tw"><table class="rv-t rv-bc"><thead><tr><th>Code</th><th>Best</th><th>Winners</th><th>Profit</th><th>Next best</th></tr></thead><tbody>${rows.join("")}</tbody></table></div>`:""})();
+      return `<div class="bcx"><div class="bcx-h"><b>${l}</b><small>${rs.length} race${rs.length===1?"":"s"}</small></div><div class="bcx-w">Best: <b>${lw}</b> · ${t[w].won} win${t[w].won===1?"":"s"} from ${t[w].n} · ${pm(v)}</div>${ws.length>1?`<div class="bcx-r">Next: ${ws.slice(1,3).map(([w2,l2])=>`${l2} ${pm(t[w2].back-t[w2].cost)}`).join(" · ")}</div>`:""}</div>`}).filter(Boolean);
+    return rows.length>1?`<details class="rv-more rv-more2" ${RV.more2?"open":""}><summary><span>Who&rsquo;s best for horses, harness and greys<small>The tipster who&rsquo;d have made the most on each</small></span><span class="rchev">&#9656;</span></summary><div class="bcxs">${rows.join("")}</div><p class="rv-note">Counts all the bet types above, at the bet size picked there.</p></details>`:""})();
   const no=(r,name)=>{const k=nkey(name),f=[...(r.result.fin||[]),...(r.picks||[])].find(u=>nkey(u.name)===k);if(f&&f.no)return cloth(f.no,r.code,f.box);const rr=RACES.find(x=>x.code===r.code&&+x.no===+r.race&&nkey(x.venue)===nkey(r.venue)),u=rr&&(fieldOf(rr)||[]).find(u=>nkey(u.name)===k);return u?cloth(u.no,r.code,u.box):`<span class="rv-nm">${escH(String(name).split(" ")[0])}</span>`};
   const list=per.map(({r,j})=>{const res=r.result,ab=/abandon/i.test(res.status||""),fin=(res.fin||[]).slice().sort((a,b)=>a.pos-b.pos),ex=res.exo||{},[hm,ap]=timeOf(r.jump).split(" ");
     const won=WHO.filter(([w])=>j[w]&&j[w].win&&j[w].win.hit).map(([,l])=>l);
@@ -3125,18 +3140,19 @@ function renderResults(){const WHO=RV_WHO.filter(([w])=>!RV.off.includes(w));con
       ${ab?'<p class="rv-ab">Abandoned</p>':`<div class="rv-fin">${fin.slice(0,4).map(u=>`<span class="rv-pl"><i>${ord(u.pos)}</i>${cloth(u.no,r.code,u.box)}<b>${escH(u.name)}</b>${u.pos===1&&u.win?`<em>${div(u.win)}</em>`:""}</span>`).join("")}</div>
       <p class="rv-won">${won.length?`Tipped the winner: <b>${won.join(", ")}</b>`:"Nobody tipped the winner"}</p>`}</summary>
       ${ab?"":`<p class="rv-div">${[["Win",fin[0]&&fin[0].win],["Place",fin.slice(0,+res.pp||3).map(u=>u.place).filter(Boolean).map(div).join(" / ")],["Quinella",ex.quinella],["Exacta",ex.exacta],["Trifecta",ex.trifecta],["First 4",ex.first4]].map(([l,v])=>`<span>${l} <b>${v?(typeof v==="string"?v:div(v)):"–"}</b></span>`).join("")}</p>
-      <div class="rv-tw"><table class="rv-t rv-rt"><thead><tr><th>Tipster</th><th>Picks</th>${RV_BT.map(([,l])=>`<th>${l}</th>`).join("")}<th>Profit</th></tr></thead><tbody>
+      <div class="rrts">
       ${WHO.filter(([w])=>j[w]).map(([w,l])=>{const x=j[w],p=RV_BT.reduce((a,[b])=>a+(x[b]?(x[b].back||0)-x[b].cost:0),0),names=rvPicks(r,w,date).filter(n=>x.k.includes(nkey(n)));
-        return `<tr><th>${l}</th><td class="rv-pk">${names.slice(0,4).map(n=>no(r,n)).join("")}</td>${RV_BT.map(([b])=>{const y=x[b];return `<td>${!y?'<span class="na">–</span>':y.hit?`<span class="hit">&#10003;${y.back!=null?` ${money(y.back)}`:""}</span>`:'<span class="miss">&#10007;</span>'}</td>`}).join("")}<td>${pm(p)}</td></tr>`}).join("")}
-      </tbody></table></div>`}</details>`}).join("");
-  el.innerHTML=head+top+(more?more+byCode+"</details>":"")+(!per.length?"":week?`<p class="rv-note">Pick a single day above to see its races one by one.</p>`:`<h3 class="bgrp">Race by race (${per.length})</h3>${list}`);
+        return `<div class="rrt"><div class="rrt-h"><b>${l}</b><span class="rv-pk">${names.slice(0,4).map(n=>no(r,n)).join("")}</span>${pm(p)}</div><div class="rrt-b">${RV_BT.filter(([b])=>x[b]).map(([b,lb])=>{const y=x[b];return y.hit?`<span class="hit">${lb} &#10003;${y.back!=null?` ${money(y.back)}`:""}</span>`:`<span class="miss">${lb} &#10007;</span>`}).join("")}</div></div>`}).join("")}
+      </div>`}</details>`}).join("");
+  el.innerHTML=head+top+more+byCode+(!per.length?"":week?`<p class="rv-note">Pick a single day above to see its races one by one.</p>`:`<h3 class="bgrp">Race by race (${per.length})</h3>${list}`);
 }
-document.addEventListener("click",e=>{const b=e.target.closest("[data-rvday],[data-rvcode],[data-rvst],[data-rvbox],[data-rvwho]");if(!b)return;
+document.addEventListener("click",e=>{const b=e.target.closest("[data-rvday],[data-rvcode],[data-rvst],[data-rvbox],[data-rvwho],[data-rvsame]");if(!b)return;
+  if(b.hasAttribute("data-rvsame")){RV.same=!RV.same;rvSave();return renderResults()}
   if(b.dataset.rvwho){const w=b.dataset.rvwho,on=!RV.off.includes(w);if(on&&RV_WHO.length-RV.off.length<=1)return;RV.off=on?[...RV.off,w]:RV.off.filter(x=>x!==w);rvSave();return renderResults()}
   if(b.dataset.rvday)return loadResults(b.dataset.rvday);
   if(b.dataset.rvcode)RV.code=b.dataset.rvcode;else if(b.dataset.rvst)RV.stake=b.dataset.rvst;else RV.box=b.dataset.rvbox==="1";
   rvSave();renderResults()});
-document.addEventListener("toggle",e=>{if(e.target.classList&&e.target.classList.contains("rv-more"))RV.more=e.target.open},true);
+document.addEventListener("toggle",e=>{const c=e.target.classList;if(!c||!c.contains("rv-more"))return;if(c.contains("rv-more2"))RV.more2=e.target.open;else RV.more=e.target.open},true);
 document.addEventListener("change",e=>{if(e.target.id!=="rvOwn")return;const v=Math.round(+e.target.value);if(v>=1&&v<=100){RV.stake=v===100?"100.0":String(v);rvSave()}renderResults()});
 setInterval(()=>{if(ST.view==="results"&&(RV.date||REC_TODAY())===REC_TODAY()&&!document.querySelector("#resultsView details[open]"))loadResults(REC_TODAY(),true)},120e3);
 // settled bets, filtered to all, wins, losses or refunds
@@ -3194,6 +3210,7 @@ document.addEventListener("click",e=>{
 });
 /* ---------- What's new: the update history, plus the suggestions box ---------- */
 const CHANGES=[
+ ["2.50.3","15 Nov","Results, easier on a phone",["Results now opens with one plain line: if you'd put $10 on each tipster's top pick to win, this is how you'd have done.","Tick Only races everyone tipped to compare the tipsters on exactly the same races.","Other bet types and who's best for each code fold away, laid out as cards that fit a phone, with the bet sizes explained."]],
  ["2.50.2","15 Nov","Tidier bets",["In your bets, the official result shows full names again, and your runners are highlighted instead of marked YOURS.","Borrow from Nan folds away; it opens by itself while you owe Nan.","Bet buttons just say Bet."]],
  ["2.50.1","15 Nov","The Racing tab, reworked",["The Racing tab now shows today's races as the usual race cards, nothing else. Open one and press Bet on this race to bet any way you like."]],
  ["2.49.3","15 Nov","Results made plain",["Results now asks one question: if you put $10 on each tipster's top pick in every race, who'd be up? The tipsters are ranked by that, best first."]],
