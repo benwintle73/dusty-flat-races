@@ -548,10 +548,95 @@ details.srcs{margin-top:16px}details.srcs>.allow,details.srcs #allow>.allow{marg
  table.field tbody{column-count:2;column-gap:28px}
  table.field tbody tr{display:block;break-inside:avoid}table.field tbody td{display:block}
 }
+
+/* ---------- 2.48 layout: four sections, one controls card, plain race cards ---------- */
+.mast.mast{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:nowrap;padding:10px 14px}
+.mast .mt{display:flex;align-items:baseline;gap:4px 12px;flex-wrap:wrap;min-width:0}
+.mast .sub{flex-direction:row!important;gap:6px!important;align-items:baseline!important;flex:0 1 auto!important;font-size:16px!important;color:var(--amber-dim)}
+.mast h1{font-size:clamp(26px,5vw,38px)!important}
+.newsbtn{flex:none}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+/* radio: one slim line */
+.rbar{padding:5px 10px!important;margin-top:8px!important;gap:8px!important}
+.rplay{width:40px!important;height:40px!important}.rplay i{border-left-width:14px!important;border-top-width:9px!important;border-bottom-width:9px!important}
+.rplay.on i{width:14px!important;height:16px!important;border-left-width:4px!important;border-right-width:4px!important}
+.rbar-t b{font-size:17px!important}.rbar-t small{font-size:13px!important}
+.rch button{min-height:34px!important;min-width:46px!important}
+@media (max-width:560px){.rbar-t small{display:none}}
+/* home-screen nudge: one line */
+.a2wrap{padding-top:8px}
+.a2slim{display:flex;align-items:center;gap:10px;background:var(--tote2);color:var(--paper);border:1px solid var(--amber-dim);border-radius:10px;padding:6px 8px 6px 10px;font-size:15px;position:relative}
+.a2slim img{border-radius:7px;flex:none}.a2t{flex:1 1 auto;min-width:0;font-weight:600}
+.a2slim .a2go{min-height:36px;padding:0 12px}.a2x2{background:none;border:0;color:#d9c9a3;font-size:14px;text-decoration:underline;min-height:36px;padding:0 4px;cursor:pointer}
+.a2how>summary{list-style:none;cursor:pointer;background:var(--amber);color:var(--tote);font-weight:700;padding:7px 12px;border-radius:6px;font-size:14px}.a2how>summary::-webkit-details-marker{display:none}
+.a2pop{position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:15;background:var(--paper);color:var(--ink);border:2px solid var(--amber);border-radius:10px;padding:8px 12px;box-shadow:0 6px 18px #0007}
+/* main sections */
+.mnav{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:10px;background:var(--tote);border:3px solid var(--tote2);padding:6px}
+.mnav button{position:relative;display:flex;align-items:center;justify-content:center;gap:8px;min-height:50px;background:var(--tote2);color:var(--paper);border:2px solid var(--amber-dim);font:400 21px/1 var(--display);letter-spacing:.6px;text-transform:uppercase;cursor:pointer}
+.mnav button[aria-pressed=true]{background:var(--amber);color:var(--tote);border-color:var(--amber)}
+.mnav .mi{font-size:17px;line-height:1}
+.mnav i,#moreDot{position:absolute;top:6px;right:8px;width:9px;height:9px;border-radius:50%;background:var(--red)}
+main.wrap{position:relative}
+.moremenu{position:absolute;right:0;top:72px;z-index:30;width:min(340px,100%)}
+.mm-in{display:grid;gap:4px;background:var(--tote);border:2px solid var(--amber);border-radius:12px;padding:8px;box-shadow:0 10px 30px #000a}
+.mm-in>button,.mm-in>a{display:block;text-align:left;background:var(--tote2);color:var(--paper);border:0;border-radius:8px;padding:10px 12px;min-height:48px;text-decoration:none;cursor:pointer}
+.mm-in b{display:block;font:400 20px/1.1 var(--display);letter-spacing:.4px;text-transform:uppercase;color:var(--amber)}.mm-in small{display:block;font-size:14px;color:#d9c9a3;margin-top:2px}
+.mm-in>button[aria-pressed=true]{outline:2px solid var(--amber)}#refBtn.new b{color:#7be08f}
+.mm-in .mm-x{text-align:center;background:none;color:#d9c9a3;text-decoration:underline;min-height:42px}
+.subnav{display:flex;gap:6px;margin-top:8px}.subnav button{flex:1;min-height:44px;background:var(--paper2,#e6dcc2);color:var(--ink);border:2px solid var(--amber-dim);font-weight:700;font-size:16px;cursor:pointer}.subnav button[aria-pressed=true]{background:var(--paper);border-color:var(--amber);box-shadow:inset 0 -4px 0 var(--amber)}
+@media (max-width:700px){
+  /* one-handed: the sections sit at the bottom of the screen */
+  .mnav{position:fixed;left:0;right:0;bottom:0;z-index:25;margin:0;border:0;border-top:3px solid var(--amber);padding:6px 6px calc(6px + env(safe-area-inset-bottom));gap:4px}
+  .mnav button{flex-direction:column;gap:3px;min-height:52px;font-size:15px;border-width:0;background:transparent;color:#d9c9a3;white-space:nowrap;letter-spacing:.3px}
+  .mnav button[aria-pressed=true]{background:var(--amber);color:var(--tote);border-radius:8px}
+  .mnav .mi{font-size:19px}
+  .moremenu{position:fixed;left:8px;right:8px;top:auto;bottom:calc(74px + env(safe-area-inset-bottom));width:auto}
+  body{padding-bottom:calc(170px + env(safe-area-inset-bottom))!important}
+  #slipBar{bottom:calc(80px + env(safe-area-inset-bottom))!important}
+}
+/* the Tips controls */
+.fbar{display:grid;gap:8px}
+.codes4{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}.codes4 button{min-height:44px}
+.ftrack{display:grid!important;grid-template-columns:minmax(0,1fr) auto;gap:6px}.ftrack select{min-height:46px;width:100%;min-width:0}
+#nextBtn{min-height:46px;padding:0 14px;background:var(--good);color:#fff;border:0;font-weight:700;font-size:16px;white-space:nowrap}
+details.filters{background:#0002;border-radius:8px}details.filters>summary{list-style:none;display:flex;align-items:center;gap:8px;cursor:pointer;min-height:44px;padding:0 10px;color:var(--amber);font-weight:700}
+details.filters>summary::-webkit-details-marker{display:none}details.filters[open]>summary .rchev{transform:rotate(90deg)}
+.fsum{flex:1;min-width:0;text-align:right;font-weight:400;font-size:14px;color:#d9c9a3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+details.filters>*:not(summary){margin:0 10px 10px}
+.fgrp{display:grid;grid-template-columns:70px minmax(0,1fr);align-items:center;gap:8px}.fl{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#d9c9a3}
+.fgrp .frow{display:grid;grid-template-columns:1fr 1fr;gap:6px}.fgrp input[type=search]{grid-column:1/-1;min-height:44px;width:100%}
+details.filters .tabs.who{background:none;padding:0}details.filters .who .wl{color:#d9c9a3;font-size:13px}
+.fsave,#favOnly{min-height:42px;padding:0 12px;font-size:15px}
+.fchk{display:flex;align-items:center;gap:8px;min-height:42px;color:var(--paper);font-size:15px}.fchk input{width:22px;height:22px}
+@media (max-width:480px){.fgrp{grid-template-columns:1fr;gap:4px}}
+#status .loading::before{content:"";display:inline-block;width:14px;height:14px;margin-right:8px;vertical-align:-2px;border:3px solid var(--amber);border-top-color:transparent;border-radius:50%;animation:rspin 1s linear infinite}
+#status .lerr{color:#ffb4a6}
+/* race cards: label, number and name first */
+details.race .r-top{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:8px;row-gap:2px;align-items:center;margin-top:6px}
+details.race .r-top .r-who{grid-column:1;width:auto;font-size:12px;letter-spacing:.05em}
+details.race .r-top .r-sel{grid-column:1;display:flex;align-items:center;gap:6px;min-width:0}
+details.race .r-top .r-no{font:600 14px/1 var(--led);color:var(--ink2)}
+details.race .r-top .r-name{font-size:19px}
+details.race .r-top .r-pc{grid-column:2;grid-row:1/3;text-align:right;font-size:20px}
+details.race .r-top .r-pc small{display:block;margin:2px 0 0;font-size:11px}
+details.race:not(.crm) .r-next,details.race:not(.crm) .r-panel{display:flex;flex-wrap:wrap;align-items:center;gap:5px}
+details.race .r-next .r-who,details.race .r-panel .r-who{width:auto;margin-right:2px}
+details.race .r-next .r-scr{margin-left:auto}
+details.race .r-panel .agree{margin-left:0!important}.r-pn{font-size:14px;color:var(--ink)}
+details.race .r-top.r-note{display:block}
+/* inside a race */
+details.why1{background:#fff8e4;border:2px solid var(--amber);border-radius:8px;margin:6px 0 10px}
+details.why1>summary{list-style:none;display:flex;align-items:center;gap:7px;min-height:46px;padding:0 10px;cursor:pointer;font-size:16px}details.why1>summary::-webkit-details-marker{display:none}
+.w1l{font-weight:700;color:var(--ink2)}details.why1>summary .rchev{margin-left:auto}details.why1[open]>summary .rchev{transform:rotate(90deg)}
+details.why1>.why{padding:0 10px 10px}
+.fkey{font-size:14px;color:var(--ink2);margin:8px 0 4px}
+details.others{margin-top:10px;border-top:2px solid var(--line)}details.others>summary{list-style:none;display:flex;align-items:center;min-height:44px;cursor:pointer;font-weight:700}details.others>summary::-webkit-details-marker{display:none}details.others>summary .rchev{margin-left:auto}details.others[open]>summary .rchev{transform:rotate(90deg)}
+/* About, folded */
+details.about>summary h4{margin:0}details.about details.fsec{margin-top:8px}details.about h5{margin:14px 0 4px;color:var(--amber);font:400 18px/1.1 var(--display);letter-spacing:.4px;text-transform:uppercase}
 </style>
 </head>
 <body>
-<header class="mast"><h1>Nan's Tips</h1><span class="sub" id="sub"><span>Loading</span><span>today's races…</span></span><button class="verbtn" id="refBtn" aria-label="Refresh to get the latest version"><b id="verTxt"></b><small id="verSub">Refresh</small></button><a href="./?play=1" id="playLink">Play Off To The Races &#9656;</a><button class="newsbtn" id="newsBtn" aria-expanded="false">What's new<i id="newDot" hidden></i></button></header>
+<header class="mast"><div class="mt"><h1>Nan's Tips</h1><span class="sub" id="sub"><span id="subDay"></span></span></div><button class="newsbtn" id="newsBtn" aria-expanded="false">What's new<i id="newDot" hidden></i></button></header>
 <section id="newsView" class="wrap newsp" hidden></section>
 <section id="radioView" class="wrap newsp"><div class="rbar">
   <button id="rsnPlay" class="rplay" aria-label="Play"><i></i></button>
@@ -562,21 +647,33 @@ details.srcs{margin-top:16px}details.srcs>.allow,details.srcs #allow>.allow{marg
   <audio id="rsnAudio" preload="none" playsinline></audio></section>
 <div id="a2hs" class="wrap a2wrap" hidden></div>
 <main class="wrap">
-  <div class="view"><button data-view="tips" aria-pressed="true">Today's tips</button><button data-view="races" aria-pressed="false">Races</button><button data-view="results" aria-pressed="false">Results</button><button data-view="record" aria-pressed="false">Tipsters</button><button data-view="punters" aria-pressed="false">Punters</button><button data-view="bets" aria-pressed="false">My bets</button><button data-view="blk" aria-pressed="false">Black book</button><button data-view="cricket" aria-pressed="false">Cricket</button></div>
+  <nav class="mnav" id="mnav" aria-label="Sections">
+    <button data-nav="tips" aria-pressed="true"><span class="mi" aria-hidden="true">&#9733;</span>Tips</button>
+    <button data-nav="results" aria-pressed="false"><span class="mi" aria-hidden="true">&#9873;</span>Results</button>
+    <button data-nav="mine" aria-pressed="false"><span class="mi" aria-hidden="true">&#9998;</span>My stuff</button>
+    <button data-nav="more" aria-pressed="false" aria-expanded="false" aria-controls="moreMenu"><span class="mi" aria-hidden="true">&#8943;</span>More<i id="moreDot" hidden></i></button>
+  </nav>
+  <div class="moremenu" id="moreMenu" hidden><div class="mm-in" role="menu" aria-label="More">
+    <button data-view="record" role="menuitem"><b>Tipsters</b><small>Leaderboard and Nan's record</small></button>
+    <button data-view="punters" role="menuitem"><b>Punters</b><small>How everyone's bets are going</small></button>
+    <button data-view="cricket" role="menuitem"><b>Cricket</b><small>Nan's cricket tips</small></button>
+    <a href="./?play=1" id="playLink" role="menuitem"><b>Play Off To The Races</b><small>The racing game</small></a>
+    <button id="refBtn" role="menuitem" aria-label="Refresh to get the latest version"><b>Refresh <span id="verTxt"></span></b><small id="verSub">Get the latest version</small></button>
+    <button data-mclose class="mm-x" role="menuitem">Close</button></div></div>
+  <div class="subnav" id="subnav" hidden></div>
   <section id="tipsView">
-  <div class="tabs who" id="whoc"></div>
-  <div id="hl"></div>
-  <details class="nums"><summary>What do these numbers mean?</summary>
-    <p><b>Chance</b> (e.g. 27%): how likely the tipster rates the runner to win. Every runner in a race adds up to 100%.</p>
-    <p><b>Price</b> (e.g. $3.40): what $1 returns if it wins, your $1 included. <b>Market</b> is the bookies' price (horses, and quick-form races). <b>Nan's price</b> is her own, worked out from her chance, for dogs and harness.</p>
-    <p><b>3/4 agree</b>: how many tipsters have the same top pick.</p>
-  </details>
-  <div id="recStrip"></div>
   <div class="bar fbar">
-    <div class="frow scroll"><div class="tabs dayc" id="dayc"></div><div class="tabs" id="codes"></div><label><input type="checkbox" id="past"> Show jumped</label></div>
-    <div class="frow nw"><input type="search" id="q" placeholder="Find a track" aria-label="Search meetings" autocomplete="off"><select id="meet" aria-label="Meeting"></select><button id="favBtn" class="ficon" aria-pressed="false" title="Save this meeting">&#9734;</button></div>
-    <div class="frow nw"><button id="nextBtn">Next to jump &#9656;</button><button id="favOnly" aria-pressed="false">&#9733; My meetings</button></div>
+    <div class="tabs codes4" id="codes"></div>
+    <div class="frow ftrack"><label class="sr" for="meet">Track</label><select id="meet" aria-label="Track"></select><button id="nextBtn">Next race &#9656;</button></div>
+    <details class="filters" id="filters"><summary><span>Filters &amp; options</span><span class="fsum" id="fsum"></span><span class="rchev">&#9656;</span></summary>
+      <div class="fgrp"><span class="fl">Day</span><div class="tabs dayc" id="dayc"></div></div>
+      <div class="fgrp"><span class="fl">Tracks</span><div class="frow nw"><input type="search" id="q" placeholder="Find a track" aria-label="Find a track" autocomplete="off"><button id="favBtn" class="fsave" aria-pressed="false">Save this track</button><button id="favOnly" aria-pressed="false">Only my saved tracks</button></div></div>
+      <div class="fgrp"><span class="fl">Races</span><label class="fchk"><input type="checkbox" id="past"> Show races that have already jumped</label></div>
+      <div class="tabs who" id="whoc"></div>
+    </details>
   </div>
+  <div id="recStrip"></div>
+  <div id="hl"></div>
   <div class="note" id="status"></div>
   <div id="multi"></div>
   <div class="races" id="races"></div>
@@ -603,7 +700,13 @@ details.srcs{margin-top:16px}details.srcs>.allow,details.srcs #allow>.allow{marg
     <div class="races" id="recList"></div>
   </section>
   <div class="foot">
-    <h4>Who&rsquo;s who at Nan&rsquo;s table</h4>
+    <details class="fsec about"><summary><h4>About Nan&rsquo;s tips</h4><span class="rchev">&#9656;</span></summary>
+    <h5>Reading a race</h5>
+    <p><b>Nan&rsquo;s pick</b> is the runner she rates most likely to win. Tap a race to see her full order, and tap <b>Why Nan picked it</b> for her reasons.</p>
+    <p><b>Chance</b> (like 27%): how likely the tipster rates the runner to win. Every runner in a race adds up to 100%.</p>
+    <p><b>Price</b> (like $3.40): what $1 returns if it wins, your $1 included. <b>Market</b> is the bookies&rsquo; price. <b>Nan&rsquo;s price</b> is her own, worked out from her chance, for dogs and harness.</p>
+    <p><b>The Mob</b> line shows whether the other tipsters agree with Nan.</p>
+    <h5>Who&rsquo;s who at Nan&rsquo;s table</h5>
     <p><b>Nan</b> does her homework. Then she checks the market to see if it&rsquo;s done its homework too.</p>
     <p><b>Pop</b> trusts the computer. He&rsquo;s trusted it since it tipped him a $21 winner in 1998. He still brings it up.</p>
     <p><b>Bob</b> gets his tips from a bloke at the pub. The bloke&rsquo;s wrong a fair bit. Bob remains completely confident in him.</p>
@@ -622,6 +725,7 @@ details.srcs{margin-top:16px}details.srcs>.allow,details.srcs #allow>.allow{marg
     <details class="fsec"><summary><h4>Nan&rsquo;s record</h4><span class="rchev">&#9656;</span></summary>
     <p>Nan&rsquo;s top pick in every horse race&mdash;and every race at the dog and harness meetings she follows&mdash;is recorded before the jump. After the race, it&rsquo;s checked against the official result. No changing the tip after the finish. No blaming the jockey. No &ldquo;that&rsquo;s the one I meant.&rdquo;</p>
     <p>The profit or loss is worked out using a $1 win stake on each pick and the official win dividend. Scratched runners don&rsquo;t count. Tips stay on the record whether Nan likes the result or not.</p>
+    </details>
     </details>
     <p class="foot-serious">For fun only. 18+. Play money, not rent money. If gambling stops being fun, call Gambling Help on <a href="tel:1800858858">1800 858 858</a>.</p>
   </div>
@@ -731,15 +835,18 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.47.1"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.48.0"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
 // ?day=tomorrow shows tomorrow's races (form loads only for what you open or pick); past days are on Nan's record
 const TOMORROW=new URLSearchParams(location.search).get("day")==="tomorrow";
 const pickDay=(days,today)=>TOMORROW?(days||[]).map(d=>d.date).filter(d=>d>today).sort()[0]:today;
+// fetches that give up after a while, so the page never sits on "loading" for ever
+async function getJSONT(u,ms=25e3){const c=new AbortController(),t=setTimeout(()=>c.abort(),ms);try{const r=await fetch(u,{signal:c.signal});const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}finally{clearTimeout(t)}}
 async function loadAll(){
-  const [pe,dl,hl,fo,qd,qh]=await Promise.allSettled([getJSON(PE_URL),getJSON(DG_URL+"?list=1"),getJSON(HN_URL+"&list=1"),getJSON(SB+"/otr-nan?follow=1"),getJSON(PE_URL+"?quick=greyhound"),getJSON(PE_URL+"?quick=harness")]);
+  $("status").innerHTML='<span class="loading">Fetching today&rsquo;s races&hellip;</span>';
+  const [pe,dl,hl,fo,qd,qh]=await Promise.allSettled([getJSONT(PE_URL),getJSONT(DG_URL+"?list=1"),getJSONT(HN_URL+"&list=1"),getJSONT(SB+"/otr-nan?follow=1"),getJSONT(PE_URL+"?quick=greyhound"),getJSONT(PE_URL+"?quick=harness")]);
   if(qd.status==="fulfilled")QUICK.D=qd.value;if(qh.status==="fulfilled")QUICK.N=qh.value;
   if(fo.status==="fulfilled"&&fo.value.tracks){FOLLOW={D:fo.value.tracks.D||[],N:fo.value.tracks.N||[],auto:!!fo.value.auto,mode:fo.value.mode||"auto"};ALLOW=fo.value.allowance||null;CREDITS=fo.value.credits||null}
   if(pe.status==="fulfilled"){const j=pe.value;ST.today=ST.today||j.today;RESULTS=j.results||{};
@@ -750,12 +857,15 @@ async function loadAll(){
       addRace({id:`${code}|${m.slug}|${r.number}`,code,venue:m.track,slug:m.slug,date:m.date,no:r.number,name:r.name,dist:r.distance,cls:r.cls,jump:r.jump})}
   RACES.sort((a,b)=>Date.parse(a.jump)-Date.parse(b.jump)||a.venue.localeCompare(b.venue));
   const bad=[pe,dl,hl].filter(x=>x.status!=="fulfilled").length;
-  const shown=ST.day||ST.today,sd=shown?new Date(shown+"T12:00:00"):null;$("sub").innerHTML=sd?`<span>${sd.toLocaleDateString("en-AU",{weekday:"long"})}${TOMORROW?" (tomorrow)":""}</span><span>${ord(sd.getDate())} ${sd.toLocaleDateString("en-AU",{month:"long"})}</span>`:"<span>Today</span>";
+  const shown=ST.day||ST.today,sd=shown?new Date(shown+"T12:00:00"):null;if(sd)$("sub").innerHTML=`<span>${sd.toLocaleDateString("en-AU",{weekday:"long"})}${TOMORROW?" (tomorrow)":""}</span><span>${ord(sd.getDate())} ${sd.toLocaleDateString("en-AU",{month:"long"})}</span>`;
   $("dayc").innerHTML=`<button data-day="today" aria-pressed="${!TOMORROW}">Today</button><button data-day="tomorrow" aria-pressed="${TOMORROW}">Tomorrow</button><button data-day="past">Past days</button>`;
   if(TOMORROW&&!RACES.length)$("status").textContent="Tomorrow's races aren't out yet. Horse fields usually arrive mid-afternoon.";
-  $("status").textContent=bad===3?"Nan couldn't load today's races. Try again soon.":bad?"Some codes didn't load, so they're missing for now.":"";
+  $("status").innerHTML=bad===3?`<span class="lerr">Nan couldn't load the races. It's usually the internet or the race data being slow.</span> <button class="ffload" data-retry>Try again</button>`:bad?`Some codes didn't load (${[[pe,"horses"],[dl,"greys"],[hl,"harness"]].filter(([x])=>x.status!=="fulfilled").map(([,l])=>l).join(", ")}), so they're missing for now. <button class="linkbtn" data-retry>Try again</button>`:"";
   render();pump();loadBob();pumpPop();loadStrip();
 }
+document.addEventListener("click",e=>{if(e.target.closest("[data-retry]"))location.reload()});
+// the date in the header straight away (Sydney's racing day), before anything has loaded
+try{const d=new Date(Date.parse(new Intl.DateTimeFormat("en-CA",{timeZone:"Australia/Sydney"}).format(new Date())+"T12:00:00")+(TOMORROW?864e5:0));$("sub").innerHTML=`<span>${d.toLocaleDateString("en-AU",{weekday:"long"})}${TOMORROW?" (tomorrow)":""}</span><span>${ord(d.getDate())} ${d.toLocaleDateString("en-AU",{month:"long"})}</span>`}catch(e){}
 // dog and harness fields: only meetings Nan follows load by themselves (to save the daily form allowance); others when asked
 const ticked=r=>(FOLLOW[r.code]||[]).includes(r.slug),follows=r=>!!FOLLOW.auto||ticked(r),wanted=r=>follows(r)||WANT.has(r.code+r.slug);
 // single races asked for on their own (Only what I pick): CARDR holds each one's field, WANTR the ones asked for
@@ -923,14 +1033,19 @@ function raceBody(r){
   if(r.code==="H")loadForm(r);
   const n=rk.length,maxP=rk[0].p;
   const canBet=Date.now()<Date.parse(r.jump);
-  return `<p class="nsays">${escH(catchFor("nan",r))}</p>${whoOrderHtml(r)}${panelHtml(r)}${loadBtn}${canBet?builderHtml(r):""}<p class="rmeta">${[r.name,r.dist?r.dist+"m":"",r.cls,r.cond||(r.card&&r.card.cond),r.est?"No market yet: horse prices estimated":""].filter(Boolean).map(escH).join(" · ")}</p>
+  const x0=rk[0],oth=whoOrderHtml(r)+panelHtml(r);
+  return `<p class="nsays">${escH(catchFor("nan",r))}</p>
+  <details class="why1"><summary><span class="w1l">Why Nan picked</span>${cloth(x0.u.no,r.code,x0.u.box)}<b>${escH(x0.u.name)}</b><span class="rchev">&#9656;</span></summary><div class="why">${talkBox(r,x0.u,"nan")}${whyHtml(r,x0,0,n)}</div></details>
+  ${loadBtn}${canBet?builderHtml(r):""}<p class="rmeta">${[r.name,r.dist?r.dist+"m":"",r.cls,r.cond||(r.card&&r.card.cond),r.est?"No market yet: horse prices estimated":""].filter(Boolean).map(escH).join(" · ")}</p>
+  <p class="fkey"><b>Chance</b>: how likely Nan rates each runner to win (the field adds up to 100%). <b>Price</b>: what $1 returns if it wins. Tap a runner for her reasons and its form.</p>
   <table class="field"><thead><tr><th colspan="3">Nan's order</th></tr></thead><tbody>
   ${rk.map((x,i)=>`<tr><td><details class="run${i===0?" top1":""}"><summary><span class="rk">${ord(i+1)}</span>${cloth(x.u.no,r.code,x.u.box,"no")}<span class="nm"><b>${inBlk(r.code,x.u.name)?'<span class="blkmark">★</span>':""}${escH(x.u.name)}</b><small>${escH(runSub(r,x.u))}</small><small class="nt">${escH(talkFor("nan",r,x.u,i+1,n))}</small></span>
     <span class="pct">${pct(x.p)}<small>chance</small></span><span class="pr">${div(x.price)}<small>${mkt(r)?"market":"Nan's"}</small></span>${mkt(r)?`<span class="pr mk">${div(ladder(1/(x.p*1.13)))}<small>Nan's</small></span>`:"<span></span>"}
     <span class="meter"><i style="width:${Math.round(100*x.p/maxP)}%"></i></span></summary>
     <div class="why">${blkBtn(r.code,x.u.name)}${talkBox(r,x.u,"nan")}${whyHtml(r,x,i,n)}${fullForm(r,x)}</div></details></td></tr>`).join("")}
   ${(r.scr||[]).map(u=>`<tr><td><div class="scrrow"><span class="rk">SCR</span>${cloth(u.no,r.code,u.box,"no x")}<span class="nm"><s>${escH(u.name)}</s><small>Scratched: no chance from Nan</small><small class="nt">${escH(talkFor("nan",r,u,1,1,true))}</small></span></div></td></tr>`).join("")}
-  </tbody></table>`;
+  </tbody></table>
+  ${oth?`<details class="others"${ST.who!=="all"&&ST.who!=="nan"?" open":""}><summary><span>What the other tipsters say</span><span class="rchev">&#9656;</span></summary>${oth}</details>`:""}`;
 }
 function visible(){
   const now=Date.now();
@@ -2060,16 +2175,22 @@ function raceState(r){const ms=Date.parse(r.jump)-Date.now();
 // one race, collapsed: time and countdown on the left; venue, the tipster's top pick and the next three, and the panel, lined up on the right
 function raceCard(r,open,tag){const rk=ranked(r),t=Date.parse(r.jump),gone=t<=Date.now(),[hm,ap]=timeOf(r.jump).split(" ");
   const w=ST.who==="all"?"nan":ST.who,tp=w==="nan"?null:tipOf(r,w);
-  const meta=`${CODE[r.code]}${r.dist?" "+r.dist+"m":""}`;let pick;
+  const meta=`${CODE[r.code]}${r.dist?" "+r.dist+"m":""}`;let pick="";
   if(offList(r)&&rk===undefined)pick=`<div class="r-top r-note">Nan isn't following ${escH(r.venue)} · open to load her pick</div>`;
   else if(rk===undefined)pick=`<div class="r-top r-note">Nan is reading the form…</div>`;
   else if(!rk)pick=`<div class="r-top r-note">${noField(r,true)}</div>`;
   else if(w!=="nan"&&!tp)pick=`<div class="r-top r-note">${w==="mob"?"Not enough tipsters on this one yet.":WHO[w]+" hasn't rated this race."}</div>`;
-  else{const top=tp?topN(r,tp,4):rk.slice(0,4).map(x=>({no:x.u.no,name:x.u.name,box:x.u.box,p:x.p}));
-    pick=`<div class="r-top"><span class="r-who">${WHO[w]}</span>${cloth(top[0].no,r.code,top[0].box)}<b class="r-name">${escH(top[0].name)}</b><span class="r-pc">${pct(top[0].p)}<small>win</small></span></div>
-      <div class="r-next"><span class="r-who">Then</span>${top.slice(1,4).map(x=>cloth(x.no,r.code,x.box)).join("")}<span class="r-scr">${meta}${r.scr&&r.scr.length?` · ${r.scr.length} scr`:""}</span></div>`}
-  const pn=rk&&!gone?panelOf(r):null,others=pn?pn.ts.filter(x=>x.who!=="nan"):[];
-  const panel=pn?`<div class="r-panel"><span class="r-who">The Mob</span>${cloth(pn.pick.no,r.code,pn.pick.box)}${others.map(x=>`<span class="r-t"><small>${escH(x.label.split("'")[0])}</small>${cloth(x.pick.no,r.code,x.pick.box)}</span>`).join("")}<span class="agree a${pn.agree===pn.ts.length?"all":""}">${pn.agree}/${pn.ts.length}<span class="agw"> agree</span></span></div>`:"";
+  let top=null;
+  if(!pick){top=tp?topN(r,tp,4):rk.slice(0,4).map(x=>({no:x.u.no,name:x.u.name,box:x.u.box,p:x.p}));
+    // the essentials, plainly: whose pick, its number and name, and its chance to win
+    pick=`<div class="r-top"><span class="r-who">${w==="mob"?"The Mob's pick":WHO[w]+"'s pick"}</span><span class="r-sel"><span class="r-no">No.</span>${cloth(top[0].no,r.code,top[0].box)}<b class="r-name">${escH(top[0].name)}</b></span><span class="r-pc">${pct(top[0].p)}<small>chance</small></span></div>
+      <div class="r-next"><span class="r-who">Next best</span>${top.slice(1,4).map(x=>cloth(x.no,r.code,x.box)).join("")}<span class="r-scr">${meta}${r.scr&&r.scr.length?` · ${r.scr.length} scratched`:""}</span></div>`}
+  // one line on the other tipsters: do they agree, and if not, who they're on
+  const pn=rk&&!gone?panelOf(r):null;let panel="";
+  if(pn&&top){const same=nkey(pn.pick.name)===nkey(top[0].name),n=pn.ts.length,on=pn.agree;
+    panel=w==="mob"?`<div class="r-panel"><span class="r-who">Nan's pick</span>${rk&&rk[0]?`${cloth(rk[0].u.no,r.code,rk[0].u.box)}<span class="r-pn">${escH(rk[0].u.name)}</span>`:""}</div>`
+      :same?`<div class="r-panel"><span class="r-who">The Mob</span><span class="agree a${on===n?"all":""}">Agrees</span><span class="r-pn">${on} of ${n} tipsters on it</span></div>`
+      :`<div class="r-panel"><span class="r-who">The Mob</span><span class="r-pn">prefers</span>${cloth(pn.pick.no,r.code,pn.pick.box)}<span class="r-pn"><b>${escH(pn.pick.name)}</b> · ${on} of ${n}</span></div>`}
   const src=rk&&r.src==="quick"?`<span class="qtag">${QUICK[r.code]&&QUICK[r.code].priceOnly?"Price only":"Quick form"}</span>`:"";
   return `<details class="race${gone?" jumped":""}" data-id="${escH(r.id)}" ${open.has(r.id)?"open":""}><summary class="rsum">
     <div class="r-main"><div class="r-title"><span class="r-time">${hm||""}<small>${ap||""}</small></span><b class="r-v">${escH(r.venue)}</b><b class="r-n">R${r.no}</b><i class="rbr"></i><span class="ctag c${r.code}">${CODE_TAG[r.code]}</span>${blkTag(r,rk)}${src}<span class="r-cd">${raceState(r)}</span></div>${pick}${panel}</div>
@@ -2077,12 +2198,13 @@ function raceCard(r,open,tag){const rk=ranked(r),t=Date.parse(r.jump),gone=t<=Da
 function render(){
   if(ST.view==="races")renderRaces();
   renderFollow();$("multi").innerHTML=multiHtml();if(typeof slipBar==="function")slipBar();
-  $("codes").innerHTML=[["all","All"],["H","Horses"],["D","Dogs"],["N","Harness"]].map(([k,l])=>`<button data-code="${k}" aria-pressed="${ST.code===k}">${l}</button>`).join("");
+  $("codes").innerHTML=[["all","All"],["H","Horses"],["N","Harness"],["D","Greys"]].map(([k,l])=>`<button data-code="${k}" aria-pressed="${ST.code===k}">${l}</button>`).join("");
   const meets=[...new Map(RACES.filter(r=>ST.code==="all"||r.code===ST.code).map(r=>[`${r.code}|${r.venue}`,r])).values()].sort((a,b)=>a.venue.localeCompare(b.venue));
   if(ST.meet!=="all"&&!meets.some(r=>`${r.code}|${r.venue}`===ST.meet))ST.meet="all";
   const mopt=r=>`<option value="${escH(r.code+"|"+r.venue)}" ${ST.meet===r.code+"|"+r.venue?"selected":""}>${FAV.has(r.code+"|"+r.venue)?"★ ":""}${escH(r.venue)} · ${CODE[r.code]}</option>`,favM=meets.filter(r=>FAV.has(r.code+"|"+r.venue));
-  $("meet").innerHTML=`<option value="all">All meetings</option>`+(favM.length?`<optgroup label="My meetings">${favM.map(mopt).join("")}</optgroup><optgroup label="All meetings">`:"")+meets.map(mopt).join("")+(favM.length?"</optgroup>":"");
-  const fb=$("favBtn"),fon=ST.meet!=="all"&&FAV.has(ST.meet);fb.disabled=ST.meet==="all";fb.setAttribute("aria-pressed",fon);fb.innerHTML=fon?"&#9733;":"&#9734;";fb.title=ST.meet==="all"?"Pick a meeting to save it":fon?"Remove from My meetings":"Save to My meetings";
+  $("meet").innerHTML=`<option value="all">All tracks</option>`+(favM.length?`<optgroup label="My saved tracks">${favM.map(mopt).join("")}</optgroup><optgroup label="All tracks">`:"")+meets.map(mopt).join("")+(favM.length?"</optgroup>":"");
+  const fb=$("favBtn"),fon=ST.meet!=="all"&&FAV.has(ST.meet);fb.disabled=ST.meet==="all";fb.setAttribute("aria-pressed",fon);fb.innerHTML=fon?"&#9733; Saved: tap to remove":"&#9734; Save this track";fb.title=ST.meet==="all"?"Pick a meeting to save it":fon?"Remove from My meetings":"Save to My meetings";
+  $("fsum").textContent=[ST.day&&ST.today&&ST.day>ST.today?"Tomorrow":"Today",ST.who!=="all"?`${WHO[ST.who]}'s tips`:"",ST.fav?"Saved tracks":"",ST.past?"Jumped shown":""].filter(Boolean).join(" · ");
   if(ST.fav&&!FAV.size)ST.fav=false;const fo=$("favOnly");fo.setAttribute("aria-pressed",!!ST.fav);fo.disabled=!FAV.size;fo.title=FAV.size?"Only show meetings you've saved":"Pick a meeting and tap the star to save it";
   renderStrip();
   if(OFF.has(ST.who))ST.who="all";
@@ -2957,10 +3079,11 @@ document.addEventListener("click",e=>{
   const b=e.target.closest("[data-blk]");
   if(b){e.preventDefault();blkSet(b.dataset.blk,b.dataset.blkn,b.hasAttribute("data-blkoff")?false:!inBlk(b.dataset.blk,b.dataset.blkn));
     if(ST.view==="blk")renderBlk();else{document.querySelectorAll(`[data-blk="${b.dataset.blk}"][data-blkn="${CSS.escape(b.dataset.blkn)}"]`).forEach(x=>{const on=inBlk(x.dataset.blk,x.dataset.blkn);x.setAttribute("aria-pressed",on);x.textContent=on?"★ In your black book":"☆ Add to black book"});try{render()}catch(_){}}return}
-  const g=e.target.closest("[data-blkgo]");if(g){RS.code="all";RS.id=g.dataset.blkgo;setView("races")}
+  const g=e.target.closest("[data-blkgo]");if(g){openInTips(g.dataset.blkgo)}
 });
 /* ---------- What's new: the update history, plus the suggestions box ---------- */
 const CHANGES=[
+ ["2.48.0","15 Nov","A tidier Nan's Tips",["Four sections instead of nine buttons: Tips, Results, My stuff (your bets and Black book) and More (Tipsters, Punters, Cricket, the game). On a phone they sit at the bottom of the screen, where your thumb is.","Tips now has everything to find a race in one place: Horses, Harness or Greys, a track picker and Next race. The rest (day, whose tips, saved tracks, races that have jumped) is under Filters & options. The old Races tab is folded into Tips.","Each race card leads with Nan's pick, by number and name, and its chance. Open a race for Why Nan picked it, her full order and what the other tipsters say. Who's who and the explanations are under About Nan's tips at the bottom. The radio and the home-screen nudge take up a single line each."]],
  ["2.47.1","15 Nov","Results: 100% bets, or your own stake",["The Results tab now works out what the tipsters' picks would have paid on 100% bets by default: $1 a combination, so a boxed trifecta costs $6 and pays the full dividend, a boxed First 4 $24. Or pick a stake for every bet ($1, $5, $10, $20, $50, $100, or your own from $1 to $100), spread flexi over the combinations.","Exotics are boxed by default (any order); switch to In order to judge them in the order the tipster picked. Your choice is remembered."]],
  ["2.47.0","15 Nov","Results",["A new Results tab with the day's official results and how every tipster went. The table up top shows Nan, Pop, Bob, Gran, Kev and The Mob side by side: winners, places, quinellas, exactas, trifectas and first fours, and what $10 on each would have won or lost. Whoever's done best gets the trophy.","Below it, every race that has run: the first four with their dividends, who tipped the winner, and tap a race for each tipster's picks and which bets they landed. Pick any of the last 7 days, and Horses, Harness or Greys."]],
  ["2.47.0","15 Nov","Uncle Kev joins the table, and no more stuck bets",["Uncle Kev is the new tipster. He tips whatever the most tipsters are on, usually closer to the jump. He's on the race cards, in Whose tips, The Mob and the leaderboard.","Bets no longer get stuck on Waiting on results: a backup results feed fills in missing meetings, abandoned races refund straight away, and any race with no result after two days is refunded."]],
@@ -3065,8 +3188,10 @@ function a2Steps(os){return os==="ios"?`<ol class="a2s"><li><span class="ib">${I
   :`<p><b>iPhone:</b> in Safari, tap Share <span class="ib sm">${ICO.share}</span> then Add to Home Screen <span class="ib sm">${ICO.add}</span>.</p><p><b>Android:</b> in Chrome, tap the menu <span class="ib sm">${ICO.dots}</span> then Add to Home screen <span class="ib sm">${ICO.install}</span>.</p>`}
 function a2Html(card){const os=devOS();return `${card?`<button class="a2x" data-a2x aria-label="Not now">✕</button>`:""}<div class="a2h"><img src="icons/icon-192.png" alt="" width="44" height="44"><div><b>Put Nan on your home screen</b><small>Opens full screen like an app, one tap away.</small></div></div>
   ${A2P?`<button class="ffload a2go" data-a2go>Install Nan's Tips</button>`:a2Steps(os)}${card?`<button class="linkbtn a2no" data-a2x>Not now</button>`:""}`}
+// a slim one-line nudge; the steps open only if asked for
 function showA2(){const el=$("a2hs");if(!el)return;let snooze=0;try{snooze=+localStorage.getItem("otr-a2hs")||0}catch(e){}
-  if(isApp()||Date.now()<snooze){el.hidden=true;return}el.innerHTML=`<div class="a2card">${a2Html(true)}</div>`;el.hidden=false}
+  if(isApp()||Date.now()<snooze){el.hidden=true;return}
+  el.innerHTML=`<div class="a2slim"><img src="icons/icon-192.png" alt="" width="32" height="32"><span class="a2t">Put Nan on your home screen</span>${A2P?`<button class="ffload a2go" data-a2go>Install</button>`:`<details class="a2how"><summary>How</summary><div class="a2pop">${a2Steps(devOS())}</div></details>`}<button class="a2x2" data-a2x aria-label="Hide this for two weeks">Not now</button></div>`;el.hidden=false}
 window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();A2P=e;showA2()});
 window.addEventListener("appinstalled",()=>{A2P=null;const el=$("a2hs");if(el)el.hidden=true});
 document.addEventListener("click",async e=>{if(e.target.closest("[data-a2x]")){try{localStorage.setItem("otr-a2hs",Date.now()+14*864e5)}catch(_){}$("a2hs").hidden=true;return}
@@ -3421,10 +3546,24 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-rsgo],[dat
   if(b.dataset.rtip){const [ty,sel]=b.dataset.rtip.split("|");Object.assign(BUILD,{type:ty,style:"straight",pos:0,legs:[[],[],[],[]],sel:sel.split(",").map(Number),myst:null});renderRaces();
     const x=document.querySelector("#racesView .bb-runners");if(x)try{x.scrollIntoView({block:"start",behavior:"smooth"})}catch(_){x.scrollIntoView()}return}
   rsGo(+b.dataset.rsgo)});
+// open one race on the Tips list: its track, jumped races shown if it has run, card open and scrolled to
+function openInTips(id){const r=RACES.find(x=>x.id===id);if(!r)return;ST.code="all";ST.fav=false;ST.q="";if($("q"))$("q").value="";ST.meet=`${r.code}|${r.venue}`;ST.past=Date.parse(r.jump)<=Date.now()-GRACE;if($("past"))$("past").checked=ST.past;ST.cap=99;
+  setView("tips");render();const d=document.querySelector(`#races details.race[data-id="${CSS.escape(id)}"]`);if(d){d.open=true;setTimeout(()=>{try{d.scrollIntoView({block:"start",behavior:"smooth"})}catch(_){d.scrollIntoView()}},40)}}
 function toTop(id){const el=$(id)||$(ST.view+"View");if(!el)return;try{el.scrollIntoView({block:"start",behavior:"instant"})}catch(e){try{el.scrollIntoView(true)}catch(_){}}try{window.scrollBy(0,-10)}catch(e){}}
+// the four main sections; each view belongs to one. My stuff and More get a row of their own pages under the main nav.
+const NAV_OF={tips:"tips",races:"tips",results:"results",bets:"mine",blk:"mine",record:"more",punters:"more",cricket:"more"};
+const SUBNAV={mine:[["bets","My bets"],["blk","Black book"]],more:[["record","Tipsters"],["punters","Punters"],["cricket","Cricket"]]};
+function moreMenu(on){const m=$("moreMenu"),b=document.querySelector('[data-nav="more"]');if(!m)return;on=on==null?m.hidden:on;m.hidden=!on;b.setAttribute("aria-expanded",on);if(on){const f=m.querySelector("button");if(f)try{f.focus({preventScroll:true})}catch(_){}}}
+function paintNav(v){const g=NAV_OF[v]||"tips";document.querySelectorAll("[data-nav]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.nav===g));
+  const sn=$("subnav"),list=SUBNAV[g];sn.hidden=!list;sn.innerHTML=list?list.map(([k,l])=>`<button data-view="${k}" aria-pressed="${k===v}">${l}</button>`).join(""):""}
+document.addEventListener("click",e=>{const n=e.target.closest("[data-nav]");
+  if(n){const g=n.dataset.nav;if(g==="more")return moreMenu();moreMenu(false);if(g==="mine")return setView(NAV_OF[ST.view]==="mine"?ST.view:"bets");return setView(g)}
+  if(e.target.closest("[data-mclose]"))return moreMenu(false);
+  const m=$("moreMenu");if(m&&!m.hidden&&!e.target.closest("#moreMenu"))moreMenu(false)});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&$("moreMenu")&&!$("moreMenu").hidden){moreMenu(false);const b=document.querySelector('[data-nav="more"]');if(b)b.focus()}});
 function setView(v,focus){
-  const was=ST.view;
-  document.querySelectorAll("[data-view]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.view===v));
+  const was=ST.view;moreMenu(false);
+  document.querySelectorAll("[data-view]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.view===v));paintNav(v);
   ST.view=v;$("racesView").hidden=v!=="races";$("tipsView").hidden=v!=="tips";$("recordView").hidden=v!=="record";$("betsView").hidden=v!=="bets";$("blkView").hidden=v!=="blk";$("cricketView").hidden=v!=="cricket";$("puntersView").hidden=v!=="punters";$("resultsView").hidden=v!=="results";
   if(v==="record"){if(!REC.sum)loadRecord();else renderRecord();loadBoard()}
   if(v==="punters"){renderPlayers();loadPlayers()}
@@ -3466,9 +3605,9 @@ setInterval(refreshAllow,120e3);
 $("verTxt").textContent="v"+NAN_VERSION;$("playLink").href="./?play=1&v="+NAN_VERSION; // a new version always opens the new game, not a cached copy
 // a newer version on the server lights the badge up: checked every 3 minutes and whenever the app comes back to the front
 async function checkVersion(){try{const t=await fetch(location.pathname+"?vc="+Date.now(),{cache:"no-store"}).then(r=>r.text()),m=t.match(new RegExp("NAN_VERSION"+"=\x22(\\d[0-9.]*)\x22"));
-  if(m&&m[1]!==NAN_VERSION){$("refBtn").classList.add("new");$("verTxt").textContent="v"+m[1];$("verSub").textContent="New · tap"}}catch(e){}}
+  if(m&&m[1]!==NAN_VERSION){$("refBtn").classList.add("new");$("verTxt").textContent="v"+m[1];$("verSub").textContent="A new version is ready: tap to load it";$("moreDot").hidden=false}}catch(e){}}
 setInterval(checkVersion,3*60e3);document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")checkVersion()});setTimeout(checkVersion,4000);
-$("refBtn").addEventListener("click",()=>{$("verSub").textContent="Loading…";const u=new URL(location.href);u.searchParams.set("r",Date.now());if(ST.view&&ST.view!=="tips")u.hash=ST.view;location.replace(u.href)});
+$("refBtn").addEventListener("click",()=>{$("verSub").textContent="Loading the latest version…";const u=new URL(location.href);u.searchParams.set("r",Date.now());if(ST.view&&ST.view!=="tips")u.hash=ST.view;location.replace(u.href)});
 try{const u=new URL(location.href);if(u.searchParams.has("r")){u.searchParams.delete("r");history.replaceState(null,"",u.pathname+u.search+u.hash)}}catch(e){}
 newsDot();showA2();$("newsBtn").addEventListener("click",()=>toggleNews());
 /* RSN live in the page: RSN's own public live streams (HLS), played by the phone's own audio player. iPhones, iPads
