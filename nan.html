@@ -85,6 +85,8 @@ html.app .mast{padding-top:calc(46px + env(safe-area-inset-top))!important}
 .hl{background:var(--paper);color:var(--ink);border-left:5px solid var(--red);padding:9px 12px;margin-top:8px;font-size:17px}
 .hl b{color:var(--ink)}
 .races{display:grid;gap:8px;margin-top:10px}
+.rs-count{margin:8px 0 0;font-size:15px;color:var(--ink2)}
+details.rs-run{margin-top:14px}details.rs-run>summary{list-style:none;display:flex;align-items:center;justify-content:space-between;cursor:pointer;color:var(--amber);font:400 24px/1.1 var(--display);letter-spacing:.5px;text-transform:uppercase;padding:6px 0}details.rs-run>summary::-webkit-details-marker{display:none}details.rs-run[open]>summary .rchev{transform:rotate(90deg)}
 details.race{background:var(--paper);color:var(--ink);border:1px solid var(--line)}
 details.race>summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;padding:10px 12px}
 details.race>summary::-webkit-details-marker{display:none}
@@ -390,7 +392,7 @@ details.race>summary.rsum .rchev{align-self:center}
 .g-px{text-align:right;font:700 16px/1 var(--led);font-variant-numeric:tabular-nums;white-space:nowrap}.bb-run:disabled{cursor:default;opacity:1}
 .bb-runners.g .g-hd{margin-bottom:-2px}.bb-runners.g .g-hd .bb-run{min-height:0;padding:0 8px;background:none;border-color:transparent;font:600 11px/1 var(--led);text-transform:uppercase;letter-spacing:.5px;color:var(--ink2);cursor:default}.g-hd .bb-run span:nth-child(n+3){text-align:right}
 @media (min-width:700px){.bb-runners.g{grid-template-columns:1fr}}
-.bb-low{margin-top:6px;border-top:1px solid var(--line);padding-top:2px}#racesView [data-bclose],#racesView .bb-multi{display:none}#racesView .bb-act{grid-template-columns:1fr}
+.bb-low{margin-top:6px;border-top:1px solid var(--line);padding-top:2px}
 .crcomp{overflow:hidden;text-overflow:ellipsis;min-width:0}
 .crwhy{font-style:italic;color:var(--ink2);margin:4px 0}
 .crhead p{margin:4px 0}
@@ -702,7 +704,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.45.10"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.46.0"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -2054,7 +2056,7 @@ function render(){
   else if($("status").textContent.startsWith("Nan is still"))$("status").textContent="";
   // races still to run come first, 10 at a time with "Show 10 more", or the whole lot once "Show all" is picked (remembered)
   const cap=ALLRACES?Infinity:(ST.cap||PAGE),shown=list.slice(0,cap);
-  $("races").innerHTML=list.length?shown.map(r=>raceCard(r,open,tag)).join("")+pager(list.length,shown.length,"")
+  $("races").innerHTML=ST.view==="races"?"":list.length?shown.map(r=>raceCard(r,open,tag)).join("")+pager(list.length,shown.length,"")
     :`<div class="empty">${!RACES.length?"No real races found for today yet.":ST.q?`No meetings match "${escH(ST.q)}".`:ST.fav?"None of your saved meetings have races to show.":'No races to show. Tick "Show jumped" or pick another code.'}</div>`;
   for(const k of openRun){const [id,no]=k.split("#");const d=[...document.querySelectorAll(`details.race[data-id="${CSS.escape(id)}"] details.run`)].find(x=>x.querySelector(".no").textContent===no);if(d)d.open=true}
 }
@@ -2813,10 +2815,11 @@ document.addEventListener("click",e=>{
   const b=e.target.closest("[data-blk]");
   if(b){e.preventDefault();blkSet(b.dataset.blk,b.dataset.blkn,b.hasAttribute("data-blkoff")?false:!inBlk(b.dataset.blk,b.dataset.blkn));
     if(ST.view==="blk")renderBlk();else{document.querySelectorAll(`[data-blk="${b.dataset.blk}"][data-blkn="${CSS.escape(b.dataset.blkn)}"]`).forEach(x=>{const on=inBlk(x.dataset.blk,x.dataset.blkn);x.setAttribute("aria-pressed",on);x.textContent=on?"★ In your black book":"☆ Add to black book"});try{render()}catch(_){}}return}
-  const g=e.target.closest("[data-blkgo]");if(g){setView("races");RS.code="all";RS.id=g.dataset.blkgo;renderRaces();toTop("racesView")}
+  const g=e.target.closest("[data-blkgo]");if(g){RS.code="all";RS.id=g.dataset.blkgo;setView("races")}
 });
 /* ---------- What's new: the update history, plus the suggestions box ---------- */
 const CHANGES=[
+ ["2.46.0","15 Nov","Races: the whole day as cards",["The Races tab now shows every race of the day as cards, just like Today's tips: tap one to open the field, Nan's order and the bet builder. Races still to run come first; the ones that have run fold away under Run today, latest first. Today or Tomorrow, and Horses, Dogs or Harness, as before."]],
  ["2.45.10","15 Nov","Five minutes after the jump",["Jumped races now stay listed for 5 minutes (was 2), still counting up the time since they jumped, so you can open them and see the field."]],
  ["2.45.9","15 Nov","Races hang about after the jump",["A race now stays on Today's tips (and the game's next-to-go list) for 2 minutes after its start time. Its clock keeps going, counting up how long since it jumped (Jumped 0:45 ago). You can still open it and see the runners and the tips; betting is closed. Your bets show the same count-up."]],
  ["2.45.8","15 Nov","Filter your settled bets",["Under My bets, Settled now has All, Wins, Losses and Refunds buttons, each with its count, and a line showing what you staked, got back and your profit for the bets you're looking at."]],
@@ -3205,7 +3208,7 @@ setInterval(()=>{if(ST.view==="cricket"&&!document.activeElement?.matches?.("#cr
 setInterval(()=>{if(ST.view==="cricket")loadCricket(false)},15*60e3);
 setInterval(()=>{if(ST.view==="cricket"||ST.view==="bets")crCheck()},5*60e3);
 /* ---------- Races: one race at a time, the full field with its form, and the bet builder. Prev / Next race. ---------- */
-const RS={id:null,code:"all",ev:false};
+const RS={id:null,code:"all",ev:false,runOpen:false};
 // every race of the day (run or not), in jump order, for the chosen code
 function raceList(){return RACES.filter(r=>RS.code==="all"||r.code===RS.code).sort((a,b)=>Date.parse(a.jump)-Date.parse(b.jump)||a.venue.localeCompare(b.venue)||a.no-b.no)}
 const placesOf=n=>n>=8?3:n>=5?2:1;
@@ -3233,25 +3236,21 @@ function evHtml(list,cur){const now=Date.now(),ms=new Map();for(const x of list)
   return `<div class="rs-ev">${nx?`<button class="rs-nx" data-rsid="${escH(nx.id)}">Next to jump: ${timeOf(nx.jump)} ${escH(nx.venue)} R${nx.no}</button>`:""}
     ${[...ms.values()].map(rs=>`<div class="ev-m"><div class="ev-h"><span class="ev-c">${CODE[rs[0].code]}</span><b>${escH(rs[0].venue)}</b><small>${rs.length} race${rs.length===1?"":"s"}</small></div>
       <div class="ev-r">${rs.sort((a,b)=>a.no-b.no).map(x=>{const gone=now>=Date.parse(x.jump);return `<button data-rsid="${escH(x.id)}" aria-pressed="${x.id===cur}" class="${gone?"gone":""}">R${x.no}<small>${gone?"run":timeOf(x.jump).replace(/ ?[ap]m$/,"")}</small></button>`}).join("")}</div></div>`).join("")}</div>`}
+/* The Races tab: every race of the day as a card, like Today's tips. Still to run first, soonest first; then the ones
+   that have run, latest first. Tap a card to open the field and bet (until the jump). */
 function renderRaces(){const el=$("racesView");if(!el)return;const list=raceList(),now=Date.now();
-  let r=list.find(x=>x.id===RS.id);if(!r){r=list.find(x=>Date.parse(x.jump)>now)||list[list.length-1];RS.id=r?r.id:null}
+  const open=new Set([...el.querySelectorAll("details.race[open]")].map(d=>d.dataset.id));if(RS.id)open.add(RS.id);
+  const runOpen=el.querySelector("details.rs-run")?el.querySelector("details.rs-run").open:RS.runOpen;RS.runOpen=runOpen;
   const day=`<div class="bb-grid rs-day"><button data-day="today" aria-pressed="${!TOMORROW}">Today</button><button data-day="tomorrow" aria-pressed="${TOMORROW}">Tomorrow</button></div>`;
   const codes=[["all","All"],["H","Horses"],["D","Dogs"],["N","Harness"]].map(([k,l])=>`<button data-rscode="${k}" aria-pressed="${RS.code===k}">${l}</button>`).join("");
-  if(!r){el.innerHTML=`<div class="calc rs">${day}<div class="bb-grid rs-codes">${codes}</div><p>${TOMORROW?"Tomorrow's races aren't out yet. Horse fields usually arrive mid-afternoon.":"No races loaded"+(RS.code!=="all"?" for "+CODE[RS.code].toLowerCase():"")+"."}</p></div>`;return}
-  const i=list.indexOf(r),[hm,ap]=timeOf(r.jump).split(" "),f=fieldOf(r),gone=now>=Date.parse(r.jump);
-  if(BUILD.id!==r.id){BUILD.id=r.id;BUILD.sel=[];BUILD.form=null;BUILD.myst=null}
-  const P=f?placesOf(f.length):0;
-  el.innerHTML=`<div class="calc rs">${day}
-    <div class="bb-grid rs-codes">${codes}</div>
-    <div class="rs-nav"><button data-rsgo="-1" ${i>0?"":"disabled"}>◀ Prev</button><button class="rs-evb" data-rsev aria-expanded="${RS.ev}">Race ${i+1} of ${list.length}<small>All events ${RS.ev?"▴":"▾"}</small></button><button data-rsgo="1" ${i<list.length-1?"":"disabled"}>Next ▶</button></div>
-    ${RS.ev?evHtml(list,r.id):""}
-    <div class="rs-head"><span class="r-time">${hm||""}<small>${ap||""}</small></span><b class="rs-v">R${r.no} ${escH(r.venue)}</b><span class="r-cd">${raceState(r)}</span></div>
-    <p class="rs-meta">${[CODE[r.code],r.dist?r.dist+"m":"",r.cond||"",f?f.length+" runners":"",P>1?`Pays ${P} places`:P?"Win only":""].filter(Boolean).map(escH).join(" · ")}</p>
-    ${r.name?`<p class="rs-nm">${escH(r.name)}</p>`:""}
-    ${r.scr&&r.scr.length?`<p class="rs-nm">Scratched: ${r.scr.map(u=>escH(u.no+" "+(u.name||""))).join(", ")}</p>`:""}
-    ${f?rsTips(r,f):""}
-  </div>
-  ${f?builderHtml(r,gone?"closed":true):`<p class="note">${noField(r)}</p>`}`;
+  const up=list.filter(r=>Date.parse(r.jump)>now-GRACE),run=list.filter(r=>Date.parse(r.jump)<=now-GRACE).reverse();
+  // a race picked from elsewhere (Open race in the Black book) still shows if it has run
+  const ranOpen=RS.id&&run.some(r=>r.id===RS.id);
+  el.innerHTML=`<div class="calc rs">${day}<div class="bb-grid rs-codes">${codes}</div>
+    <p class="rs-count">${list.length?`${list.length} race${list.length===1?"":"s"} ${TOMORROW?"tomorrow":"today"} · ${up.length} still to run`:TOMORROW?"Tomorrow's races aren't out yet. Horse fields usually arrive mid-afternoon.":"No races loaded"+(RS.code!=="all"?" for "+CODE[RS.code].toLowerCase():"")+"."}</p></div>
+    ${up.length?`<div class="races">${up.map(r=>raceCard(r,open)).join("")}</div>`:list.length?'<p class="note">Everything has run for the day.</p>':""}
+    ${run.length?`<details class="rs-run"${runOpen||ranOpen?" open":""}><summary>Run ${TOMORROW?"":"today"} (${run.length})<span class="rchev">&#9656;</span></summary><div class="races">${run.map(r=>raceCard(r,open)).join("")}</div></details>`:""}`;
+  if(RS.id){const d=el.querySelector(`details.race[data-id="${CSS.escape(RS.id)}"]`);RS.id=null;if(d)setTimeout(()=>{try{d.scrollIntoView({block:"start",behavior:"smooth"})}catch(_){d.scrollIntoView()}},30)}
 }
 function rsGo(d){const list=raceList(),i=list.findIndex(x=>x.id===RS.id),n=list[i+d];if(!n)return;RS.id=n.id;renderRaces();toTop("racesView")}
 document.addEventListener("click",e=>{const b=e.target.closest("[data-rsgo],[data-rscode],[data-rsev],[data-rsid],[data-rtip]");if(!b)return;
@@ -3268,7 +3267,8 @@ function setView(v,focus){
   ST.view=v;$("racesView").hidden=v!=="races";$("tipsView").hidden=v!=="tips";$("recordView").hidden=v!=="record";$("betsView").hidden=v!=="bets";$("blkView").hidden=v!=="blk";$("cricketView").hidden=v!=="cricket";$("puntersView").hidden=v!=="punters";
   if(v==="record"){if(!REC.sum)loadRecord();else renderRecord();loadBoard()}
   if(v==="punters"){renderPlayers();loadPlayers()}
-  if(v==="races"){RS.id=null;renderRaces()}
+  if(v==="races"){render()}
+  if(was==="races"&&v!=="races"){$("racesView").innerHTML="";if(v==="tips")render()}
   if(v==="bets"){renderBets();checkOfficial(false);crCheck()}
   if(v==="blk"){renderBlk();checkOfficial(false)}
   if(v==="cricket"){renderCricket();loadCricket(false).then(crCheck)}
