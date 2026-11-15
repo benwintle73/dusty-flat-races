@@ -167,6 +167,8 @@ details.fsec>summary::-webkit-details-marker{display:none}details.fsec>summary h
 .rec .tag.won{background:var(--good);color:#fff}.rec .tag.plc{background:#b98a22;color:#fff}.rec .tag.lost{background:#8e3a2c;color:#fff}
 .rec .line{font-size:16px;grid-column:1/-1}.rec .line b{font-size:17px}
 .rec .order{font-size:15px;color:var(--ink2);grid-column:1/-1}
+.setf{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;margin:4px 0 6px}.setf button{background:var(--tote2);color:var(--paper);border:2px solid var(--amber-dim);min-height:42px;font-weight:700;font-size:15px;cursor:pointer}.setf button small{opacity:.75;font-weight:600}.setf button[aria-pressed=true]{background:var(--amber);color:var(--tote);border-color:var(--amber)}
+.setsum{margin:0 0 8px;font-size:15px;color:var(--paper)}.setsum .plus{color:#7be08f}.setsum .minus{color:#ff8a7a}
 .picks{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:4px 14px;margin:4px 0 2px}.picks .pkrow{display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px;width:100%}.picks .pkrow>b{min-width:34px;font-size:14px;color:var(--ink2)}
 .pk{display:inline-flex;align-items:center;gap:6px;font-size:16px;line-height:1.2}.pk>span:last-child{font-weight:600}
 .lg-s .picks{margin:2px 0 0}
@@ -698,7 +700,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.45.7"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.45.8"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -2750,12 +2752,21 @@ function renderBets(){
     <div class="sum"><h3>Official profit</h3><div class="big ${b.profit>=0?"plus":"minus"}">${b.profit>=0?"+":""}${money(b.profit)}</div><p>From settled bets. Started with ${money(BK.start)}${BK.topups?` + ${money(BK.topups)} added`:""}${b.owed>0?` · owe Nan ${money(b.owed)}`:""}.</p></div></div>
     <div class="calc-row"><button data-bcheck ${BKBUSY?"disabled":""}>${BKBUSY?"Checking…":"Check official results"}</button></div>${CHECKMSG?`<p class="checkmsg">${CHECKMSG}</p>`:""}
     ${loanHtml(b)}
-    ${groups.map(([h,f])=>{const ts=live.filter(t=>f(t)&&(h==="Cancelled"||t.status!=="cancelled"));if(h==="Before the jump")ts.sort((a,b)=>Date.parse(a.jump||a.start)-Date.parse(b.jump||b.start));return ts.length?`<h3 class="bgrp">${h} (${ts.length})</h3>${h==="Settled"||h==="Cancelled"?byDayHtml(ts,h):`<div class="races">${ts.map(tkHtml).join("")}</div>`}`:""}).join("")}
+    ${groups.map(([h,f])=>{const ts=live.filter(t=>f(t)&&(h==="Cancelled"||t.status!=="cancelled"));if(h==="Before the jump")ts.sort((a,b)=>Date.parse(a.jump||a.start)-Date.parse(b.jump||b.start));if(h==="Settled"&&ts.length)return setHtml(ts);return ts.length?`<h3 class="bgrp">${h} (${ts.length})</h3>${h==="Settled"||h==="Cancelled"?byDayHtml(ts,h):`<div class="races">${ts.map(tkHtml).join("")}</div>`}`:""}).join("")}
     ${syncHtml()}
     <p class="note">Play money only. Bets are saved to your account (see Your account) and on this device. Cricket bets pay the price you took and settle on the official result from ESPN. Win and place pay the official tote dividend; exotics pay the official dividend for that bet, scaled by your flexi percentage (outlay ÷ combinations). Duet, doubles, trebles, quaddies and Big 6s are estimated, because the results feed doesn't carry those pools; All Up pays the official win dividends multiplied together. Scratched selections are refunded (in a box or standout, just their combinations).</p>`;
   slipBar();
 }
 let BKBUSY=false;
+// settled bets, filtered to all, wins, losses or refunds
+let SETF="all";
+function setHtml(ts){const kind=t=>{const o=settleOf(t);return o.state==="won"||o.state==="div"?"won":o.state==="lost"?"lost":o.state==="void"?"void":"other"};
+  const F=[["all","All"],["won","Wins"],["lost","Losses"],["void","Refunds"]],n=k=>k==="all"?ts.length:ts.filter(t=>kind(t)===k).length;
+  if(SETF!=="all"&&!n(SETF))SETF="all";
+  const sel=SETF==="all"?ts:ts.filter(t=>kind(t)===SETF),st=sel.reduce((a,t)=>a+costOf(t),0),back=sel.reduce((a,t)=>a+(settleOf(t).pay||0),0),pl=r2(back-st);
+  return `<h3 class="bgrp">Settled (${ts.length})</h3><div class="setf">${F.filter(([k])=>k==="all"||n(k)).map(([k,l])=>`<button data-setf="${k}" aria-pressed="${SETF===k}">${l} <small>${n(k)}</small></button>`).join("")}</div>
+    <p class="setsum">${sel.length} bet${sel.length===1?"":"s"} · staked ${money(r2(st))} · returned ${money(r2(back))} · <b class="${pl>=0?"plus":"minus"}">${pl>=0?"+":""}${money(pl)}</b></p>${byDayHtml(sel,"Settled")}`}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-setf]");if(!b)return;SETF=b.dataset.setf;const y=b.getBoundingClientRect().top;renderBets();const nb=document.querySelector(`[data-setf="${SETF}"]`);if(nb)window.scrollBy(0,nb.getBoundingClientRect().top-y)});
 /* ---------- The black book: favourite runners, where they race next, and how our bets on them have gone ----------
    Saved with your bets (so it follows your account). A bet counts for a runner when the runner is in it, so an exotic
    or multi with two of them counts for both. */
@@ -2802,6 +2813,7 @@ document.addEventListener("click",e=>{
 });
 /* ---------- What's new: the update history, plus the suggestions box ---------- */
 const CHANGES=[
+ ["2.45.8","15 Nov","Filter your settled bets",["Under My bets, Settled now has All, Wins, Losses and Refunds buttons, each with its count, and a line showing what you staked, got back and your profit for the bets you're looking at."]],
  ["2.45.7","15 Nov","The radio's always there",["The live race calls now sit right under the heading, ready to play: one tap on play, no menu to open. Switch between RSN Xtra (race calls from around Australia) and RSN 927. A green light shows when it's on air."]],
  ["2.45.6","15 Nov","The Mob's tips",["The Mob is now in Whose tips on Today's tips. Pick it to see The Mob's pick on every race, its Best Bet, Next Best and Value Bet up top, and its full order in each race, with where Nan, Pop, Bob and Gran each have every runner."]],
  ["2.45.5","15 Nov","Runner names in your bets",["Your bets now show the names of the runners you picked, not just their numbers: in finishing order for a straight trifecta or exacta, place by place for a standout, and every runner in a box or a multi leg. Black book runners get their star."]],
