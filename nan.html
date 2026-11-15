@@ -700,7 +700,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.45.8"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.45.9"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -772,6 +772,8 @@ function loadForm(r){
 
 /* ---------- page ---------- */
 // "10 at a time" or "the whole lot" under a long list. cap: how many are showing (Infinity = all); k: the data- prefix the buttons use
+// a race stays on the lists for 2 minutes after its start time: you can still open it and see the field, but not bet
+const GRACE=2*60e3;
 const PAGE=10;let ALLRACES=false;try{ALLRACES=localStorage.getItem("otr:allraces")==="1"}catch(e){}
 const setAll=v=>{ALLRACES=v;try{localStorage.setItem("otr:allraces",v?"1":"0")}catch(e){}};
 function pager(total,shown,k){const left=total-shown;if(left>0)return `<div class="morerow"><button class="more" data-${k}more>Show ${Math.min(PAGE,left)} more <small>(${left} to go)</small></button>${left>PAGE?`<button class="more all" data-${k}moreall>Show all</button>`:""}</div>`;
@@ -898,7 +900,7 @@ function raceBody(r){
 function visible(){
   const now=Date.now();
   const q=(ST.q||"").trim().toLowerCase();
-  return RACES.filter(r=>(ST.code==="all"||r.code===ST.code)&&(ST.meet==="all"||`${r.code}|${r.venue}`===ST.meet)&&(!ST.fav||FAV.has(`${r.code}|${r.venue}`))&&(!q||r.venue.toLowerCase().includes(q))&&(ST.past||Date.parse(r.jump)>now-60e3));
+  return RACES.filter(r=>(ST.code==="all"||r.code===ST.code)&&(ST.meet==="all"||`${r.code}|${r.venue}`===ST.meet)&&(!ST.fav||FAV.has(`${r.code}|${r.venue}`))&&(!q||r.venue.toLowerCase().includes(q))&&(ST.past||Date.parse(r.jump)>now-GRACE));
 }
 // the form allowance meter: FormFav's free 1,000 dog and harness form lookups a day (rolling 24 hours)
 function creditsHtml(c){
@@ -2784,7 +2786,7 @@ function blkStats(e){const ts=blkBets(e);let st=0,back=0,setSt=0,open=0,won=0;
   return {ts,st:r2(st),back:r2(back),profit:r2(back-setSt),open,won}}
 // where the runner is racing (today's and tomorrow's cards that are loaded)
 function blkRuns(e){const k=fkey(e.name),now=Date.now();
-  return RACES.filter(r=>r.code===e.code&&Date.parse(r.jump)>now-60e3).map(r=>{let rk;try{rk=ranked(r)}catch(_){rk=null}const x=rk&&rk.find(x=>fkey(x.u.name)===k);return x?{r,x,n:rk.length}:null}).filter(Boolean).sort((a,b)=>Date.parse(a.r.jump)-Date.parse(b.r.jump))}
+  return RACES.filter(r=>r.code===e.code&&Date.parse(r.jump)>now-GRACE).map(r=>{let rk;try{rk=ranked(r)}catch(_){rk=null}const x=rk&&rk.find(x=>fkey(x.u.name)===k);return x?{r,x,n:rk.length}:null}).filter(Boolean).sort((a,b)=>Date.parse(a.r.jump)-Date.parse(b.r.jump))}
 let BLKQ="";
 function blkHits(){const q=fkey(BLKQ);if(q.length<2)return [];const out=[],seen=new Set();
   for(const r of RACES){let rk;try{rk=ranked(r)}catch(_){rk=null}if(!rk)continue;for(const x of rk){const k=blkKey(r.code,x.u.name);if(seen.has(k)||!fkey(x.u.name).includes(q))continue;seen.add(k);out.push({r,x})}if(out.length>=8)break}
@@ -2813,6 +2815,7 @@ document.addEventListener("click",e=>{
 });
 /* ---------- What's new: the update history, plus the suggestions box ---------- */
 const CHANGES=[
+ ["2.45.9","15 Nov","Races hang about after the jump",["A race now stays on Today's tips (and the game's next-to-go list) for 2 minutes after its start time, marked Jumped. You can still open it and see the runners and the tips; betting is closed."]],
  ["2.45.8","15 Nov","Filter your settled bets",["Under My bets, Settled now has All, Wins, Losses and Refunds buttons, each with its count, and a line showing what you staked, got back and your profit for the bets you're looking at."]],
  ["2.45.7","15 Nov","The radio's always there",["The live race calls now sit right under the heading, ready to play: one tap on play, no menu to open. Switch between RSN Xtra (race calls from around Australia) and RSN 927. A green light shows when it's on air."]],
  ["2.45.6","15 Nov","The Mob's tips",["The Mob is now in Whose tips on Today's tips. Pick it to see The Mob's pick on every race, its Best Bet, Next Best and Value Bet up top, and its full order in each race, with where Nan, Pop, Bob and Gran each have every runner."]],
