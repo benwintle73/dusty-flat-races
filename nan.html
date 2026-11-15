@@ -352,12 +352,12 @@ details.race>summary.rsum{grid-template-columns:minmax(0,1fr) 14px;gap:0 8px;ali
 .r-pan small{color:var(--ink)}.r-panel .agree{margin-left:auto;flex:none;font:600 12px/1 var(--led);background:#0001;padding:3px 6px;border-radius:3px}.r-panel .agree.aall{background:var(--good);color:#fff}
 .r-panel .sc,.r-next .sc{min-width:22px;height:22px;font-size:13px}
 /* Then and The Mob rows on race cards share one grid, so every number sits in the same column, evenly spaced:
-   label | 1st (under Nan's number) | 2nd | 3rd | 4th | details on the right */
-details.race:not(.crm) .r-next,details.race:not(.crm) .r-panel{display:grid;grid-template-columns:38px 22px repeat(3,52px) minmax(0,1fr);column-gap:6px;align-items:center}
+   label | 1st (under Nan's number) | Pop | Bob | Gran | Kev | details on the right */
+details.race:not(.crm) .r-next,details.race:not(.crm) .r-panel{display:grid;grid-template-columns:38px 22px repeat(4,minmax(44px,48px)) minmax(0,1fr);column-gap:5px;align-items:center}
 details.race:not(.crm) .r-next .sc{margin:0}details.race:not(.crm) .r-next>.sc~.sc{justify-self:end}
 details.race:not(.crm) .r-next .r-scr{grid-column:5/-1;justify-self:end;margin:0;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 details.race:not(.crm) .r-panel .r-t{width:auto;margin:0;justify-content:space-between}
-details.race:not(.crm) .r-panel .agree{grid-column:6;justify-self:end;margin:0}
+details.race:not(.crm) .r-panel .agree{grid-column:7;justify-self:end;margin:0}
 @media (max-width:420px){.r-panel .r-t{margin-left:4px;width:56px}.agw{display:none}details.race>summary.rsum{gap:0 4px;padding:8px 8px}}
 details.race>summary.rsum .rchev{align-self:center}
 .more{display:block;width:100%;margin:8px 0;min-height:48px;background:var(--tote2);color:var(--paper);border:2px solid var(--amber-dim);font:400 19px/1 var(--display);letter-spacing:.5px;text-transform:uppercase;cursor:pointer}
