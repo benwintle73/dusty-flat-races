@@ -619,7 +619,7 @@ const SOON=5*60e3,stLabel=ms=>ms<=0?(ms>-GRACE?"Jumped "+upText(ms):"Jumped"):ms
 const cdn=iso=>{const ms=Date.parse(iso)-Date.now();return iso&&ms>-GRACE?` <span class="cdn${ms<120e3?" soon":""}" data-cdn="${iso}">⏱ ${cdText(ms)}</span>`:""};
 setInterval(()=>{for(const el of document.querySelectorAll("[data-cdn]")){const ms=Date.parse(el.dataset.cdn)-Date.now(),rs=el.hasAttribute("data-rs");el.textContent=rs?stLabel(ms):(ms>0&&!el.closest(".r-cd")?"⏱ ":"")+cdText(ms);el.classList.toggle("soon",ms>0&&ms<(rs?SOON:120e3));el.classList.toggle("gone",ms<=0)}},1000);
 const timeOf=iso=>iso?new Date(iso).toLocaleTimeString("en-AU",{hour:"numeric",minute:"2-digit"}).replace(/\s?([ap])\.?m\.?/i,(m,a)=>" "+a.toLowerCase()+"m"):"";
-const CODE={H:"Horses",D:"Dogs",N:"Harness"},CODE_TAG={H:"Horses",D:"Greyhounds",N:"Harness"};
+const CODE={H:"Horses",D:"Dogs",N:"Harness"},CODE_TAG={H:"Horses",D:"Greys",N:"Harness"};
 const ord=n=>n+(["th","st","nd","rd"][(n%100-20)%10]||["th","st","nd","rd"][n%100]||"th");
 
 // Saddlecloth colours: dogs wear their box's rug (1 red, 2 black-and-white, 3 white, 4 blue, 5 yellow, 6 green, 7 black, 8 pink); horses and harness by number
@@ -2822,7 +2822,7 @@ document.addEventListener("click",e=>{
 });
 /* ---------- What's new: the update history, plus the suggestions box ---------- */
 const CHANGES=[
- ["2.46.1","15 Nov","Horses, Harness or Greyhounds at a glance",["Every race card now has a coloured tag next to the race name saying what it is: Horses (green), Harness (blue) or Greyhounds (brown)."]],
+ ["2.46.1","15 Nov","Horses, Harness or Greys at a glance",["Every race card now has a coloured tag next to the race name saying what it is: Horses (green), Harness (blue) or Greys (brown)."]],
  ["2.46.0","15 Nov","Races: the whole day as cards",["The Races tab now shows every race of the day as cards, just like Today's tips: tap one to open the field, Nan's order and the bet builder. Races still to run come first; the ones that have run fold away under Run today, latest first. Today or Tomorrow, and Horses, Dogs or Harness, as before."]],
  ["2.45.10","15 Nov","Five minutes after the jump",["Jumped races now stay listed for 5 minutes (was 2), still counting up the time since they jumped, so you can open them and see the field."]],
  ["2.45.9","15 Nov","Races hang about after the jump",["A race now stays on Today's tips (and the game's next-to-go list) for 2 minutes after its start time. Its clock keeps going, counting up how long since it jumped (Jumped 0:45 ago). You can still open it and see the runners and the tips; betting is closed. Your bets show the same count-up."]],
