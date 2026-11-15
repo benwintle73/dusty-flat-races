@@ -272,8 +272,8 @@ details.follow p{margin:0 12px 8px;font-size:15px;color:#d9c9a3}
 .tabs.who{margin:8px 0 0;display:block;background:var(--tote);padding:8px 12px}
 .wrow{display:grid;grid-template-columns:92px minmax(0,1fr);gap:8px;align-items:center;margin:3px 0}
 .tabs.who .wl{color:var(--amber);font:600 15px/1.1 var(--led);text-transform:uppercase;letter-spacing:.5px}
-.wbtns{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:5px}
-@media (max-width:560px){.wrow{grid-template-columns:1fr;gap:4px;margin:4px 0 6px}.wbtns{grid-template-columns:repeat(5,minmax(0,1fr))}}
+.wbtns{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:5px}
+@media (max-width:560px){.wrow{grid-template-columns:1fr;gap:4px;margin:4px 0 6px}.wbtns{grid-template-columns:repeat(3,minmax(0,1fr))}}
 .tabs.who button,.wchk{background:#3b3120;color:var(--paper);border:0;min-height:38px;padding:0 6px;font:700 16px/1 var(--led);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px}
 .tabs.who button[aria-pressed="true"]{background:var(--amber);color:var(--tote)}
 .smap{background:#fff8;border:1px solid var(--line);padding:6px 8px;margin:6px 0;font-size:15px}.smap>div{padding:2px 0}.smap .tw{display:inline-block;min-width:96px;font-weight:700}
@@ -705,7 +705,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.45.5"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.45.6"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -939,7 +939,7 @@ function renderFollow(){
    The Mob (the Panel, "panel" in code) averages every tipster's chance for each runner, so all the feeds' data has a say, each weighted by
    how that tipster's top picks have gone in the code lately, re-weighed after every result (TIPS.w, from otr-tips). */
 const TIPS_URL=SB+"/otr-tips",TIPS={w:null,bob:{},bobAt:0,pop:{},map:{},asked:new Set(),askedMap:new Set(),busy:false};
-const WHO={all:"Everyone",nan:"Nan",pop:"Pop",bob:"Bob",gran:"Gran"};
+const WHO={all:"Everyone",nan:"Nan",pop:"Pop",bob:"Bob",gran:"Gran",mob:"The Mob"};
 // tipsters the punter has switched off (Nan is always on); saved on this device
 let OFF=(()=>{try{return new Set(JSON.parse(localStorage.getItem("otr-nan-off")||"[]").filter(w=>["pop","bob","gran"].includes(w)))}catch(e){return new Set()}})();
 const fkey=v=>String(v||"").toLowerCase().replace(/[^a-z0-9]/g,"");
@@ -1941,15 +1941,20 @@ function talkBox(r,u,skip){const ts=tipsters(r).filter(t=>t.who!==skip);if(!ts.l
   return rows?`<div class="talk"><h4>What the tipsters say</h4>${rows}</div>`:""}
 const tipsters0=(r,w)=>tipsters(r).some(t=>t.who===w);
 // the chosen tipster's full order for a race, every runner
-function whoOrderHtml(r){const w=ST.who;if(w==="all"||w==="nan")return "";const t=tipsters(r).find(x=>x.who===w);if(!t)return `<p class="tnote">${WHO[w]} hasn't rated this race.</p>`;
+function whoOrderHtml(r){const w=ST.who;if(w==="all"||w==="nan")return "";const t=tipOf(r,w);if(!t)return `<p class="tnote">${w==="mob"?"The Mob needs at least two tipsters on a race, and this one hasn't got them yet.":WHO[w]+" hasn't rated this race."}</p>`;
   const all=topN(r,t,99),ord=n=>n+(["th","st","nd","rd"][n%100>10&&n%100<14?0:n%10]||"th");
-  return `<div class="panel worder"><h4>${WHO[w]}'s order</h4>${all.map((x,i)=>`<div class="tip" data-hlbet="${escH(r.id)}|${x.no}"><span class="tw">${ord(i+1)}</span>${cloth(x.no,r.code,x.box)} <b>${escH(x.name)}</b> ${pct(x.p)}<small>${escH(talkFor(w,r,ranked(r).map(y=>y.u).find(y=>y.no===x.no)||x,i+1,all.length))}</small></div>`).join("")}<p class="tnote">Tap a runner to bet on it. Nan's own order is below.</p></div>`}
+  return `<div class="panel worder"><h4>${w==="mob"?"The Mob's order":WHO[w]+"'s order"}</h4>${all.map((x,i)=>`<div class="tip" data-hlbet="${escH(r.id)}|${x.no}"><span class="tw">${ord(i+1)}</span>${cloth(x.no,r.code,x.box)} <b>${escH(x.name)}</b> ${pct(x.p)}<small>${escH(w==="mob"?mobTalk(r,x):talkFor(w,r,ranked(r).map(y=>y.u).find(y=>y.no===x.no)||x,i+1,all.length))}</small></div>`).join("")}<p class="tnote">Tap a runner to bet on it. Nan's own order is below.</p></div>`}
 function panelOf(r){const ts=tipsters(r);if(ts.length<2)return null;const rk=ranked(r),tot=new Map();
   // each tipster weighted by how their top picks have gone in this code lately (worked out on the server from settled results)
   const ws=(TIPS.w&&TIPS.w[r.code])||{},wt=t=>ws[t.who]??1,sw=ts.reduce((a,t)=>a+wt(t),0)||1;
   for(const u of rk.map(x=>x.u)){let s=0;for(const t of ts)s+=(t.chance.get(nkey(u.name))||0)*wt(t);tot.set(nkey(u.name),s/sw)}
   const best=[...tot.entries()].sort((a,b)=>b[1]-a[1])[0],u=rk.map(x=>x.u).find(x=>nkey(x.name)===best[0]);
-  return {ts,pick:{no:u.no,name:u.name,box:u.box,p:best[1]},agree:ts.filter(t=>nkey(t.pick.name)===best[0]).length}}
+  return {ts,chance:tot,pick:{no:u.no,name:u.name,box:u.box,p:best[1]},agree:ts.filter(t=>nkey(t.pick.name)===best[0]).length}}
+// The Mob in the same shape as a tipster, so "Whose tips" can show it like anyone else
+function mobOf(r){const pn=panelOf(r);if(!pn)return null;return {who:"mob",label:"The Mob",pick:pn.pick,chance:pn.chance,says:`${pn.agree} of ${pn.ts.length} agree on ${pn.pick.name}.`}}
+const tipOf=(r,w)=>w==="mob"?mobOf(r):tipsters(r).find(t=>t.who===w);
+// where each tipster has a runner, for The Mob's order
+function mobTalk(r,u){return tipsters(r).map(t=>{const o=[...t.chance.entries()].sort((a,b)=>b[1]-a[1]).findIndex(([k])=>k===nkey(u.name));return o>=0?`${WHO[t.who]} ${ord(o+1)}`:""}).filter(Boolean).join(" · ")}
 function panelLine(r){const pn=panelOf(r);if(!pn)return "";const o=pn.ts.filter(t=>t.who!=="nan");
   return `<div class="panelline">${o.map(t=>`${t.label.split("'")[0]} ${cloth(t.pick.no,r.code,t.pick.box)}`).join(" · ")} · <b>The Mob:</b> ${cloth(pn.pick.no,r.code,pn.pick.box)} ${escH(pn.pick.name)} <span class="agree a${pn.agree===pn.ts.length?"all":""}">${pn.agree} of ${pn.ts.length} agree</span></div>`}
 function panelHtml(r){const pn=panelOf(r),ts=pn?pn.ts:tipsters(r);if(!ts.length)return "";
@@ -1996,12 +2001,12 @@ function raceState(r){const ms=Date.parse(r.jump)-Date.now();
   const x=resultOf(r);return x==="ab"?'<span class="cdn gone">Abandoned</span>':x?'<span class="cdn res">Result in</span>':'<span class="cdn gone">Jumped</span>'}
 // one race, collapsed: time and countdown on the left; venue, the tipster's top pick and the next three, and the panel, lined up on the right
 function raceCard(r,open,tag){const rk=ranked(r),t=Date.parse(r.jump),gone=t<=Date.now(),[hm,ap]=timeOf(r.jump).split(" ");
-  const w=ST.who==="all"?"nan":ST.who,tp=w==="nan"?null:tipsters(r).find(x=>x.who===w);
+  const w=ST.who==="all"?"nan":ST.who,tp=w==="nan"?null:tipOf(r,w);
   const meta=`${CODE[r.code]}${r.dist?" "+r.dist+"m":""}`;let pick;
   if(offList(r)&&rk===undefined)pick=`<div class="r-top r-note">Nan isn't following ${escH(r.venue)} · open to load her pick</div>`;
   else if(rk===undefined)pick=`<div class="r-top r-note">Nan is reading the form…</div>`;
   else if(!rk)pick=`<div class="r-top r-note">${noField(r,true)}</div>`;
-  else if(w!=="nan"&&!tp)pick=`<div class="r-top r-note">${WHO[w]} hasn't rated this race.</div>`;
+  else if(w!=="nan"&&!tp)pick=`<div class="r-top r-note">${w==="mob"?"Not enough tipsters on this one yet.":WHO[w]+" hasn't rated this race."}</div>`;
   else{const top=tp?topN(r,tp,4):rk.slice(0,4).map(x=>({no:x.u.no,name:x.u.name,box:x.u.box,p:x.p}));
     pick=`<div class="r-top"><span class="r-who">${WHO[w]}</span>${cloth(top[0].no,r.code,top[0].box)}<b class="r-name">${escH(top[0].name)}</b><span class="r-pc">${pct(top[0].p)}<small>win</small></span></div>
       <div class="r-next"><span class="r-who">Then</span>${top.slice(1,4).map(x=>cloth(x.no,r.code,x.box)).join("")}<span class="r-scr">${meta}${r.scr&&r.scr.length?` · ${r.scr.length} scr`:""}</span></div>`}
@@ -2037,12 +2042,12 @@ function render(){
   const plbl=r=>r.code==="H"||r.src==="quick"?"market":"Nan's price";
   const bestC=best?card({r:best.r,no:best.rk[0].u.no,box:best.rk[0].u.box,name:best.rk[0].u.name,title:"Nan's Best Bet",p:best.rk[0].p,pr:best.rk[0].price,lbl:plbl(best.r),says:catchFor("nan",best.r)}):"";
   const roughC=rough?card({r:rough.x.r,no:rough.y.u.no,box:rough.y.u.box,name:rough.y.u.name,title:"Nan's Roughie",p:rough.y.p,pr:rough.pr,lbl:rough.x.r.code==="H"?"market":plbl(rough.x.r),says:nanSays(rough.x.r.code,rough.x.r.id+"|"+rough.y.u.name)}):"";
-  const tOf=(r,w)=>tipsters(r).find(t=>t.who===w);
+  const tOf=tipOf;
   if(ST.who!=="all"&&ST.who!=="nan"){const w=ST.who,mine=live.map(x=>({r:x.r,t:tOf(x.r,w)})).filter(x=>x.t).sort((a,b)=>b.t.pick.p-a.t.pick.p);
     const val=mine.map(x=>{const u=x.t.pick,f=ranked(x.r).find(y=>y.u.no===u.no),pr=f?(x.r.code==="H"?f.u.win:f.price):0;return {...x,pr,ev:u.p*pr}}).filter(x=>x.pr>=6).sort((a,b)=>b.ev-a.ev)[0];
     const box=(x,title,pr)=>card({r:x.r,no:x.t.pick.no,box:x.t.pick.box,name:x.t.pick.name,title,p:x.t.pick.p,pr,lbl:x.r.code==="H"?"market":plbl(x.r),says:x.t.says});
     $("hl").innerHTML=mine.length?box(mine[0],`${WHO[w]}'s Best Bet`)+(mine[1]?box(mine[1],`${WHO[w]}'s Next Best`):"")+(val&&val!==mine[0]&&val!==mine[1]?box(val,`${WHO[w]}'s Value Bet`,val.pr):"")
-      :`<div class="hl">${WHO[w]} hasn't tipped any of the races still to run yet.${w==="gran"?" Gran only tips once the bookies have prices up.":""}</div>`}
+      :`<div class="hl">${w==="mob"?"The Mob":WHO[w]} hasn't tipped any of the races still to run yet.${w==="gran"?" Gran only tips once the bookies have prices up.":""}</div>`}
   else if(ST.who==="nan")$("hl").innerHTML=bestC+roughC;
   else $("hl").innerHTML=(pbest?card({cls:"hlpanel",r:pbest.r,no:pbest.pn.pick.no,box:pbest.pn.pick.box,name:pbest.pn.pick.name,title:"The Mob's pick",p:pbest.pn.pick.p,says:`${pbest.pn.agree} of ${pbest.pn.ts.length} tipsters agree: ${pbest.pn.ts.map(t=>t.label.split("'")[0]).join(", ")}.`}):"")+bestC+roughC;
   const waiting=RACES.filter(r=>r.code!=="H"&&!CARDS[r.code+r.slug]&&wanted(r)).length;
@@ -2804,6 +2809,7 @@ document.addEventListener("click",e=>{
 });
 /* ---------- What's new: the update history, plus the suggestions box ---------- */
 const CHANGES=[
+ ["2.45.6","15 Nov","The Mob's tips",["The Mob is now in Whose tips on Today's tips. Pick it to see The Mob's pick on every race, its Best Bet, Next Best and Value Bet up top, and its full order in each race, with where Nan, Pop, Bob and Gran each have every runner."]],
  ["2.45.5","15 Nov","Runner names in your bets",["Your bets now show the names of the runners you picked, not just their numbers: in finishing order for a straight trifecta or exacta, place by place for a standout, and every runner in a box or a multi leg. Black book runners get their star."]],
  ["2.45.4","15 Nov","Live race calls on the computer too",["Listen to the races live now plays on computers (Chrome, Edge, Firefox) and Android phones as well as iPhones and iPads.","The links out to other stations are gone: it's just RSN Xtra and RSN 927, playing right here."]],
  ["2.45.3","15 Nov","Live race calls that actually play",["Listen to the races live now plays RSN's own live streams straight from Nan's page: RSN Xtra for the Sky Racing calls from around Australia (10am to 11pm), or RSN 927. Press play and keep reading; the bar up top shows when it's on air, and it shows on your lock screen too."]],
