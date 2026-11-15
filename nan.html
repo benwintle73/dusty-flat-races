@@ -57,16 +57,15 @@ html.app .mast{padding-top:calc(46px + env(safe-area-inset-top))!important}
 .rnote{margin:8px 0 0!important;font-size:14px;color:var(--ink2)}
 .rlive{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;background:var(--tote);color:var(--paper);padding:10px 12px;margin:0 0 10px;border-left:5px solid var(--good)}
 .rlive-l b{display:block;font:400 22px/1.1 var(--display);letter-spacing:.4px;text-transform:uppercase}.rlive-l small{display:block;font-size:14px;opacity:.85;margin-top:3px}
-.rplayer{display:flex;align-items:center;gap:8px}.rload{font-size:14px;opacity:.8}
-.rplayer .mytuner-widget{all:initial;display:flex;align-items:center;gap:8px;font-family:inherit}
-.rplayer [id$="top-bar"]{display:flex;align-items:center;gap:10px}
-.rplayer .main-play-button{width:52px;height:52px;border-radius:50%;background:var(--amber);cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none;border:0}
-.rplayer .main-play-button>div{width:0;height:0;border-left:18px solid var(--tote);border-top:11px solid transparent;border-bottom:11px solid transparent;margin-left:5px}
-.rplayer .main-play-button.playing>div{width:16px;height:20px;border:0;margin:0;border-left:5px solid var(--tote);border-right:5px solid var(--tote)}
-.rplayer .main-play-button.loading{opacity:.6}.rplayer .main-play-button.disabled{opacity:.35;cursor:wait}
-.rplayer .volume-indicator{display:none}.rplayer input.volume-control{width:90px;accent-color:#ffb52e}
-.rplayer [id$="song-history"]{display:none}
-@media (max-width:420px){.rlive{grid-template-columns:1fr}.rplayer input.volume-control{width:140px}}
+.rplayer{display:flex;align-items:center;gap:10px}
+.rplay{width:56px;height:56px;border-radius:50%;background:var(--amber);border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none}
+.rplay i{width:0;height:0;border-left:19px solid var(--tote);border-top:12px solid transparent;border-bottom:12px solid transparent;margin-left:5px}
+.rplay.on i{width:18px;height:22px;border:0;margin:0;border-left:6px solid var(--tote);border-right:6px solid var(--tote)}
+.rplay.wait i{border:4px solid var(--tote);border-top-color:transparent;border-radius:50%;width:22px;height:22px;margin:0;animation:rspin 1s linear infinite}
+#rsnVol{width:100px;accent-color:#ffb52e}
+.rch{display:flex;gap:6px;margin-top:8px}.rch button{background:var(--tote2);color:var(--paper);border:2px solid var(--amber-dim);min-height:36px;padding:0 12px;font-weight:700;font-size:14px;cursor:pointer}.rch button[aria-pressed=true]{background:var(--amber);color:var(--tote);border-color:var(--amber)}
+.rmsg{grid-column:1/-1;margin:0!important;font-size:14px;color:#ffd27a}
+@media (max-width:420px){.rlive{grid-template-columns:1fr}#rsnVol{flex:1;width:auto}}
 .radiobtn.on{border-color:var(--good)}.radiobtn .ron{display:none;color:#7be08f;font-size:12px}.radiobtn.on .ron{display:inline}
 .mast .sub{display:flex;flex-direction:column;align-items:center;text-align:center;gap:3px;flex:1 1 auto;min-width:0;line-height:1;align-self:center}
 .mast .sub{white-space:nowrap}@media (max-width:400px){.mast .sub{font-size:17px}}
@@ -527,11 +526,15 @@ details.srcs{margin-top:16px}details.srcs>.allow,details.srcs #allow>.allow{marg
 </style>
 </head>
 <body>
-<header class="mast"><h1>Nan's Tips</h1><span class="sub" id="sub"><span>Loading</span><span>today's races…</span></span><button class="verbtn" id="refBtn" aria-label="Refresh to get the latest version"><b id="verTxt"></b><small id="verSub">Refresh</small></button><a href="./?play=1" id="playLink">Play Off To The Races &#9656;</a><button class="newsbtn" id="newsBtn" aria-expanded="false">What's new<i id="newDot" hidden></i></button><button class="radiobtn" id="radioBtn" aria-expanded="false"><span aria-hidden="true">&#128251;</span> Listen to the races live <span class="ron">&#9679; RSN on</span> <b>&#9662;</b></button></header>
+<header class="mast"><h1>Nan's Tips</h1><span class="sub" id="sub"><span>Loading</span><span>today's races…</span></span><button class="verbtn" id="refBtn" aria-label="Refresh to get the latest version"><b id="verTxt"></b><small id="verSub">Refresh</small></button><a href="./?play=1" id="playLink">Play Off To The Races &#9656;</a><button class="newsbtn" id="newsBtn" aria-expanded="false">What's new<i id="newDot" hidden></i></button><button class="radiobtn" id="radioBtn" aria-expanded="false"><span aria-hidden="true">&#128251;</span> Listen to the races live <span class="ron">&#9679; On air</span> <b>&#9662;</b></button></header>
 <section id="newsView" class="wrap newsp" hidden></section>
 <section id="radioView" class="wrap newsp" hidden><div class="calc radio"><h3>Listen to the races live</h3>
-  <div class="rlive"><div class="rlive-l"><b>RSN 927 live</b><small>Victoria's racing station, right here. Press play and keep reading: it plays on while you move around Nan's page.</small></div><div id="rsnPlayer" class="rplayer"><span class="rload">Loading the player…</span></div></div>
-  <p>Or open a station in its own tab. RSN Xtra (on RSN's site) carries the Sky Racing calls from around Australia, 10am to 11pm.</p>
+  <div class="rlive"><div class="rlive-l"><b id="rsnName">RSN Xtra · race calls</b><small id="rsnSub">The Sky Racing calls from around Australia, 10am to 11pm. Press play and keep reading: it plays on while you move around Nan's page.</small>
+    <div class="rch"><button data-rsn="x" aria-pressed="true">RSN Xtra</button><button data-rsn="m" aria-pressed="false">RSN 927</button></div></div>
+    <div class="rplayer"><button id="rsnPlay" class="rplay" aria-label="Play"><i></i></button><input id="rsnVol" type="range" min="0" max="100" value="100" aria-label="Volume"></div>
+    <p id="rsnMsg" class="rmsg" hidden></p></div>
+  <audio id="rsnAudio" preload="none" playsinline></audio>
+  <p>Or open a station in its own tab.</p>
   <div class="rstations">
     <a class="rst" href="https://www.rsn.net.au/" target="_blank" rel="noopener"><b>RSN 927</b><small>Victoria's racing station. Its RSN Xtra channel carries the Sky Racing race calls from Australia-wide, 10am to 11pm.</small><span>Listen &#9656;</span></a>
     <a class="rst" href="https://www.skysportsradio.com.au/" target="_blank" rel="noopener"><b>Sky Sports Radio</b><small>NSW's racing station: live calls of the gallops, harness and dogs.</small><span>Listen &#9656;</span></a>
@@ -705,7 +708,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.45.2"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.45.3"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -2796,6 +2799,7 @@ document.addEventListener("click",e=>{
 });
 /* ---------- What's new: the update history, plus the suggestions box ---------- */
 const CHANGES=[
+ ["2.45.3","15 Nov","Live race calls that actually play",["Listen to the races live now plays RSN's own live streams straight from Nan's page: RSN Xtra for the Sky Racing calls from around Australia (10am to 11pm), or RSN 927. Press play and keep reading; the bar up top shows when it's on air, and it shows on your lock screen too."]],
  ["2.45.2","15 Nov","RSN 927 live, right here",["Listen to the races live now has RSN 927 playing right on Nan's page: press play and carry on reading the tips, races and your bets. The bar up top shows when it's on. The other stations still open in their own tab."]],
  ["2.45.1","15 Nov","Listen to the races live",["New at the top of Nan's page: Listen to the races live. Pick a racing radio station (RSN 927, whose RSN Xtra channel carries the Sky Racing calls, Sky Sports Radio or SEN Track). It opens in a new tab and keeps playing while you come back to Nan's tips."]],
  ["2.45.0","15 Nov","The black book",["A new Black book tab for your favourite runners. Open a runner on Today's tips and tap Add to black book, or find one by name in the Black book tab.","For each runner it shows where it's racing next (with Nan's chance and the price, and a button to open the race) and how your bets on it have gone: bets, staked, returned and profit. Races with one of your runners in them get a ★ on Today's tips. The book is saved with your bets, so it follows your account."]],
@@ -3281,20 +3285,27 @@ $("refBtn").addEventListener("click",()=>{$("verSub").textContent="Loading…";c
 try{const u=new URL(location.href);if(u.searchParams.has("r")){u.searchParams.delete("r");history.replaceState(null,"",u.pathname+u.search+u.hash)}}catch(e){}
 newsDot();showA2();$("newsBtn").addEventListener("click",()=>toggleNews());
 $("radioBtn").addEventListener("click",()=>{const el=$("radioView"),on=el.hidden;el.hidden=!on;$("radioBtn").setAttribute("aria-expanded",on);if(on)rsnLoad()});
-/* RSN 927 in the page: myTuner's free station player (the one they offer for websites), built on first open so nothing
-   loads until you want it. The audio keeps going when the panel is closed; the bar up top shows it's on. */
-const RSN_W="PcKrw4/Dhk3CuznCokzDmXdjw7zDln5NIcOzW8KqYg==",RSN_ID=412080;let rsnDone=false;
-function rsnLoad(){if(rsnDone)return;rsnDone=true;const box=$("rsnPlayer"),W=RSN_W,O="https://mytuner-radio.com";
-  box.innerHTML=`<div id="${W}" class="mytuner-widget" data-target="${RSN_ID}" data-requires_initialization="true" data-autoplay="false" data-hidehistory="true"><div id="${W}top-bar"><div id="${W}play-button" class="main-play-button disabled" role="button" aria-label="Play or pause RSN 927"><div></div></div><span id="${W}volume-indicator" class="volume-indicator"></span><input id="${W}volume-control" class="volume-control slider" type="range" min="0" max="100" value="100" aria-label="Volume"></div><ul id="${W}song-history" data-border="0" data-bordercolor="#000"></ul><div id="${W}dow-container"></div></div>`;
-  const add=src=>{const s=document.createElement("script");s.src=src;s.defer=true;document.head.appendChild(s);return s};
-  window.mytuner_scripts=window.mytuner_scripts||{};
-  add(O+"/static/js/widgets/widget-player-v1.js");
-  const p=add(O+"/static/js/widgets/player-v1.js");p.onload=()=>{try{window.mytuner_scripts["player-v1.js"](W)}catch(e){rsnFail()}};p.onerror=rsnFail;
-  const b=document.getElementById(W+"play-button");
-  new MutationObserver(()=>$("radioBtn").classList.toggle("on",b.classList.contains("playing"))).observe(b,{attributes:true,attributeFilter:["class"]});
-  setTimeout(()=>{if(b.classList.contains("disabled"))rsnFail()},15000);
-}
-function rsnFail(){const box=$("rsnPlayer");if(box&&!box.querySelector(".main-play-button:not(.disabled)"))box.innerHTML='<a class="ffload" href="https://www.rsn.net.au/" target="_blank" rel="noopener">Player not loading · open RSN &#9656;</a>'}
+/* RSN live in the page: RSN's own public live streams (HLS), played by the phone's own audio player. iPhones, iPads
+   and Android phones play these natively; a browser that can't gets the link to RSN instead. */
+const RSN={x:{name:"RSN Xtra · race calls",sub:"The Sky Racing calls from around Australia, 10am to 11pm. Press play and keep reading: it plays on while you move around Nan's page.",url:"https://d1j02mmlpi2jw3.cloudfront.net/playlist.m3u8"},
+  m:{name:"RSN 927",sub:"Victoria's racing and sport station: Victorian race calls, form and racing talk. It plays on while you move around Nan's page.",url:"https://dg6dce7w867bz.cloudfront.net/playlist.m3u8"}};
+let rsnCh="x";
+function rsnLoad(){}
+function rsnPaint(){const a=$("rsnAudio"),b=$("rsnPlay"),on=!a.paused&&!a.ended&&!!a.src;b.classList.toggle("on",on);b.setAttribute("aria-label",on?"Pause":"Play");$("radioBtn").classList.toggle("on",on);
+  $("rsnName").textContent=RSN[rsnCh].name;$("rsnSub").textContent=RSN[rsnCh].sub;document.querySelectorAll("[data-rsn]").forEach(x=>x.setAttribute("aria-pressed",x.dataset.rsn===rsnCh))}
+function rsnMsg(t){const m=$("rsnMsg");m.hidden=!t;m.innerHTML=t||""}
+function rsnStart(){const a=$("rsnAudio"),b=$("rsnPlay");
+  if(!a.canPlayType("application/vnd.apple.mpegurl")){rsnMsg('This browser can\'t play the live stream here. <a href="https://www.rsn.net.au/" target="_blank" rel="noopener">Listen on RSN&#39;s site &#9656;</a>');return}
+  rsnMsg("");if(a.src!==RSN[rsnCh].url)a.src=RSN[rsnCh].url;b.classList.add("wait");
+  a.play().then(()=>{if("mediaSession" in navigator)try{navigator.mediaSession.metadata=new MediaMetadata({title:RSN[rsnCh].name,artist:"Live on Nan's Tips"})}catch(_){}}).catch(()=>{b.classList.remove("wait");rsnMsg('Couldn\'t start the stream. Tap play again, or <a href="https://www.rsn.net.au/" target="_blank" rel="noopener">listen on RSN&#39;s site &#9656;</a>');rsnPaint()})}
+(()=>{const a=$("rsnAudio");if(!a)return;
+  ["playing","pause","ended","emptied"].forEach(ev=>a.addEventListener(ev,()=>{$("rsnPlay").classList.remove("wait");rsnPaint()}));
+  a.addEventListener("waiting",()=>$("rsnPlay").classList.add("wait"));
+  a.addEventListener("error",()=>{$("rsnPlay").classList.remove("wait");if(a.src)rsnMsg('The stream isn\'t answering right now. <a href="https://www.rsn.net.au/" target="_blank" rel="noopener">Try RSN&#39;s site &#9656;</a>');rsnPaint()});
+  $("rsnPlay").addEventListener("click",()=>{if(!a.paused)a.pause();else rsnStart()});
+  $("rsnVol").addEventListener("input",e=>{a.volume=e.target.value/100});
+  document.querySelectorAll("[data-rsn]").forEach(x=>x.addEventListener("click",()=>{const was=!a.paused;rsnCh=x.dataset.rsn;a.removeAttribute("src");a.load();rsnPaint();if(was)rsnStart()}));
+  rsnPaint()})();
 loadAll();
 setInterval(()=>{for(const k in LIMIT)if(Date.now()-LIMIT[k]>10*60e3&&!BUSY[k])delete CARDS[k];pump();if(!document.querySelector("details.run[open]"))render()},60e3);
 </script>
