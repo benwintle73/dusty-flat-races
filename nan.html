@@ -606,10 +606,12 @@ const escH=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const div=v=>v?"$"+Number(v).toFixed(2):"–";
 const pct=p=>p>=.995?"99%":p<.01?"<1%":Math.round(p*100)+"%";
-const cdText=ms=>{if(ms<=0)return "jumped";const s=Math.floor(ms/1e3),h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;return h?`${h}h ${String(m).padStart(2,"0")}m`:m?`${m}m ${String(x).padStart(2,"0")}s`:`${x}s`};
+// after the jump, for 2 minutes, the clock counts up: "jumped 0:45 ago"
+const upText=ms=>{const s=Math.floor(-ms/1e3);return `${Math.floor(s/60)}:${String(s%60).padStart(2,"0")} ago`};
+const cdText=ms=>{if(ms<=0)return ms>-2*60e3?"jumped "+upText(ms):"jumped";const s=Math.floor(ms/1e3),h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;return h?`${h}h ${String(m).padStart(2,"0")}m`:m?`${m}m ${String(x).padStart(2,"0")}s`:`${x}s`};
 // race status: "In 23m 10s", "Jumping soon · 3m 10s" (under 5 minutes), then "Jumped", then "Result in" once the official result is known
-const SOON=5*60e3,stLabel=ms=>ms<=0?"Jumped":ms<SOON?`Jumping soon ${Math.floor(ms/6e4)}:${String(Math.floor(ms/1e3)%60).padStart(2,"0")}`:"In "+cdText(ms);
-const cdn=iso=>{const ms=Date.parse(iso)-Date.now();return iso&&ms>0?` <span class="cdn${ms<120e3?" soon":""}" data-cdn="${iso}">⏱ ${cdText(ms)}</span>`:""};
+const SOON=5*60e3,stLabel=ms=>ms<=0?(ms>-2*60e3?"Jumped "+upText(ms):"Jumped"):ms<SOON?`Jumping soon ${Math.floor(ms/6e4)}:${String(Math.floor(ms/1e3)%60).padStart(2,"0")}`:"In "+cdText(ms);
+const cdn=iso=>{const ms=Date.parse(iso)-Date.now();return iso&&ms>-2*60e3?` <span class="cdn${ms<120e3?" soon":""}" data-cdn="${iso}">⏱ ${cdText(ms)}</span>`:""};
 setInterval(()=>{for(const el of document.querySelectorAll("[data-cdn]")){const ms=Date.parse(el.dataset.cdn)-Date.now(),rs=el.hasAttribute("data-rs");el.textContent=rs?stLabel(ms):(ms>0&&!el.closest(".r-cd")?"⏱ ":"")+cdText(ms);el.classList.toggle("soon",ms>0&&ms<(rs?SOON:120e3));el.classList.toggle("gone",ms<=0)}},1000);
 const timeOf=iso=>iso?new Date(iso).toLocaleTimeString("en-AU",{hour:"numeric",minute:"2-digit"}).replace(/\s?([ap])\.?m\.?/i,(m,a)=>" "+a.toLowerCase()+"m"):"";
 const CODE={H:"Horses",D:"Dogs",N:"Harness"};
@@ -1995,7 +1997,7 @@ function renderStrip(){const el=$("recStrip");if(!el)return;const s=STRIP.sum;if
 function resultOf(r){if(r.code==="H"&&RESULTS[r.key]&&RESULTS[r.key].done)return true;return STRIP.done[`${r.code}|${fkey(r.venue)}|${r.no}`]||false}
 function raceState(r){const ms=Date.parse(r.jump)-Date.now();
   if(ms>0)return `<span class="cdn${ms<SOON?" soon":""}" data-cdn="${escH(r.jump)}" data-rs>${stLabel(ms)}</span>`;
-  const x=resultOf(r);return x==="ab"?'<span class="cdn gone">Abandoned</span>':x?'<span class="cdn res">Result in</span>':'<span class="cdn gone">Jumped</span>'}
+  const x=resultOf(r);return x==="ab"?'<span class="cdn gone">Abandoned</span>':x?'<span class="cdn res">Result in</span>':ms>-GRACE?`<span class="cdn gone" data-cdn="${escH(r.jump)}" data-rs>${stLabel(ms)}</span>`:'<span class="cdn gone">Jumped</span>'}
 // one race, collapsed: time and countdown on the left; venue, the tipster's top pick and the next three, and the panel, lined up on the right
 function raceCard(r,open,tag){const rk=ranked(r),t=Date.parse(r.jump),gone=t<=Date.now(),[hm,ap]=timeOf(r.jump).split(" ");
   const w=ST.who==="all"?"nan":ST.who,tp=w==="nan"?null:tipOf(r,w);
@@ -2815,7 +2817,7 @@ document.addEventListener("click",e=>{
 });
 /* ---------- What's new: the update history, plus the suggestions box ---------- */
 const CHANGES=[
- ["2.45.9","15 Nov","Races hang about after the jump",["A race now stays on Today's tips (and the game's next-to-go list) for 2 minutes after its start time, marked Jumped. You can still open it and see the runners and the tips; betting is closed."]],
+ ["2.45.9","15 Nov","Races hang about after the jump",["A race now stays on Today's tips (and the game's next-to-go list) for 2 minutes after its start time. Its clock keeps going, counting up how long since it jumped (Jumped 0:45 ago). You can still open it and see the runners and the tips; betting is closed. Your bets show the same count-up."]],
  ["2.45.8","15 Nov","Filter your settled bets",["Under My bets, Settled now has All, Wins, Losses and Refunds buttons, each with its count, and a line showing what you staked, got back and your profit for the bets you're looking at."]],
  ["2.45.7","15 Nov","The radio's always there",["The live race calls now sit right under the heading, ready to play: one tap on play, no menu to open. Switch between RSN Xtra (race calls from around Australia) and RSN 927. A green light shows when it's on air."]],
  ["2.45.6","15 Nov","The Mob's tips",["The Mob is now in Whose tips on Today's tips. Pick it to see The Mob's pick on every race, its Best Bet, Next Best and Value Bet up top, and its full order in each race, with where Nan, Pop, Bob and Gran each have every runner."]],
