@@ -766,6 +766,10 @@ function ranked(r){
 }
 // the PuntersEdge quick-form race matching one of FormFav's (same race number, venue and start within half an hour)
 const vkey=v=>String(v||"").toLowerCase().replace(/[^a-z]+/g," ").trim().split(" ")[0];
+// same venue? Sponsors ("Sportsbet", "Ladbrokes") and extra words ("Hillside") don't count: Sportsbet Sandown Hillside = Sandown
+const VSTOP=new Set(["sportsbet","ladbrokes","tab","tabtouch","bet","picklebet","neds","pointsbet","betr","unibet","palmerbet","bluebet","topsport","playup","betfair","racing","raceway","paceway","racecourse","the","at"]);
+const vwords=v=>String(v||"").toLowerCase().replace(/[^a-z]+/g," ").trim().split(" ").filter(w=>w&&!VSTOP.has(w));
+const sameVenue=(a,b)=>{const x=vwords(a),y=vwords(b);if(!x.length||!y.length)return false;const X=new Set(x),Y=new Set(y);return x.every(w=>Y.has(w))||y.every(w=>X.has(w))||x.join("")===y.join("")};
 function quickRace(r){const q=QUICK[r.code];if(!q||!q.races)return null;
   return q.races.find(x=>+x.n===+r.no&&vkey(x.venue)===vkey(r.venue)&&Math.abs(Date.parse(x.jump)-Date.parse(r.jump))<30*60e3)||null}
 const mkt=r=>r.code==="H"||r.src==="quick";
@@ -2562,7 +2566,8 @@ function settleMulti(t){
     if(!live.some(x=>x.no===r.no))return {state:"lost",pay:0,src:r.src};
     div*=r.win!=null?r.win:(estDiv(seqP(leg.field||[],[r.no]))||1);
   }
-  if(pending)return {state:Date.now()<Date.parse(t.jump)?"open":"waiting"};
+  if(pending){if(t.legs.some(l=>!legResult(l)&&Date.now()>Date.parse(l.jump)+NO_RESULT))return {state:"void",pay:costOf(t),src:"official",nores:true};
+    return {state:Date.now()<Date.parse(t.jump)?"open":"waiting"}}
   // All Up multiplies the win dividends; tote doubles, trebles, quaddies and Big 6s have their own pools,
   // estimated here at 85% of the win dividends multiplied together
   return {state:"won",pay:r2(t.stake/combos(t)*div*(t.type==="allup"?1:.85)),src};
@@ -2573,11 +2578,13 @@ function settleOf(t){
   if(t.status==="cancelled")return {state:"cancelled"};
   const off=BK.off[t.rk];
   if(off&&off.aband)return {state:"void",pay:costOf(t),src:"official",aband:true};
-  if(off&&off.fin&&off.fin.length){const o=outcome(t,off.fin,off.exo||{},off.pp,off.scr,true);
-    if(o.void)return {state:"void",pay:o.pay,src:"official"};if(o.hit&&o.pay==null)return {state:"div",src:"official"};return {state:o.hit?"won":"lost",pay:o.pay,src:"official"}}
+  if(off&&off.fin&&off.fin.length){let o=outcome(t,off.fin,off.exo||{},off.pp,off.scr,true),est=false;
+    if(o.hit&&o.pay==null&&Date.now()>Date.parse(t.jump)+DIV_WAIT){o=outcome(t,off.fin,off.exo||{},off.pp,off.scr,false);est=true}
+    if(o.void)return {state:"void",pay:o.pay,src:"official"};if(o.hit&&o.pay==null)return {state:"div",src:"official"};return {state:o.hit?"won":"lost",pay:o.pay,src:"official",est}}
   const man=BK.manual[t.rk];
   if(man&&man.length){const fin=man.map((no,i)=>{const u=(t.field||[]).find(x=>x.no===no)||{no,name:String(no)};return {no,name:u.name,pos:i+1}});
     const o=outcome(t,fin,{},null,[],false);return {state:o.hit?"won":"lost",pay:o.pay||0,src:"manual"}}
+  if(Date.now()>Date.parse(t.jump)+NO_RESULT)return {state:"void",pay:costOf(t),src:"official",nores:true};
   return {state:Date.now()<Date.parse(t.jump)?"open":"waiting"};
 }
 function balances(){
@@ -2698,7 +2705,7 @@ function pickNames(t,code){code=code||t.code;const f=t.field||[],nm=n=>{const u=
 const myNos=t=>new Set([...(t.sel||[]).map(x=>x.no),...(t.style==="standout"&&t.legs?t.legs.flat():[])]);
 function tkMulti(t){
   const o=settleOf(t),c=costOf(t);
-  const tag={open:["To run",""],waiting:["Waiting on results",""],won:[`Won ${money(o.pay||0)}`,"won"],lost:["Lost","lost"],void:[o.aband?"Abandoned":"Refunded",""],cancelled:["Cancelled",""]}[o.state];
+  const tag={open:["To run",""],waiting:["Waiting on results",""],won:[`Won ${money(o.pay||0)}`,"won"],lost:["Lost","lost"],void:[o.aband?"Abandoned":o.nores?"No result, refunded":"Refunded",""],cancelled:["Cancelled",""]}[o.state];
   return `<div class="rec tk"><div><div class="rmeta">${timeOf(t.jump)}${t.status!=="cancelled"?cdn(t.jump):""} · ${BT[t.type][0]} · ${t.legs.length} races</div>
     <div class="line"><b>${BT[t.type][0]}</b> · ${money(c)} <small>(${comboLine(t)})</small></div></div>
     <span class="tag ${tag[1]}">${tag[0]}${o.src==="manual"&&o.state!=="open"?" · your result":""}</span>
@@ -2716,7 +2723,7 @@ function tkHtml(t){
   if(t.sport==="cricket")return crTk(t);
   if(isMulti(t.type))return tkMulti(t);
   const o=settleOf(t),c=costOf(t),man=BK.manual[t.rk],afterJump=Date.now()>=Date.parse(t.jump);
-  const tag={open:["To run",""],waiting:["Waiting on results",""],div:["Won, dividend coming",""],won:[`Won ${money(o.pay||0)}`,"won"],lost:["Lost","lost"],void:[o.aband?"Abandoned":"Refunded",""],cancelled:["Cancelled",""]}[o.state];
+  const tag={open:["To run",""],waiting:["Waiting on results",""],div:["Won, dividend coming",""],won:[`Won ${money(o.pay||0)}`,"won"],lost:["Lost","lost"],void:[o.aband?"Abandoned":o.nores?"No result, refunded":"Refunded",""],cancelled:["Cancelled",""]}[o.state];
   return `<div class="rec tk"><div class="rmeta">${timeOf(t.jump)}${t.status!=="cancelled"?cdn(t.jump):""} · ${escH(t.venue)} R${t.no} · ${CODE[t.code]}</div>
     <span class="tag ${tag[1]}">${tag[0]}${o.src==="manual"?" · your result":""}</span>
     <div class="line"><b>${BT[t.type][0]}${styleName(t)}</b> ${selHtml(t)} · ${money(c)}</div>
@@ -2724,7 +2731,7 @@ function tkHtml(t){
     ${t.type==="ew"||comboLine(t)?`<div class="order">${t.type==="ew"?`${money(t.stake)} each way`:comboLine(t)}</div>`:""}
     ${(LEDGER.per[t.id]||0)>0?`<div class="order nanpay">${money(LEDGER.per[t.id])} of it paid back to Nan</div>`:""}
     ${o.src==="manual"?resList("Your result",man.map((n,i)=>{const u=(t.field||[]).find(x=>x.no===n)||{};return {pos:i+1,no:n,name:u.name,box:u.box}}),t.code,myNos(t),"Estimated dividend for now. The official result replaces this when it's in."):""}
-    ${o.aband?`<p class="calc-out abd">Race abandoned: it was never run, so your ${money(costOf(t))} came back.</p>`:o.src==="official"&&BK.off[t.rk]?resList("Official result",BK.off[t.rk].fin.slice().sort((a,b)=>a.pos-b.pos).slice(0,4).map(x=>({...x,box:((t.field||[]).find(u=>u.no===x.no)||{}).box})),t.code,myNos(t),o.state==="void"?"A runner you picked was scratched, so the stake came back.":""):""}
+    ${o.nores?`<p class="calc-out abd">No official result turned up for this race within two days, so your ${money(costOf(t))} came back.</p>`:""}${o.est?`<p class="calc-out">The tote dividend never came through, so this was paid at an estimate.</p>`:""}${o.aband?`<p class="calc-out abd">Race abandoned: it was never run, so your ${money(costOf(t))} came back.</p>`:o.src==="official"&&BK.off[t.rk]?resList("Official result",BK.off[t.rk].fin.slice().sort((a,b)=>a.pos-b.pos).slice(0,4).map(x=>({...x,box:((t.field||[]).find(u=>u.no===x.no)||{}).box})),t.code,myNos(t),o.state==="void"?"A runner you picked was scratched, so the stake came back.":""):""}
     <div class="tkbtns">${o.state==="open"?`<button data-bcancel="${t.id}">Cancel bet</button>`:""}${afterJump&&o.src!=="official"&&t.status!=="cancelled"?`<button data-bman="${escH(t.rk)}">${man?"Change my result":"Enter result"}</button>${man?`<button data-bmanclr="${escH(t.rk)}">Clear my result</button>`:""}`:""}</div>
     ${MANUAL===t.rk?manualForm(t):""}</div>`;
 }
@@ -2964,10 +2971,15 @@ function byDayHtml(ts,h){const days=new Map();for(const t of ts){const d=betDay(
 document.addEventListener("toggle",e=>{const d=e.target;if(!d.matches||!d.matches("details.dgrp"))return;d.open?DAYOPEN.add(d.dataset.dg):DAYOPEN.delete(d.dataset.dg)},true);
 // the races a bet depends on: the race itself, or each leg of a multi-race bet
 const raceRefs=t=>isMulti(t.type)?t.legs:[{rk:t.rk,code:t.code,date:t.date,no:t.no,venue:t.venue,jump:t.jump,field:t.field,sel:t.sel}];
+// a race with no official finish and not abandoned (yet)
+const unsettled=rk=>{const o=BK.off[rk];return !o||!o.aband&&!(o.fin&&o.fin.length)};
+// backup results carry the winner's starting price but no tote dividends: keep asking the main feed for them, and once
+// DIV_WAIT has passed, pay what's still missing at an estimate. NO_RESULT: no result from anywhere, so the stake comes back.
+const DIV_WAIT=3*3600e3,NO_RESULT=48*3600e3,FFTRY={};
 async function checkOfficial(force){
   if(BKBUSY)return;const need=new Map(),refs=[];
   for(const t of BK.tickets){if(t.status==="cancelled"||t.sport==="cricket")continue;
-    for(const r of raceRefs(t)){if(Date.now()<Date.parse(r.jump)+(force?60e3:5*60e3))continue;const o=BK.off[r.rk];if(o&&o.fin&&/final|paying|official|closed|abandoned/i.test(o.st||"final")&&settleOf(t).state!=="div")continue;if(!refs.some(x=>x.rk===r.rk)){need.set(r.code+"|"+r.date,[r.code,r.date]);refs.push(r)}}}
+    for(const r of raceRefs(t)){if(Date.now()<Date.parse(r.jump)+(force?60e3:5*60e3)||Date.now()>Date.parse(r.jump)+6*864e5)continue;const o=BK.off[r.rk];if(o&&o.fin&&/final|paying|official|closed|abandoned/i.test(o.st||"final")&&settleOf(t).state!=="div"&&!(o.ff&&Date.now()<Date.parse(r.jump)+DIV_WAIT))continue;if(!refs.some(x=>x.rk===r.rk)){need.set(r.code+"|"+r.date,[r.code,r.date]);refs.push(r)}}}
   if(!need.size){if(force){CHECKMSG="Nothing waiting on official results.";renderBets()}return}
   BKBUSY=true;if(force){CHECKMSG="Checking for official results…";renderBets()}let got=0;
   await Promise.allSettled([...need.values()].filter(([c])=>c!=="H").map(([c,d])=>fetch(`${SB}/otr-res?code=${c}&date=${d}`)));
@@ -2975,19 +2987,29 @@ async function checkOfficial(force){
     try{const j=await getJSON(`${SB}/otr-nan?official=1&code=${code}&date=${date}`);
       for(const r of refs.filter(r=>r.code===code&&r.date===date)){
         const names=new Set((r.field||r.sel).map(x=>nkey(x.name)));
-        const m=(j.races||[]).filter(x=>+x.n===+r.no&&(x.fin||[]).length).map(x=>({x,s:x.fin.filter(u=>names.has(nkey(u.name))).length+(vkey(x.venue)===vkey(r.venue)?.5:0)})).sort((a,b)=>b.s-a.s)[0];
-        if(m&&m.s>=1.5&&/final|paying|official|closed|interim/i.test(m.x.st||"final")){if(!BK.off[r.rk])got++;BK.off[r.rk]={fin:m.x.fin,exo:m.x.exo||{},pp:m.x.pp,scr:m.x.scr||[],st:m.x.st||"final",at:(BK.off[r.rk]||{}).at||Date.now()}}}
+        const ab=(j.races||[]).find(x=>+x.n===+r.no&&/abandon/i.test(x.st||"")&&sameVenue(x.venue,r.venue));
+        if(ab&&!(BK.off[r.rk]&&BK.off[r.rk].fin&&BK.off[r.rk].fin.length)){if(!(BK.off[r.rk]&&BK.off[r.rk].aband))got++;BK.off[r.rk]={fin:[],aband:true,st:"abandoned",at:Date.now()};continue}
+        const m=(j.races||[]).filter(x=>+x.n===+r.no&&(x.fin||[]).length).map(x=>({x,s:x.fin.filter(u=>names.has(nkey(u.name))).length+(sameVenue(x.venue,r.venue)?.5:0)})).sort((a,b)=>b.s-a.s)[0];
+        if(m&&m.s>=1.5&&/final|paying|official|closed|interim/i.test(m.x.st||"final")){if(unsettled(r.rk))got++;BK.off[r.rk]={fin:m.x.fin,exo:m.x.exo||{},pp:m.x.pp,scr:m.x.scr||[],st:m.x.st||"final",at:(BK.off[r.rk]||{}).at||Date.now()}}}
     }catch(e){}
   }
   const ab=new Map();for(const r of refs)if(r.code!=="H"&&!(BK.off[r.rk]&&BK.off[r.rk].fin)&&Date.now()>Date.parse(r.jump)+20*60e3)ab.set(r.code+"|"+r.date,[r.code,r.date]);
   for(const [code,date] of ab.values()){try{const j=await getJSON(`${AB_URL}?code=${code}&date=${date}`);
     for(const r of refs.filter(r=>r.code===code&&r.date===date&&!(BK.off[r.rk]&&BK.off[r.rk].fin))){const m=(j.abandoned||[]).find(x=>vkey(x.track)===vkey(r.venue)&&(x.races||[]).includes(+r.no));
       if(m){BK.off[r.rk]={fin:[],aband:true,st:"abandoned",at:Date.now()};got++}}}catch(e){}}
+  // backup: FormFav, for any race (horses, dogs, harness) still without a result 30 minutes after the jump. It covers
+  // meetings the main feed misses altogether, and abandoned races. Each race is asked about at most every 10 minutes.
+  for(const r of refs){if(!unsettled(r.rk)||Date.now()<Date.parse(r.jump)+30*60e3||Date.now()-(FFTRY[r.rk]||0)<(force?60e3:10*60e3))continue;FFTRY[r.rk]=Date.now();
+    try{const j=await getJSON(`${SB}/otr-ffres?${new URLSearchParams({code:r.code,date:r.date,venue:r.venue,race:String(r.no)})}`),x=(j.races||[])[0];if(!x)continue;
+      if(/abandon/i.test(x.st||"")){BK.off[r.rk]={fin:[],aband:true,st:"abandoned",ff:true,at:Date.now()};got++;continue}
+      const names=new Set((r.field||r.sel).map(u=>nkey(u.name)));
+      if((x.fin||[]).length&&/final|interim|paying|official|closed/i.test(x.st||"")&&x.fin.some(u=>names.has(nkey(u.name)))){BK.off[r.rk]={fin:x.fin,exo:{},pp:null,scr:x.scr||[],st:x.st,ff:true,at:Date.now()};got++}
+    }catch(e){}}
   BKBUSY=false;saveBK();
-  if(force){const still=refs.filter(r=>!(BK.off[r.rk]&&BK.off[r.rk].fin)),interim=refs.filter(r=>BK.off[r.rk]&&!/final|paying|official|closed|abandoned/i.test(BK.off[r.rk].st||"final"));
+  if(force){const still=refs.filter(r=>unsettled(r.rk)&&Date.now()<Date.parse(r.jump)+NO_RESULT),interim=refs.filter(r=>BK.off[r.rk]&&!/final|paying|official|closed|abandoned/i.test(BK.off[r.rk].st||"final"));
     const ago=r=>Math.max(1,Math.round((Date.now()-Date.parse(r.jump))/6e4));
     CHECKMSG=`Checked at ${timeOf(new Date().toISOString())}. `+(got?`Results in for ${got} race${got>1?"s":""}. `:"No new results yet. ")
-      +(still.length?`Still waiting on: ${still.map(r=>`${escH(r.venue)} R${r.no} (ran ${ago(r)} min ago)`).join(", ")}. Results usually arrive 10 to 30 minutes after a race; enter it yourself to settle sooner. `:"")
+      +(still.length?`Still waiting on: ${still.map(r=>`${escH(r.venue)} R${r.no} (ran ${ago(r)} min ago)`).join(", ")}. Results usually arrive 10 to 30 minutes after a race; enter it yourself to settle sooner. If no result turns up anywhere within two days, the bet is refunded. `:"")
       +(interim.length?`Interim result for ${interim.map(r=>`${escH(r.venue)} R${r.no}`).join(", ")}: settled now, and checked again in case the dividends change.`:"")}
   renderBets();
 }
@@ -3182,7 +3204,7 @@ const crWhen=iso=>`${crDay(iso)==="Today"?"":crDay(iso).split(" ").slice(0,3).jo
 function crSlip(t){return `${crWhen(t.start||t.jump)}${cdn(t.jump)} · ${escH(t.home)} v ${escH(t.away)} · <b>${CR_MKT[t.type||"h2h"]}</b> ${crChip(t,t.sel)} ${escH(crLabel(t))} @ ${t.price.toFixed(2)} · ${money(t.stake)}`}
 function crTk(t){const o=settleOf(t),mk=t.type||"h2h",r=(BK.off[t.rk]||{}).cr,res=mk==="h2h"&&!(r&&r.final)?(BK.manual[t.rk]||[])[0]:null,started=Date.now()>=Date.parse(t.jump);
   const late=mk==="h2h"&&!(r&&r.final)&&Date.now()>Date.parse(t.start||t.jump)+8*3600e3;
-  const tag={open:["To play",""],waiting:[r&&r.state==="in"?"Under way":"Waiting on result",""],won:[`Won ${money(o.pay||0)}`,"won"],lost:["Lost","lost"],void:[o.aband?"Abandoned":"Refunded",""],cancelled:["Cancelled",""]}[o.state];
+  const tag={open:["To play",""],waiting:[r&&r.state==="in"?"Under way":"Waiting on result",""],won:[`Won ${money(o.pay||0)}`,"won"],lost:["Lost","lost"],void:[o.aband?"Abandoned":o.nores?"No result, refunded":"Refunded",""],cancelled:["Cancelled",""]}[o.state];
   const opts=t.test?["home","away","draw","nr"]:["home","away","tie","nr"];
   return `<div class="rec tk"><div class="rmeta">${crWhen(t.start||t.jump)}${t.status!=="cancelled"?cdn(t.jump):""} · Cricket · ${escH(t.comp)}</div>
     <span class="tag ${tag[1]}">${tag[0]}</span>
