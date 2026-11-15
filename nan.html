@@ -3082,7 +3082,7 @@ function renderResults(){const el=$("resultsView");if(!el)return;const today=REC
     :`<h3 class="bgrp">${week?"Last 7 days":date===today?"Today so far":"How they went"}</h3>
     <ol class="rv-lad">${lad.map(([w,l],i)=>`<li${i===0?' class="lead"':""}><span class="rl-n">${i+1}</span><b class="rl-w">${l}</b><span class="rl-h"><b>${T[w].win.hit}</b> winner${T[w].win.hit===1?"":"s"} from ${T[w].win.n}</span><span class="rl-p">${pm(w10(w))}</span></li>`).join("")}</ol>
     <p class="rv-note">The amount is what $10 on each tipster&rsquo;s top pick to win would have made or lost, at the official dividends.${waiting?` ${waiting} race${waiting>1?"s":""} still waiting on results.`:""}</p>`;
-  const more=!races.length?"":`<details class="rv-more"><summary>Place, quinella, trifecta and first 4 <span class="rchev">&#9656;</span></summary>
+  const more=!races.length?"":`<details class="rv-more" ${RV.more?"open":""}><summary>Place, quinella, trifecta and first 4 <span class="rchev">&#9656;</span></summary>
     <p class="rv-note">Every bet type on each tipster&rsquo;s picks: Win and Place on the top pick, Quinella and Exacta on the top two, Trifecta on the top three, First 4 on the top four.</p>
     ${ctl}
     <div class="rv-lead"><span class="rv-cup" aria-hidden="true">&#127942;</span><div><b>${lead[1]} ${week?"topped the last 7 days":date===today?"is on top today":"topped the day"}</b><small>across every bet type, ${rvStakeTxt()}: ${pm(tot(lead[0]))}</small></div></div>
@@ -3113,6 +3113,7 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-rvday],[da
   if(b.dataset.rvday)return loadResults(b.dataset.rvday);
   if(b.dataset.rvcode)RV.code=b.dataset.rvcode;else if(b.dataset.rvst)RV.stake=b.dataset.rvst;else RV.box=b.dataset.rvbox==="1";
   rvSave();renderResults()});
+document.addEventListener("toggle",e=>{if(e.target.classList&&e.target.classList.contains("rv-more"))RV.more=e.target.open},true);
 document.addEventListener("change",e=>{if(e.target.id!=="rvOwn")return;const v=Math.round(+e.target.value);if(v>=1&&v<=100){RV.stake=v===100?"100.0":String(v);rvSave()}renderResults()});
 setInterval(()=>{if(ST.view==="results"&&(RV.date||REC_TODAY())===REC_TODAY()&&!document.querySelector("#resultsView details[open]"))loadResults(REC_TODAY(),true)},120e3);
 // settled bets, filtered to all, wins, losses or refunds
