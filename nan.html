@@ -631,6 +631,7 @@ details.nums2{grid-column:1/-1;margin:2px 0 4px}details.nums2>summary{cursor:poi
 @media (max-width:480px){.guide{grid-template-columns:1fr}.guide .ffload{grid-column:1;grid-row:auto}}
 .bb-pm{margin:0 0 8px;padding:6px 10px;background:#fff3cf;border-left:4px solid var(--amber);font-size:14px;font-weight:600}
 .rv-intro{margin:0 0 8px;font-size:15px}
+.nsays:empty,.says:empty,.nt:empty,.pl-q:empty,.tip small:empty{display:none}
 .rv-more .rv-note,.rv-more .rv-help{color:var(--ink)}.rv-more .rv-note{color:var(--ink2)}
 .rv-same{display:flex;align-items:flex-start;gap:10px;width:100%;margin-top:8px;padding:10px;text-align:left;background:var(--paper2,#e6dcc2);border:2px solid var(--amber-dim);color:var(--ink);font:inherit;cursor:pointer}.rv-same[aria-pressed=true]{border-color:var(--ink);background:#fff4d6}
 .rv-same b{display:block;font-size:16px}.rv-same small{display:block;font-size:13px;color:var(--ink2);margin-top:2px}.rv-box{flex:none;width:24px;height:24px;border:2px solid var(--ink);display:grid;place-items:center;font-weight:900;background:#fff}
@@ -705,6 +706,7 @@ details.about>summary h4{margin:0}details.about details.fsec{margin-top:8px}deta
       <div class="fgrp"><span class="fl">Tracks</span><div class="frow nw"><input type="search" id="q" placeholder="Find a track" aria-label="Find a track" autocomplete="off"><button id="favBtn" class="fsave" aria-pressed="false">Save this track</button><button id="favOnly" aria-pressed="false">Only my saved tracks</button></div></div>
       <div class="fgrp"><span class="fl">Races</span><label class="fchk"><input type="checkbox" id="past"> Show races that have already jumped</label></div>
       <div class="tabs who" id="whoc"></div>
+      <div class="fgrp"><span class="fl">Extras</span><label class="fchk"><input type="checkbox" id="jokes"> Funny comments from Nan and the family</label></div>
     </details>
   </div>
   <div id="betAll"></div>
@@ -799,7 +801,9 @@ const NAN_SAYS={
   D:["Nan says this dog jumps like it's late for its tea.","Nan likes a dog that knows the way to the rail.","Nan says the box draw's a gift. Don't waste it.","Nan reckons this one would chase the lure to Sydney and back.","Nan says this pup's got more early speed than Pop on pension day.","Nan says this dog's quicker out of the box than Pop to the pub.","Nan says it'll hug the rail like Nan hugs a bargain.","Nan reckons the lure won't know what hit it."],
   N:["Nan says this driver could steer a shopping trolley through a car park.","Nan likes a pacer that can fire off the gate.","Nan reckons this one's got a sit and a finish in it.","Nan says no gallops, no worries. Steady as she goes.","Nan's mate in the stewards' tower rates the driver.","Nan says this one's trotting like it's late for bingo.","Nan says the gig's in good hands. Steady as a Sunday drive."]};
 const sayHash=s=>{let h=2166136261;for(const c of String(s)){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0};
-function nanSays(code,seed){const L=[...(NAN_SAYS[code]||[]),...NAN_SAYS.all];return L[sayHash(seed)%L.length]}
+// the funny lines from Nan and the family: on unless switched off in Filters & options
+let JOKES=(()=>{try{return localStorage.getItem("otr-jokes")!=="off"}catch(e){return true}})();
+function nanSays(code,seed){if(!JOKES)return "";const L=[...(NAN_SAYS[code]||[]),...NAN_SAYS.all];return L[sayHash(seed)%L.length]}
 function cloth(no,code,box,cls){
   const d=code==="D",k=d?((box||no)-1)%8:(no-1)%20,[bg,ink]=(d?SC_D:SC_N)[k<0?0:k]||SC_N[0],stripes=bg.includes("gradient");
   return `<span class="sc${cls?" "+cls:""}" style="background:${bg};color:${ink}${stripes?";font-size:14px":""}">${no}</span>`;
@@ -874,7 +878,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.50.4"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.51.0"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -1110,11 +1114,11 @@ function raceBody(r){
   ${loadBtn}${canBet?builderHtml(r):""}<p class="rmeta">${[r.name,r.dist?r.dist+"m":"",r.cls,r.cond||(r.card&&r.card.cond),r.est?"No market yet: horse prices estimated":""].filter(Boolean).map(escH).join(" · ")}</p>
   <p class="fkey"><b>Chance</b>: how likely Nan rates each runner to win (the field adds up to 100%). <b>${mkt(r)?"Market":"Nan's price"}</b>: what $1 returns if it wins${mkt(r)?`, at the bookies&rsquo; price; <b>Nan&rsquo;s</b> is her own price from her chance, so a market price above hers looks like value and gets a <b>Value</b> tag`:`, worked out from her chance (no bookies&rsquo; prices here)`}. Tap a runner for her reasons and its form.</p>
   <table class="field"><thead><tr><th colspan="3">Nan's order</th></tr></thead><tbody>
-  ${rk.map((x,i)=>`<tr><td><details class="run${i===0?" top1":""}"><summary><span class="rk">${ord(i+1)}</span>${cloth(x.u.no,r.code,x.u.box,"no")}<span class="nm"><b>${inBlk(r.code,x.u.name)?'<span class="blkmark">★</span>':""}${escH(x.u.name)}</b><small>${escH(runSub(r,x.u))}${Date.now()<Date.parse(r.jump)?moveTag(r,x.u.name):""}</small><small class="nt">${escH(talkFor("nan",r,x.u,i+1,n))}</small></span>
+  ${rk.map((x,i)=>`<tr><td><details class="run${i===0?" top1":""}"><summary><span class="rk">${ord(i+1)}</span>${cloth(x.u.no,r.code,x.u.box,"no")}<span class="nm"><b>${inBlk(r.code,x.u.name)?'<span class="blkmark">★</span>':""}${escH(x.u.name)}</b><small>${escH(runSub(r,x.u))}${Date.now()<Date.parse(r.jump)?moveTag(r,x.u.name):""}</small>${i===0?`<small class="nt">${escH(talkFor("nan",r,x.u,i+1,n))}</small>`:""}</span>
     <span class="pct">${pct(x.p)}<small>chance</small></span><span class="pr">${div(x.price)}<small>${mkt(r)?"market":"Nan's"}</small>${isValue(r,x)?'<i class="vbadge sm">Value</i>':""}</span>${mkt(r)?`<span class="pr mk">${div(ladder(1/(x.p*1.13)))}<small>Nan's</small></span>`:"<span></span>"}
     <span class="meter"><i style="width:${Math.round(100*x.p/maxP)}%"></i></span></summary>
-    <div class="why">${blkBtn(r.code,x.u.name)}${talkBox(r,x.u,"nan")}${whyHtml(r,x,i,n)}${fullForm(r,x)}</div></details></td></tr>`).join("")}
-  ${(r.scr||[]).map(u=>`<tr><td><div class="scrrow"><span class="rk">SCR</span>${cloth(u.no,r.code,u.box,"no x")}<span class="nm"><s>${escH(u.name)}</s><small>Scratched: no chance from Nan</small><small class="nt">${escH(talkFor("nan",r,u,1,1,true))}</small></span></div></td></tr>`).join("")}
+    <div class="why">${blkBtn(r.code,x.u.name)}${whyHtml(r,x,i,n)}${fullForm(r,x)}</div></details></td></tr>`).join("")}
+  ${(r.scr||[]).map(u=>`<tr><td><div class="scrrow"><span class="rk">SCR</span>${cloth(u.no,r.code,u.box,"no x")}<span class="nm"><s>${escH(u.name)}</s><small>Scratched: no chance from Nan</small></span></div></td></tr>`).join("")}
   </tbody></table>
   ${oth?`<details class="others"${ST.who!=="all"&&ST.who!=="nan"?" open":""}><summary><span>What the other tipsters say</span><span class="rchev">&#9656;</span></summary>${oth}</details>`:""}`;
 }
@@ -1989,7 +1993,7 @@ CATCH.gran=[
 "Gran says she'll be right, love, the money says so.",
 "Gran says it's a ripper, fair dinkum, dear."];
 const gcd=(a,b)=>b?gcd(b,a%b):a;
-function catchFor(who,r){const base=who==="nan"?[...(NAN_SAYS[r.code]||[]),...NAN_SAYS.all]:who==="pop"?POP_SAYS:who==="bob"?BOB_SAYS:who==="kev"?KEV_SAYS:GRAN_SAYS,L=[...base,...(CATCH[who]||[])];
+function catchFor(who,r){if(!JOKES)return "";const base=who==="nan"?[...(NAN_SAYS[r.code]||[]),...NAN_SAYS.all]:who==="pop"?POP_SAYS:who==="bob"?BOB_SAYS:who==="kev"?KEV_SAYS:GRAN_SAYS,L=[...base,...(CATCH[who]||[])];
   const h=sayHash(r.code+"|"+vkey(r.venue)+"|"+r.date+"|"+who);let step=37+(h%50);while(gcd(step,L.length)!==1)step++;
   return L[(h+(Math.max(1,+r.no||1)-1)*step)%L.length]}
 /* ---------- The tipsters' talk: a line from each tipster on every runner, by where they've put it ----------
@@ -2139,7 +2143,7 @@ function talkMap(r,who){const meet=RACES.filter(x=>x.code===r.code&&x.venue===r.
     if(x.id===r.id)out=m});
   if(TALKC.size>400)TALKC.clear();TALKC.set(key,out);return out}
 // a tipster's line on a runner: the same every time you look, and never the same as another runner's in that race
-function talkFor(who,r,u,rank,n,scr){const T=TALK[who]||TALK.nan;
+function talkFor(who,r,u,rank,n,scr){if(!JOKES)return "";const T=TALK[who]||TALK.nan;
   if(scr){const v=talkVars(r,u,1),h=sayHash(r.id+"|"+who+"|"+nkey(u.name));for(let j=0;j<T.scr.length;j++){const x=talkFill(T.scr[(h+j)%T.scr.length],v);if(x)return x}return "Scratched."}
   const m=talkMap(r,who).get(nkey(u.name));if(m)return m;
   const pool=talkPoolFull(who,r,rank,n),v=talkVars(r,u,rank),h=sayHash(r.id+"|"+who+"|"+nkey(u.name));
@@ -2179,7 +2183,7 @@ function mapHtml(r){const km=TIPS.map[popKey(r)];if(!km||!km.runners)return "";c
     ${good.length?`<div><span class="tw">Good ${draw}</span>${good.map(u=>cloth(u.me.no,r.code,u.me.box)).join(" ")} <small>${draw}s that win more often here</small></div>`:""}
     ${bad.length?`<div><span class="tw">Poor ${draw}</span>${bad.map(u=>cloth(u.me.no,r.code,u.me.box)).join(" ")}</div>`:""}
     <div><small>Bob lifts or trims each runner's chance for its running style and ${draw} record at this track.</small></div></div>`}
-function talkBox(r,u,skip){const ts=tipsters(r).filter(t=>t.who!==skip);if(!ts.length)return "";
+function talkBox(r,u,skip){if(!JOKES)return "";const ts=tipsters(r).filter(t=>t.who!==skip);if(!ts.length)return "";
   const rows=ts.map(t=>{const order=[...t.chance.entries()].sort((a,b)=>b[1]-a[1]),i=order.findIndex(([k])=>k===nkey(u.name));if(i<0)return "";
     return `<div class="tk-r"><b>${WHO[t.who]}</b><span class="tk-o">${ordN(i+1)}</span><span>${escH(talkFor(t.who,r,u,i+1,order.length))}</span></div>`}).join("");
   return rows?`<div class="talk"><h4>What the tipsters say</h4>${rows}</div>`:""}
@@ -2187,7 +2191,7 @@ const tipsters0=(r,w)=>tipsters(r).some(t=>t.who===w);
 // the chosen tipster's full order for a race, every runner
 function whoOrderHtml(r){const w=ST.who;if(w==="all"||w==="nan")return "";const t=tipOf(r,w);if(!t)return `<p class="tnote">${w==="mob"?"The Mob needs at least two tipsters on a race, and this one hasn't got them yet.":WHO[w]+" hasn't rated this race."}</p>`;
   const all=topN(r,t,99),ord=n=>n+(["th","st","nd","rd"][n%100>10&&n%100<14?0:n%10]||"th");
-  return `<div class="panel worder"><h4>${w==="mob"?"The Mob's order":WHO[w]+"'s order"}</h4>${all.map((x,i)=>`<div class="tip" data-hlbet="${escH(r.id)}|${x.no}"><span class="tw">${ord(i+1)}</span>${cloth(x.no,r.code,x.box)} <b>${escH(x.name)}</b> ${pct(x.p)}<small>${escH(w==="mob"?mobTalk(r,x):talkFor(w,r,ranked(r).map(y=>y.u).find(y=>y.no===x.no)||x,i+1,all.length))}</small></div>`).join("")}<p class="tnote">Tap a runner to bet on it. Nan's own order is below.</p></div>`}
+  return `<div class="panel worder"><h4>${w==="mob"?"The Mob's order":WHO[w]+"'s order"}</h4>${all.map((x,i)=>`<div class="tip" data-hlbet="${escH(r.id)}|${x.no}"><span class="tw">${ord(i+1)}</span>${cloth(x.no,r.code,x.box)} <b>${escH(x.name)}</b> ${pct(x.p)}<small>${escH(w==="mob"?mobTalk(r,x):i===0?talkFor(w,r,ranked(r).map(y=>y.u).find(y=>y.no===x.no)||x,i+1,all.length):"")}</small></div>`).join("")}<p class="tnote">Tap a runner to bet on it. Nan's own order is below.</p></div>`}
 function panelOf(r){const ts=tipsters(r);if(ts.length<2)return null;const rk=ranked(r),tot=new Map();
   // each tipster weighted by how their top picks have gone in this code lately (worked out on the server from settled results)
   const ws=(TIPS.w&&TIPS.w[r.code])||{},wt=t=>ws[t.who]??1,sw=ts.reduce((a,t)=>a+wt(t),0)||1;
@@ -2607,7 +2611,7 @@ function quipCats(p,i,n){const pc=p.bets?p.won/p.bets:0,net=+p.net||0,c=[];
   if(p.bets>=40)c.push("busy");else if(p.bets<=4)c.push("few");
   c.push("any");return c}
 // One line each, top of the board first; a line once used is off limits for everyone below. Seeded by the day so lines change daily, steady through the day.
-function boardQuips(ps){const used=new Set(),day=REC_TODAY(),out=[];
+function boardQuips(ps){if(!JOKES)return ps.map(()=>"");const used=new Set(),day=REC_TODAY(),out=[];
   ps.forEach((p,i)=>{let pick=null;
     for(const cat of quipCats(p,i,ps.length)){const L=QUIPS[cat],s=sayHash(p.name+"|"+cat+"|"+day);
       for(let k=0;k<L.length&&!pick;k++){const q=L[(s+k)%L.length];if(!used.has(q))pick=q}if(pick)break}
@@ -3210,6 +3214,7 @@ document.addEventListener("click",e=>{
 });
 /* ---------- What's new: the update history, plus the suggestions box ---------- */
 const CHANGES=[
+ ["2.51.0","15 Nov","Fewer jokes, and an off switch",["Nan and the family crack fewer jokes: one line on each race and its top pick, and the tipsters' banter only under Why Nan picked.","Turn them off altogether in Filters & options: untick Funny comments."]],
  ["2.50.4","15 Nov","Profit and loss",["Results says profit or loss, without \"pretend\"."]],
  ["2.50.3","15 Nov","Results, easier on a phone",["Results now opens with one plain line: if you'd put $10 on each tipster's top pick to win, this is how you'd have done.","Tick Only races everyone tipped to compare the tipsters on exactly the same races.","Other bet types and who's best for each code fold away, laid out as cards that fit a phone, with the bet sizes explained."]],
  ["2.50.2","15 Nov","Tidier bets",["In your bets, the official result shows full names again, and your runners are highlighted instead of marked YOURS.","Borrow from Nan folds away; it opens by itself while you owe Nan.","Bet buttons just say Bet."]],
@@ -3653,6 +3658,8 @@ document.addEventListener("click",e=>{const n=e.target.closest("[data-nav]");
   if(e.target.closest("[data-mclose]"))return moreMenu(false);
   const m=$("moreMenu");if(m&&!m.hidden&&!e.target.closest("#moreMenu"))moreMenu(false)});
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&$("moreMenu")&&!$("moreMenu").hidden){moreMenu(false);const b=document.querySelector('[data-nav="more"]');if(b)b.focus()}});
+if($("jokes"))$("jokes").checked=JOKES;
+document.addEventListener("change",e=>{if(e.target.id!=="jokes")return;JOKES=e.target.checked;try{localStorage.setItem("otr-jokes",JOKES?"on":"off")}catch(_){}TALKC.clear();render();if(ST.view==="punters")renderPlayers()});
 function setView(v,focus){
   if(v==="races")v="tips";
   const was=ST.view;moreMenu(false);
