@@ -47,26 +47,19 @@ html.app .mast{padding-top:calc(46px + env(safe-area-inset-top))!important}
 .newsbtn[aria-expanded="true"]{background:var(--amber);color:var(--tote);border-color:var(--amber)}
 .newsbtn i{position:absolute;top:-5px;right:-5px;width:12px;height:12px;border-radius:50%;background:var(--red);box-shadow:0 0 0 2px var(--tote)}
 .newsp{padding-bottom:0}
-.radiobtn{grid-column:1/-1;display:flex;align-items:center;justify-content:center;gap:8px;background:var(--tote2);color:var(--paper);border:2px solid var(--amber-dim);border-radius:10px;min-height:40px;padding:0 12px;font:700 15px/1 var(--led);cursor:pointer}
-.radiobtn b{font-size:12px;transition:transform .2s}.radiobtn[aria-expanded="true"]{background:var(--amber);color:var(--tote);border-color:var(--amber)}.radiobtn[aria-expanded="true"] b{transform:rotate(180deg)}
-.radio h3{margin:0 0 6px}.radio p{margin:0 0 8px}
-.rstations{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px}
-.rst{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto auto;column-gap:10px;align-items:center;background:var(--tote);color:var(--paper);text-decoration:none;padding:10px 12px;border-left:5px solid var(--amber)}
-.rst b{font:400 20px/1.1 var(--display);letter-spacing:.4px;text-transform:uppercase}.rst small{grid-column:1;font-size:14px;opacity:.85;margin-top:3px}
-.rst span{grid-column:2;grid-row:1/3;background:var(--amber);color:var(--tote);font-weight:700;padding:10px 14px;white-space:nowrap}
-.rnote{margin:8px 0 0!important;font-size:14px;color:var(--ink2)}
-.rlive{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;background:var(--tote);color:var(--paper);padding:10px 12px;margin:0;border-left:5px solid var(--good)}
-.rlive-l b{display:block;font:400 22px/1.1 var(--display);letter-spacing:.4px;text-transform:uppercase}.rlive-l small{display:block;font-size:14px;opacity:.85;margin-top:3px}
-.rplayer{display:flex;align-items:center;gap:10px}
-.rplay{width:56px;height:56px;border-radius:50%;background:var(--amber);border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none}
-.rplay i{width:0;height:0;border-left:19px solid var(--tote);border-top:12px solid transparent;border-bottom:12px solid transparent;margin-left:5px}
-.rplay.on i{width:18px;height:22px;border:0;margin:0;border-left:6px solid var(--tote);border-right:6px solid var(--tote)}
-.rplay.wait i{border:4px solid var(--tote);border-top-color:transparent;border-radius:50%;width:22px;height:22px;margin:0;animation:rspin 1s linear infinite}
+.rbar{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;align-items:center;gap:10px;background:var(--tote2);color:var(--paper);padding:8px 12px;margin-top:10px;border-left:5px solid var(--amber)}
+.rbar.on{border-left-color:#3fbf5f}
+.rbar-t b{display:flex;align-items:center;gap:6px;font:400 20px/1.1 var(--display);letter-spacing:.4px;text-transform:uppercase}.rbar-t small{display:block;font-size:14px;opacity:.8;margin-top:2px}
+.rdot{width:9px;height:9px;border-radius:50%;background:#7a6d55;flex:none}.rbar.on .rdot{background:#3fbf5f;box-shadow:0 0 0 3px #3fbf5f33;animation:rpulse 1.6s ease-in-out infinite}
+@keyframes rpulse{50%{box-shadow:0 0 0 6px #3fbf5f00}}
+.rplay{width:48px;height:48px;border-radius:50%;background:var(--amber);border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none}
+.rplay i{width:0;height:0;border-left:17px solid var(--tote);border-top:11px solid transparent;border-bottom:11px solid transparent;margin-left:5px}
+.rplay.on i{width:16px;height:20px;border:0;margin:0;border-left:5px solid var(--tote);border-right:5px solid var(--tote)}
+.rplay.wait i{border:4px solid var(--tote);border-top-color:transparent;border-radius:50%;width:20px;height:20px;margin:0;animation:rspin 1s linear infinite}
 #rsnVol{width:100px;accent-color:#ffb52e}
-.rch{display:flex;gap:6px;margin-top:8px}.rch button{background:var(--tote2);color:var(--paper);border:2px solid var(--amber-dim);min-height:36px;padding:0 12px;font-weight:700;font-size:14px;cursor:pointer}.rch button[aria-pressed=true]{background:var(--amber);color:var(--tote);border-color:var(--amber)}
-.rmsg{grid-column:1/-1;margin:0!important;font-size:14px;color:#ffd27a}
-@media (max-width:420px){.rlive{grid-template-columns:1fr}#rsnVol{flex:1;width:auto}}
-.radiobtn.on{border-color:var(--good)}.radiobtn .ron{display:none;color:#7be08f;font-size:12px}.radiobtn.on .ron{display:inline}
+.rch{display:flex;gap:4px}.rch button{background:var(--tote);color:var(--paper);border:2px solid var(--amber-dim);min-height:36px;min-width:52px;padding:0 10px;font-weight:700;font-size:14px;cursor:pointer}.rch button[aria-pressed=true]{background:var(--amber);color:var(--tote);border-color:var(--amber)}
+.rmsg{grid-column:1/-1;margin:0;font-size:14px;color:#ffd27a}
+@media (max-width:560px){.rbar{grid-template-columns:auto minmax(0,1fr) auto}#rsnVol{display:none}}
 .mast .sub{display:flex;flex-direction:column;align-items:center;text-align:center;gap:3px;flex:1 1 auto;min-width:0;line-height:1;align-self:center}
 .mast .sub{white-space:nowrap}@media (max-width:400px){.mast .sub{font-size:17px}}
 .verbtn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:84px;background:var(--tote2);color:var(--amber);border:2px solid var(--amber);border-radius:10px;padding:7px 8px 6px;cursor:pointer;animation:vglow 2.4s ease-in-out infinite}
@@ -529,15 +522,15 @@ details.srcs{margin-top:16px}details.srcs>.allow,details.srcs #allow>.allow{marg
 </style>
 </head>
 <body>
-<header class="mast"><h1>Nan's Tips</h1><span class="sub" id="sub"><span>Loading</span><span>today's races…</span></span><button class="verbtn" id="refBtn" aria-label="Refresh to get the latest version"><b id="verTxt"></b><small id="verSub">Refresh</small></button><a href="./?play=1" id="playLink">Play Off To The Races &#9656;</a><button class="newsbtn" id="newsBtn" aria-expanded="false">What's new<i id="newDot" hidden></i></button><button class="radiobtn" id="radioBtn" aria-expanded="false"><span aria-hidden="true">&#128251;</span> Listen to the races live <span class="ron">&#9679; On air</span> <b>&#9662;</b></button></header>
+<header class="mast"><h1>Nan's Tips</h1><span class="sub" id="sub"><span>Loading</span><span>today's races…</span></span><button class="verbtn" id="refBtn" aria-label="Refresh to get the latest version"><b id="verTxt"></b><small id="verSub">Refresh</small></button><a href="./?play=1" id="playLink">Play Off To The Races &#9656;</a><button class="newsbtn" id="newsBtn" aria-expanded="false">What's new<i id="newDot" hidden></i></button></header>
 <section id="newsView" class="wrap newsp" hidden></section>
-<section id="radioView" class="wrap newsp" hidden><div class="calc radio"><h3>Listen to the races live</h3>
-  <div class="rlive"><div class="rlive-l"><b id="rsnName">RSN Xtra · race calls</b><small id="rsnSub">The Sky Racing calls from around Australia, 10am to 11pm. Press play and keep reading: it plays on while you move around Nan's page.</small>
-    <div class="rch"><button data-rsn="x" aria-pressed="true">RSN Xtra</button><button data-rsn="m" aria-pressed="false">RSN 927</button></div></div>
-    <div class="rplayer"><button id="rsnPlay" class="rplay" aria-label="Play"><i></i></button><input id="rsnVol" type="range" min="0" max="100" value="100" aria-label="Volume"></div>
-    <p id="rsnMsg" class="rmsg" hidden></p></div>
-  <audio id="rsnAudio" preload="none" playsinline></audio>
-</div></section>
+<section id="radioView" class="wrap newsp"><div class="rbar">
+  <button id="rsnPlay" class="rplay" aria-label="Play"><i></i></button>
+  <div class="rbar-t"><b><span class="rdot" aria-hidden="true"></span><span id="rsnName">RSN Xtra</span></b><small id="rsnSub">Live race calls</small></div>
+  <div class="rch"><button data-rsn="x" aria-pressed="true">Xtra</button><button data-rsn="m" aria-pressed="false">927</button></div>
+  <input id="rsnVol" type="range" min="0" max="100" value="100" aria-label="Volume">
+  <p id="rsnMsg" class="rmsg" hidden></p></div>
+  <audio id="rsnAudio" preload="none" playsinline></audio></section>
 <div id="a2hs" class="wrap a2wrap" hidden></div>
 <main class="wrap">
   <div class="view"><button data-view="tips" aria-pressed="true">Today's tips</button><button data-view="races" aria-pressed="false">Races</button><button data-view="record" aria-pressed="false">Tipsters</button><button data-view="punters" aria-pressed="false">Punters</button><button data-view="bets" aria-pressed="false">My bets</button><button data-view="blk" aria-pressed="false">Black book</button><button data-view="cricket" aria-pressed="false">Cricket</button></div>
@@ -705,7 +698,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.45.6"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.45.7"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -2809,6 +2802,7 @@ document.addEventListener("click",e=>{
 });
 /* ---------- What's new: the update history, plus the suggestions box ---------- */
 const CHANGES=[
+ ["2.45.7","15 Nov","The radio's always there",["The live race calls now sit right under the heading, ready to play: one tap on play, no menu to open. Switch between RSN Xtra (race calls from around Australia) and RSN 927. A green light shows when it's on air."]],
  ["2.45.6","15 Nov","The Mob's tips",["The Mob is now in Whose tips on Today's tips. Pick it to see The Mob's pick on every race, its Best Bet, Next Best and Value Bet up top, and its full order in each race, with where Nan, Pop, Bob and Gran each have every runner."]],
  ["2.45.5","15 Nov","Runner names in your bets",["Your bets now show the names of the runners you picked, not just their numbers: in finishing order for a straight trifecta or exacta, place by place for a standout, and every runner in a box or a multi leg. Black book runners get their star."]],
  ["2.45.4","15 Nov","Live race calls on the computer too",["Listen to the races live now plays on computers (Chrome, Edge, Firefox) and Android phones as well as iPhones and iPads.","The links out to other stations are gone: it's just RSN Xtra and RSN 927, playing right here."]],
@@ -3297,14 +3291,13 @@ setInterval(checkVersion,3*60e3);document.addEventListener("visibilitychange",()
 $("refBtn").addEventListener("click",()=>{$("verSub").textContent="Loading…";const u=new URL(location.href);u.searchParams.set("r",Date.now());if(ST.view&&ST.view!=="tips")u.hash=ST.view;location.replace(u.href)});
 try{const u=new URL(location.href);if(u.searchParams.has("r")){u.searchParams.delete("r");history.replaceState(null,"",u.pathname+u.search+u.hash)}}catch(e){}
 newsDot();showA2();$("newsBtn").addEventListener("click",()=>toggleNews());
-$("radioBtn").addEventListener("click",()=>{const el=$("radioView"),on=el.hidden;el.hidden=!on;$("radioBtn").setAttribute("aria-expanded",on);if(on)rsnLoad()});
 /* RSN live in the page: RSN's own public live streams (HLS), played by the phone's own audio player. iPhones, iPads
    and Android phones play these natively; a browser that can't gets the link to RSN instead. */
-const RSN={x:{name:"RSN Xtra · race calls",sub:"The Sky Racing calls from around Australia, 10am to 11pm. Press play and keep reading: it plays on while you move around Nan's page.",url:"https://d1j02mmlpi2jw3.cloudfront.net/playlist.m3u8"},
-  m:{name:"RSN 927",sub:"Victoria's racing and sport station: Victorian race calls, form and racing talk. It plays on while you move around Nan's page.",url:"https://dg6dce7w867bz.cloudfront.net/playlist.m3u8"}};
+const RSN={x:{name:"RSN Xtra",sub:"Live race calls, Australia-wide · 10am–11pm",url:"https://d1j02mmlpi2jw3.cloudfront.net/playlist.m3u8"},
+  m:{name:"RSN 927",sub:"Victorian racing and sport, live",url:"https://dg6dce7w867bz.cloudfront.net/playlist.m3u8"}};
 let rsnCh="x";
 function rsnLoad(){}
-function rsnPaint(){const a=$("rsnAudio"),b=$("rsnPlay"),on=!a.paused&&!a.ended&&!!a.src;b.classList.toggle("on",on);b.setAttribute("aria-label",on?"Pause":"Play");$("radioBtn").classList.toggle("on",on);
+function rsnPaint(){const a=$("rsnAudio"),b=$("rsnPlay"),on=!a.paused&&!a.ended&&!!a.src;b.classList.toggle("on",on);b.setAttribute("aria-label",on?"Pause":"Play");document.querySelector(".rbar").classList.toggle("on",on);
   $("rsnName").textContent=RSN[rsnCh].name;$("rsnSub").textContent=RSN[rsnCh].sub;document.querySelectorAll("[data-rsn]").forEach(x=>x.setAttribute("aria-pressed",x.dataset.rsn===rsnCh))}
 function rsnMsg(t){const m=$("rsnMsg");m.hidden=!t;m.innerHTML=t||""}
 // iPhones, iPads and Safari play the stream themselves; other browsers (Chrome, Edge, Firefox on a computer, Android)
