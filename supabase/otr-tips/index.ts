@@ -229,7 +229,8 @@ function spread(list: any[] | null | undefined, field: Set<string>) {
   for (const [k, v] of m) m.set(k, v / s);
   return m;
 }
-const top3 = (m: Map<string, number>, names: Map<string, string>) => [...m.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k, p]) => ({ name: names.get(k) || k, p: r3(p) }));
+// each tipster's top four (four from 15 November, for the First 4 on the Results page; the leaderboard reads the first three)
+const top3 = (m: Map<string, number>, names: Map<string, string>) => [...m.entries()].sort((a, b) => b[1] - a[1]).slice(0, 4).map(([k, p]) => ({ name: names.get(k) || k, p: r3(p) }));
 
 // Every 10 minutes (pg_cron, x-nan-key) each tipster's top three picks are saved for races jumping in the next 90 minutes,
 // against the race Nan logged (otr_nan_log), and kept updating until the jump. The Panel is saved beside them: the weighted
