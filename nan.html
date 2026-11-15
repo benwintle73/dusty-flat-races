@@ -174,6 +174,9 @@ details.fsec>summary::-webkit-details-marker{display:none}details.fsec>summary h
 .rec .tag.won{background:var(--good);color:#fff}.rec .tag.plc{background:#b98a22;color:#fff}.rec .tag.lost{background:#8e3a2c;color:#fff}
 .rec .line{font-size:16px;grid-column:1/-1}.rec .line b{font-size:17px}
 .rec .order{font-size:15px;color:var(--ink2);grid-column:1/-1}
+.picks{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:4px 14px;margin:4px 0 2px}.picks .pkrow{display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px;width:100%}.picks .pkrow>b{min-width:34px;font-size:14px;color:var(--ink2)}
+.pk{display:inline-flex;align-items:center;gap:6px;font-size:16px;line-height:1.2}.pk>span:last-child{font-weight:600}
+.lg-s .picks{margin:2px 0 0}
 .rlist{grid-column:1/-1;margin-top:4px;border-top:1px dashed var(--line);padding-top:6px}
 .rl-h{font:600 12px/1 var(--led);text-transform:uppercase;letter-spacing:.5px;color:var(--ink2);margin-bottom:4px}
 .rl-r{display:grid;grid-template-columns:34px 28px minmax(0,1fr) auto;align-items:center;column-gap:6px;min-height:30px;font-size:15px}
@@ -702,7 +705,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.45.4"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.45.5"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -2676,6 +2679,13 @@ function multiTicket0(){return {type:MB.type,stake:MB.stake,legs:MB.legs.map(l=>
 function resList(title,rows,code,mine,note){
   return `<div class="rlist"><div class="rl-h">${title}</div>${rows.map(x=>{const me=x.no!=null&&mine.has(x.no);
     return `<div class="rl-r${me?" mine":""}"><span class="rl-p">${ord(x.pos)}</span>${x.no!=null?cloth(x.no,code,x.box):"<span></span>"}<span class="rl-n">${escH(x.name||"")}</span><i>${me?"yours":""}</i></div>`}).join("")}${note?`<p class="rl-note">${note}</p>`:""}</div>`}
+// the runners in a bet by name: in order for a straight exotic, by place for a standout, as a list for a box
+function pickNames(t,code){code=code||t.code;const f=t.field||[],nm=n=>{const u=f.find(x=>x.no===n)||(t.sel||[]).find(x=>x.no===n)||{};return u.name||""},
+    one=(n,box)=>`<span class="pk">${cloth(n,code,box!=null?box:(f.find(u=>u.no===n)||{}).box)}<span>${inBlk(code,nm(n))?'<span class="blkmark">★</span>':""}${escH(nm(n))}</span></span>`;
+  if(t.style==="standout"&&t.legs)return `<div class="picks">${t.legs.map((l,i)=>`<div class="pkrow"><b>${ord(i+1)}</b>${l.map(n=>one(n)).join("")}</div>`).join("")}</div>`;
+  const ordd=exotic(t.type)&&t.style!=="box"&&ordered(t.type);
+  return `<div class="picks">${(t.sel||[]).map((x,i)=>ordd?`<div class="pkrow"><b>${ord(i+1)}</b>${one(x.no,x.box)}</div>`:one(x.no,x.box)).join("")}</div>`;
+}
 const myNos=t=>new Set([...(t.sel||[]).map(x=>x.no),...(t.style==="standout"&&t.legs?t.legs.flat():[])]);
 function tkMulti(t){
   const o=settleOf(t),c=costOf(t);
@@ -2686,7 +2696,7 @@ function tkMulti(t){
     ${(LEDGER.per[t.id]||0)>0?`<div class="order nanpay">${money(LEDGER.per[t.id])} of it paid back to Nan</div>`:""}
     <div class="rlist"><div class="rl-h">Legs</div>${t.legs.map((l,i)=>{const r=legResult(l),run=Date.now()>=Date.parse(l.jump),hit=r&&r.no!=null&&l.sel.some(x=>x.no===r.no);
       return `<div class="lg-r"><span class="rl-p">${i+1}</span><span class="lg-v">${escH(l.venue)} R${l.no} · ${timeOf(l.jump)}</span><span class="lg-w">${r?`${r.no!=null?cloth(r.no,l.code,((l.field||[]).find(u=>u.no===r.no)||{}).box):"?"} <i class="${hit?"y":"n"}">${hit?"✓":"✗"}</i>`:""}</span>
-        <span class="lg-s">${l.sel.map(x=>cloth(x.no,l.code,x.box)).join(" ")}${r&&r.src==="manual"?" <small>your result</small>":""}</span>
+        <span class="lg-s">${pickNames({sel:l.sel,field:l.field,type:"win"},l.code)}${r&&r.src==="manual"?" <small>your result</small>":""}</span>
         ${run&&!(BK.off[l.rk]&&BK.off[l.rk].fin)&&t.status!=="cancelled"?`<span class="lg-b"><button data-bman="${escH(l.rk)}">${BK.manual[l.rk]?"Change my result":"Enter result"}</button>${BK.manual[l.rk]?` <button data-bmanclr="${escH(l.rk)}">Clear</button>`:""}</span>`:""}</div>
         ${MANUAL===l.rk?manualForm({field:l.field,rk:l.rk}):""}`}).join("")}</div>
     <div class="tkbtns">${o.state==="open"?`<button data-bcancel="${t.id}">Cancel bet</button>`:""}</div></div>`;
@@ -2701,6 +2711,7 @@ function tkHtml(t){
   return `<div class="rec tk"><div class="rmeta">${timeOf(t.jump)}${t.status!=="cancelled"?cdn(t.jump):""} · ${escH(t.venue)} R${t.no} · ${CODE[t.code]}</div>
     <span class="tag ${tag[1]}">${tag[0]}${o.src==="manual"?" · your result":""}</span>
     <div class="line"><b>${BT[t.type][0]}${styleName(t)}</b> ${selHtml(t)} · ${money(c)}</div>
+    ${exotic(t.type)?pickNames(t):""}
     ${t.type==="ew"||comboLine(t)?`<div class="order">${t.type==="ew"?`${money(t.stake)} each way`:comboLine(t)}</div>`:""}
     ${(LEDGER.per[t.id]||0)>0?`<div class="order nanpay">${money(LEDGER.per[t.id])} of it paid back to Nan</div>`:""}
     ${o.src==="manual"?resList("Your result",man.map((n,i)=>{const u=(t.field||[]).find(x=>x.no===n)||{};return {pos:i+1,no:n,name:u.name,box:u.box}}),t.code,myNos(t),"Estimated dividend for now. The official result replaces this when it's in."):""}
@@ -2793,6 +2804,7 @@ document.addEventListener("click",e=>{
 });
 /* ---------- What's new: the update history, plus the suggestions box ---------- */
 const CHANGES=[
+ ["2.45.5","15 Nov","Runner names in your bets",["Your bets now show the names of the runners you picked, not just their numbers: in finishing order for a straight trifecta or exacta, place by place for a standout, and every runner in a box or a multi leg. Black book runners get their star."]],
  ["2.45.4","15 Nov","Live race calls on the computer too",["Listen to the races live now plays on computers (Chrome, Edge, Firefox) and Android phones as well as iPhones and iPads.","The links out to other stations are gone: it's just RSN Xtra and RSN 927, playing right here."]],
  ["2.45.3","15 Nov","Live race calls that actually play",["Listen to the races live now plays RSN's own live streams straight from Nan's page: RSN Xtra for the Sky Racing calls from around Australia (10am to 11pm), or RSN 927. Press play and keep reading; the bar up top shows when it's on air, and it shows on your lock screen too."]],
  ["2.45.2","15 Nov","RSN 927 live, right here",["Listen to the races live now has RSN 927 playing right on Nan's page: press play and carry on reading the tips, races and your bets. The bar up top shows when it's on. The other stations still open in their own tab."]],
