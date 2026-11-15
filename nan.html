@@ -708,7 +708,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.45.3"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.45.4"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -2799,6 +2799,7 @@ document.addEventListener("click",e=>{
 });
 /* ---------- What's new: the update history, plus the suggestions box ---------- */
 const CHANGES=[
+ ["2.45.4","15 Nov","Live race calls on the computer too",["Listen to the races live now plays on computers (Chrome, Edge, Firefox) and Android phones as well as iPhones and iPads."]],
  ["2.45.3","15 Nov","Live race calls that actually play",["Listen to the races live now plays RSN's own live streams straight from Nan's page: RSN Xtra for the Sky Racing calls from around Australia (10am to 11pm), or RSN 927. Press play and keep reading; the bar up top shows when it's on air, and it shows on your lock screen too."]],
  ["2.45.2","15 Nov","RSN 927 live, right here",["Listen to the races live now has RSN 927 playing right on Nan's page: press play and carry on reading the tips, races and your bets. The bar up top shows when it's on. The other stations still open in their own tab."]],
  ["2.45.1","15 Nov","Listen to the races live",["New at the top of Nan's page: Listen to the races live. Pick a racing radio station (RSN 927, whose RSN Xtra channel carries the Sky Racing calls, Sky Sports Radio or SEN Track). It opens in a new tab and keeps playing while you come back to Nan's tips."]],
@@ -3294,17 +3295,30 @@ function rsnLoad(){}
 function rsnPaint(){const a=$("rsnAudio"),b=$("rsnPlay"),on=!a.paused&&!a.ended&&!!a.src;b.classList.toggle("on",on);b.setAttribute("aria-label",on?"Pause":"Play");$("radioBtn").classList.toggle("on",on);
   $("rsnName").textContent=RSN[rsnCh].name;$("rsnSub").textContent=RSN[rsnCh].sub;document.querySelectorAll("[data-rsn]").forEach(x=>x.setAttribute("aria-pressed",x.dataset.rsn===rsnCh))}
 function rsnMsg(t){const m=$("rsnMsg");m.hidden=!t;m.innerHTML=t||""}
-function rsnStart(){const a=$("rsnAudio"),b=$("rsnPlay");
-  if(!a.canPlayType("application/vnd.apple.mpegurl")){rsnMsg('This browser can\'t play the live stream here. <a href="https://www.rsn.net.au/" target="_blank" rel="noopener">Listen on RSN&#39;s site &#9656;</a>');return}
-  rsnMsg("");if(a.src!==RSN[rsnCh].url)a.src=RSN[rsnCh].url;b.classList.add("wait");
-  a.play().then(()=>{if("mediaSession" in navigator)try{navigator.mediaSession.metadata=new MediaMetadata({title:RSN[rsnCh].name,artist:"Live on Nan's Tips"})}catch(_){}}).catch(()=>{b.classList.remove("wait");rsnMsg('Couldn\'t start the stream. Tap play again, or <a href="https://www.rsn.net.au/" target="_blank" rel="noopener">listen on RSN&#39;s site &#9656;</a>');rsnPaint()})}
+// iPhones, iPads and Safari play the stream themselves; other browsers (Chrome, Edge, Firefox on a computer, Android)
+// use hls.js through our relay, which adds the headers they need
+const rsnApple=()=>/iPhone|iPad|iPod/.test(navigator.userAgent)||(/Safari/.test(navigator.userAgent)&&!/Chrome|Chromium|CriOS|Edg|OPR|Android/.test(navigator.userAgent));
+let rsnHls=null,rsnHlsP=null;
+function rsnLib(){return rsnHlsP||(rsnHlsP=new Promise((ok,no)=>{if(window.Hls)return ok(window.Hls);const s=document.createElement("script");s.src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js";s.onload=()=>ok(window.Hls);s.onerror=no;document.head.appendChild(s)}))}
+function rsnStart(){const a=$("rsnAudio"),b=$("rsnPlay"),fail=()=>{b.classList.remove("wait");rsnMsg('Couldn\'t start the stream. Tap play again, or <a href="https://www.rsn.net.au/" target="_blank" rel="noopener">listen on RSN&#39;s site &#9656;</a>');rsnPaint()};
+  rsnMsg("");b.classList.add("wait");
+  if(!rsnApple()){
+    // a gesture-started silent play keeps the browser happy while hls.js loads
+    a.play().catch(()=>{});
+    return rsnLib().then(H=>{if(!H||!H.isSupported())throw 0;if(rsnHls){rsnHls.destroy();rsnHls=null}
+      const h=rsnHls=new H({lowLatencyMode:false,liveSyncDurationCount:3});h.loadSource(`${SB}/otr-radio?ch=${rsnCh}&p=playlist.m3u8`);h.attachMedia(a);
+      h.on(H.Events.MANIFEST_PARSED,()=>a.play().then(rsnMeta).catch(fail));
+      h.on(H.Events.ERROR,(_,d)=>{if(d&&d.fatal){h.destroy();rsnHls=null;fail()}})}).catch(fail)}
+  if(a.src!==RSN[rsnCh].url)a.src=RSN[rsnCh].url;
+  a.play().then(rsnMeta).catch(fail)}
+function rsnMeta(){if("mediaSession" in navigator)try{navigator.mediaSession.metadata=new MediaMetadata({title:RSN[rsnCh].name,artist:"Live on Nan's Tips"})}catch(_){}}
 (()=>{const a=$("rsnAudio");if(!a)return;
   ["playing","pause","ended","emptied"].forEach(ev=>a.addEventListener(ev,()=>{$("rsnPlay").classList.remove("wait");rsnPaint()}));
   a.addEventListener("waiting",()=>$("rsnPlay").classList.add("wait"));
-  a.addEventListener("error",()=>{$("rsnPlay").classList.remove("wait");if(a.src)rsnMsg('The stream isn\'t answering right now. <a href="https://www.rsn.net.au/" target="_blank" rel="noopener">Try RSN&#39;s site &#9656;</a>');rsnPaint()});
-  $("rsnPlay").addEventListener("click",()=>{if(!a.paused)a.pause();else rsnStart()});
+  a.addEventListener("error",()=>{$("rsnPlay").classList.remove("wait");if(a.src&&!rsnHls)rsnMsg('The stream isn\'t answering right now. <a href="https://www.rsn.net.au/" target="_blank" rel="noopener">Try RSN&#39;s site &#9656;</a>');rsnPaint()});
+  $("rsnPlay").addEventListener("click",()=>{if(!a.paused){a.pause();if(rsnHls){rsnHls.destroy();rsnHls=null}}else rsnStart()});
   $("rsnVol").addEventListener("input",e=>{a.volume=e.target.value/100});
-  document.querySelectorAll("[data-rsn]").forEach(x=>x.addEventListener("click",()=>{const was=!a.paused;rsnCh=x.dataset.rsn;a.removeAttribute("src");a.load();rsnPaint();if(was)rsnStart()}));
+  document.querySelectorAll("[data-rsn]").forEach(x=>x.addEventListener("click",()=>{const was=!a.paused;rsnCh=x.dataset.rsn;if(rsnHls){rsnHls.destroy();rsnHls=null}a.removeAttribute("src");a.load();rsnPaint();if(was)rsnStart()}));
   rsnPaint()})();
 loadAll();
 setInterval(()=>{for(const k in LIMIT)if(Date.now()-LIMIT[k]>10*60e3&&!BUSY[k])delete CARDS[k];pump();if(!document.querySelector("details.run[open]"))render()},60e3);
