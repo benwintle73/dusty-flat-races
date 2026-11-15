@@ -418,7 +418,7 @@ body.landrace #bigbtn{display:none}
 <script>
 "use strict";
 /* ---------- helpers ---------- */
-const APP_VERSION="2.52.0"; // bump on every release; shown after the title
+const APP_VERSION="2.53.0"; // bump on every release; shown after the title
 const $=id=>document.getElementById(id);
 let RNG=Math.random;
 const mulberry=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
@@ -1925,7 +1925,7 @@ function restartMeet(){abortRace();refundBets();clearMeetingBets(false);S.idx=0;
 function goMeeting(i){refundBets();S.phase="bet";S.realIdx=i;S.real=S.realList[i];S.track=S.real.venue;S.tier=S.real.metro?2:0;S.idx=0;R=null;buildReal();renderAll();say(`Switched to <b>${S.track}</b>.`)}
 function goRace(i){if(S.phase==="bet"&&i===S.idx)return;refundBets();S.phase="bet";S.idx=i;R=null;buildReal();renderAll();say(`Betting open on the <b>${S.race.title}</b>.`)}
 function realBanner(){
-  if(isGold()){const P=S.goldProg[S.gold.slug]||{};return `<div class="conds"><span>${dayName(S.gold.date)} · ${escH(S.track)}</span><span>Race ${S.idx+1} of ${S.gold.races.length}</span>${P.plays?`<span>Replay ${P.plays}</span>`:""}</div>`}
+  if(isGold()){const P=S.goldProg[S.gold.slug]||{};return `<div class="conds"><span>${S.gold.legends?"Legends Day":dayName(S.gold.date)+" · "+escH(S.track)}</span><span>Race ${S.idx+1} of ${S.gold.races.length}</span>${P.plays?`<span>Replay ${P.plays}</span>`:""}</div>`}
   if(S.mode!=="real")return "";
   const src=S.real.races[S.idx],k=raceKey(S.real,src.number),man=BOOK.scr[k]||[],rl=resultLine(k);
   return `<div class="conds"><span>${dayName(S.real.date)} · ${S.track} · ${timeOf(src.jump)}</span>${closed(src.jump)?'<span class="feat">Betting closed</span>':""}</div>${rl?`<div class="tip">Official result: <b>${rl}</b></div>`:""}${src.est?`<div class="tip">No bookmaker market yet: prices are estimated from form.</div>`:""}${man.length?`<div class="tip">You scratched: ${man.map(n=>`<b>${n}</b> <button class="tk-act" data-unscr="${n}">Undo</button>`).join(" ")}</div>`:""}`;
@@ -2001,6 +2001,7 @@ const isGold=()=>S&&S.mode==="gold"&&!!S.gold;
 const goldProg=()=>(S.mode==="gold"?S:S.career||S).goldProg||{};
 // the field for one race: the same for everyone (prices and Nan's tip come after, in goldRace)
 function goldField(g,i){
+  if(g.legends)return legendField(g,i);
   const card=g.races[i],code=g.code,V=(g.venues&&g.venues[code])||[g.venue];
   return withSeed(card.seed,()=>{
     const n=card.field.length,rating=clamp(g.rating+irand(-1,1),3,code==="H"?9:7);
@@ -2031,7 +2032,7 @@ function goldRace(g,i){
 const goldSim=(g,i,race,rec)=>withSeed((g.races[i].seed^0x5bd1e995)>>>0,()=>simulate(race.field,race,rec));
 function buildGoldRace(){S.race=goldRace(S.gold,S.idx);S.bets=[];S.sel=[];S.phase="bet";S.result=null;save()}
 function enterGold(slug,date,again){
-  date=date||(GLIST&&GLIST.today);const day=GDAY[date];
+  const leg=slug===LEG_SLUG;date=leg?melDay():date||(GLIST&&GLIST.today);const day=leg?{meetings:[LEG_MEET()],runners:{},venues:{}}:GDAY[date];
   if(!day){if(gfBusy)return;gfBusy=slug;renderNav();say("Loading the Goldfields card...");
     fetch(`${GF_URL}?date=${date}`).then(r=>r.json()).then(j=>{if(j&&Array.isArray(j.meetings)){GDAY[date]=j;gfBusy="";enterGold(slug,date,again)}else say("That meeting couldn't load. Try again soon.")})
       .catch(()=>say("That meeting couldn't load. Try again soon.")).finally(()=>{if(gfBusy===slug)gfBusy="";renderNav()});return}
@@ -2049,9 +2050,10 @@ function enterGold(slug,date,again){
   S.gold={...m,date,runners,venues:day.venues};S.track=m.venue;
   // carry on where you left off; a meeting played right through starts again from race 1
   const P=S.goldProg[slug]||(S.goldProg[slug]={next:0,plays:0});
+  if(leg)S.gold.races=S.gold.races.map(r=>({...r,seed:(r.seed+(P.plays||0)*7919)>>>0})); // a new running every play
   const replay=P.next===0&&P.plays>0;S.idx=P.next;S.startBank=P.startBank??S.bank;if(P.next===0)P.startBank=S.bank;S.ledger=P.ledger||[];
   R=null;buildGoldRace();renderAll();
-  say(replay?`Replaying <b>${escH(m.venue)}</b>. Same runners, same results. Betting open on <b>R1</b>.`:P.next?`Back at <b>${escH(m.venue)}</b>. Betting open on <b>R${S.idx+1}</b>.`:`<b>${escH(m.venue)}</b>. Betting open on <b>R1</b>. Play it right through to replay it.`);
+  say(leg?(P.next?`Back at <b>Legends Day</b>. Betting open on the <b>${escH(m.races[S.idx].name)}</b>.`:`<b>Legends Day</b>: Australia's biggest races, the greatest horses. Betting open on the <b>${escH(m.races[0].name)}</b>.`):replay?`Replaying <b>${escH(m.venue)}</b>. Same runners, same results. Betting open on <b>R1</b>.`:P.next?`Back at <b>${escH(m.venue)}</b>. Betting open on <b>R${S.idx+1}</b>.`:`<b>${escH(m.venue)}</b>. Betting open on <b>R1</b>. Play it right through to replay it.`);
   document.querySelector(".stage").scrollIntoView({block:"start"});
 }
 // after each race: where you're up to at this meeting (and its ledger), so leaving and coming back carries on
@@ -2075,6 +2077,26 @@ function postMissing(date){
   step();
 }
 setInterval(()=>{if(GLIST&&GLIST.today!==melDay())loadGold(true)},60e3);
+/* ---------- Legends Day: Australia's eight biggest races on one card, run by the greats who won (or placed in) them ----------
+   Each runner carries its real jockey, trainer and claim to fame. Abilities are our own ratings; the racing is simulated,
+   seeded per play so a replay runs differently. Played with the Goldfields bank; results aren't posted anywhere. */
+const LEG_SLUG="legends-day",LEG_DATA=[{"name":"Golden Slipper","dist":1200,"seed":71001,"f":[["Todman","Neville Sellwood","Maurice McCarten","Won 1957, the first Slipper",90],["Vain","Pat Hyland","","Won 1969",88],["Belle Du Jour","Lenny Beasley","Clarry Conners","Won 2000",82],["Ha Ha","Jim Cassidy","Gai Waterhouse","Won 2001",83],["Dance Hero","Chris Munce","Gai Waterhouse","Won 2004",86],["Miss Finland","Craig Williams","David Hayes","Won 2006",85],["Forensics","Damien Oliver","John Hawkes","Won 2007",82],["Sebring","Glen Boss","Gai Waterhouse","Won 2008",85],["Crystal Lily","Brett Prebble","Mathew Ellerton & Simon Zahra","Won 2010",81],["Sepoy","Kerrin McEvoy","Peter Snowden","Won 2011",89],["Pierro","Nash Rawiller","Gai Waterhouse","Won 2012, unbeaten at two",90],["Vancouver","Tommy Berry","Gai Waterhouse","Won 2015",84],["She Will Reign","Ben Melham","Gary Portelli","Won 2017",84],["Lady Of Camelot","Blake Shinn","G Waterhouse & A Bott","Won 2024",83]]},{"name":"TJ Smith Stakes","dist":1200,"seed":71002,"f":[["Trapeze Artist","Tye Angland","Gerald Ryan","Won 2018",84],["Santa Ana Lane","Mark Zahra","Anthony Freedman","Won 2019",85],["Melito","Blake Shinn","Gerald Ryan","Won 2010",82],["Shamekha","Darren Beadman","Gai Waterhouse","Won 2005",81],["Spinning Hill","Darren Beasley","G H Walter","Won 2003",80],["Dilly Dally","Kerrin McEvoy","Leon Macdonald","Won 2004",80],["Red Oog","Hugh Bowman","Joseph Pride","Won 2006",81],["Chain Of Lightning","Damian Lane","Peter Moody & Katherine Coleman","Won 2024",85],["Master Of Design","Craig Williams","David Payne","Won 2012",82],["I Wish I Win","Luke Nolen","Peter Moody","Won 2023",86],["Bentley Biscuit","Nash Rawiller","Gai Waterhouse","Won 2007",82],["Century Kid","Lenny Beasley","Graeme Rogerson","Won 2001",81]]},{"name":"The Everest","dist":1200,"seed":71003,"f":[["Redzel","Kerrin McEvoy","Peter & Paul Snowden","Won 2017 and 2018",89],["Yes Yes Yes","Glen Boss","Chris Waller","Won 2019",86],["Nature Strip","James McDonald","Chris Waller","Won 2021, three TJ Smiths",93],["Giga Kick","Mark Zahra","Clayton Douglas","Won 2022, 2nd 2024",88],["Think About It","Sam Clipperton","Joseph Pride","Won 2023",88],["Bella Nipotina","Craig Williams","Ciaron Maher","Won 2024",87],["Ka Ying Rising","Zac Purton","David Hayes","Won 2025",93],["Black Caviar","Luke Nolen","Peter Moody","TJ Smith 2011 and 2013, 25 from 25",97],["Chautauqua","Tommy Berry","Michael, Wayne & John Hawkes","TJ Smith 2015, 2016 and 2017",91],["Takeover Target","Nash Rawiller","Joe Janiak","TJ Smith 2009",88],["Apache Cat","Corey Brown","Greg Eurell","TJ Smith 2008",87],["Lankan Rupee","Chad Newitt","Mick Price","TJ Smith 2014",88]]},{"name":"Doncaster Mile","dist":1600,"seed":71004,"f":[["Sunline","Greg Childs","Trevor McKee","Won 2002",94],["More Joyous","Nash Rawiller","Gai Waterhouse","Won 2012",88],["Sacred Falls","Zac Purton","Chris Waller","Won 2013 and 2014",87],["Private Steer","Glen Boss","John O'Shea","Won 2004",87],["Grand Armee","Darren Beasley","Gai Waterhouse","Won 2003",86],["Happy Clapper","Blake Shinn","Patrick Webster","Won 2018",87],["Mr Brightside","Craig Williams","Ben & JD Hayes","Won 2022",88],["Cascadian","Jamie Kah","James Cummings","Won 2021",85],["Celestial Legend","Tyler Schiller","Les Bridge","Won 2024",84],["Nettoyer","James Innes Jnr","Wendy Roche","Won 2020",82],["Vision And Power","Jim Cassidy","Joseph Pride","Won 2009",83],["Patezza","Danny Nikolic","G H Walter","Won 2005",82],["Sacred Choice","Tim Clark","Joseph Pride","Won 2011",81]]},{"name":"Victoria Derby","dist":2500,"seed":71005,"f":[["Efficient","Michael Rodd","Graeme Rogerson","Won 2006, then the 2007 Cup",89],["Preferment","Damien Oliver","Chris Waller","Won 2014",85],["Riff Rocket","James McDonald","Chris Waller","Won 2023",84],["Manzoice","Michael Dee","Chris Waller","Won 2022",83],["Hitotsu","John Allen","Ciaron Maher & David Eustace","Won 2021",84],["Johnny Get Angry","Lachlan King","Denis Pagan","Won 2020",82],["Ace High","Tye Angland","David Payne","Won 2017",83],["Tarzino","Chad Newitt","Mick Price","Won 2015",82],["Polanski","Hugh Bowman","Robbie Laing","Won 2013",81],["Monaco Consul","Corey Brown","Michael Moroney","Won 2009",82],["Rebel Raider","Clare Lindop","Leon Macdonald","Won 2008, first woman to ride a Derby winner",81],["Kibbutz","Craig Williams","David Hayes","Won 2007",81],["Helenus","Steven King","Leon Corstens","Won 2002",81],["Hit The Roof","Glen Boss","David Hall","Won 2000",80]]},{"name":"Caulfield Cup","dist":2400,"seed":71006,"f":[["Without A Fight","Mark Zahra","Anthony & Sam Freedman","Won 2023, then the Cup",91],["Durston","Michael Dee","Chris Waller","Won 2022",86],["Incentivise","Brett Prebble","Peter Moody","Won 2021",89],["Mer De Glace","Damian Lane","H Shimizu","Won 2019",87],["Best Solution","Pat Cosgrave","Saeed bin Suroor","Won 2018",86],["Boom Time","Cory Parish","D & B Hayes & T Dabernig","Won 2017",83],["Jameka","Nicholas Hall","Ciaron Maher","Won 2016",85],["Mongolian Khan","Opie Bosson","Murray Baker & Andrew Forsman","Won 2015",85],["Admire Rakti","Zac Purton","T Umeda","Won 2014",87],["Dunaden","Craig Williams","Mikel Delzangles","Won 2012",89],["All The Good","Kerrin McEvoy","Saeed bin Suroor","Won 2008",84],["Master O'Reilly","Vlad Duric","Danny O'Brien","Won 2007",83],["Elvstroem","Nash Rawiller","Tony Vasil","Won 2004",86],["Mummify","Danny Nikolic","Lee Freedman","Won 2003",84]]},{"name":"Cox Plate","dist":2040,"seed":71007,"f":[["Winx","Hugh Bowman","Chris Waller","Won 2015, 2016, 2017 and 2018",98],["Phar Lap","Jim Pike","Harry Telford","Won 1930",97],["Kingston Town","Malcolm Johnston","Tommy Smith","Won 1980, 1981 and 1982",95],["Northerly","Damien Oliver","Fred Kersley","Won 2001 and 2002",92],["So You Think","Glen Boss","Bart Cummings","Won 2009 and 2010",93],["Romantic Warrior","James McDonald","Danny Shum","Won 2023",94],["State Of Rest","John Allen","Joseph O'Brien","Won 2021",88],["Lys Gracieux","Damian Lane","Yoshito Yahagi","Won 2019",91],["Adelaide","Ryan Moore","Aidan O'Brien","Won 2014",88],["Shamus Award","Chad Schofield","Danny O'Brien","Won 2013",85],["Pinker Pinker","Craig Williams","Greg Eurell","Won 2011",84],["Fields Of Omagh","Steven King","Tony McEvoy","Won 2003 and 2006",88],["Savabeel","Chris Munce","Graeme Rogerson","Won 2004",86],["El Segundo","Luke Nolen","Colin Little","Won 2007",86]]},{"name":"Melbourne Cup","dist":3200,"seed":71008,"f":[["Makybe Diva","Glen Boss","Lee Freedman","Won 2003, 2004 and 2005",97],["Might And Power","Jim Cassidy","Jack Denham","Won 1997",92],["Vintage Crop","Michael Kinane","Dermot Weld","Won 1993",89],["Saintly","Darren Beadman","Bart Cummings","Won 1996",91],["Prince Of Penzance","Michelle Payne","Darren Weir","Won 2015, first woman to ride the winner",85],["Verry Elleegant","James McDonald","Chris Waller","Won 2021",92],["Gold Trip","Mark Zahra","Ciaron Maher & David Eustace","Won 2022",88],["Rain Lover","Jim Johnson","Mick Robins","Won 1968 and 1969",91],["Think Big","Harry White","Bart Cummings","Won 1974 and 1975",90],["Media Puzzle","Damien Oliver","Dermot Weld","Won 2002",87],["Brew","Kerrin McEvoy","Mike Moroney","Won 2000",85],["Protectionist","Ryan Moore","Andreas Wöhler","Won 2014",88],["Americain","Gerald Mosse","Alain de Royer-Dupré","Won 2010",89],["Rising Fast","Jack Purtell","Ivan Tucker","Won 1954",88],["Ethereal","Scott Seamer","Sheila Laxon","Won 2001",86],["Half Yours","Jamie Melham","Tony & Calvin McEvoy","Won 2025",87]]}];
+const LEG_MEET=()=>({slug:LEG_SLUG,code:"H",venue:"Legends Day",legends:true,rating:8,n:LEG_DATA.length,
+  races:LEG_DATA.map((r,i)=>({no:i+1,name:r.name,dist:r.dist,seed:r.seed,field:r.f.map(f=>({id:"L"+strHash(f[0]),name:f[0]}))}))});
+function legendField(g,i){
+  const card=g.races[i],src=LEG_DATA[i];
+  return withSeed(card.seed,()=>{
+    const n=src.f.length,bars=shuffle([...Array(n).keys()].map(k=>k+1)),rating=irand(3,5);
+    const field=src.f.map((f,k)=>{
+      const h=withSeed(strHash("legend|"+f[0]),()=>makeHorse(f[0]));
+      h.q=clamp(.5+(f[4]-80)/18*.47+gauss()*.02,.45,.99);h.sta=clamp((card.dist-1000)/2200+rand(-.06,.06),.02,1);
+      h.style=card.dist<=1200?pick(["front","front","mid"]):h.style;h.cons=rand(.6,1);
+      h.form=Array.from({length:5},()=>{const v=Math.round(1+(1-h.q)*9+Math.abs(gauss())*1.4);return String(clamp(v,1,9))}).join("");
+      h.runs=[...h.form].map(p=>({t:pick(["Flemington","Randwick","Caulfield","Moonee Valley","Rosehill"]),d:card.dist,r:9,p,n:irand(10,18)}));
+      h.jock=f[1];h.trainer=f[2];h.claim=f[3];h.legend=true;h.gid=g.races[i].field[k].id;
+      return {...h,no:k+1,barrier:bars[k],weight:Math.round(clamp(54.5+h.q*3+rand(-.5,.5),54,58)*2)/2,trip:Math.round((1000+h.sta*2200)/200)*200,wetRec:wetRecord(h)}});
+    return {title:card.name,dist:card.dist,rating,field,placeN:3,no:i+1,gold:true,legends:true}});
+}
 /* ---------- next to go: today's real horse and dog races in start order ---------- */
 let NTG=[];
 function schedule(){
@@ -2240,8 +2262,9 @@ function meetList(code){
   const gold=gl.length?gNow.map(gRow).join(""):gfFailed?"":mtRow('data-gold=""',"Goldfields meeting","Loading…",false,"game",true);
   const goldOld=gOld.length?`<details class="mtom mgold" ${NAV_GOLDOLD?"open":""}><summary><span>Earlier Goldfields meetings</span><small>${gOld.length}</small></summary><div class="mts">${gOld.map(gRow).join("")}</div></details>`:"";
   if(code==="H"){
-    const tier=TIERS[home.tier||0]||TIERS[0];
-    game=mtRow('data-nav="career"',"Dusty Flat Races",`Game · ${escH(tier.name)} · ${escH(home.track||"")}`,S.mode==="career"&&open,"game")
+    const tier=TIERS[home.tier||0]||TIERS[0],LP=GP[LEG_SLUG]||{},lon=isGold()&&S.gold.slug===LEG_SLUG;
+    game=mtRow(`data-gold="${LEG_SLUG}"`,"Legends Day",lon?`Race ${S.idx+1} of ${LEG_DATA.length} · ${escH(S.race.title)}`:LP.next?`Up to R${LP.next+1} · ${escH(LEG_DATA[LP.next].name)}`:"Australia's biggest races · all-time greats",lon&&open,"game")+
+      mtRow('data-nav="career"',"Dusty Flat Races",`Game · ${escH(tier.name)} · ${escH(home.track||"")}`,S.mode==="career"&&open,"game")
       +mtRow('data-nav="daily"',"Daily $1,000",S.mode!=="daily"&&dd!==undefined?`Played today · ${money(dd)}`:"Game · one go a day",S.mode==="daily"&&open,"game",S.mode!=="daily"&&dd!==undefined);
     MEETS.forEach((m,mi)=>{const x={attrs:`data-meet="${mi}"`,name:m.venue,races:m.races,on:S.mode==="real"&&mi===S.realIdx&&open};(m.date===REAL_TODAY?today:tom).push(x)});
     if(!MEETS.length)note=meetsFailed?"Real races only load on the public game site.":"Loading today's meetings…";
@@ -2443,7 +2466,7 @@ function buildResult(){
     return {pos:i+1,no:h.no,name:h.name,jock:h.jock,bar:h.realBarrier||h.barrier,wt:race.dogs?(h.kg||null):race.harness?null:h.weight,win:h.win,place:h.place,time:Math.round(t*100)/100,
       mar:i?(t-sim.fin[o[i-1]])*FIN_V/lenM:0,btn:(t-w)*FIN_V/lenM,silk:[rugCss(h)||c[0],h.silk?inkOn(c[0]):c[1]]}});
   return {id:x.rid,at:new Date().toISOString(),mode:S.mode,
-    meet:race.gold?`Goldfields · R${race.no}`:race.realHarness?`Real Harness (simulated) · R${race.realNo}`:race.harness?`Harness · Meeting ${S.meeting}`:race.realDogs?`Real Dogs (simulated) · R${race.realNo}`:race.dogs?`Greyhounds · Meeting ${S.meeting}`:real?"Real Races (simulated)":S.mode==="daily"?"Daily Meeting "+S.day:`${TIERS[S.tier||0].name} · Meeting ${S.meeting}`,
+    meet:race.legends?`Legends Day · ${race.title}`:race.gold?`Goldfields · R${race.no}`:race.realHarness?`Real Harness (simulated) · R${race.realNo}`:race.harness?`Harness · Meeting ${S.meeting}`:race.realDogs?`Real Dogs (simulated) · R${race.realNo}`:race.dogs?`Greyhounds · Meeting ${S.meeting}`:real?"Real Races (simulated)":S.mode==="daily"?"Daily Meeting "+S.day:`${TIERS[S.tier||0].name} · Meeting ${S.meeting}`,
     track:S.track,raceNo:race.realNo||race.no,title:race.title,dist:race.dist,cond:race.trackLabel||ratingName(race.rating),
     jump:real&&src?src.jump:null,date:real?S.real.date:race.gold?S.gold.date:null,key:real&&src?raceKey(S.real,src.number):null,placeN:race.placeN,runners,
     div:{quin:x.quin,exacta:x.exacta,tri:x.tri,first4:x.first4||null},staked:x.staked,ret:x.ret};
@@ -2626,7 +2649,7 @@ function settle(){
   S.ledger.push({no:race.no,staked:res.staked,ret:res.ret});
   S.result=res;S.phase="result";
   recordResult();
-  if(race.gold&&isGold()){postGold(S.gold.date,S.gold.slug,S.gold.races[S.idx].no,o.map(k=>race.field[k].gid));goldDone()}
+  if(race.gold&&isGold()){if(!S.gold.legends)postGold(S.gold.date,S.gold.slug,S.gold.races[S.idx].no,o.map(k=>race.field[k].gid));goldDone()}
   save();
   if(res.ret>res.staked)jingle();else if(res.staked>0)sad();
   renderAll();
@@ -2664,8 +2687,8 @@ function nextMeeting(){S.meeting++;S.lastNames=[];newMeeting();R=null;renderAll(
 function stake(){return Math.max(0,Math.floor(+$("stake").value||0))}
 function silk(h,k,tag){const a=silkOf(h,k)[0],b=h.silk?inkOn(a):SILKS[k%SILKS.length][1];return `<span class="silk" style="background:${rugCss(h)||a};color:${b}">${h.no}${tag?`<i>${tag}</i>`:""}</span>`}
 function renderHeader(){
-  $("meet").textContent=isGold()?`Goldfields · ${S.track} · ${dayName(S.gold.date)}`:S.mode==="harness"?(S.rh?`Real Harness · ${S.track} · ${dayName(S.rh.date)}`:`Harness · ${S.track} · Meeting ${S.meeting}`):S.mode==="dogs"?(S.rd?`Real Dogs · ${S.track} · ${dayName(S.rd.date)}`:`Greyhounds · ${S.track} · Meeting ${S.meeting}`):S.mode==="real"?`Real Races · ${S.track} · ${S.real.date}`:S.mode==="daily"?`Daily Meeting ${S.day}`:`${TIERS[S.tier].name} · ${S.track} · Meeting ${S.meeting}`;
-  const dd=(S.dailyDone||{})[dayKey()];const db=$("daily");db.hidden=S.mode!=="career";const rb=$("realbtn");rb.hidden=S.mode!=="career";rb.disabled=S.phase!=="bet"||S.bets.length>0;$("foot").innerHTML=isGold()?"Our own Goldfields meeting: made-up runners at made-up meetings, the same card and the same results for everyone. Play money only.":isHarness()&&S.rh?"Fields and form by FormFav. Odds are game estimates from form and the draw. Play money only. Place bet uses your game bank and is paid on the simulation you watch; Add to My Book is paid on the official result.":isDogs()&&S.rd?"Fields and form by FormFav. Odds are game estimates from form. Play money only. Place bet uses your game bank and is paid on the simulation you watch; Add to My Book is paid on the official result.":S.mode==="real"?`${dataCredit()}. Play money only. Place bet uses your game bank and is paid on the simulation you watch; Add to My Book is paid on the official result.`:"Play money only. No real bets, deposits or prizes.";db.disabled=dd!==undefined||S.phase!=="bet"||S.bets.length>0;db.textContent=dd!==undefined?`Today's daily: ${money(dd)}`:"Play Daily Meeting";
+  $("meet").textContent=isGold()?(S.gold.legends?`Legends Day · ${S.race.title}`:`Goldfields · ${S.track} · ${dayName(S.gold.date)}`):S.mode==="harness"?(S.rh?`Real Harness · ${S.track} · ${dayName(S.rh.date)}`:`Harness · ${S.track} · Meeting ${S.meeting}`):S.mode==="dogs"?(S.rd?`Real Dogs · ${S.track} · ${dayName(S.rd.date)}`:`Greyhounds · ${S.track} · Meeting ${S.meeting}`):S.mode==="real"?`Real Races · ${S.track} · ${S.real.date}`:S.mode==="daily"?`Daily Meeting ${S.day}`:`${TIERS[S.tier].name} · ${S.track} · Meeting ${S.meeting}`;
+  const dd=(S.dailyDone||{})[dayKey()];const db=$("daily");db.hidden=S.mode!=="career";const rb=$("realbtn");rb.hidden=S.mode!=="career";rb.disabled=S.phase!=="bet"||S.bets.length>0;$("foot").innerHTML=isGold()&&S.gold.legends?"Legends Day: real champions with the jockeys and trainers from their famous runs. Abilities are our ratings and the races are simulated, different every play. Play money only.":isGold()?"Our own Goldfields meeting: made-up runners at made-up meetings, the same card and the same results for everyone. Play money only.":isHarness()&&S.rh?"Fields and form by FormFav. Odds are game estimates from form and the draw. Play money only. Place bet uses your game bank and is paid on the simulation you watch; Add to My Book is paid on the official result.":isDogs()&&S.rd?"Fields and form by FormFav. Odds are game estimates from form. Play money only. Place bet uses your game bank and is paid on the simulation you watch; Add to My Book is paid on the official result.":S.mode==="real"?`${dataCredit()}. Play money only. Place bet uses your game bank and is paid on the simulation you watch; Add to My Book is paid on the official result.`:"Play money only. No real bets, deposits or prizes.";db.disabled=dd!==undefined||S.phase!=="bet"||S.bets.length>0;db.textContent=dd!==undefined?`Today's daily: ${money(dd)}`:"Play Daily Meeting";
   $("raceNo").textContent=`${S.race.no}/${lastIdx()+1}`;
   $("bank").textContent=money(S.bank);$("banklbl").textContent="BANK";
 }
@@ -2687,7 +2710,7 @@ function renderCard(){
     const tag=on&&TYPES[S.type][1]>1&&!isMultiT(S.type)&&exoStyle()==="straight"?(S.type==="quin"||S.type==="duet"?"•":i+1):"";
     return `<button class="runner${on?" on":""}" data-k="${k}" aria-pressed="${on}" ${S.phase!=="bet"?"disabled":""}>
       ${silk(h,k,tag)}
-      <span><span class="rname">${h.name}</span><br><span class="rmeta">${r.harness?`${h.form?`<b>${escH(h.form)}</b> · `:""}${rowTag(h)} · Driver ${escH(h.jock)}<br>${h.trainer?"Trainer "+escH(h.trainer)+" · ":""}${r.trot?"Trotter":"Pacer"}${h.style&&!r.realHarness?" · "+HN_STYLE[h.style]:""}${h.age?" · "+h.age+"yo":""}${h.sex?" "+escH(String(h.sex).toLowerCase()):""}`:r.realDogs?`${h.form?`<b>${escH(h.form)}</b> · `:""}Box ${h.box}${h.reserve?" (reserve)":""}${h.sex?" · "+escH(h.sex):""}<br>Trainer ${escH(h.jock)}`:r.dogs?`<b>${h.form}</b> · Box ${h.no} · ${h.kg}kg · ${h.sex}<br>Trainer ${h.jock} · ${DOG_STYLE[h.style]} · ${DOG_COATS[h.coat%DOG_COATS.length].n}`:h.real?`${h.form?`<b>${h.form}</b> · `:""}B${h.realBarrier} · ${h.weight}kg<br>${h.jock}${h.trainer?`<br>${h.trainer}${h.speed?" · "+h.speed:""}`:h.speed?`<br>${h.speed}`:""}`:`<b>${h.form}</b> · B${h.barrier} · ${h.weight}kg<br>${h.jock} · ${STYLE[h.style]}<br>Best ${h.trip}m · Wet ${h.wetRec}`}</span></span>
+      <span><span class="rname">${h.name}</span><br><span class="rmeta">${r.harness?`${h.form?`<b>${escH(h.form)}</b> · `:""}${rowTag(h)} · Driver ${escH(h.jock)}<br>${h.trainer?"Trainer "+escH(h.trainer)+" · ":""}${r.trot?"Trotter":"Pacer"}${h.style&&!r.realHarness?" · "+HN_STYLE[h.style]:""}${h.age?" · "+h.age+"yo":""}${h.sex?" "+escH(String(h.sex).toLowerCase()):""}`:r.realDogs?`${h.form?`<b>${escH(h.form)}</b> · `:""}Box ${h.box}${h.reserve?" (reserve)":""}${h.sex?" · "+escH(h.sex):""}<br>Trainer ${escH(h.jock)}`:r.dogs?`<b>${h.form}</b> · Box ${h.no} · ${h.kg}kg · ${h.sex}<br>Trainer ${h.jock} · ${DOG_STYLE[h.style]} · ${DOG_COATS[h.coat%DOG_COATS.length].n}`:h.real?`${h.form?`<b>${h.form}</b> · `:""}B${h.realBarrier} · ${h.weight}kg<br>${h.jock}${h.trainer?`<br>${h.trainer}${h.speed?" · "+h.speed:""}`:h.speed?`<br>${h.speed}`:""}`:h.legend?`<b>${escH(h.claim)}</b><br>B${h.barrier} · ${h.weight}kg · ${escH(h.jock)}${h.trainer?`<br>Trainer ${escH(h.trainer)}`:""}`:`<b>${h.form}</b> · B${h.barrier} · ${h.weight}kg<br>${h.jock} · ${STYLE[h.style]}<br>Best ${h.trip}m · Wet ${h.wetRec}`}</span></span>
       <span class="odds"><small>Win</small>${oddsTxt(h.win)}</span>
       <span class="odds"><small>Place</small>${oddsTxt(h.place)}</span>
     </button>`}).join("")}</div>`;
@@ -2719,11 +2742,11 @@ function renderEnd(){
   const net=S.bank-S.startBank,ratio=S.bank/Math.max(1,S.startBank+0);
   let title=RANK[0][1];for(const [m,t] of RANK)if(ratio>=m)title=t;
   if(isGold()){
-    const GP=S.goldProg,more=GLIST?GLIST.days[0].meetings.filter(m=>m.slug!==S.gold.slug&&!(GP[m.slug]&&GP[m.slug].plays)).map(m=>({...m,date:GLIST.days[0].date})):[];
+    const GP=S.goldProg,more=S.gold.legends?[]:GLIST?GLIST.days[0].meetings.filter(m=>m.slug!==S.gold.slug&&!(GP[m.slug]&&GP[m.slug].plays)).map(m=>({...m,date:GLIST.days[0].date})):[];
     $("card").innerHTML=`<h2>${escH(S.track)} is done</h2><div class="net ${net>=0?"won":"lost"}">${net>=0?"Up":"Down"} ${money(Math.abs(net))}</div><div class="tip">Verdict: <b>${title}</b></div>
     <table class="tbl">${S.ledger.map(l=>`<tr><td>Race ${l.no}</td><td class="n">Bet ${money(l.staked)}</td><td class="n ${l.ret>l.staked?"won":l.ret<l.staked?"lost":""}">${money(l.ret-l.staked)}</td></tr>`).join("")}</table>
     <div class="conds"><span>Goldfields bank ${money(S.bank)}</span><span>Best ${money(S.best)}</span></div>
-    ${more.length?`<div class="tip">Still to play today:</div>${more.map(m=>`<button class="big next" data-goldend="${m.slug}" data-gdate="${m.date}">${escH(m.venue)} · ${m.code==="H"?"horses":m.code==="D"?"dogs":"harness"}</button>`).join("")}`:'<div class="tip">You\'ve played every Goldfields meeting for today. New ones tomorrow.</div>'}
+    ${more.length?`<div class="tip">Still to play today:</div>${more.map(m=>`<button class="big next" data-goldend="${m.slug}" data-gdate="${m.date}">${escH(m.venue)} · ${m.code==="H"?"horses":m.code==="D"?"dogs":"harness"}</button>`).join("")}`:(S.gold.legends?'':'<div class="tip">You\'ve played every Goldfields meeting for today. New ones tomorrow.</div>')}
     <button class="big next alt" id="gagain">Replay ${escH(S.track)}</button><button class="reset" id="dd">Back to the horses</button>`;
     const slug=S.gold.slug,date=S.gold.date;
     $("card").querySelectorAll("[data-goldend]").forEach(b=>b.onclick=()=>enterGold(b.dataset.goldend,b.dataset.gdate));
