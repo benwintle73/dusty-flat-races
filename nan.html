@@ -606,12 +606,12 @@ const escH=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const div=v=>v?"$"+Number(v).toFixed(2):"–";
 const pct=p=>p>=.995?"99%":p<.01?"<1%":Math.round(p*100)+"%";
-// after the jump, for 2 minutes, the clock counts up: "jumped 0:45 ago"
+// after the jump, for 5 minutes, the clock counts up: "jumped 0:45 ago"
 const upText=ms=>{const s=Math.floor(-ms/1e3);return `${Math.floor(s/60)}:${String(s%60).padStart(2,"0")} ago`};
-const cdText=ms=>{if(ms<=0)return ms>-2*60e3?"jumped "+upText(ms):"jumped";const s=Math.floor(ms/1e3),h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;return h?`${h}h ${String(m).padStart(2,"0")}m`:m?`${m}m ${String(x).padStart(2,"0")}s`:`${x}s`};
+const cdText=ms=>{if(ms<=0)return ms>-GRACE?"jumped "+upText(ms):"jumped";const s=Math.floor(ms/1e3),h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;return h?`${h}h ${String(m).padStart(2,"0")}m`:m?`${m}m ${String(x).padStart(2,"0")}s`:`${x}s`};
 // race status: "In 23m 10s", "Jumping soon · 3m 10s" (under 5 minutes), then "Jumped", then "Result in" once the official result is known
-const SOON=5*60e3,stLabel=ms=>ms<=0?(ms>-2*60e3?"Jumped "+upText(ms):"Jumped"):ms<SOON?`Jumping soon ${Math.floor(ms/6e4)}:${String(Math.floor(ms/1e3)%60).padStart(2,"0")}`:"In "+cdText(ms);
-const cdn=iso=>{const ms=Date.parse(iso)-Date.now();return iso&&ms>-2*60e3?` <span class="cdn${ms<120e3?" soon":""}" data-cdn="${iso}">⏱ ${cdText(ms)}</span>`:""};
+const SOON=5*60e3,stLabel=ms=>ms<=0?(ms>-GRACE?"Jumped "+upText(ms):"Jumped"):ms<SOON?`Jumping soon ${Math.floor(ms/6e4)}:${String(Math.floor(ms/1e3)%60).padStart(2,"0")}`:"In "+cdText(ms);
+const cdn=iso=>{const ms=Date.parse(iso)-Date.now();return iso&&ms>-GRACE?` <span class="cdn${ms<120e3?" soon":""}" data-cdn="${iso}">⏱ ${cdText(ms)}</span>`:""};
 setInterval(()=>{for(const el of document.querySelectorAll("[data-cdn]")){const ms=Date.parse(el.dataset.cdn)-Date.now(),rs=el.hasAttribute("data-rs");el.textContent=rs?stLabel(ms):(ms>0&&!el.closest(".r-cd")?"⏱ ":"")+cdText(ms);el.classList.toggle("soon",ms>0&&ms<(rs?SOON:120e3));el.classList.toggle("gone",ms<=0)}},1000);
 const timeOf=iso=>iso?new Date(iso).toLocaleTimeString("en-AU",{hour:"numeric",minute:"2-digit"}).replace(/\s?([ap])\.?m\.?/i,(m,a)=>" "+a.toLowerCase()+"m"):"";
 const CODE={H:"Horses",D:"Dogs",N:"Harness"};
@@ -702,7 +702,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.45.9"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.45.10"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -774,8 +774,8 @@ function loadForm(r){
 
 /* ---------- page ---------- */
 // "10 at a time" or "the whole lot" under a long list. cap: how many are showing (Infinity = all); k: the data- prefix the buttons use
-// a race stays on the lists for 2 minutes after its start time: you can still open it and see the field, but not bet
-const GRACE=2*60e3;
+// a race stays on the lists for 5 minutes after its start time: you can still open it and see the field, but not bet
+const GRACE=5*60e3;
 const PAGE=10;let ALLRACES=false;try{ALLRACES=localStorage.getItem("otr:allraces")==="1"}catch(e){}
 const setAll=v=>{ALLRACES=v;try{localStorage.setItem("otr:allraces",v?"1":"0")}catch(e){}};
 function pager(total,shown,k){const left=total-shown;if(left>0)return `<div class="morerow"><button class="more" data-${k}more>Show ${Math.min(PAGE,left)} more <small>(${left} to go)</small></button>${left>PAGE?`<button class="more all" data-${k}moreall>Show all</button>`:""}</div>`;
@@ -2817,6 +2817,7 @@ document.addEventListener("click",e=>{
 });
 /* ---------- What's new: the update history, plus the suggestions box ---------- */
 const CHANGES=[
+ ["2.45.10","15 Nov","Five minutes after the jump",["Jumped races now stay listed for 5 minutes (was 2), still counting up the time since they jumped, so you can open them and see the field."]],
  ["2.45.9","15 Nov","Races hang about after the jump",["A race now stays on Today's tips (and the game's next-to-go list) for 2 minutes after its start time. Its clock keeps going, counting up how long since it jumped (Jumped 0:45 ago). You can still open it and see the runners and the tips; betting is closed. Your bets show the same count-up."]],
  ["2.45.8","15 Nov","Filter your settled bets",["Under My bets, Settled now has All, Wins, Losses and Refunds buttons, each with its count, and a line showing what you staked, got back and your profit for the bets you're looking at."]],
  ["2.45.7","15 Nov","The radio's always there",["The live race calls now sit right under the heading, ready to play: one tap on play, no menu to open. Switch between RSN Xtra (race calls from around Australia) and RSN 927. A green light shows when it's on air."]],
