@@ -485,7 +485,7 @@ details.codebox{margin-top:10px;border-top:1px dashed var(--line);padding-top:6p
 #hl{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:8px;margin-top:8px}#hl .hl{margin-top:0}
 .hl-p{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:4px 10px}
 .hl-p .hl-m{min-width:0}.hl-p .hl-n{display:block}.hl-s{display:block;margin:2px 0 0;font:600 15px/1.2 var(--led);color:var(--ink2);white-space:normal}.hl-s b{color:var(--ink);font-size:17px}
-.hl .hlbet{width:auto;margin:0;min-height:40px;padding:0 16px}
+.hl .hlbet{width:auto;margin:0;min-height:44px;min-width:76px;padding:0 18px;border-radius:4px;font-size:17px;align-self:center}
 .hl .nsays{margin-top:6px}
 details.nums{margin-top:6px;color:#e6d6ae;font-size:14px}details.nums>summary{cursor:pointer;font:600 15px/1.2 var(--led);color:var(--amber);padding:4px 2px;list-style:none}details.nums>summary::-webkit-details-marker{display:none}details.nums>summary::before{content:"? ";font-weight:700}
 details.nums p{margin:4px 2px 6px;line-height:1.4}details.nums b{color:var(--paper)}
@@ -623,7 +623,7 @@ small .mv{margin-left:6px}
 .rdiv{font-weight:700;color:var(--good)}.rr{font-size:13px;font-weight:700;padding:3px 7px;border-radius:4px}.rr.ok{background:var(--good);color:#fff}.rr.pl{background:#efe0b0;color:var(--ink)}.rr.no{background:#0001;color:var(--ink2)}
 .rs-today{margin-right:14px}
 .hl-means{margin:2px 0 4px;font-size:13px;color:var(--ink2);font-style:italic}
-.hlbet{display:flex;flex-direction:column;align-items:center;line-height:1.05}.hlbet small,.rbody [data-bopen] small{display:block;font-size:11px;font-weight:600;opacity:.85;text-transform:none;letter-spacing:0}
+.hlbet{display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.05}.hlbet small,.rbody [data-bopen] small{display:block;font-size:11px;font-weight:600;opacity:.85;text-transform:none;letter-spacing:0}
 .rbody [data-bopen]{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
 details.nums2{grid-column:1/-1;margin:2px 0 4px}details.nums2>summary{cursor:pointer;color:var(--amber);font-weight:700;font-size:15px;min-height:40px;display:flex;align-items:center}details.nums2>p{color:var(--paper);font-size:15px;margin:4px 0}
 .guide{background:var(--paper);color:var(--ink);border-left:5px solid var(--good);padding:10px 12px;margin-top:8px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 14px;align-items:center}.guide>b{grid-column:1}.guide ol{grid-column:1}.guide .ffload{grid-column:2;grid-row:1/3;padding:0 22px}
@@ -879,7 +879,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.52.0"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.53.1"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -3248,6 +3248,7 @@ document.addEventListener("click",e=>{
 });
 /* ---------- What's new: the update history, plus the suggestions box ---------- */
 const CHANGES=[
+ ["2.53.1","16 Nov","Tidier Bet button",["The Bet button on Nan's Best Bet and Roughie had its word stuck at the top of a tall green block. It's now a proper button with the word in the middle."]],
  ["2.52.0","15 Nov","Why anyone picked it",["Nan comments on a few more runners in each race: her top pick and a handful of others, sometimes one she reckons has no hope.","Open Why Nan picked and tap Pop, Bob, Gran, Kev or The Mob to see how they picked their runner, from the numbers they tip off.","What the tipsters say now comes after the reasons."]],
  ["2.51.0","15 Nov","Fewer jokes, and an off switch",["Nan and the family crack fewer jokes: one line on each race and its top pick, and the tipsters' banter only under Why Nan picked.","Turn them off altogether in Filters & options: untick Funny comments."]],
  ["2.50.4","15 Nov","Profit and loss",["Results says profit or loss, without \"pretend\"."]],
