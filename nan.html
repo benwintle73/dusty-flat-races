@@ -885,7 +885,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.57.0"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.57.1"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -2685,7 +2685,7 @@ function myTipTag(r){const t=CHAMP.mine.get(srvId(r));return t?`<span class="myt
 function champStrip(r,rk){const t=CHAMP.mine.get(srvId(r)),open=Date.now()<Date.parse(r.jump),id=escH(srvId(r)),m=CHAMP.msg[srvId(r)];
   if(!open)return t?`<div class="ctip"><b class="ct-h">Family Championship</b>Your tip: ${cloth(t.no,r.code)} <b>${escH(t.name)}</b> (locked at the jump)</div>`:"";
   if(!SYNC.name)return `<div class="ctip"><b class="ct-h">Family Championship</b>Pick a leaderboard name in <button class="linkbtn" data-view="bets">My bets</button> to tip in the family comp.</div>`;
-  const live=rk.map(x=>x.u),busy=CHAMP.busy.has(srvId(r));
+  const live=rk.map(x=>x.u).sort((a,b)=>a.no-b.no),busy=CHAMP.busy.has(srvId(r));
   return `<div class="ctip"><b class="ct-h">Family Championship · My tip</b><div class="ct-row">${live.map(u=>`<button data-ctip="${id}" data-ctno="${u.no}" aria-pressed="${!!t&&t.no===+u.no}" ${busy?"disabled":""} aria-label="Tip No. ${u.no} ${escH(u.name)}">${cloth(u.no,r.code,u.box)}</button>`).join("")}</div>
     <div class="ct-msg">${m?escH(m):t?`Your tip: <b>No. ${t.no} ${escH(t.name)}</b>${t.mk?` at ${div(t.mk)}`:""}. Tap another to change it until the jump.<button class="ct-clear" data-ctclear="${id}">Clear</button>`:"One runner a race. Winner 10 points, 2nd 5, 3rd 3, plus a bonus for winners at $5 or more."}</div></div>`}
 async function champTip(id,no,clear){if(!SYNC.code||CHAMP.busy.has(id))return;CHAMP.busy.add(id);CHAMP.msg[id]="Saving…";rerenderRace(id);
@@ -3465,6 +3465,7 @@ document.addEventListener("click",e=>{
 });
 /* ---------- What's new: the update history, plus the suggestions box ---------- */
 const CHANGES=[
+ ["2.57.1","17 Nov","Tip buttons in number order",["The Family Championship tip buttons on each race now run in saddlecloth number order."]],
  ["2.57.0","17 Nov","Family Championship",["Tip one runner a race against the family and Nan, Pop, Bob, Gran, Kev and The Mob. Open any race and tap a runner under Family Championship.","Winner 10 points, 2nd 5, 3rd 3, plus a bonus for winners at $5 or more. Change your tip any time until the jump.","Weekly and monthly standings, last week's and last month's champions, biggest winning outsider and best winning streak under More, Championship.","You need a leaderboard name (set it in My bets) to join."]],
  ["2.56.0","17 Nov","Strategy Lab",["New on the Results page under the leaderboard: the Strategy Lab, comparing Current Nan with five experimental ways of picking (form, market, consensus, value and Best Bets).","Every strategy's pick is now saved by the server before each race, whether or not anyone has the page open, and settled on the official result.","Filters for 7, 30, 90 and 180 days, each code, the same races only, and picks recorded live only. It's research only: nobody's live tips change."]],
  ["2.55.1","17 Nov","Best Bets on Nan's tips too",["Best Bets of the day now also shows up top when Whose tips is set to Nan, above her Best Bet and Roughie."]],
