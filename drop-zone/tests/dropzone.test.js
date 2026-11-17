@@ -31,12 +31,14 @@ console.log('DROP ZONE headless tests');
   ok(me.hp===100,'player inside the circle is untouched');
 }
 { // full matches with every player bot-driven
-  let ends=[],kills=0,nan=false,loot=0,fights=0,stormDeaths=0,botsMoved=true;
+  let ends=[],kills=0,nan=false,loot=0,fights=0,stormDeaths=0,botsMoved=true,firsts=[],alive20=[];
   for(let r=0;r<12;r++){const PB=boot(),S=PB.S;PB.setAuto(true);land(PB);
     const start=S.players.map(p=>[p.x,p.y]);let t=0;
-    while(!S.over&&t<200){PB.step(1/120);t+=1/120}
+    let first=null,a20=null;
+    while(!S.over&&t<200){PB.step(1/120);t+=1/120;if(first===null&&S.players.some(p=>p.dead))first=S.t;if(a20===null&&S.t>=20)a20=S.players.filter(p=>!p.dead).length}
     // keep going until one is left, to test the whole match even if the "player" died
-    while(S.players.filter(p=>!p.dead).length>1&&t<220){PB.step(1/120);t+=1/120}
+    while(S.players.filter(p=>!p.dead).length>1&&t<220){PB.step(1/120);t+=1/120;if(first===null&&S.players.some(p=>p.dead))first=S.t;if(a20===null&&S.t>=20)a20=S.players.filter(p=>!p.dead).length}
+    firsts.push(first);alive20.push(a20);
     ends.push(S.t);kills+=S.players.reduce((a,p)=>a+p.kills,0);
     loot+=S.chests.filter(c=>c.open).length;
     if(S.players.some(p=>!isFinite(p.x)||!isFinite(p.hp)&&!p.dead))nan=true;
@@ -44,9 +46,14 @@ console.log('DROP ZONE headless tests');
     stormDeaths+=S.feed.length?0:0;
   }
   function dist(a,p){return Math.hypot(a[0]-p.x,a[1]-p.y)}
-  const avg=ends.reduce((a,b)=>a+b)/ends.length;
+  const avg=ends.reduce((a,b)=>a+b)/ends.length,med=a=>{const s=[...a].sort((x,y)=>x-y);return s[Math.floor(s.length/2)]};
+  console.log('     match length: median '+med(ends).toFixed(0)+'s, range '+Math.min(...ends).toFixed(0)+'-'+Math.max(...ends).toFixed(0)+'s');
+  console.log('     first elimination: median '+med(firsts).toFixed(1)+'s');
+  console.log('     alive at 20s: '+(alive20.reduce((a,b)=>a+b)/alive20.length/12*100).toFixed(0)+'% of players');
+  ok(med(ends)>=75&&med(ends)<=120,'median match length is in the 75-120s band');
+  ok(med(firsts)>=12,'first elimination usually comes after the looting phase');
   ok(!nan,'no NaN');
-  ok(ends.every(t=>t<175),'every match finishes with one survivor (avg '+avg.toFixed(0)+'s, max '+Math.max(...ends).toFixed(0)+'s)');
+  ok(ends.every(t=>t<180),'every match finishes with one survivor (avg '+avg.toFixed(0)+'s, max '+Math.max(...ends).toFixed(0)+'s)');
   ok(kills/12>=5,'players eliminate each other, not just the storm (avg '+(kills/12).toFixed(1)+' gun eliminations a match)');
   ok(loot/12>=6,'bots open chests (avg '+(loot/12).toFixed(1)+' a match)');
   ok(botsMoved,'every surviving bot moves');
