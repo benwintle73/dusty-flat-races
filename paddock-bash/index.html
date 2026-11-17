@@ -9,7 +9,8 @@
   html,body{margin:0;height:100%;background:#2f5e22;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
   canvas{display:block;position:fixed;inset:0;width:100%;height:100%}
   #hud{position:fixed;left:0;right:0;top:0;display:flex;align-items:center;justify-content:space-between;padding:calc(env(safe-area-inset-top) + 6px) 10px 6px;pointer-events:none;color:#fff;font-weight:800;text-shadow:0 2px 0 #0006;z-index:2}
-  #hud .pill{background:#0006;border-radius:999px;padding:5px 11px;font-size:15px;white-space:nowrap}
+  #hud .pill{background:#0006;border-radius:999px;padding:5px 12px;font-size:18px;white-space:nowrap}
+  #hud #score{font-size:12px;background:#0003;opacity:.85}
   #mute{pointer-events:auto;border:0;background:#0006;color:#fff;border-radius:999px;width:38px;height:32px;font-size:17px;cursor:pointer}
   #card{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:3;background:#0005}
   #card .box{background:#fff8e6;border:4px solid #3b2a14;border-radius:18px;padding:18px 20px;width:min(84vw,330px);text-align:center;box-shadow:0 10px 0 #3b2a14;color:#3b2a14}
@@ -34,11 +35,11 @@
   <div class="best" id="cbest">Best: 0</div>
   <button id="again">AGAIN</button>
 </div></div>
-<div id="ver">v0.1.1</div>
+<div id="ver">v0.2.0</div>
 <script>
 (function(){
 'use strict';
-var VERSION='0.1.1';
+var VERSION='0.2.0';
 var TAU=Math.PI*2;
 function clamp(v,a,b){return v<a?a:v>b?b:v}
 function wrap(a){while(a>Math.PI)a-=TAU;while(a<-Math.PI)a+=TAU;return a}
@@ -47,7 +48,7 @@ function rnd(a,b){return a+Math.random()*(b-a)}
 /* ---------------- tuning ---------------- */
 var T={
   r:17,                // car collision radius
-  maxSpeed:265, accel:430, turn:4.4, grip:9,
+  maxSpeed:235, accel:400, turn:4.4, grip:9,
   aiSpeed:0.84,        // AI top speed as a share of the player's (round one is forgiving)
   dmgScale:0.24, dmgFloor:55, playerTakes:0.75,
   wallDmgFrom:170, wallDmg:0.07,
@@ -56,7 +57,7 @@ var T={
   roundCap:90
 };
 var NAMES=['Bully','Hunter','Maniac','Coward','Rookie'];
-var COLORS=['#d7263d','#1b98e0','#8e44ad','#2ecc71','#ff8c1a'];
+var COLORS=['#d7263d','#1b98e0','#8e44ad','#2ecc71','#f2f2f2'];
 var PLAYER_COLOR='#ffd31a';
 
 /* ---------------- state ---------------- */
@@ -71,7 +72,7 @@ function makeCar(i,x,y,a){
 }
 
 function newRound(){
-  S.cars=[];S.parts=[];S.pops=[];S.t=0;S.phase='count';S.count=3.2;S.shake=0;S.slow=0;S.score=0;S.wrecks=0;S.result=null;S.moved=false;S.cd={};
+  S.cars=[];S.parts=[];S.pops=[];S.t=0;S.phase='count';S.count=3.2;S.shake=0;S.slow=0;S.score=0;S.wrecks=0;S.result=null;S.moved=false;S.cd={};S.freeze=0;S.flash=null;
   var n=6;
   for(var i=0;i<n;i++){
     var ang=-Math.PI/2+i*TAU/n;
@@ -132,7 +133,7 @@ function collide(a,b,dt){
   b.x+=nx*ov*ma/(ma+mb); b.y+=ny*ov*ma/(ma+mb);
   var rel=(a.vx-b.vx)*nx+(a.vy-b.vy)*ny;
   if(rel<=0)return;
-  var j=(1+0.55)*rel/(1/ma+1/mb);
+  var j=(1+0.7)*rel/(1/ma+1/mb);
   a.vx-=j/ma*nx; a.vy-=j/ma*ny; b.vx+=j/mb*nx; b.vy+=j/mb*ny;
   var key=a.id<b.id?a.id+'-'+b.id:b.id+'-'+a.id;
   if(S.cd[key]>S.t)return;
@@ -145,8 +146,9 @@ function collide(a,b,dt){
   var toA=a.dead?0:base*(0.3+0.7*shareB)*(0.6+0.4*Math.max(0,facing(b,-nx,-ny)))*vuln(a,nx,ny);
   if(toB>0)hurt(b,toB,a,-nx,-ny);
   if(toA>0)hurt(a,toA,b,nx,ny);
-  burst(cx,cy,'spark',Math.min(18,4+rel/20));
-  burst(cx,cy,'dust',3);
+  burst(cx,cy,'spark',Math.min(30,6+rel/12));
+  burst(cx,cy,'dust',5);
+  if(rel>110)S.flash={x:cx,y:cy,t:0};
   S.shake=Math.max(S.shake,Math.min(12,rel/28)*(a.player||b.player?1:0.45));
   sfx('crash',rel/300);
   if(a.player&&toB>=9){a.boost=T.boostTime; pop(cx,cy-20,toB>25?'SMASH!':'BASH!','#fff');}
@@ -175,12 +177,13 @@ function hurt(c,dmg,by,nx,ny){
 function wreck(c){
   c.dead=true;c.hp=0;c.deadT=S.t;
   burst(c.x,c.y,'fire',22);burst(c.x,c.y,'spark',20);burst(c.x,c.y,'smoke',10);
-  S.parts.push({k:'wheel',x:c.x,y:c.y,vx:rnd(-140,140),vy:rnd(-140,140),z:0,vz:rnd(160,240),life:2.2,t:0,rot:0});
-  S.slow=0.55; S.shake=Math.max(S.shake,c.player?16:9);
+  for(var w=0;w<(c.player?4:2);w++)S.parts.push({k:'wheel',x:c.x,y:c.y,vx:rnd(-170,170),vy:rnd(-170,170),z:0,vz:rnd(170,260),life:2.4,t:0,rot:0});
+  for(var q=0;q<8;q++){var a=rnd(0,TAU),v=rnd(90,220);S.parts.push({k:'panel',x:c.x,y:c.y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,life:rnd(1.2,2),t:0,rot:rnd(0,6),vr:rnd(-14,14),col:c.color,s:rnd(6,11)})}
+  S.freeze=c.player?0.22:0.12; S.slow=c.player?1.1:0.6; S.shake=Math.max(S.shake,c.player?20:11);
   sfx('boom',1); sfx('horn',0.7);
   var credit=c.lastHitBy&&S.t-c.lastHitT<3?c.lastHitBy:null;
-  if(credit&&credit.player){S.wrecks++;S.score+=100;pop(c.x,c.y-26,'WRECKED! +100','#ffd31a');}
-  else pop(c.x,c.y-26,c.player?'YOU\'RE OUT!':'WRECKED!','#fff');
+  if(credit&&credit.player){S.wrecks++;S.score+=100;pop(c.x,c.y-26,'WRECKED!','#ffd31a',1.7);pop(c.x,c.y+4,'+100','#fff',1);}
+  else pop(c.x,c.y-26,c.player?'YOU\'RE OUT!':'WRECKED!',c.player?'#ff5a3c':'#fff',c.player?1.8:1.3);
 }
 
 /* ---------------- AI ---------------- */
@@ -246,6 +249,7 @@ function playerControl(c){
 /* ---------------- step ---------------- */
 S.cd={};
 function step(dt){
+  if(S.freeze>0){S.freeze-=dt;return}
   if(S.slow>0){S.slow-=dt;dt*=0.35}
   S.shake*=Math.exp(-9*dt);
   updateParts(dt);
@@ -283,7 +287,8 @@ function endRound(survived,place,timeUp){
   S.result={win:win,place:place,timeUp:!!timeUp,score:S.score,wrecks:S.wrecks};
   var best=0; try{best=+localStorage.getItem('paddockbash_best')||0;if(S.score>best){best=S.score;localStorage.setItem('paddockbash_best',best)}}catch(e){}
   S.result.best=best;
-  setTimeout(showCard,win?1100:1400);
+  if(win){for(var k=0;k<90;k++)S.parts.push({k:'conf',x:rnd(-S.A,S.A),y:-S.B-rnd(20,160),vx:rnd(-30,30),vy:rnd(40,120),life:rnd(3,4.5),t:0,rot:rnd(0,6),vr:rnd(-8,8),col:['#ffd31a','#e8401c','#1b98e0','#2ecc71','#fff'][k%5],s:rnd(5,8)});sfx('win',1)}
+  setTimeout(showCard,win?1500:1500);
 }
 
 /* ---------------- particles ---------------- */
@@ -308,6 +313,7 @@ function updateParts(dt){
   for(var i=S.parts.length-1;i>=0;i--){
     var p=S.parts[i];p.t+=dt;
     if(p.t>=p.life){S.parts.splice(i,1);continue}
+    if(p.k==='conf'){p.vy+=40*dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.rot+=p.vr*dt;continue}
     var drag=p.k==='panel'?3:p.k==='smoke'?1:p.k==='wheel'?0.6:4;
     p.vx*=Math.exp(-drag*dt);p.vy*=Math.exp(-drag*dt);
     p.x+=p.vx*dt;p.y+=p.vy*dt;
@@ -316,7 +322,7 @@ function updateParts(dt){
   }
   for(var j=S.pops.length-1;j>=0;j--){S.pops[j].t+=dt;if(S.pops[j].t>1.1)S.pops.splice(j,1)}
 }
-function pop(x,y,txt,col){S.pops.push({x:x,y:y,txt:txt,col:col,t:0})}
+function pop(x,y,txt,col,big){S.pops.push({x:x,y:y,txt:txt,col:col,t:0,big:big||1})}
 
 /* ---------------- audio ---------------- */
 var AC=null, eng=null, muted=false;
@@ -356,6 +362,7 @@ function sfx(k,v){
     else if(k==='creak'){tone(180,0.25,0.05,'sawtooth')}
     else if(k==='beep'){tone(660,0.12,0.08,'square')}
     else if(k==='go'){tone(990,0.3,0.1,'square')}
+    else if(k==='win'){[523,659,784,1047].forEach(function(f,i){tone(f,0.25,0.08,'square',i*0.12)})}
   }catch(e){}
 }
 function engineUpdate(){
@@ -374,9 +381,9 @@ var DPR=1, VW=0, VH=0, SC=1, CX=0, CY=0, bg=null, marks=null, mctx=null;
 function layout(){
   DPR=Math.min(2,window.devicePixelRatio||1);VW=window.innerWidth;VH=window.innerHeight;
   var land=VW>VH*1.1;
-  S.A=land?290:190; S.B=land?190:290;
+  S.A=land?222:148; S.B=land?148:222;
   var top=48, bottom=10;
-  SC=Math.min((VW-12)/(2*S.A+28),(VH-top-bottom)/(2*S.B+28));
+  SC=Math.min((VW-12)/(2*S.A+26),(VH-top-bottom)/(2*S.B+26));
   CX=VW/2; CY=top+(VH-top-bottom)/2;
   if(!ctx)return;
   cv.width=Math.round(VW*DPR);cv.height=Math.round(VH*DPR);
@@ -475,9 +482,6 @@ function render(){
   S.cars.forEach(function(c){if(!c.dead&&!c.player)drawCar(ctx,c)});
   var pl=S.cars[0];
   if(pl&&!pl.dead){
-    // glow ring so the player's car is always obvious
-    ctx.strokeStyle='rgba(255,255,255,'+(0.55+0.35*Math.sin(perfNow()/180))+')';ctx.lineWidth=3;
-    ctx.beginPath();ctx.arc(pl.x,pl.y,T.r+7,0,TAU);ctx.stroke();
     if(pl.boost>0){ctx.fillStyle='#ff9f1c';for(var b=0;b<3;b++){var f=fwd(pl);ctx.beginPath();ctx.arc(pl.x-f[0]*(24+b*6)+rnd(-3,3),pl.y-f[1]*(24+b*6)+rnd(-3,3),5-b,0,TAU);ctx.fill()}}
     drawCar(ctx,pl);
   }
@@ -489,20 +493,26 @@ function render(){
     else if(p.k==='smoke'){ctx.fillStyle='rgba(60,60,60,'+0.45*k+')';ctx.beginPath();ctx.arc(p.x,p.y,p.s*(2-k),0,TAU);ctx.fill()}
     else if(p.k==='fire'){ctx.fillStyle='rgba(255,'+Math.floor(80+150*k)+',20,'+k+')';ctx.beginPath();ctx.arc(p.x,p.y,p.s*k,0,TAU);ctx.fill()}
     else if(p.k==='panel'){ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rot);ctx.globalAlpha=Math.min(1,k*2);ctx.fillStyle=p.col;ctx.fillRect(-p.s/2,-p.s/3,p.s,p.s*0.66);ctx.restore()}
+    else if(p.k==='conf'){ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rot);ctx.fillStyle=p.col;ctx.fillRect(-p.s/2,-p.s/4,p.s,p.s/2);ctx.restore()}
     else if(p.k==='wheel'){ctx.fillStyle='#0004';ctx.beginPath();ctx.arc(p.x,p.y,5,0,TAU);ctx.fill();ctx.fillStyle='#111';ctx.beginPath();ctx.arc(p.x,p.y-p.z*0.25,5.5,0,TAU);ctx.fill();ctx.fillStyle='#888';ctx.beginPath();ctx.arc(p.x,p.y-p.z*0.25,2,0,TAU);ctx.fill()}
   });
-  S.cars.forEach(function(c){drawPips(ctx,c)});
-  // YOU marker
-  if(pl&&!pl.dead&&S.t<6){
-    var bob=Math.sin(perfNow()/150)*3;
-    ctx.fillStyle='#fff';ctx.font='900 13px system-ui,sans-serif';ctx.textAlign='center';
-    ctx.fillText('YOU',pl.x,pl.y-T.r-26+bob);
-    ctx.beginPath();ctx.moveTo(pl.x-6,pl.y-T.r-20+bob);ctx.lineTo(pl.x+6,pl.y-T.r-20+bob);ctx.lineTo(pl.x,pl.y-T.r-14+bob);ctx.fill();
+  if(S.flash){S.flash.t+=1/60;var fk=1-S.flash.t/0.18;if(fk<=0)S.flash=null;else{ctx.fillStyle='rgba(255,250,220,'+0.8*fk+')';ctx.beginPath();ctx.arc(S.flash.x,S.flash.y,10+30*(1-fk),0,TAU);ctx.fill()}}
+  S.cars.forEach(function(c){if(!c.player)drawPips(ctx,c)});
+  // the player's car is always marked: a bright two-tone ring drawn above the dust, plus a bobbing arrow
+  if(pl&&!pl.dead){
+    var pulse=0.5+0.5*Math.sin(perfNow()/160);
+    ctx.lineWidth=5;ctx.strokeStyle='#000';ctx.beginPath();ctx.arc(pl.x,pl.y,T.r+8,0,TAU);ctx.stroke();
+    ctx.lineWidth=3;ctx.strokeStyle='rgba(255,211,26,'+(0.75+0.25*pulse)+')';ctx.beginPath();ctx.arc(pl.x,pl.y,T.r+8,0,TAU);ctx.stroke();
+    drawPips(ctx,pl);
+    var bob=Math.sin(perfNow()/150)*3, ay=pl.y-T.r-22+bob;
+    ctx.fillStyle='#ffd31a';ctx.strokeStyle='#000';ctx.lineWidth=2.5;
+    ctx.beginPath();ctx.moveTo(pl.x-8,ay-8);ctx.lineTo(pl.x+8,ay-8);ctx.lineTo(pl.x,ay+2);ctx.closePath();ctx.stroke();ctx.fill();
+    if(S.t<6){ctx.font='900 13px system-ui,sans-serif';ctx.textAlign='center';ctx.lineWidth=4;ctx.strokeText('YOU',pl.x,ay-12);ctx.fillStyle='#fff';ctx.fillText('YOU',pl.x,ay-12)}
   }
   // popups
   S.pops.forEach(function(p){
     var k=p.t/1.1, sc=p.t<0.12?0.6+p.t/0.12*0.6:1.2-0.2*k;
-    ctx.save();ctx.translate(p.x,p.y-k*30);ctx.scale(sc,sc);
+    ctx.save();ctx.translate(p.x,p.y-k*30);ctx.scale(sc*p.big,sc*p.big);
     ctx.font='900 18px system-ui,sans-serif';ctx.textAlign='center';ctx.lineWidth=4;ctx.strokeStyle='#000a';ctx.globalAlpha=1-Math.max(0,k-0.6)/0.4;
     ctx.strokeText(p.txt,0,0);ctx.fillStyle=p.col;ctx.fillText(p.txt,0,0);ctx.restore();
   });
@@ -535,14 +545,16 @@ var lastHud='';
 function hud(){
   var al=alive().length, s='🚗 '+al+' left|'+S.score;
   if(s===lastHud)return; lastHud=s;
-  $('left').textContent='🚗 '+al+' left';$('score').textContent=String(S.score);
+  $('left').textContent='🚗 '+al+' left';$('score').textContent='Score '+S.score;
 }
 function ord(n){return n+(n===1?'st':n===2?'nd':n===3?'rd':'th')}
 function showCard(){
   var r=S.result;if(!r)return;
-  $('ctitle').textContent=r.win?'YOU WIN!':(r.timeUp?'TIME!':'WRECKED!');
+  $('ctitle').textContent=r.win?'🏆 YOU WIN!':(r.timeUp?'TIME!':'WRECKED!');
+  $('card').querySelector('.box').style.background=r.win?'#fff3b0':'#fff8e6';
+  $('card').querySelector('.box').style.borderColor=r.win?'#c99a00':'#3b2a14';
   $('ctitle').style.color=r.win?'#2e8b2e':'#c0392b';
-  $('csub').textContent=r.win?'Last car running in the paddock':(r.timeUp?'Survived to the siren':'Your car is scrap metal');
+  $('csub').textContent=r.win?'Champion of the paddock!':(r.timeUp?'Survived to the siren':'Your car is scrap metal');
   $('cwrecks').textContent=r.wrecks;$('cplace').textContent=ord(r.place)+' of 6';$('cscore').textContent=r.score;$('cbest').textContent='Best: '+r.best;
   $('card').style.display='flex';
   setTimeout(function(){try{$('again').focus()}catch(e){}},50);
