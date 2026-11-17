@@ -51,6 +51,7 @@ const w=dom.window,E=s=>w.eval(s);let fails=0;const t=(n,f)=>{try{f();console.lo
  t("tipster with no picks",()=>{E(`BOARD.bwho="kev"`);E("renderBoard()");assert.ok(/No settled picks for Kev/.test(el.innerHTML))});
  t("switch tipster via click",()=>{go("d180");const btn=el.querySelector('[data-bkwho="gran"]');btn.dispatchEvent(new w.MouseEvent("click",{bubbles:true}));assert.strictEqual(E("BOARD.bwho"),"gran");assert.ok(/40settled/.test(el.querySelector(".bk-tot").textContent))});
  t("top 3 view has no breakdown",()=>{E(`BOARD.view="top3";renderBoard()`);assert.ok(!el.querySelector("details.bbrk"))});
+ t("error state when leaderboard fails",()=>{E(`BOARD.rows=[];BOARD.err=true;BOARD.per="week";renderBoard()`);assert.ok(/unavailable right now/.test(el.innerHTML));E(`BOARD.err=false;BOARD.rows=${JSON.stringify(rows)}`)});
  t("bands missing: price unavailable",()=>{E(`BOARD.bands=null;BOARD.view="top";BOARD.bwho="nan";renderBoard()`);assert.ok(/Price breakdown unavailable/.test(el.innerHTML))});
  console.log(fails?`${fails} FAILED`:"ALL PASSED");process.exit(fails?1:0);
 })();

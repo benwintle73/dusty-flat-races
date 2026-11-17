@@ -38,6 +38,7 @@ setTimeout(async()=>{
  t("saving a tip posts and stores it",()=>{assert.strictEqual(posted.no,2);assert.strictEqual(posted.code,"ABCD-EFGH");assert.strictEqual(E("CHAMP.mine.get('H|2026-11-18_vv|3').name"),"Runner Two");assert.ok(/aria-pressed="true"[^>]*aria-label="Tip No. 2/.test(E("champStrip(__R,__RK)")));ok("save tip")});
  await E("champTip('H|2026-11-18_vv|3',0,true)");
  t("clearing a tip",()=>{assert.ok(posted.clear);assert.ok(!E("CHAMP.mine.has('H|2026-11-18_vv|3')"));ok("clear tip")});
+ t("strip says it's not a bet",()=>{assert.ok(/not a bet/.test(E("champStrip(__R,__RK)"))&&/My Championship Tip/.test(E("champStrip(__R,__RK)")))});
  t("server ids for dogs",()=>{assert.strictEqual(E('srvId({id:"D|gosford|5",code:"D",date:"2026-11-17",slug:"gosford",no:5})'),"D|2026-11-17|gosford|5");ok("server ids")});
  console.log(fails?`${fails} FAILED`:"ALL PASSED");process.exit(fails?1:0);
 },300);
