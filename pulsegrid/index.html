@@ -75,7 +75,7 @@ button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
 .bigstars i.on{color:var(--gold);text-shadow:0 0 18px #ffd16688}.bigstars i.show{transform:scale(1);opacity:1}
 .sum{text-align:center;color:var(--muted);margin-bottom:12px}
 .sheet .btns{display:grid;gap:8px}
-.coach{position:absolute;left:50%;top:-6px;transform:translate(-50%,-100%);background:var(--gold);color:#2a1700;font-weight:700;padding:8px 12px;border-radius:12px;white-space:nowrap;font-size:15px;pointer-events:none;z-index:5;box-shadow:0 6px 18px #0008}
+.coach{position:absolute;left:50%;top:-6px;transform:translate(-50%,-100%);background:var(--gold);color:#2a1700;font-weight:700;padding:8px 12px;border-radius:12px;width:max-content;max-width:min(300px,86vw);text-align:center;font-size:15px;pointer-events:none;z-index:5;box-shadow:0 6px 18px #0008}
 .coach::after{content:"";position:absolute;left:50%;bottom:-6px;margin-left:-6px;border:6px solid transparent;border-bottom:0;border-top-color:var(--gold)}
 /* levels */
 .lvls{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;overflow:auto;padding-bottom:10px}
@@ -257,7 +257,7 @@ const PG = (() => {
 /* ===== PULSEGRID game: save, sound, rendering, input, screens ===== */
 (() => {
 const $ = (id) => document.getElementById(id);
-const VERSION = '1.0.1', SAVE_KEY = 'pulsegrid_save_v1';
+const VERSION = '1.0.2', SAVE_KEY = 'pulsegrid_save_v1';
 // ---------- dates (local calendar) ----------
 const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
 const dayDiff = (a, b) => Math.round((Date.UTC(...b.split('-').map((v, i) => i === 1 ? v - 1 : +v)) - Date.UTC(...a.split('-').map((v, i) => i === 1 ? v - 1 : +v))) / 864e5);
