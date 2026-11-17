@@ -678,7 +678,7 @@ body.rmode #betAll,body.rmode #blkSoon,body.rmode #guide,body.rmode #recStrip,bo
 details.about>summary h4{margin:0}details.about details.fsec{margin-top:8px}details.about h5{margin:14px 0 4px;color:var(--amber);font:400 18px/1.1 var(--display);letter-spacing:.4px;text-transform:uppercase}
 
 /* ---------- Simple betting (2.60) ---------- */
-body.qmode .mnav,body.qmode #subnav,body.qmode #moreMenu,body.qmode #newsView,body.qmode #radioView,body.qmode #a2hs,body.qmode .newsbtn,body.qmode #slipBar,body.qmode .foot .about{display:none!important}
+body.qmode .mnav,body.qmode #subnav,body.qmode #moreMenu,body.qmode #newsView,body.qmode #a2hs,body.qmode .newsbtn,body.qmode #slipBar,body.qmode .foot .about{display:none!important}
 body.qmode{padding-bottom:calc(16px + env(safe-area-inset-bottom))!important}
 #quickView{display:grid;gap:10px;margin-top:10px}
 #quickView>*{min-width:0}
@@ -963,7 +963,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.62.0"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.63.0"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -3644,6 +3644,7 @@ document.addEventListener("click",e=>{
 });
 /* ---------- What's new: the update history, plus the suggestions box ---------- */
 const CHANGES=[
+ ["2.63.0","18 Nov","Radio in Simple betting",["The live race-call radio is back at the top of Simple betting."]],
  ["2.62.0","18 Nov","Open into",["Choose what the app opens into: the game, Nan's Tips or Simple betting. It's at the top of More, and at the bottom of Simple betting.","Your choice is saved to your account, so it follows you to any device you sign in on."]],
  ["2.61.0","18 Nov","Up and down",["Wins and losses now say Up or Down instead of + or −: the tipster leaderboard, Results, My bets, Simple betting, the punters' board and the game."]],
  ["2.60.0","18 Nov","Simple betting",["New in More: Simple betting. Just your balance, today's races and your bets, nothing else.","Pick Horses, Harness or Dogs, tap a race, and see what Nan, Pop, Bob, Gran, Kev or The Mob would back. Tap Back it, or build any bet type.","Borrow from Nan right there, and see today's bets, results and how much you're up or down for the day.","Same balance as My bets. Once you pick it, Nan's Tips opens straight to it; tap Full Nan's Tips to go back."]],
