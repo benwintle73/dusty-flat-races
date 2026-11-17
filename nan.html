@@ -3,6 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<script>/* Open into: the screen chosen in More (game, Nan's Tips or Simple betting), only when the app is first opened */
+var OTR_FIRST=false,OTR_HOME="tips";(function(){try{var h=localStorage.getItem("otr-home");if(!h&&localStorage.getItem("otr-quick")==="1")h="simple";if(h)OTR_HOME=h;OTR_FIRST=!sessionStorage.getItem("otr-on")||sessionStorage.getItem("otr-launch")==="1";sessionStorage.setItem("otr-on","1");sessionStorage.removeItem("otr-launch");
+if(OTR_FIRST&&h==="game"&&!location.hash&&!/[?&]sync=/.test(location.search))location.replace("./?play=1")}catch(e){}})();</script>
 <script>/* Never stay on an old saved copy: when the page opens, ask the server which version is current and reload once if this copy is older. */
 (function(){try{var mine=null;document.addEventListener("DOMContentLoaded",function(){var m=document.documentElement.innerHTML.match(new RegExp("NAN_VERSION"+"=\x22(\\d[0-9.]*)\x22"));mine=m&&m[1];if(!mine)return;
  fetch(location.pathname+"?vc="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){var n=(t.match(new RegExp("NAN_VERSION"+"=\x22(\\d[0-9.]*)\x22"))||[])[1];
@@ -737,6 +740,12 @@ body.qmode{padding-bottom:calc(16px + env(safe-area-inset-bottom))!important}
 .qslip .minus{margin:0;color:#ff9b8c}
 @media (max-width:380px){.qacct small{font-size:11px}.qsum{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .ud{display:inline-flex;flex-direction:column;align-items:flex-end;line-height:1.05;white-space:nowrap}.ud small{font-size:.68em;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.mm-home{background:var(--tote2);border-radius:8px;padding:10px 12px;display:grid;gap:8px}
+.mm-home .hm-l{font:400 18px/1.1 var(--display);letter-spacing:.4px;text-transform:uppercase;color:var(--amber)}
+.mm-home .hm-b{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+.mm-home .hm-b button{min-height:44px;padding:0 4px;background:#3b3120;color:var(--paper);border:0;border-radius:6px;font-weight:700;font-size:14px;line-height:1.1;cursor:pointer}
+.mm-home .hm-b button[aria-pressed=true]{background:var(--amber);color:var(--tote)}
+.qhome{margin-top:4px}
 </style>
 </head>
 <body>
@@ -759,6 +768,7 @@ body.qmode{padding-bottom:calc(16px + env(safe-area-inset-bottom))!important}
     <button data-nav="more" aria-pressed="false" aria-expanded="false" aria-controls="moreMenu"><span class="mi" aria-hidden="true">&#8943;</span>More<i id="moreDot" hidden></i></button>
   </nav>
   <div class="moremenu" id="moreMenu" hidden><div class="mm-in" role="menu" aria-label="More">
+    <div class="mm-home" id="homePick"></div>
     <button data-view="quick" role="menuitem"><b>Simple betting</b><small>Just your balance, today's races and your bets</small></button>
     <button data-view="record" role="menuitem"><b>Tipsters</b><small>Leaderboard and Nan's record</small></button>
     <button data-view="champ" role="menuitem"><b>Championship</b><small>Family tipping comp v Nan and co.</small></button>
@@ -953,7 +963,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.61.0"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.62.0"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -3634,6 +3644,7 @@ document.addEventListener("click",e=>{
 });
 /* ---------- What's new: the update history, plus the suggestions box ---------- */
 const CHANGES=[
+ ["2.62.0","18 Nov","Open into",["Choose what the app opens into: the game, Nan's Tips or Simple betting. It's at the top of More, and at the bottom of Simple betting.","Your choice is saved to your account, so it follows you to any device you sign in on."]],
  ["2.61.0","18 Nov","Up and down",["Wins and losses now say Up or Down instead of + or −: the tipster leaderboard, Results, My bets, Simple betting, the punters' board and the game."]],
  ["2.60.0","18 Nov","Simple betting",["New in More: Simple betting. Just your balance, today's races and your bets, nothing else.","Pick Horses, Harness or Dogs, tap a race, and see what Nan, Pop, Bob, Gran, Kev or The Mob would back. Tap Back it, or build any bet type.","Borrow from Nan right there, and see today's bets, results and how much you're up or down for the day.","Same balance as My bets. Once you pick it, Nan's Tips opens straight to it; tap Full Nan's Tips to go back."]],
  ["2.59.0","17 Nov","Tidy-up",["Tipping in the family comp is now called My Championship Tip on every race, with a clear note that it's free and not a bet, and a lock when the race jumps.","Nan's Best Bet and Roughie no longer repeat a runner that's already in Best Bets of the day.","Best Bets cards fit small phones better, and the leaderboard says so if it can't load instead of looking empty.","The Championship has the same name everywhere in the menus."]],
@@ -4099,7 +4110,7 @@ document.addEventListener("toggle",e=>{const d=e.target;if(d.matches&&d.matches(
 /* ---------- Simple betting (v2.60): just your balance, borrowing from Nan, today's races for one code at a time, each
    tipster's pick in a race, every bet type, and today's bets with their results. Same account and balance as My bets. ---------- */
 const QK={code:"H",meet:"all",open:null,who:"nan",tab:"races",mb:null};
-let QK_START=false;try{QK_START=localStorage.getItem("otr-quick")==="1";const q=JSON.parse(localStorage.getItem("otr-quick-st")||"{}");if(CODE[q.code])QK.code=q.code;if(q.who&&WHO[q.who]&&q.who!=="all")QK.who=q.who}catch(e){}
+let QK_START=OTR_FIRST&&OTR_HOME==="simple";try{const q=JSON.parse(localStorage.getItem("otr-quick-st")||"{}");if(CODE[q.code])QK.code=q.code;if(q.who&&WHO[q.who]&&q.who!=="all")QK.who=q.who}catch(e){}
 const qSave=()=>{try{localStorage.setItem("otr-quick-st",JSON.stringify({code:QK.code,who:QK.who}))}catch(e){}};
 const qOn=()=>ST.view==="quick";
 const qTickets=()=>{const d=REC_TODAY();return BK.tickets.filter(t=>t.status!=="cancelled"&&t.sport!=="cricket"&&betDay(t)===d)};
@@ -4153,7 +4164,7 @@ function renderQuick(){const el=$("quickView");if(!el||!qOn())return;
       ${st&&(!/^Added/.test(st)||BK.slip.length)?`<p class="qmsg">${/^Added/.test(st)?"Added to your bet slip. Not placed yet: press <b>Confirm</b> at the bottom to place it.":escH(st)}</p>`:""}
       ${MB?`<div id="qmulti">${multiHtml()}</div>`:""}
       <div class="qlist">${L.length?L.map(r=>qRow(r,mine)).join(""):`<div class="qempty">${!RACES.length?"Loading today's races…":`No more ${CODE[QK.code].toLowerCase()} races to bet on today.`}</div>`}</div>`}
-  el.innerHTML=head+body+qSlip(b);
+  el.innerHTML=head+body+`<div class="mm-home qhome" id="qHome">${homeHtml()}</div>`+qSlip(b);
   if(MB&&QK.mb!==MB){QK.mb=MB;const m=$("qmulti");if(m)m.scrollIntoView({block:"start"})}
 }
 // everything that redraws Today's tips or My bets redraws Simple betting instead while it's showing
@@ -4174,12 +4185,24 @@ document.addEventListener("click",e=>{if(!qOn())return;const g=s=>e.target.close
 });
 document.addEventListener("change",e=>{if(e.target.id==="qmeet"){QK.meet=e.target.value;QK.open=null;renderQuick()}});
 setInterval(()=>{if(!qOn()||document.visibilityState!=="visible")return;const a=document.activeElement;if(a&&a.closest&&a.closest("#quickView")&&/INPUT|SELECT/.test(a.tagName))return;if(QK.tab==="bets")checkOfficial(false);else renderQuick()},60e3);
+/* ---------- Open into (v2.62): which screen the app opens on, saved to your account so it follows you when you sign in ---------- */
+const HOMES=[["game","The game"],["tips","Nan's Tips"],["simple","Simple betting"]];
+const homeNow=()=>{let h=OTR_HOME;try{h=localStorage.getItem("otr-home")||h}catch(e){}return HOMES.some(x=>x[0]===h)?h:"tips"};
+const homeHtml=()=>`<span class="hm-l">Open the app into</span><div class="hm-b" role="group" aria-label="Open the app into">${HOMES.map(([k,l])=>`<button data-home="${k}" aria-pressed="${homeNow()===k}">${l}</button>`).join("")}</div>`;
+function paintHome(){const el=$("homePick");if(el)el.innerHTML=homeHtml();const q=$("qHome");if(q)q.innerHTML=homeHtml()}
+function setHome(h,at){try{localStorage.setItem("otr-home",h);localStorage.removeItem("otr-quick")}catch(e){}OTR_HOME=h;if(at!==false){BK.home={v:h,at:Date.now()};saveBK()}paintHome()}
+// the account's choice wins when it's newer (another device, or after signing in)
+function homeFromBK(){const x=BK&&BK.home;if(!x||!HOMES.some(y=>y[0]===x.v))return;let at=0;try{at=+localStorage.getItem("otr-home-at")||0}catch(e){}
+  if(x.v!==homeNow()&&x.at>=at){try{localStorage.setItem("otr-home",x.v);localStorage.setItem("otr-home-at",x.at)}catch(e){}OTR_HOME=x.v;paintHome()}}
+{const _m=mergeBK;mergeBK=function(a,b){const o=_m(a,b),ha=a&&a.home,hb=b&&b.home;o.home=ha&&hb?(ha.at>=hb.at?ha:hb):ha||hb||undefined;return o}}
+{const _a=adopt;adopt=function(d){_a(d);homeFromBK()}}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-home]");if(!b)return;e.preventDefault();const h=b.dataset.home;setHome(h);try{localStorage.setItem("otr-home-at",BK.home.at)}catch(_){}});
+paintHome();homeFromBK();
 function setView(v,focus){
   if(v==="races")v="tips";
   const was=ST.view;moreMenu(false);
   document.querySelectorAll("[data-view]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.view===v));paintNav(v);
   ST.view=v;$("tipsView").hidden=v!=="tips"&&v!=="racing";document.body.classList.toggle("rmode",v==="racing");$("recordView").hidden=v!=="record";$("betsView").hidden=v!=="bets";$("blkView").hidden=v!=="blk";$("cricketView").hidden=v!=="cricket";$("puntersView").hidden=v!=="punters";$("champView").hidden=v!=="champ";$("resultsView").hidden=v!=="results";$("quickView").hidden=v!=="quick";document.body.classList.toggle("qmode",v==="quick");
-  if(v==="quick"||was==="quick")try{localStorage.setItem("otr-quick",v==="quick"?"1":"0")}catch(e){}
   if(v==="quick"){renderQuick();checkOfficial(false)}
   if(v==="record"){if(!REC.sum)loadRecord();else renderRecord();loadBoard();loadLab()}
   if(v==="punters"){renderPlayers();loadPlayers()}
