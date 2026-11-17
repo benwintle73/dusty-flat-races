@@ -2334,16 +2334,19 @@ function raceCard(r,open,tag){const rk=ranked(r),t=Date.parse(r.jump),gone=t<=Da
      The Mob blends everyone, so it is never counted as a vote; it supplies the chance.
    Chance  p    = The Mob's blended chance for the runner (needs 3+ tipsters on the race).
    Model   pi   = average of the independent model chances (Pop, Bob, and Nan where independent). Never uses the market.
-   Value   edge = pi x market - 1, only when 2+ independent models rate the race, pi >= 10%, market $1.50-$21,
-                  and edge >= 20% (a margin for the models being wrong). Fair price = 1 / pi.
+   Value   edge = pi x market - 1, only when 2+ independent models rate the race, pi >= 10%, market $1.50-$15,
+                  edge >= 20% (a margin for the models being wrong), every independent model on its own beats the
+                  market by 10%+ (they must agree it's overs), and edge <= 150% (a bigger gap is far more likely a stale
+                  price or a mismatched runner than a real overlay). Fair price = 1 / pi.
    Agree   a    = share of the opinion groups available (market, Pop, Bob, Kev, and Nan where independent) that have it on top.
    Data    d    = share of the five tipsters with a rating for the race.
    Score   S    = 100 x (0.45 x min(p/0.5, 1) + 0.30 x a + 0.15 x min(max(edge,0), 0.5)/0.5 + 0.10 x d)
    Eligible: race still to run, at least 3 tipsters including at least one independent model, runner not scratched.
    Best Chance = highest p. Best Value = highest edge among value picks. Strongest Agreement = highest a (at least 3
    groups, a >= 0.75; ties go to the higher chance). Then up to five in all by S, if p >= 20% and a >= 0.5. One card a runner.
+   Cards show the labelled picks first (Best Chance, Best Value, Strongest Agreement), then the rest by S.
    The score is for ordering the cards only. It is not a chance of winning. */
-const BB_VAL=.20,BB_MIN_P=.10;
+const BB_VAL=.20,BB_MIN_P=.10,BB_MAX_EDGE=1.5,BB_MAX_MK=15;
 function bbMarket(r,u){if(u&&u.win>1)return +u.win;const q=quickRace(r);const x=q&&(q.runners||[]).find(y=>nkey(y.name)===nkey(u.name));return x&&x.win>1?+x.win:null}
 function bbScore(p,a,edge,d){return 100*(.45*Math.min(p/.5,1)+.30*a+.15*Math.min(Math.max(edge||0,0),.5)/.5+.10*d)}
 function bbRace(r){const rk=ranked(r);if(!rk||!rk.length)return null;const pn=panelOf(r);if(!pn||pn.ts.length<3)return null;
@@ -2353,7 +2356,7 @@ function bbRace(r){const rk=ranked(r);if(!rk||!rk.length)return null;const pn=pa
   const scr=new Set((r.scr||[]).map(x=>nkey(x.name))),field=rk.map(x=>x.u).filter(u=>!scr.has(nkey(u.name)));
   const one=u=>{const k=nkey(u.name),p=pn.chance.get(k)||0,pis=ind.map(w=>T[w].chance.get(k)).filter(v=>v!=null),pi=pis.length?pis.reduce((a,v)=>a+v,0)/pis.length:null;
     const onTop=groups.filter(([,ts])=>ts.some(t=>nkey(t.pick.name)===k)).map(([g])=>g),a=groups.length?onTop.length/groups.length:0,mk=bbMarket(r,u);
-    const edge=pi!=null&&mk?pi*mk-1:null,value=pis.length>=2&&pi>=BB_MIN_P&&mk>=1.5&&mk<=21&&edge>=BB_VAL;
+    const edge=pi!=null&&mk?pi*mk-1:null,value=pis.length>=2&&pi>=BB_MIN_P&&mk>=1.5&&mk<=BB_MAX_MK&&edge>=BB_VAL&&edge<=BB_MAX_EDGE&&pis.every(v=>v*mk>=1.1);
     return {r,u,k,p,pi,nInd:pis.length,ind,mk,edge,value,a,onTop,groups:groups.map(g=>g[0]),ts:pn.ts,d:pn.ts.length/5,S:bbScore(p,a,value?edge:0,pn.ts.length/5)}};
   const top=field.find(u=>nkey(u.name)===nkey(pn.pick.name));const out=top?[{...one(top),isTop:true}]:[];
   // a value runner can be lower down The Mob's order
@@ -2366,11 +2369,12 @@ function bestBets(races){const now=Date.now(),all=[];for(const r of races){if(Da
   // a pick that qualifies for more than one label carries them all
   for(const y of picked){const x=y.x;if(chance&&x===chance&&!y.labs.includes("c"))y.labs.push("c");if(x.value&&value&&x.r.id===value.r.id&&x.k===value.k&&!y.labs.includes("v"))y.labs.push("v");if(agree&&x===agree&&!y.labs.includes("a"))y.labs.push("a")}
   for(const x of tops.slice().sort((a,b)=>b.S-a.S)){if(picked.length>=5)break;if(has(x)||x.p<.2||x.a<.5)continue;add(x,"o")}
-  return {picks:picked.sort((a,b)=>b.x.S-a.x.S),noValue:!value,count:all.length}}
+  const rank=y=>y.labs.includes("c")?0:y.labs.includes("v")?1:y.labs.includes("a")?2:3;
+  return {picks:picked.sort((a,b)=>rank(a)-rank(b)||b.x.S-a.x.S),noValue:!value,count:all.length}}
 const BB_LAB={c:"Best Chance",v:"Best Value",a:"Strongest Agreement",o:"Best Bet"},BB_WHO={market:"the market (Gran)",pop:"Pop",bob:"Bob",kev:"Kev",nan:"Nan"};
 function bbWhy(x){const b=[],nm=n=>BB_WHO[n].replace(" (Gran)","");
   b.push(`The Mob gives it ${pct(x.p)} from ${x.ts.length} tipsters`);
-  if(x.onTop.length)b.push(`${x.onTop.length===x.groups.length?"every":x.onTop.length+" of "+x.groups.length} independent view${x.groups.length===1?"":"s"} ${x.onTop.length===1?"has":"have"} it on top (${x.onTop.map(nm).join(", ")})`);
+  if(x.onTop.length)b.push(`${x.onTop.length===x.groups.length?(x.groups.length===1?"the only":"all "+x.groups.length):x.onTop.length+" of "+x.groups.length} independent view${x.groups.length===1?"":"s"} ${x.onTop.length===1&&x.groups.length>1?"has":"have"} it on top (${x.onTop.map(nm).join(", ")})`);
   if(x.value)b.push(`the models make it ${div(1/x.pi)} and the market is ${div(x.mk)}, a ${Math.round(x.edge*100)}% overlay`);
   else if(x.pi!=null&&x.mk)b.push(`the models' fair price is ${div(1/x.pi)} against ${div(x.mk)} in the market`);
   return b.join("; ")+"."}

@@ -22,7 +22,7 @@ setTimeout(()=>{
   // D: jumped race: ignored
   mk("D","H","ff",PAST,[{no:1,name:"Ida",win:1.2},{no:2,name:"Jo",win:5}],{nan:{Ida:.9,Jo:.1},pop:{Ida:.9,Jo:.1},bob:{Ida:.9,Jo:.1},gran:{Ida:.9,Jo:.1}}),
   // E: dog, full form, only Pop as model + Nan independent; value candidate Kit with 2 independent (pop+nan)
-  mk("E","D","ff",FUT,[{no:1,name:"Kit",win:7},{no:2,name:"Lou",win:1.3}],{nan:{Kit:.45,Lou:.55},pop:{Kit:.4,Lou:.6},gran:{Kit:.14,Lou:.86}}),
+  mk("E","D","ff",FUT,[{no:1,name:"Kit",win:4},{no:2,name:"Lou",win:1.3}],{nan:{Kit:.45,Lou:.55},pop:{Kit:.4,Lou:.6},gran:{Kit:.14,Lou:.86}}),
   // F: horse value runner only rated by Pop (1 model): no value call; scratched runner Zed must never appear
   mk("F","H","ff",FUT,[{no:1,name:"Max",win:2},{no:2,name:"Ned",win:15},{no:3,name:"Zed",win:20}],{nan:{Max:.5,Ned:.07,Zed:.43},pop:{Max:.3,Ned:.3,Zed:.4},gran:{Max:.5,Ned:.07,Zed:.43}},[{no:3,name:"Zed"}]),
  ];
@@ -36,9 +36,12 @@ setTimeout(()=>{
  const B=w.__B,find=n=>B.picks.find(y=>y.x.u.name===n),labs=n=>(find(n)||{labs:[]}).labs;
  t("Ace is Best Chance",()=>assert.ok(labs("Ace").includes("c")));
  t("Ace also Strongest Agreement on the same card",()=>{assert.ok(labs("Ace").includes("a"));assert.strictEqual(B.picks.filter(y=>y.x.u.name==="Ace").length,1)});
- t("Kit is Best Value (biggest overlay: Pop+Nan on a full-form dog)",()=>{const y=find("Kit");assert.ok(y&&y.labs.includes("v"))});
+ t("Dan is Best Value (biggest overlay)",()=>{const y=find("Dan");assert.ok(y&&y.labs.includes("v"))});
+ t("Kit qualifies as value (Pop+Nan on a full-form dog)",()=>{const x=E('bbRace(RACES[4])').find(x=>x.u.name==="Kit");assert.ok(x&&x.value)});
+ t("huge overlay rejected as likely bad data",()=>{E('RACES[1].runners[1].win=30');const x=E('bbRace(RACES[1])').find(x=>x.u.name==="Dan");assert.ok(!x||!x.value);E('RACES[1].runners[1].win=8')});
+ t("labelled picks listed first",()=>{const r=B.picks.map(y=>y.labs.includes("o")&&y.labs.length===1?1:0);assert.deepStrictEqual(r,r.slice().sort())});
  t("Dan qualifies as value (Pop+Bob beat $8 by 20%+)",()=>{const x=E('bbRace(RACES[1])').find(x=>x.u.name==="Dan");assert.ok(x&&x.value&&x.edge>=.2)});
- t("value runner from lower in The Mob's order",()=>assert.ok(!find("Kit").x.isTop));
+ t("value runner from lower in The Mob's order",()=>assert.ok(!find("Dan").x.isTop));
  t("no independent model: race C excluded",()=>assert.ok(!find("Gus")&&!find("Hal")));
  t("jumped race excluded",()=>assert.ok(!find("Ida")));
  t("scratched runner never shown",()=>assert.ok(!find("Zed")));
