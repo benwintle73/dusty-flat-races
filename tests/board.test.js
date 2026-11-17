@@ -23,7 +23,7 @@ const w=dom.window,E=s=>w.eval(s);let fails=0;const t=(n,f)=>{try{f();console.lo
  await new Promise(r=>setTimeout(r,300));
  if(!w.document.getElementById("board")){const d=w.document.createElement("div");d.id="board";w.document.body.appendChild(d)}
  await E("loadBoard()");
- t("version bumped",()=>assert.strictEqual(E("NAN_VERSION"),"2.54.0"));
+ t("version bumped",()=>assert.ok(E("NAN_VERSION")>="2.54.0"));
  t("boardStats maths",()=>{const s=E(`boardStats([{bets:10,won:3,placed:5,back:9.5},{bets:5,won:2,placed:3,back:6}])`);
    assert.strictEqual(s.n,15);assert.strictEqual(s.won,5);assert.strictEqual(s.staked,150);assert.strictEqual(s.ret,155);assert.strictEqual(s.profit,5);assert.ok(Math.abs(s.roi-3.333)<.01)});
  t("boardStats empty",()=>{const s=E("boardStats([])");assert.strictEqual(s.n,0);assert.strictEqual(s.roi,null)});

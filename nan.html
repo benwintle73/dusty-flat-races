@@ -879,7 +879,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.54.0"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.54.1"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -2566,7 +2566,7 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-bkwho]");i
 function boardBreakdown(rows,from,to,W){
   const who=W[BOARD.bwho]?BOARD.bwho:"nan",mine=rows.filter(r=>r.who===who),T=boardStats(mine);
   const sgn=v=>(v>=0?"+":"-")+money(Math.abs(v)).replace("-",""),roi=v=>v==null?"–":(v>=0?"+":"")+Math.round(v)+"%";
-  const r1=(lab,s)=>s.n?`<tr><td>${lab}</td><td>${s.n}</td><td>${pct(s.win)}</td><td>${pct(s.place)}</td><td class="${s.profit>=0?"plus":"minus"}">${sgn(s.profit)}</td><td class="${s.profit>=0?"plus":"minus"}">${roi(s.roi)}</td></tr>`:`<tr><td>${lab}</td><td>0</td><td colspan="4" style="text-align:left"><small>No settled picks</small></td></tr>`;
+  const p0=v=>v?pct(v):"0%",r1=(lab,s)=>s.n?`<tr><td>${lab}</td><td>${s.n}</td><td>${p0(s.win)}</td><td>${p0(s.place)}</td><td class="${s.profit>=0?"plus":"minus"}">${sgn(s.profit)}</td><td class="${s.profit>=0?"plus":"minus"}">${roi(s.roi)}</td></tr>`:`<tr><td>${lab}</td><td>0</td><td colspan="4" style="text-align:left"><small>No settled picks</small></td></tr>`;
   const head=`<thead><tr><th></th><th>Picks</th><th>Win %</th><th>Place %</th><th title="Profit or loss betting $10 on every top pick">$10 bets</th><th title="Profit as a share of what was staked">ROI</th></tr></thead>`;
   const codes=[["H","Horses"],["D","Dogs"],["N","Harness"]].filter(([c])=>BOARD.code==="all"||BOARD.code===c);
   let price="";
@@ -2578,8 +2578,8 @@ function boardBreakdown(rows,from,to,W){
       <p class="calc-out"><small>${priced.length?"Uses the bookies' price saved before the jump, never the price after the race. ":""}${un.n?`Data unavailable for ${un.n} pick${un.n===1?"":"s"}${BOARD.code==="H"?"":" (dogs and harness have no pre-race price saved)"}, so ${un.n===1?"it's":"they're"} left out of these two tables.`:""}</small></p>`}
   return `<details class="bbrk"${BOARD.brk?" open":""}><summary>Performance breakdown <span>&#9656;</span></summary>
     <div class="bb-grid bk-who">${Object.keys(W).map(k=>`<button data-bkwho="${k}" aria-pressed="${who===k}">${W[k]}</button>`).join("")}</div>
-    ${T.n?`<div class="bk-tot"><div><b>${T.n}</b><small>settled picks</small></div><div><b>${T.won}</b><small>winners (${pct(T.win)})</small></div><div><b>${money(T.staked)}</b><small>staked</small></div><div><b>${money(T.ret)}</b><small>returned</small></div>
-      <div><b class="${T.profit>=0?"plus":"minus"}">${sgn(T.profit)}</b><small>profit / loss</small></div><div><b class="${T.profit>=0?"plus":"minus"}">${roi(T.roi)}</b><small>ROI</small></div><div><b>${pct(T.place)}</b><small>placed</small></div><div><b style="font-size:13px">${sampleOf(T.n)[0]}</b><small>${T.n} picks</small></div></div>
+    ${T.n?`<div class="bk-tot"><div><b>${T.n}</b><small>settled picks</small></div><div><b>${T.won}</b><small>winners (${p0(T.win)})</small></div><div><b>${money(T.staked)}</b><small>staked</small></div><div><b>${money(T.ret)}</b><small>returned</small></div>
+      <div><b class="${T.profit>=0?"plus":"minus"}">${sgn(T.profit)}</b><small>profit / loss</small></div><div><b class="${T.profit>=0?"plus":"minus"}">${roi(T.roi)}</b><small>ROI</small></div><div><b>${p0(T.place)}</b><small>placed</small></div><div><b style="font-size:13px">${sampleOf(T.n)[0]}</b><small>${T.n} picks</small></div></div>
       <div class="bk-h">By code</div><div class="bwrap"><table class="btable bk">${head}<tbody>${codes.map(([c,l])=>r1(l,boardStats(mine.filter(r=>r.code===c)))).join("")}</tbody></table></div>${price}
       <p class="calc-out"><small>$10 on every top pick, official tote dividends. Scratched picks and abandoned races don't count. More winners doesn't always mean more profit: a tipster on short-priced favourites can win often and still lose money. ${sampleOf(T.n)[0]}: under 30 picks is a small sample, 30 to 99 is developing, 100 or more is established. These are a guide only.</small></p>`
       :`<p>No settled picks for ${W[who]} in this period yet.</p>`}
@@ -3282,6 +3282,7 @@ document.addEventListener("click",e=>{
 });
 /* ---------- What's new: the update history, plus the suggestions box ---------- */
 const CHANGES=[
+ ["2.54.1","17 Nov","Leaderboard fix",["The Performance breakdown now shows 0% instead of <1% when a tipster had no winners or placings in a group."]],
  ["2.54.0","17 Nov","Sharper tipster leaderboard",["New periods: last 30, 90 and 180 days (records start 12 November, so they fill out over time).","Each tipster shows how solid their record is: small sample, developing or established.","New Performance breakdown under the table: staked, returned, profit and ROI for each tipster, split by code, by the price of the pick when tipped (horses) and favourites against the rest."]],
  ["2.53.1","16 Nov","Tidier Bet button",["The Bet button on Nan's Best Bet and Roughie had its word stuck at the top of a tall green block. It's now a proper button with the word in the middle."]],
  ["2.52.0","15 Nov","Why anyone picked it",["Nan comments on a few more runners in each race: her top pick and a handful of others, sometimes one she reckons has no hope.","Open Why Nan picked and tap Pop, Bob, Gran, Kev or The Mob to see how they picked their runner, from the numbers they tip off.","What the tipsters say now comes after the reasons."]],
