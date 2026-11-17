@@ -673,6 +673,69 @@ body.rmode #betAll,body.rmode #blkSoon,body.rmode #guide,body.rmode #recStrip,bo
 .rv-days{grid-template-columns:repeat(8,minmax(0,1fr))!important}@media (max-width:560px){.rv-days{grid-template-columns:repeat(4,minmax(0,1fr))!important}}
 .rv-bc{min-width:520px}.rv-bc td small{font-size:12px;color:var(--ink2)}.rv-bc .bc-w b{font-size:16px;display:inline}.rv-bc .bc-r{font-size:13px;white-space:normal}.rv-bc .bc-r b{display:inline;font-size:13px}
 details.about>summary h4{margin:0}details.about details.fsec{margin-top:8px}details.about h5{margin:14px 0 4px;color:var(--amber);font:400 18px/1.1 var(--display);letter-spacing:.4px;text-transform:uppercase}
+
+/* ---------- Simple betting (2.60) ---------- */
+body.qmode .mnav,body.qmode #subnav,body.qmode #moreMenu,body.qmode #newsView,body.qmode #radioView,body.qmode #a2hs,body.qmode .newsbtn,body.qmode #slipBar,body.qmode .foot .about{display:none!important}
+body.qmode{padding-bottom:calc(16px + env(safe-area-inset-bottom))!important}
+#quickView{display:grid;gap:10px;margin-top:10px}
+#quickView>*{min-width:0}
+.qtop{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.qtop h2{margin:0;font:400 26px/1 var(--display);color:var(--amber);text-transform:uppercase;letter-spacing:.6px}
+.qtop button{min-height:40px;padding:0 12px;background:none;border:2px solid var(--amber-dim);color:var(--paper);font-weight:700;font-size:14px;cursor:pointer;white-space:nowrap}
+.qacct{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.qacct>div{background:var(--paper);color:var(--ink);padding:8px 10px;border-top:5px solid var(--amber-dim);min-width:0}
+.qacct>div:first-child{border-top-color:var(--amber)}
+.qacct small{display:block;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--ink2)}
+.qacct b{display:block;margin-top:2px;font:400 clamp(19px,5.6vw,28px)/1.1 var(--display);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qacct b.plus{color:var(--good)}.qacct b.minus{color:#b3261e}
+.qowe{margin:0;color:#ff9b8c;font-weight:700;font-size:15px}
+#quickView .nan-loan{margin-top:0}
+.qseg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}.qseg.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.qseg button{min-height:46px;background:#3b3120;color:var(--paper);border:0;font:700 17px/1 var(--led);cursor:pointer}
+.qseg button[aria-pressed=true]{background:var(--amber);color:var(--tote)}
+.qseg.two button{background:var(--paper2);color:var(--ink);border:2px solid var(--amber-dim)}.qseg.two button[aria-pressed=true]{background:var(--amber);border-color:var(--amber);color:var(--tote)}
+#qmeet{width:100%;min-height:46px;font-size:16px}
+.qmsg{margin:0;padding:8px 10px;background:#0003;color:var(--paper);font-size:15px;border-left:4px solid var(--amber)}
+.qlist{display:grid;gap:6px}
+.qrow{display:grid;grid-template-columns:62px minmax(0,1fr) auto;align-items:center;gap:8px;width:100%;min-height:58px;padding:8px 10px;background:var(--paper);color:var(--ink);border:0;border-left:5px solid var(--amber-dim);text-align:left;cursor:pointer;font:inherit}
+.qrow[aria-expanded=true]{background:var(--amber);border-left-color:var(--tote)}
+.qrow .qt{font:700 17px/1.1 var(--led)}.qrow .qt small{display:block;font-size:12px;font-weight:600;color:var(--ink2)}
+.qrow .qn{min-width:0}.qrow .qn b{display:block;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qrow .qn small{display:block;font-size:13px;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qrow .qr{display:flex;flex-direction:column;align-items:flex-end;gap:3px;font-size:13px;white-space:nowrap}
+.qrow .qmine{background:var(--tote);color:var(--amber);font-weight:700;font-size:11px;padding:2px 6px;border-radius:4px}
+.qbody{background:var(--card);color:var(--ink);padding:10px;border-left:5px solid var(--amber);display:grid;gap:8px;margin-top:-6px}
+.qbody>p{margin:0}
+.qmeta{font-size:13px;color:var(--ink2)}
+.qwho{display:grid;grid-template-columns:repeat(auto-fit,minmax(62px,1fr));gap:5px}
+.qwho button{min-height:40px;background:var(--paper2);border:1px solid var(--line);color:var(--ink);font-weight:700;font-size:15px;cursor:pointer;padding:0 4px}
+.qwho button[aria-pressed=true]{background:var(--tote);border-color:var(--tote);color:var(--amber)}
+.qtip{background:var(--paper);padding:8px 10px}
+.qtip-h{font:400 18px/1.1 var(--display);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
+.qpk{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:8px;padding:6px 0;border-top:1px solid var(--line)}
+.qpk:first-of-type{border-top:0}
+.qpk .qpn{min-width:0;font-weight:700}.qpk .qpn small{display:block;font-weight:400;font-size:13px;color:var(--ink2)}
+.qpk .betbtn{min-height:40px;padding:0 14px;white-space:nowrap}
+.qpk.q1 .qpn{font-size:17px}
+.qtip .nsays{margin:6px 0 0;font-style:italic;font-size:14px}
+.qbody .builder{margin:0}
+.qempty{background:#0003;color:var(--paper);padding:14px;text-align:center}
+.qsum{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;background:var(--paper);color:var(--ink);padding:8px 10px}
+.qsum small{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--ink2)}.qsum b{font-size:17px}
+.qsum b.plus{color:var(--good)}.qsum b.minus{color:#b3261e}
+.qgrp{margin:6px 0 0;color:var(--amber);font:400 18px/1 var(--display);text-transform:uppercase;letter-spacing:.5px}
+.qslip{position:sticky;bottom:calc(8px + env(safe-area-inset-bottom));z-index:15;background:var(--tote);color:var(--paper);border:2px solid var(--amber);border-radius:12px;padding:10px;box-shadow:0 6px 20px rgba(0,0,0,.55);display:grid;gap:8px}
+.qslip summary{list-style:none;display:flex;justify-content:space-between;align-items:center;gap:8px;cursor:pointer}.qslip summary::-webkit-details-marker{display:none}
+.qslip summary small{color:#d9c9a3}
+.qslip .slipline{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px;align-items:center;font-size:14px;padding:6px 0;border-top:1px solid #fff2}
+.qslip .slipline button{min-height:34px}
+.qbody .bb-h:has(+ .bb-mh),.qbody .bb-mh,.qbody .bb-myst,.qbody .bb-roll{display:none!important}
+.qslip details>summary{min-height:30px}
+.qslip .qsa{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px}
+.qslip [data-bconfirm]{min-height:48px;background:var(--amber);color:var(--tote);border:0;font-weight:700;font-size:16px;cursor:pointer}.qslip [data-bconfirm]:disabled{opacity:.55}
+.qslip [data-bslipclr]{padding:0 12px}
+.qslip .minus{margin:0;color:#ff9b8c}
+@media (max-width:380px){.qacct small{font-size:11px}.qsum{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
 </head>
 <body>
@@ -695,6 +758,7 @@ details.about>summary h4{margin:0}details.about details.fsec{margin-top:8px}deta
     <button data-nav="more" aria-pressed="false" aria-expanded="false" aria-controls="moreMenu"><span class="mi" aria-hidden="true">&#8943;</span>More<i id="moreDot" hidden></i></button>
   </nav>
   <div class="moremenu" id="moreMenu" hidden><div class="mm-in" role="menu" aria-label="More">
+    <button data-view="quick" role="menuitem"><b>Simple betting</b><small>Just your balance, today's races and your bets</small></button>
     <button data-view="record" role="menuitem"><b>Tipsters</b><small>Leaderboard and Nan's record</small></button>
     <button data-view="champ" role="menuitem"><b>Championship</b><small>Family tipping comp v Nan and co.</small></button>
     <button data-view="punters" role="menuitem"><b>Punters</b><small>How everyone's bets are going</small></button>
@@ -731,6 +795,7 @@ details.about>summary h4{margin:0}details.about details.fsec{margin-top:8px}deta
     <details class="follow" id="follow"></details>
   </details>
   </section>
+  <section id="quickView" hidden></section>
   <section id="betsView" hidden></section>
   <section id="blkView" hidden></section>
   <section id="cricketView" hidden></section>
@@ -887,7 +952,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.59.0"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.60.0"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -3564,6 +3629,7 @@ document.addEventListener("click",e=>{
 });
 /* ---------- What's new: the update history, plus the suggestions box ---------- */
 const CHANGES=[
+ ["2.60.0","18 Nov","Simple betting",["New in More: Simple betting. Just your balance, today's races and your bets, nothing else.","Pick Horses, Harness or Dogs, tap a race, and see what Nan, Pop, Bob, Gran, Kev or The Mob would back. Tap Back it, or build any bet type.","Borrow from Nan right there, and see today's bets, results and how much you're up or down for the day.","Same balance as My bets. Once you pick it, Nan's Tips opens straight to it; tap Full Nan's Tips to go back."]],
  ["2.59.0","17 Nov","Tidy-up",["Tipping in the family comp is now called My Championship Tip on every race, with a clear note that it's free and not a bet, and a lock when the race jumps.","Nan's Best Bet and Roughie no longer repeat a runner that's already in Best Bets of the day.","Best Bets cards fit small phones better, and the leaderboard says so if it can't load instead of looking empty.","The Championship has the same name everywhere in the menus."]],
  ["2.58.0","17 Nov","Around Nan's table",["Nan, Pop, Bob, Gran and Kev now react to how their tips are really going: winning streaks, slumps, winning outsiders, favourites beaten and overtaking each other on the leaderboard.","Find it as \"Around Nan's table\" on the Tipsters page, with the real result behind each line.","On about half the races, a line about who disagrees with whom before the jump, and a word on the Family Championship standings.","Turn off Funny comments to hide it all. Tips, tables and points don't change."]],
  ["2.57.1","17 Nov","Tip buttons in number order",["The Family Championship tip buttons on each race now run in saddlecloth number order."]],
@@ -4024,11 +4090,91 @@ document.addEventListener("change",e=>{if(e.target.id!=="jokes")return;JOKES=e.t
 document.addEventListener("click",e=>{const b=e.target.closest("[data-whyw]");if(!b)return;e.preventDefault();WHYW=b.dataset.whyw;WHYOPEN=b.dataset.whyr;
   const r=RACES.find(x=>x.id===WHYOPEN),d=b.closest(".rbody");if(r&&d)d.innerHTML=raceBody(r)});
 document.addEventListener("toggle",e=>{const d=e.target;if(d.matches&&d.matches("details.why1")){const c=d.closest("details.race");if(!d.open&&c&&WHYOPEN===c.dataset.id)WHYOPEN=null}},true);
+/* ---------- Simple betting (v2.60): just your balance, borrowing from Nan, today's races for one code at a time, each
+   tipster's pick in a race, every bet type, and today's bets with their results. Same account and balance as My bets. ---------- */
+const QK={code:"H",meet:"all",open:null,who:"nan",tab:"races",mb:null};
+let QK_START=false;try{QK_START=localStorage.getItem("otr-quick")==="1";const q=JSON.parse(localStorage.getItem("otr-quick-st")||"{}");if(CODE[q.code])QK.code=q.code;if(q.who&&WHO[q.who]&&q.who!=="all")QK.who=q.who}catch(e){}
+const qSave=()=>{try{localStorage.setItem("otr-quick-st",JSON.stringify({code:QK.code,who:QK.who}))}catch(e){}};
+const qOn=()=>ST.view==="quick";
+const qTickets=()=>{const d=REC_TODAY();return BK.tickets.filter(t=>t.status!=="cancelled"&&t.sport!=="cricket"&&betDay(t)===d)};
+function qDay(){const o={n:0,staked:0,back:0,out:0,wins:0,settled:0};
+  for(const t of qTickets()){o.n++;const s=settleOf(t),c=costOf(t);
+    if(["open","waiting","div"].includes(s.state)){o.out+=c;continue}
+    if(s.state==="void")continue;o.settled++;o.staked+=c;o.back+=s.pay||0;if((s.pay||0)>0)o.wins++}
+  o.net=r2(o.back-o.staked);return o}
+function qRaces(){const now=Date.now();return RACES.filter(r=>r.code===QK.code&&(QK.meet==="all"||r.venue===QK.meet)&&Date.parse(r.jump)>now-GRACE).sort((a,b)=>Date.parse(a.jump)-Date.parse(b.jump))}
+function qMeets(){const now=Date.now(),m=new Map();for(const r of RACES){if(r.code!==QK.code)continue;const x=m.get(r.venue)||{venue:r.venue,next:Infinity,n:0};x.n++;const t=Date.parse(r.jump);if(t>now-GRACE&&t<x.next)x.next=t;m.set(r.venue,x)}
+  return [...m.values()].sort((a,b)=>a.next-b.next||a.venue.localeCompare(b.venue))}
+function qPanel(r){
+  const rk=ranked(r);if(!rk)return `<div class="qbody">${raceBody(r)}</div>`; // still loading, or a meeting to load (Nan never spends credits you didn't choose)
+  if(r.code==="H")loadForm(r);
+  const ts=tipsters(r),mob=mobOf(r),all=[...ts,...(mob?[mob]:[])],t=all.find(x=>x.who===QK.who)||all[0],f=fieldOf(r)||[],canBet=Date.now()<Date.parse(r.jump);
+  let top=[];try{top=topN(r,t,3)}catch(e){top=[t.pick]}
+  const px=no=>{const u=f.find(x=>x.no===no);return u&&u.est&&u.est<500?div(u.est):"–"};
+  return `<div class="qbody">
+    <p class="qmeta">${[r.name,r.dist?r.dist+"m":"",r.cls,r.cond||(r.card&&r.card.cond)].filter(Boolean).map(escH).join(" · ")}</p>
+    ${all.length>1?`<div class="qwho" role="group" aria-label="Whose tips">${all.map(x=>`<button data-qwho="${x.who}" aria-pressed="${x.who===t.who}">${WHO[x.who]}</button>`).join("")}</div>`:""}
+    <div class="qtip"><div class="qtip-h">${t.who==="mob"?"The Mob's":WHO[t.who]+"'s"} picks</div>
+      ${top.map((p,i)=>`<div class="qpk${i?"":" q1"}">${cloth(p.no,r.code,p.box)}<span class="qpn">${escH(p.name)}<small>${pct(p.p)} chance · ${px(p.no)}</small></span>${canBet?`<button class="betbtn" data-qback="${escH(r.id)}|${p.no}">Back it</button>`:"<span></span>"}</div>`).join("")}
+      ${t.says?`<p class="nsays">${escH(t.says)}</p>`:""}</div>
+    ${canBet?builderHtml(r):`<p class="qmsg">Betting's closed: this race has jumped.</p>`}</div>`}
+function qRow(r,mine){const open=QK.open===r.id,[hm,ap]=timeOf(r.jump).split(" ");
+  return `<button class="qrow" data-qopen="${escH(r.id)}" aria-expanded="${open}"><span class="qt">${hm}<small>${ap||""}</small></span>
+    <span class="qn"><b>${QK.meet==="all"?escH(r.venue)+" ":""}R${r.no}</b><small>${escH(r.name||CODE[r.code])}</small></span>
+    <span class="qr">${cdn(r.jump)}${mine.has(rkey(r))?'<span class="qmine">My bet</span>':""}</span></button>${open?qPanel(r):""}`}
+function qSlip(b){if(!BK.slip.length)return "";const cost=BK.slip.reduce((a,t)=>a+costOf(t),0),closed=BK.slip.some(t=>Date.now()>=Date.parse(t.jump)),n=BK.slip.length;
+  return `<div class="qslip"><details id="qslip"${QK.slipOpen?" open":""}><summary><b>Bet slip · ${n} bet${n>1?"s":""} · ${money(cost)}</b><small>Not placed yet ▾</small></summary>
+    ${BK.slip.map((t,i)=>`<div class="slipline"><span>${slipHtml(t)}${Date.now()>=Date.parse(t.jump)?' <b class="minus">jumped</b>':""}</span><button data-bslipdel="${i}">Remove</button></div>`).join("")}</details>
+    <div class="qsa"><button data-bconfirm ${cost>b.running||closed?"disabled":""}>Confirm ${n} bet${n>1?"s":""} · ${money(cost)}</button><button data-bslipclr>Clear</button>${cost>b.running?'<p class="minus">Not enough in your balance.</p>':""}${closed?'<p class="minus">Remove bets on races that have jumped.</p>':""}</div></div>`}
+function renderQuick(){const el=$("quickView");if(!el||!qOn())return;
+  const b=balances(),d=qDay(),mine=new Set(qTickets().map(t=>t.rk));LEDGER=ledger(true);
+  const head=`<div class="qtop"><h2>Simple betting</h2><button data-qexit>Full Nan's Tips</button></div>
+    <div class="qacct"><div><small>Balance</small><b>${money(b.running)}</b></div><div><small>Today</small><b class="${d.net>0?"plus":d.net<0?"minus":""}">${d.net>0?"+":""}${money(d.net)}</b></div><div><small>Bets out</small><b>${money(d.out)}</b></div></div>
+    ${b.owed>0?`<p class="qowe">You owe Nan ${money(b.owed)}. It comes out of your next winnings.</p>`:""}
+    ${loanHtml(b)}
+    <div class="qseg" role="group" aria-label="Racing code">${[["H","Horses"],["N","Harness"],["D","Dogs"]].map(([k,l])=>`<button data-qcode="${k}" aria-pressed="${QK.code===k}">${l}</button>`).join("")}</div>
+    <div class="qseg two" role="group" aria-label="Show">${[["races","Today's races"],["bets",`My bets today${d.n?` (${d.n})`:""}`]].map(([k,l])=>`<button data-qtab="${k}" aria-pressed="${QK.tab===k}">${l}</button>`).join("")}</div>`;
+  let body="";
+  if(QK.tab==="bets"){const ts=qTickets().filter(t=>t.code===QK.code||true),open=ts.filter(t=>settleOf(t).state==="open").sort((a,b)=>Date.parse(a.jump)-Date.parse(b.jump)),run=ts.filter(t=>!open.includes(t)).sort((a,b)=>Date.parse(b.jump)-Date.parse(a.jump));
+    body=`${BKMSG?`<p class="qmsg" id="bkMsg">${BKMSG}</p>`:""}
+      <div class="qsum"><div><small>Bets</small><b>${d.n}</b></div><div><small>Winners</small><b>${d.wins}</b></div><div><small>Staked</small><b>${money(d.staked+d.out)}</b></div><div><small>Won/lost</small><b class="${d.net>0?"plus":d.net<0?"minus":""}">${d.net>0?"+":""}${money(d.net)}</b></div></div>
+      <div class="calc-row"><button data-bcheck ${BKBUSY?"disabled":""}>${BKBUSY?"Checking…":"Check results"}</button></div>${CHECKMSG?`<p class="checkmsg">${CHECKMSG}</p>`:""}
+      ${!ts.length?`<div class="qempty">No bets today yet. Pick a race on <b>Today's races</b>.</div>`:""}
+      ${open.length?`<h3 class="qgrp">To run (${open.length})</h3><div class="races">${open.map(tkHtml).join("")}</div>`:""}
+      ${run.length?`<h3 class="qgrp">Run (${run.length})</h3><div class="races">${run.map(tkHtml).join("")}</div>`:""}`}
+  else{const ms=qMeets();if(QK.meet!=="all"&&!ms.some(m=>m.venue===QK.meet))QK.meet="all";const L=qRaces(),st=$("status").textContent;
+    body=`<select id="qmeet" aria-label="Meeting"><option value="all">All ${CODE[QK.code].toLowerCase()} meetings</option>${ms.map(m=>`<option value="${escH(m.venue)}" ${QK.meet===m.venue?"selected":""}>${escH(m.venue)}${m.next===Infinity?" · all run":""}</option>`).join("")}</select>
+      ${st&&(!/^Added/.test(st)||BK.slip.length)?`<p class="qmsg">${/^Added/.test(st)?"Added to your bet slip. Not placed yet: press <b>Confirm</b> at the bottom to place it.":escH(st)}</p>`:""}
+      ${MB?`<div id="qmulti">${multiHtml()}</div>`:""}
+      <div class="qlist">${L.length?L.map(r=>qRow(r,mine)).join(""):`<div class="qempty">${!RACES.length?"Loading today's races…":`No more ${CODE[QK.code].toLowerCase()} races to bet on today.`}</div>`}</div>`}
+  el.innerHTML=head+body+qSlip(b);
+  if(MB&&QK.mb!==MB){QK.mb=MB;const m=$("qmulti");if(m)m.scrollIntoView({block:"start"})}
+}
+// everything that redraws Today's tips or My bets redraws Simple betting instead while it's showing
+{const _r=render;render=function(){if(qOn())return renderQuick();return _r.apply(this,arguments)}}
+{const _b=renderBets;renderBets=function(){if(qOn()){const el=$("betsView");if(el)el.innerHTML="";return renderQuick()}return _b.apply(this,arguments)}}
+document.addEventListener("toggle",e=>{if(e.target.id==="qslip")QK.slipOpen=e.target.open},true);
+document.addEventListener("click",e=>{if(!qOn())return;const g=s=>e.target.closest(s);let b;
+  if(g("[data-qexit]"))return setView("tips");
+  if(b=g("[data-qcode]")){QK.code=b.dataset.qcode;QK.meet="all";QK.open=null;qSave();return renderQuick()}
+  if(b=g("[data-qtab]")){QK.tab=b.dataset.qtab;BKMSG="";renderQuick();if(QK.tab==="bets")checkOfficial(false);return}
+  if(b=g("[data-qwho]")){QK.who=b.dataset.qwho;qSave();return renderQuick()}
+  if(b=g("[data-qopen]")){const id=b.dataset.qopen;QK.open=QK.open===id?null:id;const r=RACES.find(x=>x.id===id);
+    if(QK.open&&r&&!MB&&Date.now()<Date.parse(r.jump)&&BUILD.id!==id)Object.assign(BUILD,{id,type:"win",style:"straight",sel:[],pos:0,legs:[[],[],[],[]],form:null,myst:null});
+    renderQuick();if(QK.open){const x=document.querySelector(`#quickView [data-qopen="${CSS.escape(id)}"]`);if(x)try{x.scrollIntoView({block:"start",behavior:"smooth"})}catch(_){x.scrollIntoView()}}return}
+  if(b=g("[data-qback]")){const s=b.dataset.qback,k=s.lastIndexOf("|"),id=s.slice(0,k),no=+s.slice(k+1);
+    Object.assign(BUILD,{id,type:"win",style:"straight",sel:[no],pos:0,legs:[[],[],[],[]],myst:null});MB=null;renderQuick();
+    const x=document.querySelector("#quickView [data-badd]");if(x)try{x.scrollIntoView({block:"center",behavior:"smooth"})}catch(_){x.scrollIntoView()}}
+});
+document.addEventListener("change",e=>{if(e.target.id==="qmeet"){QK.meet=e.target.value;QK.open=null;renderQuick()}});
+setInterval(()=>{if(!qOn()||document.visibilityState!=="visible")return;const a=document.activeElement;if(a&&a.closest&&a.closest("#quickView")&&/INPUT|SELECT/.test(a.tagName))return;if(QK.tab==="bets")checkOfficial(false);else renderQuick()},60e3);
 function setView(v,focus){
   if(v==="races")v="tips";
   const was=ST.view;moreMenu(false);
   document.querySelectorAll("[data-view]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.view===v));paintNav(v);
-  ST.view=v;$("tipsView").hidden=v!=="tips"&&v!=="racing";document.body.classList.toggle("rmode",v==="racing");$("recordView").hidden=v!=="record";$("betsView").hidden=v!=="bets";$("blkView").hidden=v!=="blk";$("cricketView").hidden=v!=="cricket";$("puntersView").hidden=v!=="punters";$("champView").hidden=v!=="champ";$("resultsView").hidden=v!=="results";
+  ST.view=v;$("tipsView").hidden=v!=="tips"&&v!=="racing";document.body.classList.toggle("rmode",v==="racing");$("recordView").hidden=v!=="record";$("betsView").hidden=v!=="bets";$("blkView").hidden=v!=="blk";$("cricketView").hidden=v!=="cricket";$("puntersView").hidden=v!=="punters";$("champView").hidden=v!=="champ";$("resultsView").hidden=v!=="results";$("quickView").hidden=v!=="quick";document.body.classList.toggle("qmode",v==="quick");
+  if(v==="quick"||was==="quick")try{localStorage.setItem("otr-quick",v==="quick"?"1":"0")}catch(e){}
+  if(v==="quick"){renderQuick();checkOfficial(false)}
   if(v==="record"){if(!REC.sum)loadRecord();else renderRecord();loadBoard();loadLab()}
   if(v==="punters"){renderPlayers();loadPlayers()}
   if(v==="champ"){renderChamp();loadChamp();loadMyTips()}
@@ -4062,7 +4208,7 @@ document.addEventListener("change",e=>{if(e.target.id==="stakeIn"){const v=Math.
   pullBK()})();
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")pullBK()});
 setInterval(()=>{if(document.visibilityState==="visible")pullBK()},30e3);
-if(location.hash==="#record")setView("record");else if(location.hash==="#punters")setView("punters");else if(location.hash==="#champ")setView("champ");else if(location.hash==="#blk")setView("blk");else if(location.hash==="#results")setView("results");else if(location.hash==="#cricket")setView("cricket");else if(location.hash==="#news")toggleNews(true);else if(location.hash==="#bets")setView("bets",BK.slip.length?"slipBox":null);else slipBar();
+if(location.hash==="#quick"||(!location.hash&&QK_START))setView("quick");else if(location.hash==="#record")setView("record");else if(location.hash==="#punters")setView("punters");else if(location.hash==="#champ")setView("champ");else if(location.hash==="#blk")setView("blk");else if(location.hash==="#results")setView("results");else if(location.hash==="#cricket")setView("cricket");else if(location.hash==="#news")toggleNews(true);else if(location.hash==="#bets")setView("bets",BK.slip.length?"slipBox":null);else slipBar();
 function refreshAllow(){clearTimeout(refreshAllow.t);refreshAllow.t=setTimeout(()=>getJSON(SB+"/otr-nan?follow=1").then(j=>{ALLOW=j.allowance||ALLOW;CREDITS=j.credits||CREDITS;$("allow").innerHTML=creditsHtml(CREDITS);$("srcsN").innerHTML=srcsLine()}).catch(()=>{}),1500)}
 setInterval(refreshAllow,120e3);
 // Refresh: reload from the server, skipping any cached copy, and come back to the same tab
