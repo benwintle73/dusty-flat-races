@@ -30,11 +30,21 @@ button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
 .menu .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .homeinfo{text-align:center;color:var(--muted);font-size:14px;margin-top:14px}
 .homeinfo b{color:var(--gold)}
+.dailycard{max-width:360px;margin:0 auto 10px;width:100%;background:linear-gradient(135deg,#2a1f45,#1b2440);border:1px solid #ffd16655;border-radius:16px;padding:12px 14px;display:flex;align-items:center;gap:12px;text-align:left}
+.dailycard .dc-t{flex:1}.dailycard b{display:block;font-size:17px}.dailycard small{color:var(--muted)}.dailycard .fire{font-size:26px}.dailycard .go{background:var(--gold);color:#2a1700;font-weight:800;border-radius:10px;padding:8px 12px}
+.ach{display:grid;gap:6px;margin-top:12px}.ach div{display:flex;gap:10px;align-items:center;background:var(--panel);border-radius:12px;padding:8px 12px;font-size:14px}.ach div.lock{opacity:.4}.ach i{font-style:normal;font-size:20px}
+.lv.ms{border-color:#8a6cff88}.lv.ms::after{content:"◆";position:absolute;top:2px;right:5px;font-size:9px;color:var(--pu)}.lv{position:relative}
+.tier.done::after{content:" ✓";color:var(--cy)}
+.ov.win .sheet{text-align:center}.sheet.three{box-shadow:0 -10px 60px #ffd16633;border-top:2px solid var(--gold)}
+.keyrow{display:flex;align-items:center;gap:10px;margin:8px 0}.keyrow .cell{width:46px;height:46px;flex:none;pointer-events:none}
 /* header */
 .bar{display:flex;align-items:center;gap:8px;margin-bottom:8px}
 .bar .ttl{flex:1;text-align:center;line-height:1.15}.bar .ttl b{display:block;font-size:18px}.bar .ttl small{color:var(--muted);font-size:13px}
 /* game */
-.hud{display:flex;justify-content:space-between;align-items:center;background:var(--panel);border-radius:var(--r);padding:8px 12px;margin-bottom:8px;font-size:14px}
+.hud{display:grid;grid-template-columns:1fr 1fr 1.3fr;align-items:center;background:var(--panel);border-radius:var(--r);padding:8px 12px;margin-bottom:6px;font-size:14px}
+.hud .best{text-align:right}.hud .best .starline{font-size:18px}.starline .e{color:#3a4566}
+.subhud{display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:13px;margin:0 2px 6px;min-height:20px}.subhud b{color:var(--txt)}
+.track{color:var(--gold)}.track.off{color:var(--muted)}
 .hud b{font-size:20px;display:block;line-height:1}.hud .c{text-align:center}.hud small{color:var(--muted)}
 .starline{color:var(--gold);letter-spacing:2px}
 .legend{display:flex;justify-content:center;align-items:center;gap:8px;color:var(--muted);font-size:13px;margin:2px 0 8px;min-height:22px}
@@ -42,17 +52,21 @@ button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
 .boardwrap{flex:1;display:flex;align-items:center;justify-content:center;min-height:0;position:relative}
 .board{display:grid;gap:clamp(4px,1.4vw,8px);touch-action:manipulation;user-select:none;-webkit-user-select:none;position:relative}
 .cell{position:relative;border-radius:22%;background:var(--off);border:2px solid #34406a;display:flex;align-items:center;justify-content:center;transition:background .18s,border-color .18s,box-shadow .18s,transform .12s;touch-action:manipulation}
-.cell .sym{width:42%;height:42%;transition:all .18s}
-.cell.s0 .sym{border:3px solid #5a6790;border-radius:50%;width:22%;height:22%}
-.cell.s1{background:linear-gradient(145deg,#4ff0fb,#1bb8cc);border-color:#9ff8ff;box-shadow:0 0 16px #30e3f255}
+.cell .sym{width:40%;height:40%;transition:all .18s}
+.cell.s0 .sym{border:3px solid #5a6790;border-radius:50%;width:24%;height:24%}
+.cell.s1{background:linear-gradient(145deg,#4ff0fb,#1bb8cc);border-color:#9ff8ff;box-shadow:0 0 14px #30e3f244}
 .cell.s1 .sym{border-radius:50%;background:#0b3d4a}
-.cell.s2{background:linear-gradient(145deg,#ff86bd,#e13f8a);border-color:#ffc2dd;box-shadow:0 0 16px #ff5da855}
-.cell.s2 .sym{background:#4a0f2b;transform:rotate(45deg);width:34%;height:34%;border-radius:3px}
+.cell.s2{background:linear-gradient(145deg,#ff86bd,#e13f8a);border-color:#ffc2dd;box-shadow:0 0 14px #ff5da844}
+.cell.s2 .sym{background:#4a0f2b;transform:rotate(45deg);width:32%;height:32%;border-radius:3px}
 .cell.blk{background:repeating-linear-gradient(45deg,#121a30 0 6px,#0e1528 6px 12px);border-color:#1e2843;box-shadow:none;cursor:default}
 .cell.blk .sym{display:none}
-.cell .tg{position:absolute;right:7%;bottom:7%;width:22%;height:22%;border-radius:50%;border:2px solid #0b1020aa}
-.cell .tg.t0{background:#0B1020}.cell .tg.t1{background:var(--cy)}.cell .tg.t2{background:var(--mg);border-radius:3px;transform:rotate(45deg) scale(.85)}
-.cell.ok::after{content:"";position:absolute;inset:-2px;border-radius:inherit;box-shadow:inset 0 0 0 2px #ffffffaa}
+/* target badge: top-right, dark backing, the target's own shape; turns into a tick when matched */
+.cell .tg{position:absolute;right:5%;top:5%;width:34%;height:34%;min-width:14px;min-height:14px;border-radius:30%;background:#0B1020;border:2px solid #F7FAFF;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px #000a}
+.cell .tg i{display:block;width:56%;height:56%}
+.cell .tg.t0 i{border:2px solid #A9B5CC;border-radius:50%;width:46%;height:46%}.cell .tg.t1 i{background:var(--cy);border-radius:50%}.cell .tg.t2 i{background:var(--mg);transform:rotate(45deg);width:46%;height:46%;border-radius:2px}
+.cell.ok .tg{border-color:var(--gold);background:var(--gold)}.cell.ok .tg i{background:none!important;border:0!important;transform:none;width:auto;height:auto}
+.cell.ok .tg i::before{content:"✓";color:#0B1020;font:900 clamp(9px,2.6vw,15px)/1 system-ui;font-style:normal}
+.cell.gain{animation:gain .45s ease-out}@keyframes gain{40%{filter:brightness(1.45);transform:scale(1.04)}}
 .cell.press{transform:scale(.9)}
 .cell.hint{animation:hint 1s ease-in-out 3}
 @keyframes hint{50%{box-shadow:0 0 0 4px var(--gold),0 0 24px var(--gold)}}
@@ -75,8 +89,8 @@ button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
 .bigstars i.on{color:var(--gold);text-shadow:0 0 18px #ffd16688}.bigstars i.show{transform:scale(1);opacity:1}
 .sum{text-align:center;color:var(--muted);margin-bottom:12px}
 .sheet .btns{display:grid;gap:8px}
-.coach{position:absolute;left:50%;top:-6px;transform:translate(-50%,-100%);background:var(--gold);color:#2a1700;font-weight:700;padding:8px 12px;border-radius:12px;width:max-content;max-width:min(300px,86vw);text-align:center;font-size:15px;pointer-events:none;z-index:5;box-shadow:0 6px 18px #0008}
-.coach::after{content:"";position:absolute;left:50%;bottom:-6px;margin-left:-6px;border:6px solid transparent;border-bottom:0;border-top-color:var(--gold)}
+.coach{display:flex;align-items:center;gap:10px;background:var(--gold);color:#2a1700;font-weight:700;padding:8px 10px 8px 14px;border-radius:12px;margin:0 auto 8px;max-width:100%;font-size:15px;box-shadow:0 6px 18px #0006}
+.coach span{flex:1}.coach button{min-height:36px;padding:4px 10px;border-radius:9px;background:#2a170022;font-weight:800;font-size:13px}
 /* levels */
 .lvls{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;overflow:auto;padding-bottom:10px}
 .lv{aspect-ratio:1;border-radius:12px;background:var(--panel);border:1px solid #2a3557;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:800;font-size:17px;min-height:44px}
@@ -105,7 +119,7 @@ body.rm *{animation-duration:.01ms!important;transition-duration:.01ms!important
     <div class="deco" id="deco" aria-hidden="true"></div>
     <div class="menu">
       <button class="btn primary" id="bPlay">Play</button>
-      <button class="btn gold" id="bDaily">Daily Pulse</button>
+      <button class="dailycard" id="bDaily"></button>
       <div class="row"><button class="btn" id="bLevels">Levels</button><button class="btn" id="bStats">Stats</button></div>
       <div class="row"><button class="btn" id="bSound" aria-pressed="true">Sound: on</button><button class="btn" id="bSettings">Settings</button></div>
     </div>
@@ -113,8 +127,10 @@ body.rm *{animation-duration:.01ms!important;transition-duration:.01ms!important
   </section>
   <!-- GAME -->
   <section class="screen" id="game" aria-label="Puzzle">
-    <div class="bar"><button class="icon" id="gBack" aria-label="Back">&#8592;</button><div class="ttl"><b id="gTitle">Level 1</b><small id="gSub">Warm-up</small></div><button class="icon" id="gSet" aria-label="Settings">&#9881;</button></div>
-    <div class="hud"><div><small>Moves</small><b id="gMoves">0</b></div><div class="c"><small>Stars</small><div class="starline" id="gStars">★★★</div></div><div style="text-align:right"><small>Par</small><b id="gPar">0</b></div></div>
+    <div class="bar"><button class="icon" id="gBack" aria-label="Back">&#8592;</button><div class="ttl"><b id="gTitle">Level 1</b><small id="gSub">Warm-up</small></div><button class="icon" id="gKey" aria-label="What the symbols mean">?</button></div>
+    <div class="hud"><div><small>Moves</small><b id="gMoves">0</b></div><div class="c"><small>Par</small><b id="gPar">0</b></div><div class="best"><small>Best</small><div class="starline" id="gStars"></div></div></div>
+    <div class="subhud"><span id="gMatched"></span><span class="track" id="gTrack"></span></div>
+    <div id="coachSlot"></div>
     <div class="legend" id="gLegend"></div>
     <div class="boardwrap"><div class="board" id="board" role="grid" aria-label="Puzzle board"></div></div>
     <div class="msg" id="gMsg" aria-live="polite"></div>
@@ -132,12 +148,13 @@ body.rm *{animation-duration:.01ms!important;transition-duration:.01ms!important
   </section>
 </div>
 <!-- overlays -->
-<div class="ov" id="ovWin" role="dialog" aria-modal="true" aria-labelledby="wTitle"><div class="sheet">
+<div class="ov win" id="ovWin" role="dialog" aria-modal="true" aria-labelledby="wTitle"><div class="sheet" id="wSheet">
   <h2 id="wTitle">Solved!</h2><div class="bigstars" id="wStars"><i>★</i><i>★</i><i>★</i></div><p class="sum" id="wSum"></p>
   <div class="btns" id="wBtns"></div></div></div>
 <div class="ov" id="ovSet" role="dialog" aria-modal="true" aria-label="Settings"><div class="sheet">
   <h2>Settings</h2>
   <div class="setrow"><span>Sound</span><button class="toggle" role="switch" id="tSound" aria-label="Sound"></button></div>
+  <div class="setrow"><span>Vibration</span><button class="toggle" role="switch" id="tHaptic" aria-label="Vibration"></button></div>
   <div class="setrow"><span>Reduce motion</span><button class="toggle" role="switch" id="tMotion" aria-label="Reduce motion"></button></div>
   <div class="setrow"><span>How to play</span><button class="btn" id="bHow">Show</button></div>
   <p style="color:var(--muted);font-size:14px;margin:14px 0 6px">Save backup</p>
@@ -145,6 +162,14 @@ body.rm *{animation-duration:.01ms!important;transition-duration:.01ms!important
   <textarea id="saveBox" placeholder="Your save appears here, or paste one to import." aria-label="Save data" hidden></textarea>
   <div class="btns" style="margin-top:12px"><button class="btn" id="bReset" style="color:#ff8a8a">Reset all progress</button><button class="btn primary" data-close>Done</button></div>
 </div></div>
+<div class="ov" id="ovKey" role="dialog" aria-modal="true" aria-label="Symbols"><div class="sheet">
+  <h2>What you're looking at</h2>
+  <div class="keyrow"><span class="cell s1"><span class="sym"></span></span><span><b>Big symbol</b>: the square's colour now (○ dark, ● cyan, ◆ magenta).</span></div>
+  <div class="keyrow"><span class="cell s0"><span class="sym"></span><span class="tg t2"><i></i></span></span><span><b>Corner badge</b>: the colour it needs to become.</span></div>
+  <div class="keyrow"><span class="cell s2 ok"><span class="sym"></span><span class="tg t2"><i></i></span></span><span><b>Gold tick</b>: this square matches its target.</span></div>
+  <div class="keyrow"><span class="cell blk"></span><span><b>Striped</b>: blocked. Never changes, doesn't pass pulses on.</span></div>
+  <p style="color:var(--muted)">Each tap moves a square and the ones beside it one step: dark → cyan → magenta → dark.</p>
+  <div class="btns"><button class="btn primary" data-close>Got it</button></div></div></div>
 <div class="ov" id="ovHow" role="dialog" aria-modal="true" aria-label="How to play"><div class="sheet">
   <h2>How to play</h2>
   <p>Tap a square. It and the squares touching it (not diagonals) move one colour along: <b style="color:#8b97b8">dark</b> → <b style="color:var(--cy)">cyan</b> → <b style="color:var(--mg)">magenta</b> → dark.</p>
@@ -257,12 +282,24 @@ const PG = (() => {
 /* ===== PULSEGRID game: save, sound, rendering, input, screens ===== */
 (() => {
 const $ = (id) => document.getElementById(id);
-const VERSION = '1.0.2', SAVE_KEY = 'pulsegrid_save_v1';
+const VERSION = '1.1.0', SAVE_KEY = 'pulsegrid_save_v1';
 // ---------- dates (local calendar) ----------
 const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
 const dayDiff = (a, b) => Math.round((Date.UTC(...b.split('-').map((v, i) => i === 1 ? v - 1 : +v)) - Date.UTC(...a.split('-').map((v, i) => i === 1 ? v - 1 : +v))) / 864e5);
+// ---------- milestones (awarded once, kept in the save) ----------
+const ACH = [
+  { id: 'first', i: '✦', t: 'First Pulse', d: 'Solve your first puzzle', ok: (S) => S.stats.solves >= 1 },
+  { id: 'l10', i: '◆', t: 'Warmed Up', d: 'Complete 10 levels', ok: (S) => Object.keys(S.levels).length >= 10 },
+  { id: 'l25', i: '◆', t: 'Getting Serious', d: 'Complete 25 levels', ok: (S) => Object.keys(S.levels).length >= 25 },
+  { id: 'l50', i: '◆', t: 'Halfway Hero', d: 'Complete 50 levels', ok: (S) => Object.keys(S.levels).length >= 50 },
+  { id: 'l100', i: '♛', t: 'Gridmaster', d: 'Complete all 100 levels', ok: (S) => Object.keys(S.levels).length >= 100 },
+  { id: 'p1', i: '★', t: 'Perfect', d: 'Earn three stars', ok: (S) => Object.values(S.levels).some((L) => L.stars === 3) },
+  { id: 'p10', i: '★', t: 'Perfectionist', d: 'Three stars on 10 levels', ok: (S) => Object.values(S.levels).filter((L) => L.stars === 3).length >= 10 },
+  { id: 'd1', i: '☀', t: 'Daily Habit', d: 'Solve a Daily Pulse', ok: (S) => Object.keys(S.daily).length >= 1 },
+  { id: 'd7', i: '🔥', t: 'On a Roll', d: '7-day Daily Pulse streak', ok: (S) => S.bestStreak >= 7 },
+];
 // ---------- save manager ----------
-const fresh = () => ({ v: 1, unlocked: 1, levels: {}, daily: {}, streak: 0, bestStreak: 0, lastDaily: null, stats: { moves: 0, solves: 0, three: 0, time: 0 }, sound: true, motion: false, onboarded: false, active: null });
+const fresh = () => ({ v: 1, unlocked: 1, levels: {}, daily: {}, streak: 0, bestStreak: 0, lastDaily: null, stats: { moves: 0, solves: 0, three: 0, time: 0 }, sound: true, motion: false, haptics: true, onboarded: false, active: null, ach: {} });
 function sanitize(o) {
   const s = fresh(); if (!o || typeof o !== 'object') return s;
   const num = (v, d, lo = 0, hi = 1e9) => Number.isFinite(+v) ? Math.min(hi, Math.max(lo, Math.floor(+v))) : d;
@@ -271,7 +308,8 @@ function sanitize(o) {
   for (const k in (o.daily || {})) { if (!/^\d{4}-\d\d-\d\d$/.test(k)) continue; const D = o.daily[k]; if (D && typeof D === 'object') s.daily[k] = { stars: num(D.stars, 0, 0, 3), best: num(D.best, 0, 0, 9999) }; }
   s.streak = num(o.streak, 0); s.bestStreak = num(o.bestStreak, 0); s.lastDaily = /^\d{4}-\d\d-\d\d$/.test(o.lastDaily) ? o.lastDaily : null;
   const st = o.stats || {}; s.stats = { moves: num(st.moves, 0), solves: num(st.solves, 0), three: num(st.three, 0), time: num(st.time, 0) };
-  s.sound = o.sound !== false; s.motion = !!o.motion; s.onboarded = !!o.onboarded;
+  s.sound = o.sound !== false; s.motion = !!o.motion; s.haptics = o.haptics !== false; s.onboarded = !!o.onboarded;
+  for (const k in (o.ach || {})) if (ACH.some((a) => a.id === k) && /^\d{4}-\d\d-\d\d$/.test(o.ach[k])) s.ach[k] = o.ach[k];
   if (o.active && typeof o.active === 'object' && (o.active.kind === 'level' || o.active.kind === 'daily')) {
     const a = o.active, b = a.kind === 'level' ? PG.level(num(a.n, 1, 1, PG.LEVELS)) : PG.daily(String(a.date));
     if (Array.isArray(a.state) && a.state.length === b.w * b.h && a.state.every((v) => v === 0 || v === 1 || v === 2)) s.active = { kind: a.kind, n: num(a.n, 1, 1, PG.LEVELS), date: String(a.date || ''), state: a.state.slice(), moves: num(a.moves, 0), hinted: !!a.hinted };
@@ -291,11 +329,11 @@ function tone(freq, dur = .12, type = 'sine', vol = .12, delay = 0, slide = 0) {
   o.connect(g).connect(ac.destination); o.start(t); o.stop(t + dur + .02);
 }
 const SFX = {
-  tap: (k) => { tone(330 + k * 40, .09, 'triangle', .1); tone(660 + k * 60, .16, 'sine', .05, .03, 1.3); },
+  tap: (st) => { const f = [392, 494, 587][st] || 440; tone(f, .1, 'sine', .09); tone(f * 2, .14, 'sine', .03, .025, 1.2); },
   match: () => tone(1046, .14, 'sine', .07),
   undo: () => tone(520, .12, 'triangle', .08, 0, .6),
   click: () => tone(880, .05, 'square', .03),
-  win: () => [523, 659, 784, 1046].forEach((f, i) => tone(f, .22, 'triangle', .1, i * .09)),
+  win: () => [523, 659, 784, 1046].forEach((f, i) => tone(f, .24, 'sine', .09, i * .08)),
   three: () => [784, 988, 1175, 1568].forEach((f, i) => tone(f, .28, 'sine', .09, .38 + i * .08)),
   streak: () => [659, 880, 1318].forEach((f, i) => tone(f, .2, 'sine', .08, .9 + i * .1)),
 };
@@ -310,8 +348,9 @@ const say = (t) => { $('sr').textContent = t; };
 // ---------- home ----------
 function renderHome() {
   const n = Math.min(S.unlocked, PG.LEVELS), d = S.daily[today()];
-  $('bPlay').textContent = S.active ? 'Continue' : S.unlocked > 1 ? `Play level ${n}` : 'Play';
-  $('bDaily').textContent = d ? `Daily Pulse ✓ ${'★'.repeat(d.stars)}` : 'Daily Pulse';
+  const a = S.active; $('bPlay').textContent = a ? (a.kind === 'daily' ? 'Continue Daily Pulse' : `Continue level ${a.n}`) : S.unlocked > 1 ? `Play level ${n}` : 'Play';
+  const live = S.lastDaily && dayDiff(S.lastDaily, today()) <= 1 ? S.streak : 0;
+  $('bDaily').innerHTML = `<span class="fire" aria-hidden="true">${d ? '✓' : '☀'}</span><span class="dc-t"><b>Daily Pulse</b><small>${d ? `Solved today ${'★'.repeat(d.stars)} · ${d.best} moves` : "Today's puzzle is waiting"}<br>Streak ${live} · best ${S.bestStreak}</small></span><span class="go">${d ? 'Replay' : 'Play'}</span>`;
   $('bSound').textContent = `Sound: ${S.sound ? 'on' : 'off'}`; $('bSound').setAttribute('aria-pressed', S.sound);
   $('homeInfo').innerHTML = `<b>${totalStars()}</b> / ${PG.LEVELS * 3} stars · ${Object.keys(S.levels).length} levels solved${S.streak ? ` · <b>${S.streak}</b>-day streak` : ''}`;
 }
@@ -334,7 +373,7 @@ function begin(kind, b, opts = {}) {
   G = { kind, n: opts.n || 0, date: opts.date || '', b, state: (opts.state || b.start).slice(), moves: opts.moves || 0, hist: [], hinted: !!opts.hinted, done: false, cursor: firstPlayable(b) };
   S.active = { kind, n: G.n, date: G.date, state: G.state, moves: G.moves, hinted: G.hinted }; save();
   show('game'); buildBoard(); paint(); size(); requestAnimationFrame(size); startClock();
-  if (kind === 'level' && G.n === 1 && !S.onboarded) coach('Tap a square. Watch its neighbours change.');
+  removeCoach(); if (kind === 'level' && G.n === 1 && !S.onboarded) coach('Tap any square to send a pulse.');
 }
 const firstPlayable = (b) => b.block.findIndex((x) => !x);
 function startLevel(n) { begin('level', PG.level(n), { n }); }
@@ -347,21 +386,21 @@ function buildBoard() {
   G.uniform = uniform;
   for (let i = 0; i < b.w * b.h; i++) {
     const c = document.createElement('button'); c.className = 'cell'; c.dataset.i = i; c.setAttribute('role', 'gridcell');
-    c.innerHTML = '<span class="sym"></span>' + (!uniform && !b.block[i] ? `<span class="tg t${b.target[i]}"></span>` : '');
+    c.innerHTML = '<span class="sym"></span>' + (!uniform && !b.block[i] ? `<span class="tg t${b.target[i]}"><i></i></span>` : '');
     if (b.block[i]) { c.classList.add('blk'); c.disabled = true; c.setAttribute('aria-label', 'Blocked'); }
     c.tabIndex = i === G.cursor ? 0 : -1; el.appendChild(c);
   }
   size();
   const T = (t) => `<span class="sw" style="background:${['#26304d', 'var(--cy)', 'var(--mg)'][t]};${t === 0 ? 'border:2px solid #5a6790' : ''}"></span>`;
-  $('gLegend').innerHTML = uniform ? `Make every square ${T(b.target[firstPlayable(b)])} ${['dark', 'cyan', 'magenta'][b.target[firstPlayable(b)]]}` : `Match each square to the dot in its corner`;
-  $('gTitle').textContent = G.kind === 'daily' ? 'Daily Pulse' : `Level ${G.n}`;
-  $('gSub').textContent = G.kind === 'daily' ? new Date(G.date + 'T12:00').toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }) : PG.difficulty(G.n);
+  $('gLegend').innerHTML = uniform ? `Make every square ${T(b.target[firstPlayable(b)])} ${['dark', 'cyan', 'magenta'][b.target[firstPlayable(b)]]}` : `Turn each square into its corner badge · <button class="linkbtn" id="gKey2" style="text-decoration:underline;color:var(--cy)">key</button>`;
+  $('gTitle').textContent = G.kind === 'daily' ? 'Daily Pulse' : `Level ${G.n} · ${PG.difficulty(G.n)}`;
+  $('gSub').textContent = G.kind === 'daily' ? new Date(G.date + 'T12:00').toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' }) : `${b.w}×${b.h}${b.block.some(Boolean) ? ' · blocked squares' : ''}`;
   $('gPar').textContent = b.par;
 }
 function size() {
   if (!G) return; const b = G.b, el = $('board'), wrap = el.parentElement;
   const W = Math.min(wrap.clientWidth || document.querySelector('.app').clientWidth - 28, 520), H = Math.max(220, window.innerHeight - wrap.getBoundingClientRect().top - 120);
-  const gap = parseFloat(getComputedStyle(el).gap) || 6, cs = Math.floor(Math.min((W - gap * (b.w - 1)) / b.w, (H - gap * (b.h - 1)) / b.h, 96));
+  const gap = parseFloat(getComputedStyle(el).gap) || 6, cap = { 3: 112, 4: 96, 5: 84, 6: 76 }[b.w] || 76, cs = Math.max(30, Math.floor(Math.min((W - gap * (b.w - 1)) / b.w, (H - gap * (b.h - 1)) / b.h, cap)));
   el.style.gridTemplateColumns = `repeat(${b.w},${cs}px)`; el.style.gridAutoRows = cs + 'px';
 }
 window.addEventListener('resize', size);
@@ -374,9 +413,12 @@ function paint(changed) {
     c.setAttribute('aria-label', `Row ${((i / b.w) | 0) + 1}, column ${(i % b.w) + 1}: ${NAMES[s]}${G.uniform ? '' : `, target ${NAMES[b.target[i]]}`}${ok ? ', matched' : ''}`);
   }
   $('gMoves').textContent = G.moves;
-  const st = G.done ? G.stars : PG.stars(b.par, Math.max(G.moves, 0), G.hinted) - (G.moves > b.par || G.hinted ? 0 : 0);
-  const potential = G.hinted ? Math.min(2, G.moves <= PG.threshold2(b.par) ? 2 : 1) : G.moves <= b.par ? 3 : G.moves <= PG.threshold2(b.par) ? 2 : 1;
-  $('gStars').textContent = '★'.repeat(potential) + '☆'.repeat(3 - potential);
+  const best = G.kind === 'level' ? (S.levels[G.n] || {}).stars || 0 : (S.daily[G.date] || {}).stars || 0;
+  $('gStars').innerHTML = '★'.repeat(best) + `<span class="e">${'☆'.repeat(3 - best)}</span>`; $('gStars').setAttribute('aria-label', `Best: ${best} of 3 stars`);
+  const potential = G.hinted ? (G.moves < PG.threshold2(b.par) ? 2 : 1) : G.moves < b.par ? 3 : G.moves < PG.threshold2(b.par) ? 2 : 1;
+  const tr = $('gTrack'); if (G.done) { tr.textContent = ''; } else { tr.textContent = G.hinted ? 'Hint used: ★★ max' : potential === 3 ? `★★★ still on (${b.par - G.moves} to par)` : potential === 2 ? '★★ still on' : '★ — keep going'; tr.className = 'track' + (potential === 3 && !G.hinted ? '' : ' off'); }
+  let m = 0, tot = 0; for (let i = 0; i < G.state.length; i++) if (!b.block[i]) { tot++; if (G.state[i] === b.target[i]) m++; }
+  $('gMatched').innerHTML = `<b>${m}</b> / ${tot} matched`;
   $('gUndo').disabled = !G.hist.length || G.done; $('gRestart').disabled = G.done;
 }
 // ---------- moves ----------
@@ -384,11 +426,12 @@ function doTap(i) {
   if (!G || G.done || G.b.block[i]) return;
   const before = G.state, after = PG.tap(G.b, before, i);
   G.hist.push(before); G.state = after; G.moves++; S.stats.moves++;
-  if (G.kind === 'level' && G.n === 1 && !S.onboarded) { if (G.moves === 1) coach('Match every square to the target.'); }
-  const gained = PG.neighbours(G.b, i).filter((j) => after[j] === G.b.target[j] && before[j] !== G.b.target[j]).length;
-  fx(i); SFX.tap(PG.neighbours(G.b, i).length); if (gained >= 2) setTimeout(SFX.match, 90);
-  if (navigator.vibrate && !S.motion) try { navigator.vibrate(8); } catch (e) {}
+  if ($('coach')) { if (G.moves === 1) coach('See? The square and its neighbours changed colour.'); else if (G.moves === 2) coach('Now match every square to the target.'); else removeCoach(); }
+  const gainedCells = PG.neighbours(G.b, i).filter((j) => after[j] === G.b.target[j] && before[j] !== G.b.target[j]);
+  fx(i); SFX.tap(after[i]); if (gainedCells.length >= 2) setTimeout(SFX.match, 90);
+  if (S.haptics && navigator.vibrate) try { navigator.vibrate(8); } catch (e) {}
   paint(); persist();
+  if (!S.motion) { const cs = $('board').children; gainedCells.forEach((j) => { cs[j].classList.remove('gain'); void cs[j].offsetWidth; cs[j].classList.add('gain'); }); }
   say(`Move ${G.moves}. ${PG.neighbours(G.b, i).length} squares changed.`);
   if (PG.solved(G.b, G.state)) win();
 }
@@ -424,9 +467,11 @@ function hint() {
 $('gHint').onclick = hint;
 const msg = (t) => { $('gMsg').textContent = t; };
 $('gBack').onclick = () => { SFX.click(); show('home'); };
-$('gSet').onclick = () => { SFX.click(); paintToggles(); openOv('ovSet'); };
-function coach(t) { removeCoach(); const el = document.createElement('div'); el.className = 'coach'; el.id = 'coach'; el.textContent = t; $('board').appendChild(el); }
-function removeCoach() { const c = $('coach'); if (c) c.remove(); }
+$('gKey').onclick = () => { SFX.click(); openOv('ovKey'); };
+document.addEventListener('click', (e) => { if (e.target.id === 'gKey2') { SFX.click(); openOv('ovKey'); } });
+function coach(t) { let el = $('coach'); if (!el) { el = document.createElement('div'); el.className = 'coach'; el.id = 'coach'; el.setAttribute('role', 'status'); $('coachSlot').appendChild(el); }
+  el.innerHTML = `<span>${t}</span><button id="coachSkip">Skip</button>`; $('coachSkip').onclick = () => { S.onboarded = true; save(); removeCoach(); }; requestAnimationFrame(size); }
+function removeCoach() { const c = $('coach'); if (c) { c.remove(); requestAnimationFrame(size); } }
 // ---------- winning ----------
 function win() {
   G.done = true; removeCoach(); const b = G.b, st = PG.stars(b.par, G.moves, G.hinted); G.stars = st;
@@ -441,20 +486,24 @@ function win() {
     const D = S.daily[G.date], first = !D; S.daily[G.date] = { stars: Math.max(D ? D.stars : 0, st), best: D ? Math.min(D.best, G.moves) : G.moves };
     if (first && G.date === today()) { const gap = S.lastDaily ? dayDiff(S.lastDaily, G.date) : null; S.streak = gap === 1 ? S.streak + 1 : gap === 0 ? S.streak : 1; S.lastDaily = G.date; S.bestStreak = Math.max(S.bestStreak, S.streak); streakUp = S.streak > 1; }
   }
+  const got = ACH.filter((a) => !S.ach[a.id] && a.ok(S)); got.forEach((a) => { S.ach[a.id] = today(); });
   save(); paint(); stopClock();
   $('board').classList.add('win'); SFX.win(); if (st === 3) SFX.three(); if (streakUp) SFX.streak();
   say(`Solved in ${G.moves} moves. ${st} star${st > 1 ? 's' : ''}.`);
-  setTimeout(() => showWin(st, newBest), S.motion ? 50 : 650);
+  let shown = false; const go = () => { if (shown) return; shown = true; $('board').removeEventListener('pointerdown', go); showWin(st, newBest, got); };
+  $('board').addEventListener('pointerdown', go); setTimeout(go, S.motion ? 50 : 600);
 }
-function showWin(st, newBest) {
-  const b = G.b; $('wTitle').textContent = st === 3 ? 'Perfect!' : 'Solved!';
+function showWin(st, newBest, got = []) {
+  const b = G.b; $('wTitle').textContent = G.kind === 'daily' ? (st === 3 ? 'Perfect Pulse!' : 'Daily Pulse solved!') : st === 3 ? 'Perfect!' : 'Level Complete!';
+  $('wSheet').classList.toggle('three', st === 3);
   [...$('wStars').children].forEach((s, k) => { s.className = k < st ? 'on' : ''; setTimeout(() => s.classList.add('show'), 120 + k * 180); });
   const need = st < 3 ? (G.hinted ? 'Solve without a hint to earn ★★★.' : `Par is ${b.par}. Can you match it?`) : b.exact ? 'You matched the shortest possible solution.' : 'You matched par.';
-  $('wSum').innerHTML = `${G.moves} moves · par ${b.par}${newBest && G.kind === 'level' ? ' · new best' : ''}<br>${need}${G.kind === 'daily' ? `<br>Streak: <b style="color:var(--gold)">${S.streak} day${S.streak === 1 ? '' : 's'}</b> · best ${S.bestStreak}` : ''}`;
+  const ms = G.kind === 'level' && [10, 25, 50, 75, 100].includes(G.n) ? `<br><b style="color:var(--pu)">◆ Milestone: level ${G.n}${G.n < 100 ? `. ${PG.difficulty(G.n + 1)} levels ahead.` : '. You\'ve beaten them all!'}</b>` : '';
+  $('wSum').innerHTML = `<b style="font-size:20px;color:var(--txt)">${G.moves}</b> moves · par ${b.par}${newBest && G.kind === 'level' && (S.levels[G.n] || {}).plays > 1 ? ' · <b style="color:var(--cy)">new best</b>' : ''}<br>${need}${G.kind === 'daily' ? `<br>Streak: <b style="color:var(--gold)">${S.streak} day${S.streak === 1 ? '' : 's'}</b> · best ${S.bestStreak}` : ''}${ms}${got.map((a) => `<br><span style="color:var(--gold)">${a.i} Unlocked: <b>${a.t}</b></span>`).join('')}`;
   const B = [];
   if (G.kind === 'level' && G.n < PG.LEVELS) B.push(`<button class="btn primary" id="wNext">Next level</button>`);
   if (G.kind === 'daily') B.push(`<button class="btn gold" id="wShare">Share</button>`);
-  if (st < 3) B.push(`<button class="btn" id="wRetry">Try for ★★★</button>`);
+  B.push(`<button class="btn" id="wRetry">${st < 3 ? 'Try for ★★★' : 'Replay'}</button>`);
   B.push(`<button class="btn" id="wMenu">${G.kind === 'level' ? 'Levels' : 'Home'}</button>`);
   $('wBtns').innerHTML = B.join(''); openOv('ovWin');
   const nx = $('wNext'); if (nx) nx.onclick = () => { closeOv(); SFX.click(); startLevel(G.n + 1); };
@@ -472,9 +521,9 @@ async function share() {
 function renderLevels() {
   const g = $('lvGrid'), tiers = [[1, 'Warm-up'], [11, 'Easy'], [26, 'Medium'], [46, 'Hard'], [71, 'Expert']]; let h = '';
   for (let n = 1; n <= PG.LEVELS; n++) {
-    const t = tiers.find((x) => x[0] === n); if (t) h += `<div class="tier">${t[1]}</div>`;
+    const t = tiers.find((x) => x[0] === n); if (t) { const end = (tiers[tiers.indexOf(t) + 1] || [101])[0] - 1; let all = true; for (let q = n; q <= end; q++) if (!S.levels[q]) all = false; h += `<div class="tier${all ? ' done' : ''}">${t[1]} · ${n}–${end}</div>`; }
     const L = S.levels[n], lock = n > S.unlocked, cur = n === S.unlocked && !L;
-    h += `<button class="lv${L ? ' done' : ''}${lock ? ' lock' : ''}${cur ? ' cur' : ''}" data-lv="${n}" ${lock ? 'disabled aria-label="Level ' + n + ', locked"' : `aria-label="Level ${n}${L ? ', ' + L.stars + ' stars' : ''}"`}>${lock ? '🔒' : n}<small>${L ? '★'.repeat(L.stars) : ''}</small></button>`;
+    h += `<button class="lv${L ? ' done' : ''}${lock ? ' lock' : ''}${cur ? ' cur' : ''}${[10, 25, 50, 75, 100].includes(n) ? ' ms' : ''}" data-lv="${n}" ${lock ? 'disabled aria-label="Level ' + n + ', locked"' : `aria-label="Level ${n}${L ? ', ' + L.stars + ' stars' : ''}"`}>${lock ? '🔒' : n}<small>${L ? '★'.repeat(L.stars) : ''}</small></button>`;
   }
   g.innerHTML = h; $('lvSub').textContent = `${totalStars()} / ${PG.LEVELS * 3} stars`;
   const cur = g.querySelector('.cur') || g.querySelector('.lv:not(.lock):last-of-type'); if (cur) setTimeout(() => cur.scrollIntoView({ block: 'center' }), 0);
@@ -485,12 +534,14 @@ function renderStats() {
   const done = Object.keys(S.levels).length, t = S.stats.time, hm = t >= 3600 ? `${Math.floor(t / 3600)}h ${Math.floor(t % 3600 / 60)}m` : `${Math.floor(t / 60)}m`;
   const items = [['Highest unlocked', S.unlocked], ['Levels solved', `${done} / ${PG.LEVELS}`], ['Stars', `${totalStars()} / ${PG.LEVELS * 3}`], ['Three-star solves', Object.values(S.levels).filter((L) => L.stars === 3).length],
     ['Puzzles solved', S.stats.solves], ['Moves made', S.stats.moves], ['Daily Pulses', Object.keys(S.daily).length], ['Current streak', S.streak], ['Best streak', S.bestStreak], ['Play time', hm]];
-  $('stGrid').innerHTML = items.map(([l, v]) => `<div class="stat"><b>${v}</b><small>${l}</small></div>`).join('');
+  $('stGrid').innerHTML = items.map(([l, v]) => `<div class="stat"><b>${v}</b><small>${l}</small></div>`).join('') +
+    `<div style="grid-column:1/-1"><h3 style="margin:14px 0 0">Milestones · ${Object.keys(S.ach).length} / ${ACH.length}</h3><div class="ach">${ACH.map((a) => `<div class="${S.ach[a.id] ? '' : 'lock'}"><i>${a.i}</i><span><b>${a.t}</b><br><small style="color:var(--muted)">${a.d}</small></span></div>`).join('')}</div></div>`;
 }
 // ---------- settings ----------
-function paintToggles() { $('tSound').setAttribute('aria-checked', S.sound); $('tMotion').setAttribute('aria-checked', S.motion); document.body.classList.toggle('rm', S.motion); }
+function paintToggles() { $('tHaptic').setAttribute('aria-checked', S.haptics); $('tSound').setAttribute('aria-checked', S.sound); $('tMotion').setAttribute('aria-checked', S.motion); document.body.classList.toggle('rm', S.motion); }
 $('tSound').onclick = () => { S.sound = !S.sound; save(); paintToggles(); renderHome(); SFX.click(); };
 $('tMotion').onclick = () => { S.motion = !S.motion; save(); paintToggles(); };
+$('tHaptic').onclick = () => { S.haptics = !S.haptics; save(); paintToggles(); if (S.haptics && navigator.vibrate) try { navigator.vibrate(12); } catch (e) {} };
 $('bHow').onclick = () => { closeOv(); openOv('ovHow'); };
 $('bExport').onclick = () => { const t = $('saveBox'); t.hidden = false; t.value = JSON.stringify(S); t.select(); try { navigator.clipboard.writeText(t.value); toast('Save copied'); } catch (e) {} };
 $('bImport').onclick = () => { const t = $('saveBox'); if (t.hidden || !t.value.trim()) { t.hidden = false; t.value = ''; t.focus(); toast('Paste a save, then tap Import again'); return; }
@@ -498,6 +549,7 @@ $('bImport').onclick = () => { const t = $('saveBox'); if (t.hidden || !t.value.
   try { const o = JSON.parse(t.value); if (!o || o.v !== 1) throw 0; S = sanitize(o); save(); paintToggles(); renderHome(); toast('Save imported'); t.hidden = true; } catch (e) { toast("That doesn't look like a PULSEGRID save"); } };
 $('bReset').onclick = () => { if (!confirm('Reset ALL progress, stars and streaks? This cannot be undone.')) return; const snd = S.sound; S = fresh(); S.sound = snd; save(); closeOv(); show('home'); toast('Progress reset'); };
 // ---------- boot ----------
+ACH.forEach((a) => { if (!S.ach[a.id] && a.ok(S)) S.ach[a.id] = today(); }); save();
 paintToggles(); renderHome();
 if (location.hash === '#daily') startDaily();
 window.PULSEGRID = { get G() { return G; }, get S() { return S; }, doTap, undo, restart, hint, startLevel, startDaily, sanitize, VERSION };
