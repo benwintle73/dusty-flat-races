@@ -299,7 +299,8 @@ details.follow p{margin:0 12px 8px;font-size:15px;color:#d9c9a3}
 .talk{background:#fff8e6;border:1px solid var(--line);padding:6px 10px 4px;margin:4px 0 8px;color:var(--ink)}.talk h4{margin:2px 0 6px}
 .tk-r{display:grid;grid-template-columns:44px 40px minmax(0,1fr);gap:6px;align-items:baseline;padding:5px 0;border-top:1px dashed #0002;font-size:14px;line-height:1.35}.tk-r:first-of-type{border-top:0}
 .tk-r b{font:700 13px/1 var(--led);text-transform:uppercase;letter-spacing:.4px}.tk-o{font:700 14px/1 var(--led);color:var(--ink2);text-align:right}.tk-r span:last-child{font-style:italic;color:#5b4520}
-.bd-per{grid-template-columns:repeat(4,minmax(0,1fr));margin:6px 0 5px}.bd-per button{line-height:1.1}.bd-code{margin-bottom:5px}.bd-view{grid-template-columns:repeat(2,minmax(0,1fr));margin-bottom:8px}.bsamp{display:block;font:600 11px/1.1 var(--sans,inherit);color:var(--muted,#7a6a4f);white-space:nowrap}.bsamp.s1{color:#a4441a}.bsamp.s3{color:#2f6b2f}details.bbrk{border-top:1px solid var(--line);margin-top:8px}details.bbrk>summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;font-weight:700;font-size:17px}details.bbrk>summary::-webkit-details-marker{display:none}details.bbrk>summary span{color:var(--muted,#7a6a4f)}details.bbrk[open]>summary span{transform:rotate(90deg)}.bk-who{margin:4px 0 8px}.bk-who button{min-height:38px;font-size:14px}.bk-tot{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;margin:6px 0}.bk-tot div{background:var(--paper2,#f4ecd8);border:1px solid var(--line);padding:5px 4px;text-align:center}.bk-tot b{display:block;font-size:17px}.bk-tot small{font-size:11px}.bk-h{font-weight:700;margin:10px 0 2px}.btable.bk td:first-child,.btable.bk th:first-child{white-space:nowrap}@media (max-width:560px){.bk-tot{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.bd-per{grid-template-columns:repeat(4,minmax(0,1fr));margin:6px 0 5px}.bd-per button{line-height:1.1}.bd-code{margin-bottom:5px}.bd-view{grid-template-columns:repeat(2,minmax(0,1fr));margin-bottom:8px}.lab-x{display:inline-block;font:700 11px/1 var(--led);background:#a4441a;color:#fff;padding:3px 6px;border-radius:3px;text-transform:uppercase;letter-spacing:.3px;margin-left:6px;vertical-align:middle}.lab-warn{background:#fff3cd;border:1px solid #e0c97a;padding:6px 8px;font-size:14px;margin:6px 0}.lab-opts{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:4px 0 6px;font-size:14px}.btable.lab td:nth-child(1),.btable.lab th:nth-child(1){text-align:left;white-space:nowrap}.btable.lab td:nth-child(2),.btable.lab th:nth-child(2){text-align:right}
+.bsamp{display:block;font:600 11px/1.1 var(--sans,inherit);color:var(--muted,#7a6a4f);white-space:nowrap}.bsamp.s1{color:#a4441a}.bsamp.s3{color:#2f6b2f}details.bbrk{border-top:1px solid var(--line);margin-top:8px}details.bbrk>summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;font-weight:700;font-size:17px}details.bbrk>summary::-webkit-details-marker{display:none}details.bbrk>summary span{color:var(--muted,#7a6a4f)}details.bbrk[open]>summary span{transform:rotate(90deg)}.bk-who{margin:4px 0 8px}.bk-who button{min-height:38px;font-size:14px}.bk-tot{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;margin:6px 0}.bk-tot div{background:var(--paper2,#f4ecd8);border:1px solid var(--line);padding:5px 4px;text-align:center}.bk-tot b{display:block;font-size:17px}.bk-tot small{font-size:11px}.bk-h{font-weight:700;margin:10px 0 2px}.btable.bk td:first-child,.btable.bk th:first-child{white-space:nowrap}@media (max-width:560px){.bk-tot{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .tip .rest{display:block;font-size:14px;color:var(--ink2);margin-top:2px}.worder .tw{min-width:52px}
 .wchk input{width:16px;height:16px;margin:0;accent-color:var(--amber)}.wchk:not(.on){opacity:.6}
 .tgwrap{overflow-x:auto}.tgrid{width:100%;border-collapse:collapse;font-size:15px}
@@ -735,6 +736,7 @@ details.about>summary h4{margin:0}details.about details.fsec{margin-top:8px}deta
   <section id="recordView" hidden>
     <div class="note" id="recNote">Loading Nan's record…</div>
     <div class="calc board" id="board"><h3>Tipster leaderboard</h3><p>Loading…</p></div>
+    <div class="calc board" id="lab"></div>
     <div class="sumgrid" id="recSum"></div>
     <div class="bar"><div class="tabs days" id="recDays"></div></div>
     <div class="bar recf"><div class="tabs" id="recCodes"></div><div class="tabs" id="recRes"></div></div>
@@ -880,7 +882,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.55.1"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.56.0"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -2664,6 +2666,43 @@ function boardBreakdown(rows,from,to,W){
       :`<p>No settled picks for ${W[who]} in this period yet.</p>`}
   </details>`}
 document.addEventListener("click",e=>{const p=e.target.closest("[data-boardper]"),c=e.target.closest("[data-boardcode]"),v=e.target.closest("[data-boardview]");if(v){BOARD.view=v.dataset.boardview;renderBoard()}if(p){BOARD.per=p.dataset.boardper;renderBoard()}if(c){BOARD.code=c.dataset.boardcode;renderBoard()}});
+/* ---------- Strategy Lab (v2.56): experimental strategies recorded before each race by the server, never used for live tips ----------
+   Data: otr-lab (otr_strategy_lab view). Every pick is saved by the database job every 10 minutes for races jumping within 90
+   minutes, with a new revision whenever it changes, and can't be written after the jump. The last pre-race pick is settled on
+   the official result: $10 win, official dividend, scratched = refund, abandoned left out.
+   "backfill" rows were rebuilt on 17 Nov from tips saved before each race (12-17 Nov); "live" rows are recorded from 17 Nov on. */
+const LAB={rows:null,seen:null,today:null,per:"all",code:"all",match:false,live:false,err:false};
+const LAB_S=[["nan","Current Nan","Nan's own top pick, unchanged."],["form","Form-focused","Highest average of the independent models: Pop, Bob, and Nan on dogs and harness."],["market","Market-focused","The shortest-priced runner. Needs a saved price."],["consensus","Consensus","Most opinion groups on top (market, Pop, Bob, Kev, Nan on dogs and harness), each counted once. Needs 3 groups and 2 votes."],["value","Value-focused","Only when 2+ independent models beat the market by 20% to 100% ($1.50 to $12). Occasional."],["bestbets","Best Bets","Races where The Mob's pick qualifies for Best Bets (chance 20%+, half the groups agree)."]];
+async function loadLab(){try{const j=await getJSON(SB+"/otr-lab");LAB.rows=j.rows||[];LAB.seen=j.seen||[];LAB.today=j.today;LAB.err=false}catch(e){LAB.err=true;LAB.rows=LAB.rows||null}renderLab()}
+function labFrom(per,t){return per==="all"?"0000":boardFrom(per==="d7"?"week":per,t)}
+function renderLab(){const el=$("lab");if(!el)return;
+  if(!LAB.rows){el.innerHTML=`<h3>Strategy Lab<span class="lab-x">Experimental</span></h3><p>${LAB.err?"The Strategy Lab is unavailable right now.":"Loading…"}</p>`;return}
+  const t=LAB.today||REC_TODAY(),from=labFrom(LAB.per,t),ok=r=>r.date>=from&&(LAB.code==="all"||r.code===LAB.code)&&(!LAB.live||r.source==="live"),rows=LAB.rows.filter(r=>ok(r)&&(!LAB.match||r.matched));
+  const seen=(LAB.seen||[]).filter(ok).reduce((a,r)=>a+(+r.races||0),0),dates=rows.map(r=>r.date).sort(),span=dates.length?`${new Date(dates[0]+"T12:00:00").toLocaleDateString("en-AU",{day:"numeric",month:"short"})} to ${new Date(dates[dates.length-1]+"T12:00:00").toLocaleDateString("en-AU",{day:"numeric",month:"short"})}`:"no settled picks yet";
+  const sgn=v=>(v>=0?"+":"-")+money(Math.abs(v)).replace("-",""),p0=v=>v?pct(v):"0%";
+  const st=LAB_S.map(([k,l,d])=>({k,l,d,s:boardStats(rows.filter(r=>r.strategy===k))}));
+  const chip=(k,v,l,cur)=>`<button data-lab${k}="${v}" aria-pressed="${cur===v}">${l}</button>`;
+  const row=x=>x.s.n?`<tr><td><b>${x.l}</b><span class="bsamp ${sampleOf(x.s.n)[1]}">${sampleOf(x.s.n)[0]}</span></td><td>${x.s.n}</td><td>${p0(x.s.win)}</td><td>${p0(x.s.place)}</td><td class="${x.s.profit>=0?"plus":"minus"}">${sgn(x.s.profit)}</td><td class="${x.s.profit>=0?"plus":"minus"}">${x.s.roi==null?"–":(x.s.roi>=0?"+":"")+Math.round(x.s.roi)+"%"}</td><td>${seen&&!LAB.match?pct(Math.min(1,x.s.n/seen)):"–"}</td></tr>`:`<tr><td><b>${x.l}</b></td><td>0</td><td colspan="5" style="text-align:left"><small>No settled picks</small></td></tr>`;
+  const B=[["a","Under $2"],["b","$2–$4"],["c","$4–$8"],["d","$8+"],["na","No price"]];
+  const bandRow=x=>`<tr><td>${x.l}</td>${B.map(([b])=>{const s=boardStats(rows.filter(r=>r.strategy===x.k&&r.band===b));return `<td>${s.n?`${s.roi>=0?"+":""}${Math.round(s.roi)}%<small> (${s.n})</small>`:"–"}</td>`}).join("")}</tr>`;
+  const codeRow=x=>`<tr><td>${x.l}</td>${[["H"],["D"],["N"]].map(([c])=>{const s=boardStats(rows.filter(r=>r.strategy===x.k&&r.code===c));return `<td>${s.n?`${s.roi>=0?"+":""}${Math.round(s.roi)}%<small> (${s.n})</small>`:"–"}</td>`}).join("")}</tr>`;
+  const small=st.every(x=>x.s.n<100);
+  el.innerHTML=`<h3>Strategy Lab<span class="lab-x">Experimental</span></h3>
+    <p class="calc-out"><small>Experimental, not used for live tips. Each strategy's pick is saved before the jump and judged on the official result, $10 a pick.</small></p>
+    <div class="bb-grid bd-per">${chip("per","d7","Last 7 days",LAB.per)}${chip("per","d30","Last 30 days",LAB.per)}${chip("per","d90","Last 90 days",LAB.per)}${chip("per","d180","Last 180 days",LAB.per)}${chip("per","all","All available",LAB.per)}</div>
+    <div class="bb-grid bd-code">${chip("code","all","All codes",LAB.code)}${chip("code","H","Horses",LAB.code)}${chip("code","D","Dogs",LAB.code)}${chip("code","N","Harness",LAB.code)}</div>
+    <div class="lab-opts"><label><input type="checkbox" data-labmatch ${LAB.match?"checked":""}> Same races only</label><label><input type="checkbox" data-lablive ${LAB.live?"checked":""}> Recorded live only</label></div>
+    ${small?`<div class="lab-warn">Early days: every strategy has fewer than 100 settled picks here, so these results are preliminary. A few winners can swing them a long way.</div>`:""}
+    <div class="bwrap"><table class="btable lab"><thead><tr><th>Strategy</th><th>Picks</th><th>Win %</th><th>Place %</th><th>$10 bets</th><th>ROI</th><th title="Share of the races it looked at where it made a pick">Picks a race</th></tr></thead><tbody>${st.map(row).join("")}</tbody></table></div>
+    <p class="calc-out"><small>${span}. ${LAB.match?"Only races where Nan, Form, Market and Consensus all picked, so they're compared on the same races (mostly horses, where prices are saved).":`${seen} race${seen===1?"":"s"} looked at.`} ${LAB.live?"":"Picks before 17 Nov were rebuilt from tips saved before each race; tick \"Recorded live only\" for picks saved by the new job."}</small></p>
+    <details class="bbrk"><summary>By code and by price <span>&#9656;</span></summary>
+      <div class="bk-h">ROI by code (picks)</div><div class="bwrap"><table class="btable lab bk"><thead><tr><th></th><th>Horses</th><th>Dogs</th><th>Harness</th></tr></thead><tbody>${st.map(codeRow).join("")}</tbody></table></div>
+      <div class="bk-h">ROI by the pick's price when tipped (picks)</div><div class="bwrap"><table class="btable lab bk"><thead><tr><th></th>${B.map(([,l])=>`<th>${l}</th>`).join("")}</tr></thead><tbody>${st.map(bandRow).join("")}</tbody></table></div>
+      <p class="calc-out"><small>Dog and harness prices are only saved from 17 Nov, so earlier dog and harness picks show under "No price".</small></p></details>
+    <details class="bhow"><summary>The strategies <span>&#9656;</span></summary><dl>${LAB_S.map(([,l,d])=>`<dt>${l}</dt><dd>${d}</dd>`).join("")}</dl>
+      <p class="calc-out"><small>Picks are saved by the server every 10 minutes for races jumping within 90 minutes, and a new version is kept whenever a pick changes; nothing can be saved after the jump. None of this changes anyone's live tips. A strategy only earns a place in the live tips after it keeps winning on later races it hasn't seen.</small></p></details>`}
+document.addEventListener("click",e=>{const p=e.target.closest("[data-labper]"),c=e.target.closest("[data-labcode]");if(p){LAB.per=p.dataset.labper;renderLab()}if(c){LAB.code=c.dataset.labcode;renderLab()}});
+document.addEventListener("change",e=>{if(e.target.matches("[data-labmatch]")){LAB.match=e.target.checked;renderLab()}if(e.target.matches("[data-lablive]")){LAB.live=e.target.checked;renderLab()}});
 function renderRecord(){
   const s=REC.sum;if(!s)return;
   const days=s.days||[],all=days.flatMap(d=>Object.values(d.codes)),byCode=k=>days.map(d=>d.codes[k]).filter(Boolean);
@@ -3361,6 +3400,7 @@ document.addEventListener("click",e=>{
 });
 /* ---------- What's new: the update history, plus the suggestions box ---------- */
 const CHANGES=[
+ ["2.56.0","17 Nov","Strategy Lab",["New on the Results page under the leaderboard: the Strategy Lab, comparing Current Nan with five experimental ways of picking (form, market, consensus, value and Best Bets).","Every strategy's pick is now saved by the server before each race, whether or not anyone has the page open, and settled on the official result.","Filters for 7, 30, 90 and 180 days, each code, the same races only, and picks recorded live only. It's research only: nobody's live tips change."]],
  ["2.55.1","17 Nov","Best Bets on Nan's tips too",["Best Bets of the day now also shows up top when Whose tips is set to Nan, above her Best Bet and Roughie."]],
  ["2.55.0","17 Nov","Best Bets of the day",["Up to five standout picks from races still to run, up top on Today's tips: Best Chance, Best Value and Strongest Agreement.","Each card shows the market, The Mob's chance and how many independent tipsters agree, with a plain reason and \"Why this pick?\" for the detail and any gaps in the data.","Value only shows when Pop and Bob's own ratings beat the market by a clear margin. If there isn't one, it says so.","Tap a card to open its race. Nan's Best Bet and Roughie are still there under Whose tips: Nan."]],
  ["2.54.1","17 Nov","Leaderboard fix",["The Performance breakdown now shows 0% instead of <1% when a tipster had no winners or placings in a group."]],
@@ -3821,7 +3861,7 @@ function setView(v,focus){
   const was=ST.view;moreMenu(false);
   document.querySelectorAll("[data-view]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.view===v));paintNav(v);
   ST.view=v;$("tipsView").hidden=v!=="tips"&&v!=="racing";document.body.classList.toggle("rmode",v==="racing");$("recordView").hidden=v!=="record";$("betsView").hidden=v!=="bets";$("blkView").hidden=v!=="blk";$("cricketView").hidden=v!=="cricket";$("puntersView").hidden=v!=="punters";$("resultsView").hidden=v!=="results";
-  if(v==="record"){if(!REC.sum)loadRecord();else renderRecord();loadBoard()}
+  if(v==="record"){if(!REC.sum)loadRecord();else renderRecord();loadBoard();loadLab()}
   if(v==="punters"){renderPlayers();loadPlayers()}
   if(v==="results"){renderResults();loadResults(RV.date||REC_TODAY())}
   if((v==="tips"||v==="racing")&&was!==v)render();
