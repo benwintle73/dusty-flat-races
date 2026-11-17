@@ -33,11 +33,11 @@
   <div class="best" id="cbest"></div>
   <button id="again">PLAY AGAIN</button>
 </div></div>
-<div id="ver">v0.2.0</div>
+<div id="ver">v0.2.1</div>
 <script>
 (function(){
 'use strict';
-var VERSION='0.2.0';
+var VERSION='0.2.1';
 var TAU=Math.PI*2;
 function clamp(v,a,b){return v<a?a:v>b?b:v}
 function rnd(a,b){return a+Math.random()*(b-a)}
@@ -492,7 +492,7 @@ function sfx(k,v){
 var cv=document.getElementById('c'),ctx=null;
 try{ctx=cv.getContext&&cv.getContext('2d')}catch(e){ctx=null}
 var DPR=1,VW=0,VH=0,Z=1,SAT=0,SAB=0;
-function layout(){DPR=Math.min(2,window.devicePixelRatio||1);VW=window.innerWidth;VH=window.innerHeight;Z=Math.min(VW,VH*0.75)/430;try{var cs=getComputedStyle(document.documentElement);SAT=parseFloat(cs.getPropertyValue('--sat'))||0;SAB=parseFloat(cs.getPropertyValue('--sab'))||0}catch(e){}if(!ctx)return;cv.width=Math.round(VW*DPR);cv.height=Math.round(VH*DPR)}
+function layout(){DPR=Math.min(2,window.devicePixelRatio||1);VW=window.innerWidth;VH=window.innerHeight;Z=Math.min(VW,VH*0.75)/365;try{var cs=getComputedStyle(document.documentElement);SAT=parseFloat(cs.getPropertyValue('--sat'))||0;SAB=parseFloat(cs.getPropertyValue('--sab'))||0}catch(e){}if(!ctx)return;cv.width=Math.round(VW*DPR);cv.height=Math.round(VH*DPR)}
 function toScreen(x,y){var z=Z*S.cam.zoom;return [VW/2+(x-S.cam.x)*z,VH/2+(y-S.cam.y)*z]}
 function perfNow(){return (window.performance&&performance.now())||Date.now()}
 
