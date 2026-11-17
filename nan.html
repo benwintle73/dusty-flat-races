@@ -880,7 +880,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.55.0"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.55.1"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -2436,7 +2436,7 @@ function render(){
     const box=(x,title,pr)=>card({r:x.r,no:x.t.pick.no,box:x.t.pick.box,name:x.t.pick.name,title,p:x.t.pick.p,pr,lbl:x.r.code==="H"?"market":plbl(x.r),says:x.t.says});
     $("hl").innerHTML=mine.length?box(mine[0],`${WHO[w]}'s Best Bet`)+(mine[1]?box(mine[1],`${WHO[w]}'s Next Best`):"")+(val&&val!==mine[0]&&val!==mine[1]?box(val,`${WHO[w]}'s Value Bet`,val.pr):"")
       :`<div class="hl">${w==="mob"?"The Mob":WHO[w]} hasn't tipped any of the races still to run yet.${w==="gran"?" Gran only tips once the bookies have prices up.":w==="kev"?" Kev only tips once the word&rsquo;s gone round, usually closer to the jump.":""}</div>`}
-  else if(ST.who==="nan")$("hl").innerHTML=bestC+roughC;
+  else if(ST.who==="nan")$("hl").innerHTML=bestBetsHtml()+bestC+roughC;
   else $("hl").innerHTML=bestBetsHtml();
   {const nm=$("hlnums"),was=nm.querySelector("details.nums2"),op=was&&was.open;nm.innerHTML=$("hl").innerHTML?NUMS_HTML:"";if(op&&nm.firstChild)nm.firstChild.open=true}
   const waiting=RACES.filter(r=>r.code!=="H"&&!CARDS[r.code+r.slug]&&wanted(r)).length;
@@ -3361,6 +3361,7 @@ document.addEventListener("click",e=>{
 });
 /* ---------- What's new: the update history, plus the suggestions box ---------- */
 const CHANGES=[
+ ["2.55.1","17 Nov","Best Bets on Nan's tips too",["Best Bets of the day now also shows up top when Whose tips is set to Nan, above her Best Bet and Roughie."]],
  ["2.55.0","17 Nov","Best Bets of the day",["Up to five standout picks from races still to run, up top on Today's tips: Best Chance, Best Value and Strongest Agreement.","Each card shows the market, The Mob's chance and how many independent tipsters agree, with a plain reason and \"Why this pick?\" for the detail and any gaps in the data.","Value only shows when Pop and Bob's own ratings beat the market by a clear margin. If there isn't one, it says so.","Tap a card to open its race. Nan's Best Bet and Roughie are still there under Whose tips: Nan."]],
  ["2.54.1","17 Nov","Leaderboard fix",["The Performance breakdown now shows 0% instead of <1% when a tipster had no winners or placings in a group."]],
  ["2.54.0","17 Nov","Sharper tipster leaderboard",["New periods: last 30, 90 and 180 days (records start 12 November, so they fill out over time).","Each tipster shows how solid their record is: small sample, developing or established.","New Performance breakdown under the table: staked, returned, profit and ROI for each tipster, split by code, by the price of the pick when tipped (horses) and favourites against the rest."]],
