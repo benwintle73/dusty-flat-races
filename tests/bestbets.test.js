@@ -15,7 +15,7 @@ setTimeout(()=>{
   mk("A","H","ff",FUT,[{no:1,name:"Ace",win:1.3},{no:2,name:"Bee",win:6},{no:3,name:"Cee",win:10}],
      {nan:{Ace:.7,Bee:.2,Cee:.1},pop:{Ace:.7,Bee:.2,Cee:.1},bob:{Ace:.75,Bee:.15,Cee:.1},gran:{Ace:.7,Bee:.2,Cee:.1},kev:{Ace:.8,Bee:.2}}),
   // B: horses, Pop and Bob love Dan at $8 (value), Mob top is Eve
-  mk("B","H","ff",FUT,[{no:1,name:"Eve",win:2.2},{no:2,name:"Dan",win:8},{no:3,name:"Fay",win:6}],
+  mk("B","H","ff",FUT,[{no:1,name:"Eve",win:2.2},{no:2,name:"Dan",win:6},{no:3,name:"Fay",win:6}],
      {nan:{Eve:.45,Dan:.12,Fay:.43},pop:{Eve:.35,Dan:.3,Fay:.35},bob:{Eve:.3,Dan:.32,Fay:.38},gran:{Eve:.45,Dan:.12,Fay:.43}}),
   // C: only market + Kev, no independent model: not eligible
   mk("C","H","ff",FUT,[{no:1,name:"Gus",win:1.5},{no:2,name:"Hal",win:3}],{nan:{Gus:.6,Hal:.4},gran:{Gus:.65,Hal:.35},kev:{Gus:.8,Hal:.2}}),
@@ -38,7 +38,7 @@ setTimeout(()=>{
  t("Ace also Strongest Agreement on the same card",()=>{assert.ok(labs("Ace").includes("a"));assert.strictEqual(B.picks.filter(y=>y.x.u.name==="Ace").length,1)});
  t("Dan is Best Value (biggest overlay)",()=>{const y=find("Dan");assert.ok(y&&y.labs.includes("v"))});
  t("Kit qualifies as value (Pop+Nan on a full-form dog)",()=>{const x=E('bbRace(RACES[4])').find(x=>x.u.name==="Kit");assert.ok(x&&x.value)});
- t("huge overlay rejected as likely bad data",()=>{E('RACES[1].runners[1].win=30');const x=E('bbRace(RACES[1])').find(x=>x.u.name==="Dan");assert.ok(!x||!x.value);E('RACES[1].runners[1].win=8')});
+ t("huge overlay rejected as likely bad data",()=>{E('RACES[1].runners[1].win=30');const x=E('bbRace(RACES[1])').find(x=>x.u.name==="Dan");assert.ok(!x||!x.value);E('RACES[1].runners[1].win=6')});
  t("labelled picks listed first",()=>{const r=B.picks.map(y=>y.labs.includes("o")&&y.labs.length===1?1:0);assert.deepStrictEqual(r,r.slice().sort())});
  t("Dan qualifies as value (Pop+Bob beat $8 by 20%+)",()=>{const x=E('bbRace(RACES[1])').find(x=>x.u.name==="Dan");assert.ok(x&&x.value&&x.edge>=.2)});
  t("value runner from lower in The Mob's order",()=>assert.ok(!find("Dan").x.isTop));

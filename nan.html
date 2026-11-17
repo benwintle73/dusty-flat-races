@@ -2334,9 +2334,9 @@ function raceCard(r,open,tag){const rk=ranked(r),t=Date.parse(r.jump),gone=t<=Da
      The Mob blends everyone, so it is never counted as a vote; it supplies the chance.
    Chance  p    = The Mob's blended chance for the runner (needs 3+ tipsters on the race).
    Model   pi   = average of the independent model chances (Pop, Bob, and Nan where independent). Never uses the market.
-   Value   edge = pi x market - 1, only when 2+ independent models rate the race, pi >= 10%, market $1.50-$15,
+   Value   edge = pi x market - 1, only when 2+ independent models rate the race, pi >= 10%, market $1.50-$12,
                   edge >= 20% (a margin for the models being wrong), every independent model on its own beats the
-                  market by 10%+ (they must agree it's overs), and edge <= 150% (a bigger gap is far more likely a stale
+                  market by 10%+ (they must agree it's overs), and edge <= 100% (a bigger gap is far more likely a stale
                   price or a mismatched runner than a real overlay). Fair price = 1 / pi.
    Agree   a    = share of the opinion groups available (market, Pop, Bob, Kev, and Nan where independent) that have it on top.
    Data    d    = share of the five tipsters with a rating for the race.
@@ -2346,7 +2346,7 @@ function raceCard(r,open,tag){const rk=ranked(r),t=Date.parse(r.jump),gone=t<=Da
    groups, a >= 0.75; ties go to the higher chance). Then up to five in all by S, if p >= 20% and a >= 0.5. One card a runner.
    Cards show the labelled picks first (Best Chance, Best Value, Strongest Agreement), then the rest by S.
    The score is for ordering the cards only. It is not a chance of winning. */
-const BB_VAL=.20,BB_MIN_P=.10,BB_MAX_EDGE=1.5,BB_MAX_MK=15;
+const BB_VAL=.20,BB_MIN_P=.10,BB_MAX_EDGE=1,BB_MAX_MK=12;
 function bbMarket(r,u){if(u&&u.win>1)return +u.win;const q=quickRace(r);const x=q&&(q.runners||[]).find(y=>nkey(y.name)===nkey(u.name));return x&&x.win>1?+x.win:null}
 function bbScore(p,a,edge,d){return 100*(.45*Math.min(p/.5,1)+.30*a+.15*Math.min(Math.max(edge||0,0),.5)/.5+.10*d)}
 function bbRace(r){const rk=ranked(r);if(!rk||!rk.length)return null;const pn=panelOf(r);if(!pn||pn.ts.length<3)return null;
