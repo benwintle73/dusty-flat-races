@@ -313,6 +313,7 @@ details.follow p{margin:0 12px 8px;font-size:15px;color:#d9c9a3}
   .tgrid td .sc{display:grid;width:max-content;margin:0 auto 3px}.tgrid .tp{display:block;font:600 13px/1 var(--led)}}
 .panelline{font-size:14px;color:var(--ink2);margin-top:3px}.panelline .agree{font-size:12px;background:#0001;padding:0 5px;border-radius:3px}.panelline .agree.aall{background:var(--good);color:#fff}
 .hl.hlpanel{border-left-color:var(--good)}
+.bbx{margin-top:8px}.bbx>h3{margin:4px 0 2px;font:400 22px/1.1 var(--display);text-transform:uppercase}.bbx>p.bbsub{margin:0 0 4px;font-size:14px;color:var(--ink2)}.hl.bb{border-left-color:var(--amber)}.hl.bb.bbc{border-left-color:var(--good)}.hl.bb.bbv{border-left-color:#2a6fb0}.hl.bb.bba{border-left-color:var(--red)}.bbtags{display:flex;flex-wrap:wrap;gap:4px;margin:0 0 3px}.bbtag{font:700 12px/1 var(--led);padding:3px 6px;border-radius:3px;background:#0001;text-transform:uppercase;letter-spacing:.3px}.bbtag.c{background:var(--good);color:#fff}.bbtag.v{background:#2a6fb0;color:#fff}.bbtag.a{background:var(--red);color:#fff}.bbfacts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;margin:6px 0 2px}.bbfacts div{background:var(--paper2,#f4ecd8);border:1px solid var(--line);padding:4px;text-align:center;font-size:12px;line-height:1.15}.bbfacts b{display:block;font:700 16px/1.1 var(--led)}.bbwhy{margin-top:4px;font-size:14px}.bbwhy>summary{cursor:pointer;font-weight:700;color:var(--ink2)}.bbwhy table{width:100%;border-collapse:collapse;margin:4px 0;font-size:13px}.bbwhy td,.bbwhy th{padding:2px 4px;border-bottom:1px solid var(--line);text-align:right}.bbwhy td:first-child,.bbwhy th:first-child{text-align:left}.bbwhy p{margin:4px 0}.bbnote{font-size:13px;color:var(--ink2);margin:4px 0 0}.bbopen{background:none;border:0;padding:0;color:var(--ink2);text-decoration:underline;font:600 13px/1.2 inherit;cursor:pointer;margin-left:8px}
 .hl{cursor:pointer}.hl:hover{outline:2px solid var(--amber)}
 .hlbet{width:100%;margin:8px 0 0}
 .hl-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}.hl-h b{font:400 18px/1.1 var(--display);text-transform:uppercase;letter-spacing:.3px}.hl-h small{font:600 14px/1.2 var(--led);color:var(--ink2)}
@@ -879,7 +880,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.54.1"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.55.0"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -2323,6 +2324,84 @@ function raceCard(r,open,tag){const rk=ranked(r),t=Date.parse(r.jump),gone=t<=Da
   return `<details class="race${gone?" jumped":""}" data-id="${escH(r.id)}" ${open.has(r.id)?"open":""}><summary class="rsum">
     <div class="r-main"><div class="r-title"><span class="r-time">${hm||""}<small>${ap||""}</small></span><b class="r-v">${escH(r.venue)}</b><b class="r-n">R${r.no}</b><i class="rbr"></i><span class="ctag c${r.code}">${CODE_TAG[r.code]}</span>${blkTag(r,rk)}${src}<span class="r-cd">${raceState(r)}</span></div>${pick}${gone?resLine(r):panel}</div>
     <span class="rchev">&#9656;</span></summary><div class="rbody">${open.has(r.id)?raceBody(r):""}</div></details>`}
+/* ---------- Best Bets of the day (v2.55): a display-only ranking of the strongest picks across today's races ----------
+   Nothing here changes any tipster's picks, chances, The Mob, bets or results. It reads what's already worked out and ranks it.
+   Sources per race, grouped so the same opinion isn't counted twice:
+     Pop (FormFav model) and Bob (Krok model) are independent models.
+     Nan is independent only for dogs and harness on full form (her horse chances start from the bookies' price, and on
+       "quick form" she works off the price too), so for horses and quick-form races she sits in the market group with Gran.
+     Gran is the market. Kev is public tipsters' consensus.
+     The Mob blends everyone, so it is never counted as a vote; it supplies the chance.
+   Chance  p    = The Mob's blended chance for the runner (needs 3+ tipsters on the race).
+   Model   pi   = average of the independent model chances (Pop, Bob, and Nan where independent). Never uses the market.
+   Value   edge = pi x market - 1, only when 2+ independent models rate the race, pi >= 10%, market $1.50-$12,
+                  edge >= 20% (a margin for the models being wrong), every independent model on its own beats the
+                  market by 10%+ (they must agree it's overs), and edge <= 100% (a bigger gap is far more likely a stale
+                  price or a mismatched runner than a real overlay). Fair price = 1 / pi.
+   Agree   a    = share of the opinion groups available (market, Pop, Bob, Kev, and Nan where independent) that have it on top.
+   Data    d    = share of the five tipsters with a rating for the race.
+   Score   S    = 100 x (0.45 x min(p/0.5, 1) + 0.30 x a + 0.15 x min(max(edge,0), 0.5)/0.5 + 0.10 x d)
+   Eligible: race still to run, at least 3 tipsters including at least one independent model, runner not scratched.
+   Best Chance = highest p. Best Value = highest edge among value picks. Strongest Agreement = highest a (at least 3
+   groups, a >= 0.75; ties go to the higher chance). Then up to five in all by S, if p >= 20% and a >= 0.5. One card a runner.
+   Cards show the labelled picks first (Best Chance, Best Value, Strongest Agreement), then the rest by S.
+   The score is for ordering the cards only. It is not a chance of winning. */
+const BB_VAL=.20,BB_MIN_P=.10,BB_MAX_EDGE=1,BB_MAX_MK=12;
+function bbMarket(r,u){if(u&&u.win>1)return +u.win;const q=quickRace(r);const x=q&&(q.runners||[]).find(y=>nkey(y.name)===nkey(u.name));return x&&x.win>1?+x.win:null}
+function bbScore(p,a,edge,d){return 100*(.45*Math.min(p/.5,1)+.30*a+.15*Math.min(Math.max(edge||0,0),.5)/.5+.10*d)}
+function bbRace(r){const rk=ranked(r);if(!rk||!rk.length)return null;const pn=panelOf(r);if(!pn||pn.ts.length<3)return null;
+  const T=Object.fromEntries(pn.ts.map(t=>[t.who,t])),nanInd=r.code!=="H"&&r.src==="ff";
+  const ind=["pop","bob"].filter(w=>T[w]).concat(nanInd&&T.nan?["nan"]:[]);if(!ind.length)return null;
+  const groups=[];if(T.gran||(!nanInd&&T.nan))groups.push(["market",[T.gran,!nanInd&&T.nan].filter(Boolean)]);for(const w of ["pop","bob","kev"])if(T[w])groups.push([w,[T[w]]]);if(nanInd&&T.nan)groups.push(["nan",[T.nan]]);
+  const scr=new Set((r.scr||[]).map(x=>nkey(x.name))),field=rk.map(x=>x.u).filter(u=>!scr.has(nkey(u.name)));
+  const one=u=>{const k=nkey(u.name),p=pn.chance.get(k)||0,pis=ind.map(w=>T[w].chance.get(k)).filter(v=>v!=null),pi=pis.length?pis.reduce((a,v)=>a+v,0)/pis.length:null;
+    const onTop=groups.filter(([,ts])=>ts.some(t=>nkey(t.pick.name)===k)).map(([g])=>g),a=groups.length?onTop.length/groups.length:0,mk=bbMarket(r,u);
+    const edge=pi!=null&&mk?pi*mk-1:null,value=pis.length>=2&&pi>=BB_MIN_P&&mk>=1.5&&mk<=BB_MAX_MK&&edge>=BB_VAL&&edge<=BB_MAX_EDGE&&pis.every(v=>v*mk>=1.1);
+    return {r,u,k,p,pi,nInd:pis.length,ind,mk,edge,value,a,onTop,groups:groups.map(g=>g[0]),ts:pn.ts,d:pn.ts.length/5,S:bbScore(p,a,value?edge:0,pn.ts.length/5)}};
+  const top=field.find(u=>nkey(u.name)===nkey(pn.pick.name));const out=top?[{...one(top),isTop:true}]:[];
+  // a value runner can be lower down The Mob's order
+  for(const u of field)if(!top||nkey(u.name)!==nkey(top.name)){const x=one(u);if(x.value)out.push(x)}
+  return out}
+function bestBets(races){const now=Date.now(),all=[];for(const r of races){if(Date.parse(r.jump)<=now)continue;const xs=bbRace(r);if(xs)all.push(...xs)}
+  const tops=all.filter(x=>x.isTop),picked=[],has=x=>picked.some(y=>y.x.r.id===x.r.id&&y.x.k===x.k),add=(x,lab)=>{const y=picked.find(y=>y.x.r.id===x.r.id&&y.x.k===x.k);if(y){if(!y.labs.includes(lab))y.labs.push(lab)}else picked.push({x,labs:[lab]})};
+  const chance=tops.slice().sort((a,b)=>b.p-a.p)[0],value=all.filter(x=>x.value).sort((a,b)=>b.edge-a.edge)[0],agree=tops.filter(x=>x.groups.length>=3&&x.a>=.75).sort((a,b)=>b.a-a.a||b.p-a.p)[0];
+  if(chance)add(chance,"c");if(value)add(value,"v");if(agree)add(agree,"a");
+  // a pick that qualifies for more than one label carries them all
+  for(const y of picked){const x=y.x;if(chance&&x===chance&&!y.labs.includes("c"))y.labs.push("c");if(x.value&&value&&x.r.id===value.r.id&&x.k===value.k&&!y.labs.includes("v"))y.labs.push("v");if(agree&&x===agree&&!y.labs.includes("a"))y.labs.push("a")}
+  for(const x of tops.slice().sort((a,b)=>b.S-a.S)){if(picked.length>=5)break;if(has(x)||x.p<.2||x.a<.5)continue;add(x,"o")}
+  const rank=y=>y.labs.includes("c")?0:y.labs.includes("v")?1:y.labs.includes("a")?2:3;
+  return {picks:picked.sort((a,b)=>rank(a)-rank(b)||b.x.S-a.x.S),noValue:!value,count:all.length}}
+const BB_LAB={c:"Best Chance",v:"Best Value",a:"Strongest Agreement",o:"Best Bet"},BB_WHO={market:"the market (Gran)",pop:"Pop",bob:"Bob",kev:"Kev",nan:"Nan"};
+function bbWhy(x){const b=[],nm=n=>BB_WHO[n].replace(" (Gran)","");
+  b.push(`The Mob gives it ${pct(x.p)} from ${x.ts.length} tipsters`);
+  if(x.onTop.length)b.push(`${x.onTop.length===x.groups.length?(x.groups.length===1?"the only":"all "+x.groups.length):x.onTop.length+" of "+x.groups.length} independent view${x.groups.length===1?"":"s"} ${x.onTop.length===1&&x.groups.length>1?"has":"have"} it on top (${x.onTop.map(nm).join(", ")})`);
+  if(x.value)b.push(`the models make it ${div(1/x.pi)} and the market is ${div(x.mk)}, a ${Math.round(x.edge*100)}% overlay`);
+  else if(x.pi!=null&&x.mk)b.push(`the models' fair price is ${div(1/x.pi)} against ${div(x.mk)} in the market`);
+  return b.join("; ")+"."}
+function bbLimits(x){const T=new Set(x.ts.map(t=>t.who)),m=[];
+  if(!T.has("pop"))m.push("no Pop rating yet");if(!T.has("bob"))m.push("no Bob rating yet");if(!T.has("kev"))m.push("Kev hasn't heard anything");if(!T.has("gran"))m.push("no market yet for Gran");
+  if(!x.mk)m.push("no market price");else if(x.r.code!=="H"&&x.r.src!=="quick"&&!(x.u.win>1))m.push("price from PuntersEdge quick prices");
+  if(x.r.code!=="H"&&x.r.src==="quick")m.push("Nan's on quick form (price only), so she isn't counted as independent");
+  if(x.nInd<2)m.push("only one independent model, so no value call");return m}
+function bbCard(y){const x=y.x,r=x.r,u=x.u,labs=y.labs.filter(l=>l!=="o"),cls=labs[0]==="c"?" bbc":labs[0]==="v"?" bbv":labs[0]==="a"?" bba":"";
+  const ag=`${x.onTop.length} of ${x.groups.length}`,lim=bbLimits(x),src=x.ind.map(w=>WHO[w]).join(" & ");
+  const rows=x.ts.map(t=>{const o=[...t.chance.entries()].sort((a,b)=>b[1]-a[1]),i=o.findIndex(([k])=>k===x.k);return `<tr><td>${WHO[t.who]}</td><td>${pct(t.chance.get(x.k)||0)}</td><td>${i>=0?ord(i+1):"–"}</td></tr>`}).join("");
+  return `<div class="hl bb${cls}" data-bbopen="${escH(r.id)}"><div class="bbtags">${(labs.length?labs:["o"]).map(l=>`<span class="bbtag ${l}">${BB_LAB[l]}</span>`).join("")}</div>
+    <div class="hl-h"><b>${escH(r.venue)} R${r.no}</b><small>${timeOf(r.jump)} · ${CODE[r.code]} · ${raceState(r)}</small></div>
+    <div class="hl-p">${cloth(u.no,r.code,u.box)}<span class="hl-m"><b class="hl-n">No. ${u.no} ${escH(u.name)}</b></span><button class="betbtn hlbet" data-hlbet="${escH(r.id)}|${u.no}" aria-label="Play-money bet on ${escH(u.name)}">Bet</button></div>
+    <div class="bbfacts"><div><b>${x.mk?div(x.mk):"–"}</b>market</div><div><b>${pct(x.p)}</b>est. chance<br><small>The Mob</small></div><div><b>${ag}</b>agree</div></div>
+    <p class="bbnote">${escH(bbWhy(x))}${x.value?" Model estimate, not a sure thing.":""}</p>
+    <details class="bbwhy"><summary>Why this pick?</summary>
+      <table><thead><tr><th>Tipster</th><th>Chance</th><th>Their order</th></tr></thead><tbody>${rows}</tbody></table>
+      <p>Independent models: ${src}${x.pi!=null?`, averaging ${pct(x.pi)} (fair price ${div(1/x.pi)})`:""}. Agreement counts ${x.groups.map(g=>BB_WHO[g]).join(", ")} once each; The Mob isn't a vote${x.r.code==="H"?", and Nan sits with the market on horses because she starts from the bookies' price":""}.</p>
+      <p>Best Bets score ${Math.round(x.S)} / 100: for ordering these cards only, not a chance of winning.</p>
+      ${lim.length?`<p><b>Data gaps:</b> ${lim.join("; ")}.</p>`:""}
+      <button class="bbopen" data-bbgo="${escH(r.id)}">Open the race card</button></details></div>`}
+function bestBetsHtml(){const B=bestBets(RACES);
+  if(!B.picks.length)return `<div class="bbx"><h3>Best Bets of the day</h3><p class="bbsub">${B.count?"Nothing stands out strongly enough yet.":"Waiting on enough tipsters for races still to run."} Best Bets need at least three tipsters on a race, including Pop or Bob.</p></div>`;
+  return `<div class="bbx"><h3>Best Bets of the day</h3><p class="bbsub">The strongest picks in races still to run. Tap a card to open its race.${B.noValue?" No clear value selection identified right now.":""}</p>${B.picks.map(bbCard).join("")}</div>`}
+document.addEventListener("click",e=>{const g=e.target.closest("[data-bbgo]");if(g){e.preventDefault();openInTips(g.dataset.bbgo);return}
+  const c=e.target.closest("[data-bbopen]");if(!c||e.target.closest("[data-hlbet],details.bbwhy"))return;openInTips(c.dataset.bbopen)});
 function render(){
   renderFollow();$("multi").innerHTML=multiHtml();if(typeof slipBar==="function")slipBar();
   $("codes").innerHTML=[["all","All"],["H","Horses"],["N","Harness"],["D","Greys"]].map(([k,l])=>`<button data-code="${k}" aria-pressed="${ST.code===k}">${l}</button>`).join("");
@@ -2358,7 +2437,7 @@ function render(){
     $("hl").innerHTML=mine.length?box(mine[0],`${WHO[w]}'s Best Bet`)+(mine[1]?box(mine[1],`${WHO[w]}'s Next Best`):"")+(val&&val!==mine[0]&&val!==mine[1]?box(val,`${WHO[w]}'s Value Bet`,val.pr):"")
       :`<div class="hl">${w==="mob"?"The Mob":WHO[w]} hasn't tipped any of the races still to run yet.${w==="gran"?" Gran only tips once the bookies have prices up.":w==="kev"?" Kev only tips once the word&rsquo;s gone round, usually closer to the jump.":""}</div>`}
   else if(ST.who==="nan")$("hl").innerHTML=bestC+roughC;
-  else $("hl").innerHTML=(pbest?card({cls:"hlpanel",r:pbest.r,no:pbest.pn.pick.no,box:pbest.pn.pick.box,name:pbest.pn.pick.name,title:"The Mob's pick",means:"All the tipsters' picks combined, leaning on whoever's been winning.",p:pbest.pn.pick.p,says:`${pbest.pn.agree} of ${pbest.pn.ts.length} tipsters agree: ${pbest.pn.ts.map(t=>t.label.split("'")[0]).join(", ")}.`}):"")+bestC+roughC;
+  else $("hl").innerHTML=bestBetsHtml();
   {const nm=$("hlnums"),was=nm.querySelector("details.nums2"),op=was&&was.open;nm.innerHTML=$("hl").innerHTML?NUMS_HTML:"";if(op&&nm.firstChild)nm.firstChild.open=true}
   const waiting=RACES.filter(r=>r.code!=="H"&&!CARDS[r.code+r.slug]&&wanted(r)).length;
   if(waiting&&!$("status").textContent.startsWith("Nan couldn't"))$("status").textContent=`Nan is still reading the form for ${waiting} race${waiting>1?"s":""}…`;
@@ -3282,6 +3361,7 @@ document.addEventListener("click",e=>{
 });
 /* ---------- What's new: the update history, plus the suggestions box ---------- */
 const CHANGES=[
+ ["2.55.0","17 Nov","Best Bets of the day",["Up to five standout picks from races still to run, up top on Today's tips: Best Chance, Best Value and Strongest Agreement.","Each card shows the market, The Mob's chance and how many independent tipsters agree, with a plain reason and \"Why this pick?\" for the detail and any gaps in the data.","Value only shows when Pop and Bob's own ratings beat the market by a clear margin. If there isn't one, it says so.","Tap a card to open its race. Nan's Best Bet and Roughie are still there under Whose tips: Nan."]],
  ["2.54.1","17 Nov","Leaderboard fix",["The Performance breakdown now shows 0% instead of <1% when a tipster had no winners or placings in a group."]],
  ["2.54.0","17 Nov","Sharper tipster leaderboard",["New periods: last 30, 90 and 180 days (records start 12 November, so they fill out over time).","Each tipster shows how solid their record is: small sample, developing or established.","New Performance breakdown under the table: staked, returned, profit and ROI for each tipster, split by code, by the price of the pick when tipped (horses) and favourites against the rest."]],
  ["2.53.1","16 Nov","Tidier Bet button",["The Bet button on Nan's Best Bet and Roughie had its word stuck at the top of a tall green block. It's now a proper button with the word in the middle."]],
