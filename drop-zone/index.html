@@ -33,11 +33,11 @@
   <div class="best" id="cbest"></div>
   <button id="again">PLAY AGAIN</button>
 </div></div>
-<div id="ver">v0.1.0</div>
+<div id="ver">v0.2.0</div>
 <script>
 (function(){
 'use strict';
-var VERSION='0.1.0';
+var VERSION='0.2.0';
 var TAU=Math.PI*2;
 function clamp(v,a,b){return v<a?a:v>b?b:v}
 function rnd(a,b){return a+Math.random()*(b-a)}
@@ -49,13 +49,14 @@ var IR=700;               // island radius
 var PR=14;                // player radius
 var SPEED=175;
 var N_BOTS=11;
+var BOT_DMG=0.7;   // bots hit a bit softer than you do
 var WEAPONS={
   pistol:{name:'Pistol',rank:1,col:'#b9bec6',dmg:15,rate:4,mag:12,reload:1.0,spd:1150,spread:0.035,range:520,pellets:1,len:14},
   shotgun:{name:'Shotgun',rank:2,col:'#3d8bff',dmg:9,rate:1.15,mag:5,reload:1.6,spd:1000,spread:0.24,range:270,pellets:7,len:20},
   ar:{name:'Assault Rifle',rank:3,col:'#b04dff',dmg:14,rate:7.5,mag:30,reload:1.4,spd:1350,spread:0.055,range:660,pellets:1,len:24},
   argold:{name:'Gold Rifle',rank:4,col:'#ffb81f',dmg:17,rate:8,mag:30,reload:1.2,spd:1400,spread:0.04,range:700,pellets:1,len:24}
 };
-var STORM=[{wait:16,shrink:14,to:440,dmg:2},{wait:12,shrink:13,to:230,dmg:4},{wait:10,shrink:13,to:95,dmg:7},{wait:8,shrink:16,to:0,dmg:11}];
+var STORM=[{wait:22,shrink:16,to:450,dmg:2},{wait:18,shrink:16,to:270,dmg:4},{wait:14,shrink:14,to:120,dmg:7},{wait:10,shrink:16,to:0,dmg:11}];
 var NAMES=['MeatPieMax','DingoDash','xX_Kanga_Xx','SweatyNoodle','BushCamper','LagMonster','NoScopeNan','PotatoAim','BigWaveBazza','TacoTurbo','Sk8rGrom','VegemiteVic'];
 var OUTFITS=['#e74c3c','#2ecc71','#9b59b6','#e67e22','#1abc9c','#e84393','#34495e','#c0392b','#16a085','#8e44ad','#d35400','#2980b9'];
 
@@ -134,12 +135,12 @@ function makeIsland(){
 
 function makePlayer(i){
   var w=WEAPONS.pistol;
-  return {id:i,me:i===0,name:i===0?'You':NAMES[i-1],col:i===0?'#ffcf1f':OUTFITS[i-1],x:0,y:0,vx:0,vy:0,kx:0,ky:0,
+  return {hair:['#2b1d0e','#d9a441','#111','#8a3b12','#e8e8e8','#5a3a1a'][i%6],id:i,me:i===0,name:i===0?'You':NAMES[i-1],col:i===0?'#ffcf1f':OUTFITS[i-1],x:0,y:0,vx:0,vy:0,kx:0,ky:0,
     hp:100,sh:0,dead:false,w:'pistol',mag:w.mag,reload:0,fireCd:0,aim:rnd(0,TAU),kills:0,flash:0,
     z:1,lx:0,ly:0, // drop: altitude and landing target
     // bot brain
     skill:rnd(0,1),think:0,target:null,goal:null,strafe:1,strafeT:0,react:0,stuckT:0,lastX:0,lastY:0,seenT:0,hurtBy:null,
-    lastHit:null,lastHitT:-9,diedT:0,place:0};
+    lastHit:null,lastHitT:-9,diedT:0,place:0,retreatT:0,recoil:0,walk:0};
 }
 
 function newMatch(){
@@ -188,14 +189,14 @@ function tryFire(p,dt){
   var w=W(p);
   if(p.reload>0||p.fireCd>0)return;
   if(p.mag<=0){p.reload=w.reload;if(p.me)sfx('reload');return}
-  p.fireCd=1/w.rate;p.mag--;
+  p.fireCd=1/w.rate;p.mag--;p.recoil=0.07;
   if(p.mag<=0)p.reload=w.reload;
   var a=p.aim;
   if(p.me&&input.touchAim)a=assist(p,a);
   for(var i=0;i<w.pellets;i++){
     var sp=a+(Math.random()-0.5)*2*w.spread*(w.pellets>1?1:0.6);
     var mx=p.x+Math.cos(a)*(PR+w.len*0.7),my=p.y+Math.sin(a)*(PR+w.len*0.7);
-    S.bullets.push({x:mx,y:my,px:mx,py:my,vx:Math.cos(sp)*w.spd,vy:Math.sin(sp)*w.spd,dmg:w.dmg,owner:p,life:w.range/w.spd,col:w.rank>=4?'#ffe27a':'#fff4c2'});
+    S.bullets.push({x:mx,y:my,px:mx,py:my,vx:Math.cos(sp)*w.spd,vy:Math.sin(sp)*w.spd,dmg:w.dmg*(p.me&&!AUTO?1:BOT_DMG),owner:p,life:w.range/w.spd,col:w.rank>=4?'#ffe27a':'#fff4c2'});
   }
   S.parts.push({k:'muzzle',x:p.x+Math.cos(a)*(PR+w.len),y:p.y+Math.sin(a)*(PR+w.len),a:a,life:0.06,t:0});
   if(dist(p.x,p.y,S.cam.x,S.cam.y)<700)sfx(p.w==='shotgun'?'shotgun':p.w==='pistol'?'pistol':'rifle',p.me?1:Math.max(0.15,1-dist(p.x,p.y,S.cam.x,S.cam.y)/700));
@@ -289,7 +290,7 @@ function loot(p){
     if(!c.open&&dist(p.x,p.y,c.x,c.y)<PR+16){
       c.open=true;burst(c.x,c.y,'gold',14);
       if(p.me||dist(c.x,c.y,S.cam.x,S.cam.y)<500)sfx('chest',p.me?1:0.4);
-      var w=rollWeapon();
+      var w=rollWeapon();if(c.good&&p.me&&WEAPONS[w].rank<2)w=Math.random()<0.5?'shotgun':'ar';
       if(!giveWeapon(p,w))S.drops.push({x:c.x+rnd(-14,14),y:c.y+18,w:w,t:0,cool:0.6});
       if(Math.random()<0.6){ if(p.sh<100){p.sh=Math.min(100,p.sh+50);if(p.me)pop(p.x,p.y-48,'+50 SHIELD','#7fdcff',1.1)} else S.drops.push({x:c.x,y:c.y-18,w:'shield',t:0}) }
     }}
@@ -309,9 +310,16 @@ function botThink(p,dt){
   if(p.think<=0){
     p.think=rnd(0.25,0.45);
     // look for the nearest enemy we can see
-    var best=null,bd=S.t<25?140:360; // early on everyone is busy looting
-    S.players.forEach(function(o){if(o===p||o.dead||o.z>0)return;var d=dist(p.x,p.y,o.x,o.y);if(d<bd&&los(p.x,p.y,o.x,o.y)){bd=d;best=o}});
+    // pacing: first 15s loot and only fight back; 15-40s fight what's close; after 40s hunt
+    var aliveN=S.players.filter(function(o){return !o.dead}).length;
+    var hunter=p===S.rookie&&S.t>10;
+    var best=null,bd=S.t<15?(hunter?300:0):S.t<45?170:S.t<70?260:380;
+    if(p.hurtBy&&!p.hurtBy.dead&&S.t-p.lastHitT<3&&dist(p.x,p.y,p.hurtBy.x,p.hurtBy.y)<420){best=p.hurtBy;bd=0}
+    S.players.forEach(function(o){if(o===p||o.dead||o.z>0)return;if(S.t<15&&!hunter)return;if(hunter&&S.t<15&&!o.me)return;var d=dist(p.x,p.y,o.x,o.y);if(d<bd&&los(p.x,p.y,o.x,o.y)){bd=d;best=o}});
     if(best&&best!==p.target){p.target=best;p.react=rnd(0.5,1.0)*(1.3-p.skill*0.6)}
+    // hurt and outgunned: break off for a moment to reposition
+    if(p.target&&p.hp<40&&p.retreatT<=0&&Math.random()<0.35&&aliveN>3){p.retreatT=rnd(1.5,2.5)}
+    if(p.target&&p.target.dead)p.target=null;
     if(!best&&p.target&&!los(p.x,p.y,p.target.x,p.target.y))p.seenT+=0.3;else p.seenT=0;
     if(p.seenT>1.5){p.target=null;p.seenT=0}
     // movement goal
@@ -319,6 +327,11 @@ function botThink(p,dt){
     var stormy=dC>st.r-50||(st.state==='shrink'&&dN>st.nr-30)||(st.state==='wait'&&st.timer<7&&dN>st.nr-30);
     if(stormy){p.goal={x:st.ncx+rnd(-30,30)*(st.nr>60?1:0),y:st.ncy+rnd(-30,30)*(st.nr>60?1:0),why:'storm'}}
     else if(p.target){p.goal=null}
+    else if(aliveN<=3||(hunter&&!S.players[0].dead)){ // endgame, or the nearby rookie: go find someone
+      var q=hunter&&!S.players[0].dead?S.players[0]:null,qd=1e9;
+      if(!q)S.players.forEach(function(o){if(o===p||o.dead)return;var d=dist(p.x,p.y,o.x,o.y);if(d<qd){qd=d;q=o}});
+      if(q)p.goal={x:q.x,y:q.y,why:'hunt'};
+    }
     else{
       if(!p.goal||p.goal.why==='storm'||dist(p.x,p.y,p.goal.x,p.goal.y)<20||(p.goal.why==='loot'&&p.goal.c&&p.goal.c.open)){
         // go loot if under-geared, else roam inside the safe zone
@@ -333,9 +346,10 @@ function botThink(p,dt){
   // move
   var mx=0,my=0;
   if(p.goal&&(p.goal.why==='storm'||!p.target)){var gd=dist(p.x,p.y,p.goal.x,p.goal.y);if(gd>6){mx=(p.goal.x-p.x)/gd;my=(p.goal.y-p.y)/gd}}
+  if(p.retreatT>0)p.retreatT-=dt;
   if(p.target){
-    var t=p.target,d=dist(p.x,p.y,t.x,t.y),ux=(t.x-p.x)/d,uy=(t.y-p.y)/d,pr=prefRange(p);
-    var radial=d>pr+40?1:d<pr-40?-0.7:0;
+    var t=p.target,d=dist(p.x,p.y,t.x,t.y)||1,ux=(t.x-p.x)/d,uy=(t.y-p.y)/d,pr=prefRange(p);
+    var radial=p.retreatT>0?-1:d>pr+40?1:d<pr-40?-0.7:0;
     var fx=ux*radial-uy*p.strafe*0.8,fy=uy*radial+ux*p.strafe*0.8;
     if(p.goal&&p.goal.why==='storm'){mx=mx*0.8+fx*0.2;my=my*0.8+fy*0.2}else{mx=fx;my=fy}
     // aim with skill-based error; fire once reaction time has passed
@@ -366,6 +380,19 @@ function playerInput(p){
   else if(input.mouse){var sp=toScreen(p.x,p.y);p.aim=Math.atan2(input.my-sp[1],input.mx-sp[0]);input.touchAim=false;if(input.mdown){p.wantFire=true;input.usedAim=true}}
 }
 
+/* first 20s: a chest right by your landing, a better gun inside, and one rookie bot who comes looking */
+function firstLoop(){
+  var me=S.players[0];
+  var near=S.chests.some(function(c){return !c.open&&dist(c.x,c.y,me.x,me.y)<110});
+  if(!near){for(var i=0;i<40;i++){var a=rnd(0,TAU),r=rnd(55,95),x=me.x+Math.cos(a)*r,y=me.y+Math.sin(a)*r;if(freeSpot(x,y,18)){S.chests.push({x:x,y:y,open:false,t:0,good:true});break}}}
+  else S.chests.forEach(function(c){if(dist(c.x,c.y,me.x,me.y)<110)c.good=true});
+  // nobody else starts on top of you
+  S.players.forEach(function(p){if(p.me)return;var d=dist(p.x,p.y,me.x,me.y);if(d<300){var a=Math.atan2(p.y-me.y,p.x-me.x)||rnd(0,TAU);for(var k=0;k<30;k++){var nx=me.x+Math.cos(a)*rnd(320,420),ny=me.y+Math.sin(a)*rnd(320,420);if(freeSpot(nx,ny,PR)){p.x=nx;p.y=ny;break}a+=0.5}}});
+  // the weakest bot will wander over to you after ~10s
+  var bots=S.players.filter(function(p){return !p.me});bots.sort(function(a,b){return a.skill-b.skill});S.rookie=bots[0];
+  S.rookie.skill=Math.min(S.rookie.skill,0.25);
+}
+
 /* ---------------- step ---------------- */
 var AUTO=false;
 function step(dt){
@@ -378,7 +405,7 @@ function step(dt){
       else{var k=Math.min(1,dt/Math.max(dt,S.dropT));p.x+=(p.lx-p.x)*k;p.y+=(p.ly-p.y)*k}
       p.z=Math.max(0,S.dropT/3.2);
     });
-    if(S.dropT<=0){S.phase='play';S.players.forEach(function(p){p.z=0;var g=0;while(!freeSpot(p.x,p.y,PR)&&g<40){p.x+=rnd(-30,30);p.y+=rnd(-30,30);g++}pushOut(p);burst(p.x,p.y,'dust',6)});S.hint=5;sfx('land',1)}
+    if(S.dropT<=0){S.phase='play';S.players.forEach(function(p){p.z=0;var g=0;while(!freeSpot(p.x,p.y,PR)&&g<40){p.x+=rnd(-30,30);p.y+=rnd(-30,30);g++}pushOut(p);burst(p.x,p.y,'dust',6)});S.hint=20;firstLoop();sfx('land',1)}
     return;
   }
   S.t+=dt;
@@ -398,6 +425,8 @@ function step(dt){
     if(p.reload>0){p.reload-=dt;if(p.reload<=0){p.reload=0;p.mag=W(p).mag}}
     if(p.wantFire)tryFire(p,dt);
     if(p.flash>0)p.flash-=dt;
+    if(p.recoil>0)p.recoil-=dt;
+    p.walk+=Math.hypot(p.vx,p.vy)*dt*0.09;
     loot(p);
     if(inStorm(p)){p.hp-=sd*dt;if(p.me){S.stormHurt=(S.stormHurt||0)+dt;if(S.stormHurt>0.5){S.stormHurt=0;pop(p.x,p.y-PR-8,String(Math.round(sd/2)),'#d58bff',0.9)}}
       if(p.hp<=0)eliminate(p,p.lastHit&&S.t-p.lastHitT<4?p.lastHit:null)}
@@ -550,21 +579,31 @@ function drawPlayer(g,p,z){
     g.fillStyle='#ffffff55';for(var i=0;i<3;i++){g.beginPath();g.moveTo(-24+i*16,-26);g.lineTo(-16+i*16,-26);g.lineTo(-20+i*16+8,-48+Math.abs(i-1)*6);g.fill()}
     g.strokeStyle='#ffffffaa';g.lineWidth=1;g.beginPath();g.moveTo(-22,-26);g.lineTo(-6,-4);g.moveTo(22,-26);g.lineTo(6,-4);g.stroke();
   }
-  var w=W(p);
+  var w=W(p),fl=p.flash>0,kick=p.recoil>0?-3.5*p.recoil/0.07:0,sw=Math.sin(p.walk)*(z>0?0:1);
+  var body=fl?'#fff':p.col,dark=fl?'#ddd':shade(p.col,0.62),skin=fl?'#fff':'#f1c27d';
   g.rotate(p.aim);
+  // feet (walk cycle)
+  if(z===0){g.fillStyle='#2a2a2a';g.beginPath();g.ellipse(4*sw,-6,5,3.2,0,0,TAU);g.fill();g.beginPath();g.ellipse(-4*sw,6,5,3.2,0,0,TAU);g.fill()}
+  // backpack
+  g.fillStyle=dark;rr(g,-PR-3,-7,8,14,3);g.fill();
+  // shoulders / torso: wider than deep, so it reads as a person seen from above
+  g.fillStyle=body;g.beginPath();g.ellipse(0,0,PR*0.72,PR*1.08,0,0,TAU);g.fill();
+  g.strokeStyle='#0008';g.lineWidth=1.8;g.stroke();
+  // arms reaching forward to the gun
+  g.strokeStyle=body;g.lineWidth=5;g.lineCap='round';
+  g.beginPath();g.moveTo(2,-PR*0.85);g.lineTo(PR+2+kick,-2);g.moveTo(2,PR*0.85);g.lineTo(PR-4+kick,3);g.stroke();
   // gun
-  g.fillStyle='#1b1b1b';g.fillRect(PR-6,-3.5,w.len+2,7);g.fillStyle=w.col;g.fillRect(PR-5,-2.5,w.len,5);
+  g.fillStyle='#1b1b1b';g.fillRect(PR-6+kick,-3.5,w.len+2,7);g.fillStyle=w.col;g.fillRect(PR-5+kick,-2.5,w.len,5);
+  if(w.rank>=3){g.fillStyle='#1b1b1b';g.fillRect(PR+2+kick,2,4,5)}
   // hands
-  g.fillStyle='#f1c27d';g.beginPath();g.arc(PR-2,4,3.5,0,TAU);g.fill();g.beginPath();g.arc(PR+6,-1,3.2,0,TAU);g.fill();
-  // body + backpack
-  g.fillStyle='#0003';g.fillRect(-PR-4,-7,7,14);
-  g.fillStyle=p.flash>0?'#fff':p.col;g.beginPath();g.arc(0,0,PR,0,TAU);g.fill();
-  g.strokeStyle='#0007';g.lineWidth=2;g.stroke();
-  // head
-  g.fillStyle=p.flash>0?'#fff':'#f1c27d';g.beginPath();g.arc(1,0,7,0,TAU);g.fill();
-  g.fillStyle=p.me?'#3b2a14':'#2b2b2b';g.beginPath();g.arc(-1,0,6,Math.PI*0.5,Math.PI*1.5);g.fill();
+  g.fillStyle=skin;g.beginPath();g.arc(PR-4+kick,3.5,3.2,0,TAU);g.fill();g.beginPath();g.arc(PR+3+kick,-1.5,3,0,TAU);g.fill();
+  // head with hair or helmet
+  g.fillStyle=skin;g.beginPath();g.arc(1,0,6.8,0,TAU);g.fill();
+  g.fillStyle=fl?'#fff':p.hair;g.beginPath();g.arc(-0.5,0,6.6,Math.PI*0.42,Math.PI*1.58);g.fill();
+  if(p.me){g.fillStyle='#ffcf1f';g.fillRect(-6,-1.5,4,3)}
   g.restore();
-  if(p.me&&z===0){g.strokeStyle='#fff';g.lineWidth=2.5;g.beginPath();g.arc(p.x,p.y,PR+3,0,TAU);g.stroke()}
+  if(p.me&&z===0){g.strokeStyle='#fff';g.lineWidth=2.5;g.beginPath();g.arc(p.x,p.y,PR+5,0,TAU);g.stroke();
+    var b=Math.sin(perfNow()/160)*2;g.fillStyle='#ffcf1f';g.strokeStyle='#000';g.lineWidth=2;g.beginPath();g.moveTo(p.x-6,p.y-PR-16+b);g.lineTo(p.x+6,p.y-PR-16+b);g.lineTo(p.x,p.y-PR-8+b);g.closePath();g.stroke();g.fill()}
 }
 
 function hud(g){
@@ -620,13 +659,13 @@ function hud(g){
     small2(g,isTouch?'Drag to steer your landing':'Use WASD / arrows to steer your landing',VH*0.2+30);
   }
   if(S.phase==='play'&&S.hint>0&&!(input.usedMove&&input.usedAim)){
-    var al=Math.min(1,S.hint);g.globalAlpha=al;
+    var al=Math.min(1,S.hint);g.globalAlpha=al*0.9;
+    g.font='700 12px system-ui,sans-serif';g.textAlign='center';g.lineWidth=3;g.strokeStyle='#000a';
+    var hy=VH-SAB-112;
     if(isTouch){
-      g.font='800 '+(small?13:15)+'px system-ui,sans-serif';g.textAlign='center';g.lineWidth=4;g.strokeStyle='#000b';
-      var y=VH*0.72;g.strokeText('LEFT thumb: move',VW*0.25,y);g.fillStyle='#fff';g.fillText('LEFT thumb: move',VW*0.25,y);
-      g.strokeText('RIGHT thumb: aim + shoot',VW*0.75,y);g.fillStyle='#ffb3b3';g.fillText('RIGHT thumb: aim + shoot',VW*0.75,y);
-      g.strokeStyle='#ffffff44';g.setLineDash([6,6]);g.beginPath();g.moveTo(VW/2,VH*0.55);g.lineTo(VW/2,VH*0.8);g.stroke();g.setLineDash([]);
-    } else small2(g,'WASD to move  ·  Mouse to aim  ·  Click to shoot',VH*0.72);
+      if(!input.usedMove){g.strokeText('◀ thumb: move',VW*0.22,hy);g.fillStyle='#fff';g.fillText('◀ thumb: move',VW*0.22,hy)}
+      if(!input.usedAim){g.strokeText('thumb: aim + shoot ▶',VW*0.78,hy);g.fillStyle='#ffd0d0';g.fillText('thumb: aim + shoot ▶',VW*0.78,hy)}
+    } else {var ht='WASD move · mouse aim · click shoot';g.strokeText(ht,VW/2,hy);g.fillStyle='#fff';g.fillText(ht,VW/2,hy)}
     g.globalAlpha=1;
   }
   if(S.big){var k=S.big.t;g.globalAlpha=Math.min(1,(1.6-k)*3);big(g,S.big.txt,VH*0.38,'#ffcf1f',small?20:24,k<0.1?0.7+k*3:1);g.globalAlpha=1}
@@ -634,6 +673,7 @@ function hud(g){
 function pill(g,x,y,t,fs){g.font='800 '+fs+'px system-ui,sans-serif';g.textAlign='left';var w=g.measureText(t).width+18;g.fillStyle='#0008';rr(g,x,y,w,fs+12,(fs+12)/2);g.fill();g.fillStyle='#fff';g.fillText(t,x+9,y+fs+4)}
 function big(g,t,y,col,fs,sc){g.save();g.translate(VW/2,y);if(sc)g.scale(sc,sc);g.font='900 '+fs+'px system-ui,sans-serif';g.textAlign='center';g.lineWidth=6;g.strokeStyle='#000c';g.strokeText(t,0,0);g.fillStyle=col;g.fillText(t,0,0);g.restore()}
 function small2(g,t,y){g.font='800 14px system-ui,sans-serif';g.textAlign='center';g.lineWidth=4;g.strokeStyle='#000b';g.strokeText(t,VW/2,y);g.fillStyle='#fff';g.fillText(t,VW/2,y)}
+function shade(hex,k){var n=parseInt(hex.slice(1),16);return 'rgb('+Math.round((n>>16)*k)+','+Math.round((n>>8&255)*k)+','+Math.round((n&255)*k)+')'}
 function rr(g,x,y,w,h,r){g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath()}
 
 function render(dt){
