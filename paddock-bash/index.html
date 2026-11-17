@@ -34,11 +34,11 @@
   <div class="best" id="cbest">Best: 0</div>
   <button id="again">AGAIN</button>
 </div></div>
-<div id="ver">v0.1.0</div>
+<div id="ver">v0.1.1</div>
 <script>
 (function(){
 'use strict';
-var VERSION='0.1.0';
+var VERSION='0.1.1';
 var TAU=Math.PI*2;
 function clamp(v,a,b){return v<a?a:v>b?b:v}
 function wrap(a){while(a>Math.PI)a-=TAU;while(a<-Math.PI)a+=TAU;return a}
@@ -52,7 +52,7 @@ var T={
   dmgScale:0.24, dmgFloor:55, playerTakes:0.75,
   wallDmgFrom:170, wallDmg:0.07,
   boostTime:0.65, boostMul:1.35,
-  targetPlayer:0.4,
+  targetPlayer:0.4, aiOnAi:0.7,
   roundCap:90
 };
 var NAMES=['Bully','Hunter','Maniac','Coward','Rookie'];
@@ -155,7 +155,8 @@ function collide(a,b,dt){
 
 function hurt(c,dmg,by,nx,ny){
   if(c.dead)return;
-  if(c.player)dmg*=T.playerTakes;
+  if(c.player)dmg*=T.playerTakes*(S.t<3?0.2:1); // a short grace period while the player finds the controls
+  else if(by&&!by.player)dmg*=T.aiOnAi;
   var before=c.hp;
   c.hp-=dmg;
   if(by){c.lastHitBy=by;c.lastHitT=S.t;}
