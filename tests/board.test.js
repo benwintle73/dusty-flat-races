@@ -41,7 +41,7 @@ const w=dom.window,E=s=>w.eval(s);let fails=0;const t=(n,f)=>{try{f();console.lo
    assert.ok(/85\.00/.test(td[7]),td[7]);assert.ok(/Developing record/.test(td[1]))});
  t("small sample label",()=>{go("d180");const pop=[...el.querySelectorAll("table.btable:not(.bk) tbody tr")].find(r=>/Pop/.test(r.textContent));assert.ok(/Small sample/.test(pop.textContent))});
  t("breakdown totals",()=>{go("d180");const b=el.querySelector("details.bbrk");assert.ok(b&&b.open);const tx=b.querySelector(".bk-tot").textContent;
-   assert.ok(tx.includes("39settled"),tx);assert.ok(tx.includes("$390.00staked"));assert.ok(tx.includes("$305.00returned"));assert.ok(/-\$85\.00/.test(tx));assert.ok(/-22%ROI/.test(tx),tx)});
+   assert.ok(tx.includes("39settled"),tx);assert.ok(tx.includes("$390.00staked"));assert.ok(tx.includes("$305.00returned"));assert.ok(/Down\$85\.00/.test(tx));assert.ok(/Down 22%ROI/.test(tx),tx)});
  t("breakdown by code",()=>{go("d180");const tabs=el.querySelectorAll("details.bbrk table.bk");const codes=tabs[0].textContent;assert.ok(/Horses15/.test(codes),codes);assert.ok(/Dogs20/.test(codes));assert.ok(/Harness4/.test(codes))});
  t("price bands and favourites",()=>{go("d180");const tabs=[...el.querySelectorAll("details.bbrk table.bk")];assert.strictEqual(tabs.length,3);
    assert.ok(/Under \$22/.test(tabs[1].textContent));assert.ok(/\$2 to \$410/.test(tabs[1].textContent));assert.ok(/\$4 to \$83/.test(tabs[1].textContent));assert.ok(/\$8 and over0/.test(tabs[1].textContent));

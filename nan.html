@@ -736,6 +736,7 @@ body.qmode{padding-bottom:calc(16px + env(safe-area-inset-bottom))!important}
 .qslip [data-bslipclr]{padding:0 12px}
 .qslip .minus{margin:0;color:#ff9b8c}
 @media (max-width:380px){.qacct small{font-size:11px}.qsum{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.ud{display:inline-flex;flex-direction:column;align-items:flex-end;line-height:1.05;white-space:nowrap}.ud small{font-size:.68em;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
 </style>
 </head>
 <body>
@@ -952,7 +953,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.60.0"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.61.0"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -2369,8 +2370,8 @@ function renderStrip(){const el=$("recStrip");if(!el)return;const s=STRIP.sum&&S
   const td=Object.values(STRIP.day).filter(x=>x.settled_at&&x.result&&x.result.status!=="abandoned"&&(x.result.fin||[]).length&&x.top_pos!==-1);
   const tw=td.filter(x=>x.top_pos===1),tb=tw.reduce((a,x)=>a+(+((x.result.fin||[]).find(u=>u.pos===1)||{}).win||0),0),tp=tb-td.length;
   if(!t.bets&&!td.length){el.innerHTML="";return}
-  const today=td.length?`<span class="rs-today">Today: <b>${tw.length} winner${tw.length===1?"":"s"} from ${td.length}</b> · <b class="${tp>=0?"plus":"minus"}">${tp>=0?"+":""}${money(Math.round(tp*100)/100)}</b></span>`:"";
-  el.innerHTML=`<div class="recstrip" data-view="record" role="button" tabindex="0"><span class="rs-l">Nan's record</span>${today}${t.bets?`<span>Last 7 days: <b>${t.won} winner${t.won===1?"":"s"} from ${t.bets} tips</b> (${Math.round(100*t.won/t.bets)}%) · $1 on each top pick: <b class="${prof>=0?"plus":"minus"}">${prof>=0?"+":""}${money(prof)}</b></span>`:""}<span class="rs-go">Full record &#9656;</span></div>`}
+  const today=td.length?`<span class="rs-today">Today: <b>${tw.length} winner${tw.length===1?"":"s"} from ${td.length}</b> · <b class="${tp>=0?"plus":"minus"}">${ud(tp)}</b></span>`:"";
+  el.innerHTML=`<div class="recstrip" data-view="record" role="button" tabindex="0"><span class="rs-l">Nan's record</span>${today}${t.bets?`<span>Last 7 days: <b>${t.won} winner${t.won===1?"":"s"} from ${t.bets} tips</b> (${Math.round(100*t.won/t.bets)}%) · $1 on each top pick: <b class="${prof>=0?"plus":"minus"}">${ud(prof)}</b></span>`:""}<span class="rs-go">Full record &#9656;</span></div>`}
 function resultOf(r){if(r.code==="H"&&RESULTS[r.key]&&RESULTS[r.key].done)return true;return STRIP.done[`${r.code}|${fkey(r.venue)}|${r.no}`]||false}
 function raceState(r){const ms=Date.parse(r.jump)-Date.now();
   if(ms>0)return `<span class="cdn${ms<SOON?" soon":""}" data-cdn="${escH(r.jump)}" data-rs>${stLabel(ms)}</span>`;
@@ -2611,12 +2612,16 @@ const RESF=[["all","All results"],["1","Winners"],["2","2nd"],["3","3rd"],["p","
 function resOk(r){const f=REC.res;if(f==="all")return true;if(!r.settled_at||r.won===null)return false;const p=r.top_pos||99;
   return f==="1"?p===1:f==="2"?p===2:f==="3"?p===3:f==="p"?p<=3:p>3}
 const money=v=>(v<0?"-$":"$")+Math.abs(v).toLocaleString("en-AU",{minimumFractionDigits:2,maximumFractionDigits:2});
+// win/loss reads as Up or Down, never + or -
+const ud=v=>(v=Math.round(v*100)/100)>0?"Up "+money(v):v<0?"Down "+money(-v):"Even";
+const udH=(v,whole)=>{v=Math.round(v*100)/100;const m=money(Math.abs(v)),t=whole?m.replace(".00",""):m;return v===0?"Even":`<span class="ud"><small>${v>0?"Up":"Down"}</small>${t}</span>`};
+const udp=v=>{v=Math.round(v);return v>0?`Up ${v}%`:v<0?`Down ${-v}%`:"Even"};
 function tally(list){const t={races:0,settled:0,bets:0,won:0,placed:0,staked:0,back:0};for(const c of list)for(const k in t)t[k]+=c[k]||0;return t}
 function sumCard(label,t,cls){
   if(!t.bets)return `<div class="sum ${cls||""}"><h3>${label}</h3><div class="big">–</div><p>${t.races?`${t.races} race${t.races>1?"s":""} tipped, waiting on results.`:"Nothing recorded yet."}</p></div>`;
   const prof=t.back-t.staked,roi=t.staked?prof/t.staked:0;
   return `<div class="sum ${cls||""}"><h3>${label}</h3><div class="big">${Math.round(100*t.won/t.bets)}% <small>winners · ${t.won} from ${t.bets}</small></div>
-    <p>Placed ${Math.round(100*t.placed/t.bets)}% · $1 on every top pick: <b class="${prof>=0?"plus":"minus"}">${prof>=0?"+":""}${money(prof)}</b> (${roi>=0?"+":""}${Math.round(roi*100)}% back on ${t.staked} bets)</p></div>`;
+    <p>Placed ${Math.round(100*t.placed/t.bets)}% · $1 on every top pick: <b class="${prof>=0?"plus":"minus"}">${ud(prof)}</b> (${udp(roi*100)} on ${t.staked} bets)</p></div>`;
 }
 async function loadRecord(){
   try{REC.sum=await getJSON(NAN_URL)}catch(e){$("recNote").textContent="Nan's record isn't available right now. Try again soon.";return}
@@ -2654,7 +2659,7 @@ function betLine(r){
   const o=betOut(r,REC.bet,REC.stake),name=BETS.find(b=>b[0]===REC.bet)[1];if(!o)return "";
   const bk=BACKERS.find(b=>b[0]===REC.who),alt=REC.who!=="nan"?altPicks(r,REC.who):null,n=REC.bet==="first4"?4:/tri/.test(REC.bet)?3:/quin|exac/.test(REC.bet)?2:1;
   const on=alt?` on ${bk[1]}'s ${n>1?"top "+n:"pick"} (${alt.slice(0,n).map(escH).join(", ")})`:"";
-  return `<div class="betline ${o.hit?(o.back===null?"":"win"):"lose"}">${money(o.cost)} ${name.toLowerCase()}${on}: ${o.hit?(o.back===null?"won, but no dividend recorded":`back <b>${money(o.back)}</b> (${o.back-o.cost>=0?"+":""}${money(o.back-o.cost)})`):`lost ${money(o.cost)}`}</div>`;
+  return `<div class="betline ${o.hit?(o.back===null?"":"win"):"lose"}">${money(o.cost)} ${name.toLowerCase()}${on}: ${o.hit?(o.back===null?"won, but no dividend recorded":`back <b>${money(o.back)}</b> (${ud(o.back-o.cost)})`):`lost ${money(o.cost)}`}</div>`;
 }
 function renderCalc(rows){
   let cost=0,back=0,n=0,hits=0,unk=0;for(const r of rows){const o=betOut(r,REC.bet,REC.stake);if(!o)continue;if(o.hit&&o.back===null){unk++;continue}n++;cost+=o.cost;back+=o.back;if(o.hit)hits++}
@@ -2664,7 +2669,7 @@ function renderCalc(rows){
     <div class="cgrid"><span class="calc-l">Tipster</span><div class="cg cg5">${BACKERS.map(([k,l])=>`<button data-backer="${k}" aria-pressed="${REC.who===k}">${l}</button>`).join("")}</div></div>
     <div class="cgrid"><span class="calc-l">Stake</span><div class="cg cg6">${[1,5,10,20,50].map(v=>`<button data-stake="${v}" aria-pressed="${REC.stake===v}">$${v}</button>`).join("")}<label class="calc-own">$<input id="stakeIn" type="number" min="0.5" step="0.5" inputmode="decimal" value="${REC.stake}" aria-label="Your own stake"></label></div></div>
     <div class="cgrid"><span class="calc-l">Bet</span><div class="cg cg4">${BETS.map(([k,l])=>`<button data-bet="${k}" aria-pressed="${REC.bet===k}">${l}</button>`).join("")}</div></div>
-    <div class="calc-out">${n?`<b>${money(REC.stake)} ${b[1].toLowerCase()}</b> on ${what}, in the ${n} race${n>1?"s":""} below: staked <b>${money(cost)}</b>, back <b>${money(back)}</b>, <b class="${prof>=0?"plus":"minus"}">${prof>=0?"+":""}${money(prof)}</b> (${hits} collect${hits===1?"":"s"}).`:loading?"Loading their picks…":REC.who!=="nan"&&n===0&&/quin|exac|tri|first/.test(REC.bet)?`${bk[1]}'s 2nd, 3rd and 4th picks are only kept from Saturday 14 November${REC.bet==="first4"?", and only the top 3":""}, so there's nothing to settle here yet.`:"No settled races to bet on with these filters yet."}${unk?` ${unk} winning bet${unk>1?"s":""} left out: no dividend recorded.`:""}
+    <div class="calc-out">${n?`<b>${money(REC.stake)} ${b[1].toLowerCase()}</b> on ${what}, in the ${n} race${n>1?"s":""} below: staked <b>${money(cost)}</b>, back <b>${money(back)}</b>, <b class="${prof>=0?"plus":"minus"}">${ud(prof)}</b> (${hits} collect${hits===1?"":"s"}).`:loading?"Loading their picks…":REC.who!=="nan"&&n===0&&/quin|exac|tri|first/.test(REC.bet)?`${bk[1]}'s 2nd, 3rd and 4th picks are only kept from Saturday 14 November${REC.bet==="first4"?", and only the top 3":""}, so there's nothing to settle here yet.`:"No settled races to bet on with these filters yet."}${unk?` ${unk} winning bet${unk>1?"s":""} left out: no dividend recorded.`:""}
       <small>Official tote dividends per $1, after the fact. Scratched picks are refunds and don't count. ${REC.who!=="nan"?`Only races ${bk[1]} tipped count. `:""}${REC.res!=="all"?"A results filter is on (it goes by Nan's result), so this only counts those races.":""}</small></div>`;
 }
 /* ---------- Tipster leaderboard: Nan v Pop v Bob v Gran v The Mob, level $10 win bets on each top pick, and how the top three picks ran ---------- */
@@ -2695,7 +2700,7 @@ function renderBoard(){renderTableTalk();const el=$("board");if(!el)return;if(!B
   const row=(a,i)=>{const sm=!top3&&a.b?sampleOf(a.b):null,lab=`<td>${i===0?"👑":i+1}</td><td><b>${W[a.w]}</b>${sm?`<span class="bsamp ${sm[1]}">${sm[0]}</span>`:""}</td>`;
     if(!n(a))return `<tr>${lab}<td colspan="${top3?5:6}" style="text-align:left"><small>${top3&&a.w!=="nan"?"Recording since Saturday 14 November. Fills in as results come in.":"Tips are in. Waiting on the first official results."}</small></td></tr>`;
     return top3?`<tr class="${i===0?"lead":""}">${lab}<td>${a.r3}</td><td>${rate(a.w3,a.r3)}</td><td>${rate(a.pl,a.b)}</td><td>${rate(a.p2,a.b2)}</td><td>${rate(a.p3,a.b3)}</td></tr>`
-      :`<tr class="${i===0?"lead":""}">${lab}<td>${a.b}</td><td>${a.won}</td><td>${a.won?pct(a.won/a.b):"0%"}</td><td>${rate(a.pl,a.b)}</td><td>${div(a.back/a.b)}</td><td class="${a.profit>=0?"plus":"minus"}">${a.profit>=0?"+":"-"}${money(Math.abs(a.profit)).replace("-","")}</td></tr>`};
+      :`<tr class="${i===0?"lead":""}">${lab}<td>${a.b}</td><td>${a.won}</td><td>${a.won?pct(a.won/a.b):"0%"}</td><td>${rate(a.pl,a.b)}</td><td>${div(a.back/a.b)}</td><td class="${a.profit>=0?"plus":"minus"}">${udH(a.profit)}</td></tr>`};
   const note=top3?`Each tipster's first three picks in every race they rate, judged on the official placings. "Winner in top 3" is how often one of the three won. Nan's and the Mob's go back to the start; Pop, Bob and Gran's 2nd and 3rd picks are kept from Saturday 14 November.`
     :`Each tipster's top pick in every race they rate, settled on the official result and win dividend. Pop and Bob rate most races; Gran follows the bookies' favourite, wherever prices are up. The Mob blends everyone's chances, giving the most say to whoever's been tipping best in that code lately. Its picks before 5pm on Saturday 14 November were worked out afterwards from each tipster's saved ratings, using only the results known before each race. Nan's tips go back further, so "Since 13 Nov" is the fair comparison.`;
   el.innerHTML=`<h3>Tipster leaderboard</h3>
@@ -2719,7 +2724,7 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-bkwho]");i
 /* Performance breakdown for one tipster: totals, each code, the price of the pick when tipped (horses), favourites v the rest */
 function boardBreakdown(rows,from,to,W){
   const who=W[BOARD.bwho]?BOARD.bwho:"nan",mine=rows.filter(r=>r.who===who),T=boardStats(mine);
-  const sgn=v=>(v>=0?"+":"-")+money(Math.abs(v)).replace("-",""),roi=v=>v==null?"–":(v>=0?"+":"")+Math.round(v)+"%";
+  const sgn=v=>udH(v),roi=v=>v==null?"–":udp(v);
   const p0=v=>v?pct(v):"0%",r1=(lab,s)=>s.n?`<tr><td>${lab}</td><td>${s.n}</td><td>${p0(s.win)}</td><td>${p0(s.place)}</td><td class="${s.profit>=0?"plus":"minus"}">${sgn(s.profit)}</td><td class="${s.profit>=0?"plus":"minus"}">${roi(s.roi)}</td></tr>`:`<tr><td>${lab}</td><td>0</td><td colspan="4" style="text-align:left"><small>No settled picks</small></td></tr>`;
   const head=`<thead><tr><th></th><th>Picks</th><th>Win %</th><th>Place %</th><th title="Profit or loss betting $10 on every top pick">$10 bets</th><th title="Profit as a share of what was staked">ROI</th></tr></thead>`;
   const codes=[["H","Horses"],["D","Dogs"],["N","Harness"]].filter(([c])=>BOARD.code==="all"||BOARD.code===c);
@@ -2908,13 +2913,13 @@ function renderLab(){const el=$("lab");if(!el)return;
   if(!LAB.rows){el.innerHTML=`<h3>Strategy Lab<span class="lab-x">Experimental</span></h3><p>${LAB.err?"The Strategy Lab is unavailable right now.":"Loading…"}</p>`;return}
   const t=LAB.today||REC_TODAY(),from=labFrom(LAB.per,t),ok=r=>r.date>=from&&(LAB.code==="all"||r.code===LAB.code)&&(!LAB.live||r.source==="live"),rows=LAB.rows.filter(r=>ok(r)&&(!LAB.match||r.matched));
   const seen=(LAB.seen||[]).filter(ok).reduce((a,r)=>a+(+r.races||0),0),dates=rows.map(r=>r.date).sort(),span=dates.length?`${new Date(dates[0]+"T12:00:00").toLocaleDateString("en-AU",{day:"numeric",month:"short"})} to ${new Date(dates[dates.length-1]+"T12:00:00").toLocaleDateString("en-AU",{day:"numeric",month:"short"})}`:"no settled picks yet";
-  const sgn=v=>(v>=0?"+":"-")+money(Math.abs(v)).replace("-",""),p0=v=>v?pct(v):"0%";
+  const sgn=v=>udH(v),p0=v=>v?pct(v):"0%";
   const st=LAB_S.map(([k,l,d])=>({k,l,d,s:boardStats(rows.filter(r=>r.strategy===k))}));
   const chip=(k,v,l,cur)=>`<button data-lab${k}="${v}" aria-pressed="${cur===v}">${l}</button>`;
-  const row=x=>x.s.n?`<tr><td><b>${x.l}</b><span class="bsamp ${sampleOf(x.s.n)[1]}">${sampleOf(x.s.n)[0]}</span></td><td>${x.s.n}</td><td>${p0(x.s.win)}</td><td>${p0(x.s.place)}</td><td class="${x.s.profit>=0?"plus":"minus"}">${sgn(x.s.profit)}</td><td class="${x.s.profit>=0?"plus":"minus"}">${x.s.roi==null?"–":(x.s.roi>=0?"+":"")+Math.round(x.s.roi)+"%"}</td><td>${seen&&!LAB.match?pct(Math.min(1,x.s.n/seen)):"–"}</td></tr>`:`<tr><td><b>${x.l}</b></td><td>0</td><td colspan="5" style="text-align:left"><small>No settled picks</small></td></tr>`;
+  const row=x=>x.s.n?`<tr><td><b>${x.l}</b><span class="bsamp ${sampleOf(x.s.n)[1]}">${sampleOf(x.s.n)[0]}</span></td><td>${x.s.n}</td><td>${p0(x.s.win)}</td><td>${p0(x.s.place)}</td><td class="${x.s.profit>=0?"plus":"minus"}">${sgn(x.s.profit)}</td><td class="${x.s.profit>=0?"plus":"minus"}">${x.s.roi==null?"–":udp(x.s.roi)}</td><td>${seen&&!LAB.match?pct(Math.min(1,x.s.n/seen)):"–"}</td></tr>`:`<tr><td><b>${x.l}</b></td><td>0</td><td colspan="5" style="text-align:left"><small>No settled picks</small></td></tr>`;
   const B=[["a","Under $2"],["b","$2–$4"],["c","$4–$8"],["d","$8+"],["na","No price"]];
-  const bandRow=x=>`<tr><td>${x.l}</td>${B.map(([b])=>{const s=boardStats(rows.filter(r=>r.strategy===x.k&&r.band===b));return `<td>${s.n?`${s.roi>=0?"+":""}${Math.round(s.roi)}%<small> (${s.n})</small>`:"–"}</td>`}).join("")}</tr>`;
-  const codeRow=x=>`<tr><td>${x.l}</td>${[["H"],["D"],["N"]].map(([c])=>{const s=boardStats(rows.filter(r=>r.strategy===x.k&&r.code===c));return `<td>${s.n?`${s.roi>=0?"+":""}${Math.round(s.roi)}%<small> (${s.n})</small>`:"–"}</td>`}).join("")}</tr>`;
+  const bandRow=x=>`<tr><td>${x.l}</td>${B.map(([b])=>{const s=boardStats(rows.filter(r=>r.strategy===x.k&&r.band===b));return `<td>${s.n?`${udp(s.roi)}<small> (${s.n})</small>`:"–"}</td>`}).join("")}</tr>`;
+  const codeRow=x=>`<tr><td>${x.l}</td>${[["H"],["D"],["N"]].map(([c])=>{const s=boardStats(rows.filter(r=>r.strategy===x.k&&r.code===c));return `<td>${s.n?`${udp(s.roi)}<small> (${s.n})</small>`:"–"}</td>`}).join("")}</tr>`;
   const small=st.every(x=>x.s.n<100);
   el.innerHTML=`<h3>Strategy Lab<span class="lab-x">Experimental</span></h3>
     <p class="calc-out"><small>Experimental, not used for live tips. Each strategy's pick is saved before the jump and judged on the official result, $10 a pick.</small></p>
@@ -2948,7 +2953,7 @@ function renderRecord(){
   const coded=list.filter(r=>REC.code==="all"||r.code===REC.code),rows=coded.filter(resOk);
   const t=tally((wk?days.filter(x=>wd.includes(x.date)):days.filter(x=>x.date===REC.date)).flatMap(d=>Object.entries(d.codes).filter(([k])=>REC.code==="all"||k===REC.code).map(([,v])=>v)));
   renderCalc(rows);
-  $("recDay").innerHTML=t.bets?`${wk?"Last 7 days":new Date(REC.date+"T12:00:00").toLocaleDateString("en-AU",{weekday:"long",day:"numeric",month:"long"})}: <b>${t.won} winner${t.won===1?"":"s"} from ${t.bets}</b> (${Math.round(100*t.won/t.bets)}%), ${t.placed} placed, $1 a pick ${t.back-t.staked>=0?"+":""}${money(t.back-t.staked)}.${t.settled<t.races?` ${t.races-t.settled} still waiting on results.`:""}`
+  $("recDay").innerHTML=t.bets?`${wk?"Last 7 days":new Date(REC.date+"T12:00:00").toLocaleDateString("en-AU",{weekday:"long",day:"numeric",month:"long"})}: <b>${t.won} winner${t.won===1?"":"s"} from ${t.bets}</b> (${Math.round(100*t.won/t.bets)}%), ${t.placed} placed, $1 a pick ${ud(t.back-t.staked)}.${t.settled<t.races?` ${t.races-t.settled} still waiting on results.`:""}`
     :rows.length?"Results aren't in yet for this day.":"";
   $("recList").innerHTML=rows.length?(REC.res!=="all"?`<div class="note">${rows.length} race${rows.length>1?"s":""}: ${RESF.find(x=>x[0]===REC.res)[1].toLowerCase()}</div>`:"")+rows.slice(0,REC.all?Infinity:(REC.cap||PAGE)).map(recRow).join("")+pager(rows.length,Math.min(rows.length,REC.all?Infinity:(REC.cap||PAGE)),"r"):`<div class="empty">${coded.length&&REC.res!=="all"?"No races match that result filter.":`Nothing recorded for ${REC.code==="all"?"this day":CODE[REC.code].toLowerCase()+" this day"}.`}</div>`;
 }
@@ -3056,7 +3061,7 @@ function renderPlayers(){const el=$("players");if(!el)return;const me=SYNC.name,
     ${PB.err?`<p class="minus">${PB.err}</p>`:!ps?`<p>Loading…</p>`:!ps.length?`<p>No one's on the board yet. Pick a name and settle a bet to be first.</p>`:(()=>{const mi=me?ps.findIndex(p=>p.name===me):-1;
       return `${mi>=0?`<div class="pl-you"><span>You're <b>${ord(mi+1)}</b> of ${ps.length}</span><b>${money(Math.round(ps[mi].net)).replace(".00","")}</b></div>`:""}
       <div class="pl-list">${(()=>{const Q=boardQuips(ps);return ps.map((p,i)=>{const pc=p.bets?Math.round(p.won/p.bets*100):0;
-        return `<div class="pl-r${i===0?" lead":""}${me&&p.name===me?" me":""}"><span class="pl-k">${i===0?"👑":ord(i+1)}</span><span class="pl-n"><b>${nm(p.name)}</b><small>${pc}% wins · ${p.bets} bet${p.bets===1?"":"s"}${p.owed>0?` · <i>owes Nan ${money(Math.round(p.owed)).replace(".00","")}</i>`:""}</small><em class="pl-q">${escH(Q[i])}</em></span><span class="pl-m">${money(Math.round(p.net)).replace(".00","")}</span></div>`}).join("")})()}</div>`})()}
+        return `<div class="pl-r${i===0?" lead":""}${me&&p.name===me?" me":""}"><span class="pl-k">${i===0?"👑":ord(i+1)}</span><span class="pl-n"><b>${nm(p.name)}</b><small>${pc}% wins · ${p.bets} bet${p.bets===1?"":"s"}${p.owed>0?` · <i>owes Nan ${money(Math.round(p.owed)).replace(".00","")}</i>`:""}</small><em class="pl-q">${escH(Q[i])}</em></span><span class="pl-m">${udH(Math.round(p.net),true)}</span></div>`}).join("")})()}</div>`})()}
     <p class="calc-out"><small>Updates when bets are placed and results come in. Play money only.</small></p>`}
 async function saveName(){const v=(($("nameIn")||{}).value||"").trim();PB.nameIn=v;
   if(!SYNC.code){PB.msg="Place a bet first to start your account.";return renderBets()}
@@ -3450,7 +3455,7 @@ function renderBets(){
   el.innerHTML=`${signedIn()?"":signInHtml()}${BKMSG?`<div class="note okmsg" id="bkMsg">${BKMSG}</div>`:""}${slipBox}<div class="sumgrid"><div class="sum all"><h3>Running balance</h3><div class="big">${money(b.running)}</div><p>Includes results you've entered yourself. This is what you can bet with.</p></div>
     <div class="sum"><h3>Official balance</h3><div class="big">${money(b.official)}</div><p>Only official results. Changes when they come in.</p></div>
     <div class="sum"><h3>Bets out</h3><div class="big">${money(b.openSt+b.waitSt)}</div><p>${money(b.openSt)} still to run · ${money(b.waitSt)} run, waiting on official results</p></div>
-    <div class="sum"><h3>Official profit</h3><div class="big ${b.profit>=0?"plus":"minus"}">${b.profit>=0?"+":""}${money(b.profit)}</div><p>From settled bets. Started with ${money(BK.start)}${BK.topups?` + ${money(BK.topups)} added`:""}${b.owed>0?` · owe Nan ${money(b.owed)}`:""}.</p></div></div>
+    <div class="sum"><h3>Official profit</h3><div class="big ${b.profit>=0?"plus":"minus"}">${ud(b.profit)}</div><p>From settled bets. Started with ${money(BK.start)}${BK.topups?` + ${money(BK.topups)} added`:""}${b.owed>0?` · owe Nan ${money(b.owed)}`:""}.</p></div></div>
     <div class="calc-row"><button data-bcheck ${BKBUSY?"disabled":""}>${BKBUSY?"Checking…":"Check official results"}</button></div>${CHECKMSG?`<p class="checkmsg">${CHECKMSG}</p>`:""}
     ${loanHtml(b)}
     ${groups.map(([h,f])=>{const ts=live.filter(t=>f(t)&&(h==="Cancelled"||t.status!=="cancelled"));if(h==="Before the jump")ts.sort((a,b)=>Date.parse(a.jump||a.start)-Date.parse(b.jump||b.start));if(h==="Settled"&&ts.length)return setHtml(ts);return ts.length?`<h3 class="bgrp">${h} (${ts.length})</h3>${h==="Settled"||h==="Cancelled"?byDayHtml(ts,h):`<div class="races">${ts.map(tkHtml).join("")}</div>`}`:""}).join("")}
@@ -3529,7 +3534,7 @@ function renderResults(){const WHO=RV_WHO.filter(([w])=>!RV.off.includes(w));con
   const prof=(w,b)=>{const t=T[w][b];return t.back-t.cost},tot=w=>fair.reduce((a,b)=>a+prof(w,b),0);
   const who=have.sort((a,b)=>tot(b[0])-tot(a[0])||T[b[0]].win.hit-T[a[0]].win.hit);
   const best=b=>Math.max(...who.map(([w])=>prof(w,b))),bestT=Math.max(...who.map(([w])=>tot(w)));
-  const pm=v=>`<b class="${v>=0?"plus":"minus"}">${v>=0?"+":""}${money(Math.round(v*100)/100)}</b>`;
+  const pm=v=>`<b class="${v>=0?"plus":"minus"}">${udH(v)}</b>`;
   const lead=who[0];
   // the plain ladder: winners, and what $10 on each tipster's top pick to win would have made
   const w10=w=>{const t=T[w].win;return t.n&&t.cost?(t.back-t.cost)*10/(t.cost/t.n):0};
@@ -3581,7 +3586,7 @@ function setHtml(ts){const kind=t=>{const o=settleOf(t);return o.state==="won"||
   if(SETF!=="all"&&!n(SETF))SETF="all";
   const sel=SETF==="all"?ts:ts.filter(t=>kind(t)===SETF),st=sel.reduce((a,t)=>a+costOf(t),0),back=sel.reduce((a,t)=>a+(settleOf(t).pay||0),0),pl=r2(back-st);
   return `<h3 class="bgrp">Settled (${ts.length})</h3><div class="setf">${F.filter(([k])=>k==="all"||n(k)).map(([k,l])=>`<button data-setf="${k}" aria-pressed="${SETF===k}">${l} <small>${n(k)}</small></button>`).join("")}</div>
-    <p class="setsum">${sel.length} bet${sel.length===1?"":"s"} · staked ${money(r2(st))} · returned ${money(r2(back))} · <b class="${pl>=0?"plus":"minus"}">${pl>=0?"+":""}${money(pl)}</b></p>${byDayHtml(sel,"Settled")}`}
+    <p class="setsum">${sel.length} bet${sel.length===1?"":"s"} · staked ${money(r2(st))} · returned ${money(r2(back))} · <b class="${pl>=0?"plus":"minus"}">${ud(pl)}</b></p>${byDayHtml(sel,"Settled")}`}
 document.addEventListener("click",e=>{const b=e.target.closest("[data-setf]");if(!b)return;SETF=b.dataset.setf;const y=b.getBoundingClientRect().top;renderBets();const nb=document.querySelector(`[data-setf="${SETF}"]`);if(nb)window.scrollBy(0,nb.getBoundingClientRect().top-y)});
 /* ---------- The black book: favourite runners, where they race next, and how our bets on them have gone ----------
    Saved with your bets (so it follows your account). A bet counts for a runner when the runner is in it, so an exotic
@@ -3612,11 +3617,11 @@ function renderBlk(){const el=$("blkView");if(!el)return;const L=blkList();
   el.innerHTML=`<div class="calc"><div class="blk-head"><h3>Black book</h3><small>${L.length} runner${L.length===1?"":"s"}</small></div>
     <p>Keep your favourite runners here: see where they're racing next and what you've won on them. Star a runner from its details on Today's tips, or find one by name.</p>
     <div class="blk-add"><input id="blkq" type="search" placeholder="Find a runner by name" value="${escH(BLKQ)}" autocomplete="off"><div id="blkHits">${blkHitsHtml()}</div></div></div>
-    ${L.length?`<div class="blk"><div class="blk-head"><h3>All your runners</h3></div><div class="blk-nums b3"><div><small>Bet on them</small><b>${money(r2(tot.st))}</b></div><div><small>Returned</small><b>${money(r2(tot.back))}</b></div><div><small>Profit</small><b class="${tot.profit>=0?"plus":"minus"}">${tot.profit>=0?"+":""}${money(r2(tot.profit))}</b></div></div><p class="blk-note">Settled bets only. A bet counts for every one of your runners in it.</p></div>`:""}
+    ${L.length?`<div class="blk"><div class="blk-head"><h3>All your runners</h3></div><div class="blk-nums b3"><div><small>Bet on them</small><b>${money(r2(tot.st))}</b></div><div><small>Returned</small><b>${money(r2(tot.back))}</b></div><div><small>Profit</small><b class="${tot.profit>=0?"plus":"minus"}">${ud(r2(tot.profit))}</b></div></div><p class="blk-note">Settled bets only. A bet counts for every one of your runners in it.</p></div>`:""}
     ${all.map(({e,s,runs})=>`<div class="blk"><div class="blk-top"><span><b>★ ${escH(e.name)}</b><small>${CODE[e.code]}${e.since?` · in the book since ${new Date(e.since).toLocaleDateString("en-AU",{day:"numeric",month:"short"})}`:""}</small></span><button class="blk-star" data-blk="${escH(e.code)}" data-blkn="${escH(e.name)}" data-blkoff aria-pressed="true">Remove</button></div>
       ${runs.length?runs.slice(0,2).map(({r,x})=>`<div class="blk-run"><span><b>${Date.parse(r.jump)<=Date.now()?"Racing now":dayRel2(r)+" "+timeOf(r.jump)}</b> · ${escH(r.venue)} R${r.no}${r.dist?` · ${r.dist}m`:""}<br><small>No. ${x.u.no} · Nan gives it ${pct(x.p)} · ${div(x.price)}</small></span><button class="ffload" data-blkgo="${escH(r.id)}">Open race</button></div>`).join(""):'<p class="blk-note">Not in any race loaded for today or tomorrow.</p>'}
-      <div class="blk-nums"><div><small>Bets</small><b>${s.ts.length}</b></div><div><small>Staked</small><b>${money(s.st)}</b></div><div><small>Returned</small><b>${money(s.back)}</b></div><div><small>Profit</small><b class="${s.profit>=0?"plus":"minus"}">${s.profit>=0?"+":""}${money(s.profit)}</b></div></div>
-      ${s.ts.length?`<ul class="blk-bets">${s.ts.slice().sort((a,b)=>Date.parse(b.jump)-Date.parse(a.jump)).slice(0,5).map(t=>{const o=settleOf(t),c=costOf(t);return `<li><span>${new Date(t.jump).toLocaleDateString("en-AU",{day:"numeric",month:"short"})} · ${isMulti(t.type)?BT[t.type][0]:`${escH(t.venue)} R${t.no} · ${BT[t.type][0]}`} · ${money(c)}</span><b class="${o.state==="won"?"plus":o.state==="lost"?"minus":""}">${o.state==="won"?"+"+money(o.pay):o.state==="lost"?"Lost":o.state==="void"?"Refunded":"Running"}</b></li>`}).join("")}</ul>${s.ts.length>5?`<p class="blk-note">Latest 5 of ${s.ts.length}. They're all under My bets.</p>`:""}`:'<p class="blk-note">No bets on it yet.</p>'}
+      <div class="blk-nums"><div><small>Bets</small><b>${s.ts.length}</b></div><div><small>Staked</small><b>${money(s.st)}</b></div><div><small>Returned</small><b>${money(s.back)}</b></div><div><small>Profit</small><b class="${s.profit>=0?"plus":"minus"}">${ud(s.profit)}</b></div></div>
+      ${s.ts.length?`<ul class="blk-bets">${s.ts.slice().sort((a,b)=>Date.parse(b.jump)-Date.parse(a.jump)).slice(0,5).map(t=>{const o=settleOf(t),c=costOf(t);return `<li><span>${new Date(t.jump).toLocaleDateString("en-AU",{day:"numeric",month:"short"})} · ${isMulti(t.type)?BT[t.type][0]:`${escH(t.venue)} R${t.no} · ${BT[t.type][0]}`} · ${money(c)}</span><b class="${o.state==="won"?"plus":o.state==="lost"?"minus":""}">${o.state==="won"?"Won "+money(o.pay):o.state==="lost"?"Lost":o.state==="void"?"Refunded":"Running"}</b></li>`}).join("")}</ul>${s.ts.length>5?`<p class="blk-note">Latest 5 of ${s.ts.length}. They're all under My bets.</p>`:""}`:'<p class="blk-note">No bets on it yet.</p>'}
     </div>`).join("")}`;
 }
 const dayRel2=r=>{const d=new Date(r.jump).toLocaleDateString("en-CA",{timeZone:"Australia/Sydney"}),t=new Date().toLocaleDateString("en-CA",{timeZone:"Australia/Sydney"});return d===t?"Today":d>t?"Tomorrow":""};
@@ -3629,6 +3634,7 @@ document.addEventListener("click",e=>{
 });
 /* ---------- What's new: the update history, plus the suggestions box ---------- */
 const CHANGES=[
+ ["2.61.0","18 Nov","Up and down",["Wins and losses now say Up or Down instead of + or −: the tipster leaderboard, Results, My bets, Simple betting, the punters' board and the game."]],
  ["2.60.0","18 Nov","Simple betting",["New in More: Simple betting. Just your balance, today's races and your bets, nothing else.","Pick Horses, Harness or Dogs, tap a race, and see what Nan, Pop, Bob, Gran, Kev or The Mob would back. Tap Back it, or build any bet type.","Borrow from Nan right there, and see today's bets, results and how much you're up or down for the day.","Same balance as My bets. Once you pick it, Nan's Tips opens straight to it; tap Full Nan's Tips to go back."]],
  ["2.59.0","17 Nov","Tidy-up",["Tipping in the family comp is now called My Championship Tip on every race, with a clear note that it's free and not a bet, and a lock when the race jumps.","Nan's Best Bet and Roughie no longer repeat a runner that's already in Best Bets of the day.","Best Bets cards fit small phones better, and the leaderboard says so if it can't load instead of looking empty.","The Championship has the same name everywhere in the menus."]],
  ["2.58.0","17 Nov","Around Nan's table",["Nan, Pop, Bob, Gran and Kev now react to how their tips are really going: winning streaks, slumps, winning outsiders, favourites beaten and overtaking each other on the leaderboard.","Find it as \"Around Nan's table\" on the Tipsters page, with the real result behind each line.","On about half the races, a line about who disagrees with whom before the jump, and a word on the Family Championship standings.","Turn off Funny comments to hide it all. Tips, tables and points don't change."]],
@@ -3794,7 +3800,7 @@ function byDayHtml(ts,h){const days=new Map();for(const t of ts){const d=betDay(
     const label=d===today?"Today":d===yd?"Yesterday":new Date(d+"T12:00:00").toLocaleDateString("en-AU",{weekday:"long",day:"numeric",month:"short"});
     let stake=0,back=0,won=0;if(h==="Settled")for(const t of list){const o=settleOf(t);stake+=costOf(t);back+=o.pay||0;if(o.state==="won")won++}
     const pl=r2(back-stake),k=h+"|"+d;
-    const sum=h==="Settled"?`<span class="dg-n">${list.length} bet${list.length>1?"s":""} · ${won} won</span><b class="dg-p ${pl>=0?"plus":"minus"}">${pl>=0?"+":"-"}${money(Math.abs(pl))}</b>`:`<span class="dg-n">${list.length} bet${list.length>1?"s":""}</span>`;
+    const sum=h==="Settled"?`<span class="dg-n">${list.length} bet${list.length>1?"s":""} · ${won} won</span><b class="dg-p ${pl>=0?"plus":"minus"}">${ud(pl)}</b>`:`<span class="dg-n">${list.length} bet${list.length>1?"s":""}</span>`;
     return `<details class="dgrp" data-dg="${escH(k)}" ${DAYOPEN.has(k)?"open":""}><summary><span class="dg-d">${label}</span>${sum}<span class="rchev">&#9656;</span></summary><div class="races">${list.map(tkHtml).join("")}</div></details>`}).join("")}
 document.addEventListener("toggle",e=>{const d=e.target;if(!d.matches||!d.matches("details.dgrp"))return;d.open?DAYOPEN.add(d.dataset.dg):DAYOPEN.delete(d.dataset.dg)},true);
 // the races a bet depends on: the race itself, or each leg of a multi-race bet
@@ -4129,7 +4135,7 @@ function qSlip(b){if(!BK.slip.length)return "";const cost=BK.slip.reduce((a,t)=>
 function renderQuick(){const el=$("quickView");if(!el||!qOn())return;
   const b=balances(),d=qDay(),mine=new Set(qTickets().map(t=>t.rk));LEDGER=ledger(true);
   const head=`<div class="qtop"><h2>Simple betting</h2><button data-qexit>Full Nan's Tips</button></div>
-    <div class="qacct"><div><small>Balance</small><b>${money(b.running)}</b></div><div><small>Today</small><b class="${d.net>0?"plus":d.net<0?"minus":""}">${d.net>0?"+":""}${money(d.net)}</b></div><div><small>Bets out</small><b>${money(d.out)}</b></div></div>
+    <div class="qacct"><div><small>Balance</small><b>${money(b.running)}</b></div><div><small>Today</small><b class="${d.net>0?"plus":d.net<0?"minus":""}">${ud(d.net)}</b></div><div><small>Bets out</small><b>${money(d.out)}</b></div></div>
     ${b.owed>0?`<p class="qowe">You owe Nan ${money(b.owed)}. It comes out of your next winnings.</p>`:""}
     ${loanHtml(b)}
     <div class="qseg" role="group" aria-label="Racing code">${[["H","Horses"],["N","Harness"],["D","Dogs"]].map(([k,l])=>`<button data-qcode="${k}" aria-pressed="${QK.code===k}">${l}</button>`).join("")}</div>
@@ -4137,7 +4143,7 @@ function renderQuick(){const el=$("quickView");if(!el||!qOn())return;
   let body="";
   if(QK.tab==="bets"){const ts=qTickets().filter(t=>t.code===QK.code||true),open=ts.filter(t=>settleOf(t).state==="open").sort((a,b)=>Date.parse(a.jump)-Date.parse(b.jump)),run=ts.filter(t=>!open.includes(t)).sort((a,b)=>Date.parse(b.jump)-Date.parse(a.jump));
     body=`${BKMSG?`<p class="qmsg" id="bkMsg">${BKMSG}</p>`:""}
-      <div class="qsum"><div><small>Bets</small><b>${d.n}</b></div><div><small>Winners</small><b>${d.wins}</b></div><div><small>Staked</small><b>${money(d.staked+d.out)}</b></div><div><small>Won/lost</small><b class="${d.net>0?"plus":d.net<0?"minus":""}">${d.net>0?"+":""}${money(d.net)}</b></div></div>
+      <div class="qsum"><div><small>Bets</small><b>${d.n}</b></div><div><small>Winners</small><b>${d.wins}</b></div><div><small>Staked</small><b>${money(d.staked+d.out)}</b></div><div><small>Won/lost</small><b class="${d.net>0?"plus":d.net<0?"minus":""}">${ud(d.net)}</b></div></div>
       <div class="calc-row"><button data-bcheck ${BKBUSY?"disabled":""}>${BKBUSY?"Checking…":"Check results"}</button></div>${CHECKMSG?`<p class="checkmsg">${CHECKMSG}</p>`:""}
       ${!ts.length?`<div class="qempty">No bets today yet. Pick a race on <b>Today's races</b>.</div>`:""}
       ${open.length?`<h3 class="qgrp">To run (${open.length})</h3><div class="races">${open.map(tkHtml).join("")}</div>`:""}
