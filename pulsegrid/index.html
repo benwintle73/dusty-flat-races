@@ -257,7 +257,7 @@ const PG = (() => {
 /* ===== PULSEGRID game: save, sound, rendering, input, screens ===== */
 (() => {
 const $ = (id) => document.getElementById(id);
-const VERSION = '1.0.0', SAVE_KEY = 'pulsegrid_save_v1';
+const VERSION = '1.0.1', SAVE_KEY = 'pulsegrid_save_v1';
 // ---------- dates (local calendar) ----------
 const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
 const dayDiff = (a, b) => Math.round((Date.UTC(...b.split('-').map((v, i) => i === 1 ? v - 1 : +v)) - Date.UTC(...a.split('-').map((v, i) => i === 1 ? v - 1 : +v))) / 864e5);
@@ -333,7 +333,7 @@ document.addEventListener('visibilitychange', () => { clockAt = Date.now(); if (
 function begin(kind, b, opts = {}) {
   G = { kind, n: opts.n || 0, date: opts.date || '', b, state: (opts.state || b.start).slice(), moves: opts.moves || 0, hist: [], hinted: !!opts.hinted, done: false, cursor: firstPlayable(b) };
   S.active = { kind, n: G.n, date: G.date, state: G.state, moves: G.moves, hinted: G.hinted }; save();
-  buildBoard(); paint(); show('game'); startClock();
+  show('game'); buildBoard(); paint(); size(); requestAnimationFrame(size); startClock();
   if (kind === 'level' && G.n === 1 && !S.onboarded) coach('Tap a square. Watch its neighbours change.');
 }
 const firstPlayable = (b) => b.block.findIndex((x) => !x);
@@ -360,7 +360,7 @@ function buildBoard() {
 }
 function size() {
   if (!G) return; const b = G.b, el = $('board'), wrap = el.parentElement;
-  const W = Math.min(wrap.clientWidth, 520), H = Math.max(200, window.innerHeight - el.getBoundingClientRect().top - 150);
+  const W = Math.min(wrap.clientWidth || document.querySelector('.app').clientWidth - 28, 520), H = Math.max(220, window.innerHeight - wrap.getBoundingClientRect().top - 120);
   const gap = parseFloat(getComputedStyle(el).gap) || 6, cs = Math.floor(Math.min((W - gap * (b.w - 1)) / b.w, (H - gap * (b.h - 1)) / b.h, 96));
   el.style.gridTemplateColumns = `repeat(${b.w},${cs}px)`; el.style.gridAutoRows = cs + 'px';
 }
