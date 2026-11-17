@@ -1,0 +1,6 @@
+-- Applied 17 Nov 2026 with Ben's approval. Dead heats pay the dividend of the runner actually picked, not the first winner
+-- listed. Only Donald R5 (15 Nov) was affected: Nan's Pinazaki ($2.40) had been credited Move It's $13.00.
+-- 1. trigger otr_nan_ret_fix on otr_nan_log sets ret from the picked runner's own win dividend when it won
+-- 2. otr_tipster_board and otr_tipster_bands: div = the picked runner's own dividend, else the first winner's
+-- 3. update otr_nan_log set ret = ret where id = 'H|2026-11-15_donald|5';  -- re-graded by the trigger to 2.40
+-- After: leaderboard, price bands and Strategy Lab all show Nan's returns as $779.90 per $1.
