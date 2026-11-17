@@ -16,9 +16,9 @@ setTimeout(async()=>{
  const tds=n=>[...tr(n).querySelectorAll("td")].map(x=>x.textContent);
  t("labelled experimental",()=>assert.ok(/Experimental/.test(el.innerHTML)&&/not used for live tips/.test(el.innerHTML)));
  t("all six strategies listed",()=>{for(const n of["Current Nan","Form-focused","Market-focused","Consensus","Value-focused","Best Bets"])assert.ok(tr(n),n)});
- t("all available: Nan totals",()=>{const d=tds("Current Nan");assert.strictEqual(d[1],"50");assert.strictEqual(d[2],"26%");assert.ok(/-\$110\.00/.test(d[4]),d[4]);assert.strictEqual(d[5],"-22%")});
+ t("all available: Nan totals",()=>{const d=tds("Current Nan");assert.strictEqual(d[1],"50");assert.strictEqual(d[2],"26%");assert.ok(/Down\$110\.00/.test(d[4]),d[4]);assert.strictEqual(d[5],"Down 22%")});
  t("eligibility = picks / races looked at",()=>assert.strictEqual(tds("Current Nan")[6],"54%"));
- t("value with no wins shows 0%",()=>{const d=tds("Value-focused");assert.strictEqual(d[2],"0%");assert.strictEqual(d[5],"-100%")});
+ t("value with no wins shows 0%",()=>{const d=tds("Value-focused");assert.strictEqual(d[2],"0%");assert.strictEqual(d[5],"Down 100%")});
  t("preliminary warning when samples small",()=>assert.ok(/preliminary/.test(el.innerHTML)));
  t("same races only",()=>{el.querySelector("[data-labmatch]").checked=true;el.querySelector("[data-labmatch]").dispatchEvent(new w.Event("change",{bubbles:true}));assert.strictEqual(tds("Current Nan")[1],"10");assert.ok(/No settled picks/.test(tr("Best Bets").textContent));E("LAB.match=false")});
  t("recorded live only",()=>{E("LAB.live=true;renderLab()");assert.strictEqual(tds("Current Nan")[1],"10");assert.ok(/No settled picks/.test(tr("Value-focused").textContent));E("LAB.live=false")});
