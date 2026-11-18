@@ -964,7 +964,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.63.1"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.64.0"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -1064,9 +1064,17 @@ const vkey=v=>String(v||"").toLowerCase().replace(/[^a-z]+/g," ").trim().split("
 // same venue? Sponsors ("Sportsbet", "Ladbrokes") and extra words ("Hillside") don't count: Sportsbet Sandown Hillside = Sandown
 const VSTOP=new Set(["sportsbet","ladbrokes","tab","tabtouch","bet","picklebet","neds","pointsbet","betr","unibet","palmerbet","bluebet","topsport","playup","betfair","racing","raceway","paceway","racecourse","the","at"]);
 const vwords=v=>String(v||"").toLowerCase().replace(/[^a-z]+/g," ").trim().split(" ").filter(w=>w&&!VSTOP.has(w));
+// the closest name in a feed to our venue: place words only, sponsors dropped, spaces ignored (same rule as otr-tips)
+function vmatch(items,name,venue){const want=vwords(venue).join("");if(!want)return null;let best=null,score=0;
+  for(const it of items){const raw=String(name(it)||""),have=vwords(raw).join("")||raw.toLowerCase().replace(/[^a-z]/g,"");if(!have)continue;
+    const sc=have===want?1000:(have.length>=4&&want.includes(have))||(want.length>=4&&have.includes(want))?Math.min(have.length,want.length):0;
+    if(sc>score){score=sc;best=it}}return best}
+// a race in a tipster's feed keyed code|venue|race, whatever that feed calls the venue
+function keyed(b,code,venue,no){if(!b)return null;const ex=b[`${code}|${fkey(venue)}|${no}`];if(ex)return ex;
+  const m=vmatch(Object.keys(b).map(k=>k.split("|")).filter(([c,,n])=>c===code&&+n===+no),k=>k[1],venue);return m?b[m.join("|")]:null}
 const sameVenue=(a,b)=>{const x=vwords(a),y=vwords(b);if(!x.length||!y.length)return false;const X=new Set(x),Y=new Set(y);return x.every(w=>Y.has(w))||y.every(w=>X.has(w))||x.join("")===y.join("")};
 function quickRace(r){const q=QUICK[r.code];if(!q||!q.races)return null;
-  return q.races.find(x=>+x.n===+r.no&&vkey(x.venue)===vkey(r.venue)&&Math.abs(Date.parse(x.jump)-Date.parse(r.jump))<30*60e3)||null}
+  return vmatch(q.races.filter(x=>+x.n===+r.no&&Math.abs(Date.parse(x.jump)-Date.parse(r.jump))<30*60e3),x=>x.venue,r.venue)}
 const mkt=r=>r.code==="H"||r.src==="quick";
 function loadForm(r){
   if(FORM[r.id])return;FORM[r.id]={state:"loading"};
@@ -2269,11 +2277,9 @@ function talkFor(who,r,u,rank,n,scr){if(!JOKES)return "";const T=TALK[who]||TALK
   const m=talkMap(r,who).get(nkey(u.name));if(m)return m;
   const pool=talkPoolFull(who,r,rank,n),v=talkVars(r,u,rank),h=sayHash(r.id+"|"+who+"|"+nkey(u.name));
   for(let j=0;j<pool.length;j++){const x=talkFill(pool[(h+j)%pool.length],v);if(x)return x}return ""}
-function bobFor(r){const b=TIPS.bob[r.date];if(!b)return null;const k=`${r.code}|${fkey(r.venue)}|${r.no}`;if(b[k])return b[k];
-  const w=(vwords(r.venue)[0]||vkey(r.venue));for(const kk in b){const [c,v,n]=kk.split("|");if(c===r.code&&+n===+r.no&&v.includes(w))return b[kk]}return null}
+function bobFor(r){return keyed(TIPS.bob[r.date],r.code,r.venue,r.no)}
 // Kev's list for a race: [{no, name, n}] where n is how many tipsters are on it (venue matched as Bob's are)
-function kevFor(r){const b=TIPS.kev[r.date];if(!b)return null;const k=`${r.code}|${fkey(r.venue)}|${r.no}`;if(b[k])return b[k];
-  const vs=vwords(r.venue);for(const kk in b){const [c,v,n]=kk.split("|");if(c===r.code&&+n===+r.no&&(v===vs.join("")||vs.some(w=>w.length>2&&v.startsWith(w))))return b[kk]}return null}
+function kevFor(r){return keyed(TIPS.kev[r.date],r.code,r.venue,r.no)}
 const kevN=(r,name)=>{const l=kevFor(r);if(!l)return null;const x=l.find(u=>nkey(u.name)===nkey(name));return x?x.n:null};
 const popKey=r=>`${r.date}|${r.code}|${fkey(r.venue)}|${r.no}`;
 // each tipster's view of a race: [{who, label, says, pick:{no,name,box,p}, chance: Map(nameKey -> p)}]
@@ -3645,6 +3651,7 @@ document.addEventListener("click",e=>{
 });
 /* ---------- What's new: the update history, plus the suggestions box ---------- */
 const CHANGES=[
+ ["2.64.0","18 Nov","Tipsters find every meeting",["Pop, Bob, Gran and Kev now match meetings by the place, whatever each tipping service calls it: sponsors' names, extra words and spacing no longer lose a tipster's tips.","Pop asks his computer for the meeting by its own name for it, from its list of the day's meetings."]],
  ["2.63.1","18 Nov","Every tipster keeps a tab",["In Simple betting, Pop, Bob, Gran and Kev always have a tab on a race. If one hasn't tipped it yet, the tab says so instead of disappearing.","Pop and Bob now tip sponsored meetings like Sportsbet Sandown Lakeside. The sponsor's name was stopping their computers finding the race."]],
  ["2.63.0","18 Nov","Radio in Simple betting",["The live race-call radio is back at the top of Simple betting."]],
  ["2.62.0","18 Nov","Open into",["Choose what the app opens into: the game, Nan's Tips or Simple betting. It's at the top of More, and at the bottom of Simple betting.","Your choice is saved to your account, so it follows you to any device you sign in on."]],
@@ -3843,7 +3850,7 @@ async function checkOfficial(force){
   }
   const ab=new Map();for(const r of refs)if(r.code!=="H"&&!(BK.off[r.rk]&&BK.off[r.rk].fin)&&Date.now()>Date.parse(r.jump)+20*60e3)ab.set(r.code+"|"+r.date,[r.code,r.date]);
   for(const [code,date] of ab.values()){try{const j=await getJSON(`${AB_URL}?code=${code}&date=${date}`);
-    for(const r of refs.filter(r=>r.code===code&&r.date===date&&!(BK.off[r.rk]&&BK.off[r.rk].fin))){const m=(j.abandoned||[]).find(x=>vkey(x.track)===vkey(r.venue)&&(x.races||[]).includes(+r.no));
+    for(const r of refs.filter(r=>r.code===code&&r.date===date&&!(BK.off[r.rk]&&BK.off[r.rk].fin))){const m=(j.abandoned||[]).find(x=>sameVenue(x.track,r.venue)&&(x.races||[]).includes(+r.no));
       if(m){BK.off[r.rk]={fin:[],aband:true,st:"abandoned",at:Date.now()};got++}}}catch(e){}}
   // backup: FormFav, for any race (horses, dogs, harness) still without a result 30 minutes after the jump. It covers
   // meetings the main feed misses altogether, and abandoned races. Each race is asked about at most every 10 minutes.
