@@ -12,6 +12,7 @@
 // GET ?mob=YYYY-MM-DD -> { races: { raceId: { code, venue, race, ch: { name: p }, mk: { name: p }, op: { name: p }, map: [{ name, style, settle }] } } }
 //   The Mob's chances for each race (everyone's tips blended), the market now and when we first saw it (who's being backed), and
 //   Krok's speed map, kept for races from 90 minutes before the jump. The game runs its simulations of real races off these.
+// GET ?missed=1&date= -> { missed: { pop: ['H Venue', ...], bob: [...] } } venues a feed couldn't find that day
 // GET ?pop=H|venue name|race,D|...&date=   -> { pop: { 'H|venue|race': { conf, runners: [{ no, name, p, rank }] } | null } } (12 races at most)
 const SB = Deno.env.get('SUPABASE_URL')!;
 const SR = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -28,6 +29,35 @@ const addDays = (date: string, n: number) => sydney(new Date(Date.parse(date + '
 const vk = (s: unknown) => String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
 // the place in a meeting name, without sponsors or decoration: "Sportsbet Sandown Lakeside" -> "sandown lakeside"
 const VSTOP = new Set(['sportsbet', 'ladbrokes', 'tab', 'tabtouch', 'bet365', 'picklebet', 'neds', 'pointsbet', 'betr', 'unibet', 'palmerbet', 'bluebet', 'topsport', 'playup', 'betfair', 'racing', 'raceway', 'paceway', 'racecourse', 'the', 'at']);
+const vwords = (s: unknown) => String(s || '').toLowerCase().replace(/[^a-z]+/g, ' ').trim().split(' ').filter((x) => x && !VSTOP.has(x));
+// Each feed names meetings its own way ("Sportsbet Sandown Lakeside", "Sandown Lakeside", "sandownlakeside", "Sandown-Lakeside").
+// Venues are compared on their place words only, sponsors dropped and spaces ignored: the closest feed name wins.
+// Returns the matching item, or null when nothing in the feed is the same place.
+function vmatch<T>(items: T[], name: (x: T) => string, venue: unknown): T | null {
+  const want = vwords(venue).join(''); if (!want) return null;
+  let best: T | null = null, score = 0;
+  for (const it of items) {
+    const raw = String(name(it) || ''), have = vwords(raw).join('') || raw.toLowerCase().replace(/[^a-z]/g, '');
+    if (!have) continue;
+    const sc = have === want ? 1000 : (have.length >= 4 && want.includes(have)) || (want.length >= 4 && have.includes(want)) ? Math.min(have.length, want.length) : 0;
+    if (sc > score) { score = sc; best = it; }
+  }
+  return best;
+}
+// a race in a feed keyed code|venue|race, whatever the feed calls the venue
+function keyed<V>(b: Record<string, V>, code: string, venue: unknown, race: unknown): V | null {
+  const exact = b[`${code}|${vk(venue)}|${race}`]; if (exact) return exact;
+  const ks = Object.keys(b).map((k) => k.split('|')).filter(([c, , n]) => c === code && +n === +String(race));
+  const m = vmatch(ks, (k) => k[1], venue);
+  return m ? b[m.join('|')] : null;
+}
+// venues no feed could find, kept for the day so a naming miss shows up instead of a tipster quietly going missing
+async function missed(date: string, who: string, venue: string) {
+  const key = `vmiss:${date}`, row = await get('otr_form_cache', key), p = row?.payload || {};
+  if ((p[who] || []).includes(venue)) return;
+  console.error('venue not found', who, venue);
+  await put('otr_form_cache', key, { ...p, [who]: [...(p[who] || []), venue] });
+}
 const place = (s: unknown) => { const w = String(s || '').toLowerCase().replace(/[^a-z]+/g, ' ').trim().split(' ').filter((x) => x && !VSTOP.has(x)); return w.length ? w.join(' ') : String(s || '').toLowerCase().trim(); };
 const r3 = (x: number) => Math.round(x * 1000) / 1000;
 const age = (row: any) => row ? Date.now() - Date.parse(row.fetched_at) : Infinity;
@@ -48,10 +78,10 @@ async function bob(date: string) {
   if (row && age(row) < 30 * 60e3) return row.payload;
   const meta = (await get('otr_race_cache', 'meta'))?.payload;
   if (!KROK || (meta && Number(meta.rem) < 400)) return row?.payload || { races: {} };
-  const races: Record<string, any[]> = {};
+  const races: Record<string, any[]> = {}, names: Record<string, string> = {};
   // Krok can hold a race under two ids (two model runs); each race keeps the fullest set, the one adding up closest to 100%
   const groups: Record<string, Record<string, any[]>> = {};
-  const add = (rows: any[], c: string) => { for (const x of rows || []) { const k = `${c}|${vk(x.venue)}|${x.race_no}`, id = String(x.id || ''), g = id.includes('_') ? id.slice(0, id.lastIndexOf('_')) : 'x';
+  const add = (rows: any[], c: string) => { for (const x of rows || []) { const k = `${c}|${vk(x.venue)}|${x.race_no}`; names[vk(x.venue)] = String(x.venue); const id = String(x.id || ''), g = id.includes('_') ? id.slice(0, id.lastIndexOf('_')) : 'x';
     ((groups[k] ||= {})[g] ||= []).push({ name: x.horse_name, p: r3(Number(x.win_probability) || 0), rank: x.model_rank, agree: x.ensemble_agreement_count ?? null, pick: x.ensemble_pick ?? null }); } };
   try {
     for (const [c, code] of CODES) {
@@ -69,7 +99,7 @@ async function bob(date: string) {
     sets.sort((a, b) => b.length - a.length || Math.abs(a.reduce((t, u) => t + u.p, 0) - 1) - Math.abs(b.reduce((t, u) => t + u.p, 0) - 1));
     races[k] = sets[0].sort((a, b) => b.p - a.p);
   }
-  const payload = { races, at: new Date().toISOString() };
+  const payload = { races, names, at: new Date().toISOString() };
   if (Object.keys(races).length) await put('otr_race_cache', key, payload);
   return payload;
 }
@@ -130,6 +160,20 @@ async function ffPred(date: string, code: string, track: string, race: number) {
   if (!list.length) return null;
   return { conf: j.confidence || j.data?.confidence || null, runners: list.map((u: any) => ({ no: u.number, name: u.name, p: r3(Number(u.winProb) || 0), rank: u.modelRank })).sort((a: any, b: any) => b.p - a.p) };
 }
+// FormFav's own meeting names and slugs for the day (shared cache with otr-ffres: 15 minutes for today), so Pop asks for a
+// meeting by the name FormFav uses rather than ours
+const FFCODE: Record<string, string> = { H: 'gallops', D: 'greyhounds', N: 'harness' };
+async function ffMeetings(code: string, date: string) {
+  const key = `ffmeet:${code}:${date}`, row = await get('otr_form_cache', key);
+  if (row && age(row) < 15 * 60e3) return row.payload as any[];
+  try {
+    const r = await fetch(`https://api.formfav.com/v1/form/meetings?${new URLSearchParams({ date, race_code: FFCODE[code], country: 'au' })}`, { headers: { 'X-API-Key': FF } });
+    if (!r.ok) throw new Error(`formfav meetings ${r.status}`);
+    const list = ((await r.json())?.meetings || []).filter((m: any) => (m.country || 'au') === 'au').map((m: any) => ({ track: m.track, slug: m.slug, abandoned: !!m.abandoned }));
+    if (list.length) await put('otr_form_cache', key, list);
+    return list.length ? list : (row?.payload || []);
+  } catch (e) { console.error('ffmeet', String(e)); return (row?.payload || []) as any[]; }
+}
 async function pop(date: string, spec: string) {
   const ff = (await get('otr_form_cache', 'ffmeta'))?.payload;
   const items = spec.split(',').slice(0, 12).map((s) => s.split('|')).filter((p) => p.length === 3 && ['H', 'D', 'N'].includes(p[0]) && /^[A-Za-z0-9 '\-]{2,40}$/.test(p[1]) && +p[2] > 0 && +p[2] < 25);
@@ -138,7 +182,11 @@ async function pop(date: string, spec: string) {
     const k = `${c}|${vk(track)}|${n}`, day = `pop:${date}:${k}`, row = await get('otr_form_cache', day);
     if (row && (age(row) < (row.payload?.data ? 60 : 15) * 60e3 || row.payload?.jumped)) { res[k] = row.payload?.data ?? null; return; }
     if (!FF || (ff && Number(ff.rem) < 500 && Date.now() < Number(ff.until || 0))) { res[k] = row?.payload?.data ?? null; return; }
-    try { const data = await ffPred(date, c, place(track), +n); await put('otr_form_cache', day, { data }); res[k] = data; }
+    try {
+      const ms = await ffMeetings(c, date), m = vmatch(ms, (x: any) => x.track, track);
+      if (ms.length && !m) await missed(date, 'pop', `${c} ${track}`);
+      const data = await ffPred(date, c, m ? m.slug : place(track), +n); await put('otr_form_cache', day, { data }); res[k] = data;
+    }
     catch (e) { console.error('pop', k, String(e)); res[k] = row?.payload?.data ?? null; }
   }));
   return res;
@@ -181,8 +229,10 @@ async function kmap(date: string, spec: string) {
   const spent = Number((await get('otr_form_cache', `kfspent:${date}`))?.payload?.n) || 0;
   const go = todo.slice(0, Math.max(0, Math.floor((share - spent) / 5)));
   if (go.length) await put('otr_form_cache', `kfspent:${date}`, { n: spent + 5 * go.length });
+  const kn: Record<string, string> = (await get('otr_race_cache', `tips:bob:${date}`))?.payload?.names || {};
   await Promise.all(go.map(async ([k, it]) => {
-    let data: any = null; try { data = await kmapOne(date, it[0], it[1], +it[2]); } catch (e) { console.error('kmap', k, String(e)); }
+    const kv = vmatch(Object.values(kn), (x) => x, it[1]) || it[1];
+    let data: any = null; try { data = await kmapOne(date, it[0], kv, +it[2]); } catch (e) { console.error('kmap', k, String(e)); }
     await put('otr_form_cache', `kmap:${date}:${k}`, { data }); res[k] = data;
   }));
   return res;
@@ -240,9 +290,8 @@ const top3 = (m: Map<string, number>, names: Map<string, string>) => [...m.entri
 // average of everyone's chances. The leaderboard (otr_tipster_board) settles them from the same official results Nan is
 // judged on: level $1 win bets on each top pick, and how the 2nd and 3rd picks ran.
 const nm = (s: unknown) => String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-const first = (s: unknown) => place(s).split(' ')[0];
-// a tipster's races are keyed code|venue|race; venues are matched exactly first, then by their first word
-const raceOf = (b: Record<string, any>, r: any) => b[`${r.code}|${vk(r.venue)}|${r.race}`] || Object.entries(b).find(([k]) => { const [c, v, n] = k.split('|'); return c === r.code && +n === +r.race && v.includes(first(r.venue)); })?.[1] || null;
+// a tipster's races are keyed code|venue|race; venues are matched exactly first, then loosely (vmatch)
+const raceOf = (b: Record<string, any>, r: any) => keyed(b, r.code, r.venue, r.race);
 async function record() {
   const today = sydney(), now = Date.now();
   const rows = await (await db(`otr_nan_log?date=eq.${today}&jump=gt.${new Date(now).toISOString()}&jump=lt.${new Date(now + 90 * 60e3).toISOString()}&select=id,code,venue,race,picks`)).json() as any[];
@@ -262,13 +311,14 @@ async function record() {
       // Gran follows the money: horses carry the market in Nan's field, dogs and harness read PuntersEdge's market
       let mkt = (r.picks || []).filter((x: any) => Number(x.mk) > 1).map((x: any) => ({ name: x.name, p: 1 / x.mk }));
       if (r.code !== 'H') {
-        const qr = (quick[r.code] || []).find((x: any) => +x.n === +r.race && first(x.venue) === first(r.venue));
+        const qr = vmatch((quick[r.code] || []).filter((x: any) => +x.n === +r.race), (x: any) => x.venue, r.venue);
         mkt = (qr?.runners || []).filter((u: any) => Number(u.win) > 1).map((u: any) => ({ name: u.name, p: 1 / u.win }));
       }
       const ch: Record<string, Map<string, number> | null> = {
         nan: spread(r.picks, field), pop: spread(pp[key]?.runners, field), bob: spread(bobWith(raceOf(b, r), km[key]), field), gran: mkt.length >= 2 ? spread(mkt, field) : null,
         kev: spread(kevChances(raceOf(kv, r)), field),
       };
+      if (!raceOf(b, r) && Object.keys(b).length) await missed(today, 'bob', `${r.code} ${r.venue}`);
       for (const who of ['pop', 'bob', 'gran', 'kev']) { const m = ch[who]; if (!m) continue; const t = top3(m, names); save.push({ id: r.id, who, name: t[0].name, p: t[0].p, top: t, recorded_at: at }); }
       // the Panel: everyone's chances averaged, each tipster weighted by how their picks have gone in this code
       const ws = W[r.code] || {}, have = PANEL.filter((w) => ch[w]);
@@ -318,6 +368,7 @@ Deno.serve(async (req) => {
     if (q.get('mob')) { const d = /^\d{4}-\d\d-\d\d$/.test(q.get('mob')!) ? q.get('mob')! : date; return out({ races: (await get('otr_race_cache', `mob:${d}`))?.payload?.races || {} }); }
     if (q.get('pop')) return out({ pop: await pop(date, q.get('pop')!) });
     if (q.get('map')) return out({ map: await kmap(date, q.get('map')!) });
+    if (q.get('missed')) return out({ missed: (await get('otr_form_cache', `vmiss:${date}`))?.payload || {} });
     let w = null; try { w = await weights(); } catch (e) { console.error('weights', String(e)); }
     let k: any = {}; try { k = (await kev(date)).races || {}; } catch (e) { console.error('kev', String(e)); }
     return out({ bob: (await bob(date)).races || {}, kev: k, w });
