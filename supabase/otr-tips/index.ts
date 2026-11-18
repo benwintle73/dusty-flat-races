@@ -26,6 +26,9 @@ const sydney = (d = new Date()) => new Intl.DateTimeFormat('en-CA', { timeZone: 
 const sydHour = () => Number(new Intl.DateTimeFormat('en-AU', { timeZone: 'Australia/Sydney', hour: 'numeric', hourCycle: 'h23' }).format(new Date()));
 const addDays = (date: string, n: number) => sydney(new Date(Date.parse(date + 'T02:00:00Z') + n * 864e5));
 const vk = (s: unknown) => String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+// the place in a meeting name, without sponsors or decoration: "Sportsbet Sandown Lakeside" -> "sandown lakeside"
+const VSTOP = new Set(['sportsbet', 'ladbrokes', 'tab', 'tabtouch', 'bet365', 'picklebet', 'neds', 'pointsbet', 'betr', 'unibet', 'palmerbet', 'bluebet', 'topsport', 'playup', 'betfair', 'racing', 'raceway', 'paceway', 'racecourse', 'the', 'at']);
+const place = (s: unknown) => { const w = String(s || '').toLowerCase().replace(/[^a-z]+/g, ' ').trim().split(' ').filter((x) => x && !VSTOP.has(x)); return w.length ? w.join(' ') : String(s || '').toLowerCase().trim(); };
 const r3 = (x: number) => Math.round(x * 1000) / 1000;
 const age = (row: any) => row ? Date.now() - Date.parse(row.fetched_at) : Infinity;
 const CODES: [string, string][] = [['H', 'thoroughbred'], ['D', 'greyhound'], ['N', 'harness']];
@@ -133,9 +136,9 @@ async function pop(date: string, spec: string) {
   const res: Record<string, any> = {};
   await Promise.all(items.map(async ([c, track, n]) => {
     const k = `${c}|${vk(track)}|${n}`, day = `pop:${date}:${k}`, row = await get('otr_form_cache', day);
-    if (row && (age(row) < 60 * 60e3 || row.payload?.jumped)) { res[k] = row.payload?.data ?? null; return; }
+    if (row && (age(row) < (row.payload?.data ? 60 : 15) * 60e3 || row.payload?.jumped)) { res[k] = row.payload?.data ?? null; return; }
     if (!FF || (ff && Number(ff.rem) < 500 && Date.now() < Number(ff.until || 0))) { res[k] = row?.payload?.data ?? null; return; }
-    try { const data = await ffPred(date, c, track.toLowerCase(), +n); await put('otr_form_cache', day, { data }); res[k] = data; }
+    try { const data = await ffPred(date, c, place(track), +n); await put('otr_form_cache', day, { data }); res[k] = data; }
     catch (e) { console.error('pop', k, String(e)); res[k] = row?.payload?.data ?? null; }
   }));
   return res;
@@ -148,7 +151,7 @@ async function pop(date: string, spec: string) {
 const STYLE: Record<string, Record<string, number>> = { H: { L: 1.12, P: 1.08, M: 1, B: .92 }, N: { L: 1.35, P: 1.12, M: .92, B: .8 }, D: {} };
 const clampN = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 async function kmapOne(date: string, c: string, venue: string, n: number) {
-  const type = c === 'H' ? 'T' : c === 'D' ? 'G' : 'H', slug = venue.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const type = c === 'H' ? 'T' : c === 'D' ? 'G' : 'H', slug = place(venue).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   const j = await krok(`/racing/field-form?race_id=${encodeURIComponent(`${date}_${slug}_${type}_${n}`)}`);
   const rs = ((j.data || {}).runners || []).filter((u: any) => !u.scratched); if (rs.length < 3) return null;
   const nL = rs.filter((u: any) => u.speed_map?.running_style === 'L').length;
@@ -237,9 +240,9 @@ const top3 = (m: Map<string, number>, names: Map<string, string>) => [...m.entri
 // average of everyone's chances. The leaderboard (otr_tipster_board) settles them from the same official results Nan is
 // judged on: level $1 win bets on each top pick, and how the 2nd and 3rd picks ran.
 const nm = (s: unknown) => String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-const first = (s: unknown) => String(s || '').toLowerCase().replace(/[^a-z]+/g, ' ').trim().split(' ')[0];
+const first = (s: unknown) => place(s).split(' ')[0];
 // a tipster's races are keyed code|venue|race; venues are matched exactly first, then by their first word
-const raceOf = (b: Record<string, any>, r: any) => b[`${r.code}|${vk(r.venue)}|${r.race}`] || Object.entries(b).find(([k]) => { const [c, v, n] = k.split('|'); return c === r.code && +n === +r.race && v.startsWith(first(r.venue)); })?.[1] || null;
+const raceOf = (b: Record<string, any>, r: any) => b[`${r.code}|${vk(r.venue)}|${r.race}`] || Object.entries(b).find(([k]) => { const [c, v, n] = k.split('|'); return c === r.code && +n === +r.race && v.includes(first(r.venue)); })?.[1] || null;
 async function record() {
   const today = sydney(), now = Date.now();
   const rows = await (await db(`otr_nan_log?date=eq.${today}&jump=gt.${new Date(now).toISOString()}&jump=lt.${new Date(now + 90 * 60e3).toISOString()}&select=id,code,venue,race,picks`)).json() as any[];
