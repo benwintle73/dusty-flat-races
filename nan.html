@@ -712,6 +712,7 @@ body.qmode{padding-bottom:calc(16px + env(safe-area-inset-bottom))!important}
 .qmeta{font-size:13px;color:var(--ink2)}
 .qwho{display:grid;grid-template-columns:repeat(auto-fit,minmax(62px,1fr));gap:5px}
 .qwho button{min-height:40px;background:var(--paper2);border:1px solid var(--line);color:var(--ink);font-weight:700;font-size:15px;cursor:pointer;padding:0 4px}
+.qwho button.none{color:var(--muted,#8a7f6a);font-weight:600}
 .qwho button[aria-pressed=true]{background:var(--tote);border-color:var(--tote);color:var(--amber)}
 .qtip{background:var(--paper);padding:8px 10px}
 .qtip-h{font:400 18px/1.1 var(--display);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
@@ -963,7 +964,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.63.0"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.63.1"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -2269,7 +2270,7 @@ function talkFor(who,r,u,rank,n,scr){if(!JOKES)return "";const T=TALK[who]||TALK
   const pool=talkPoolFull(who,r,rank,n),v=talkVars(r,u,rank),h=sayHash(r.id+"|"+who+"|"+nkey(u.name));
   for(let j=0;j<pool.length;j++){const x=talkFill(pool[(h+j)%pool.length],v);if(x)return x}return ""}
 function bobFor(r){const b=TIPS.bob[r.date];if(!b)return null;const k=`${r.code}|${fkey(r.venue)}|${r.no}`;if(b[k])return b[k];
-  const w=vkey(r.venue);for(const kk in b){const [c,v,n]=kk.split("|");if(c===r.code&&+n===+r.no&&v.startsWith(w.replace(/[^a-z0-9]/g,"")))return b[kk]}return null}
+  const w=(vwords(r.venue)[0]||vkey(r.venue));for(const kk in b){const [c,v,n]=kk.split("|");if(c===r.code&&+n===+r.no&&v.includes(w))return b[kk]}return null}
 // Kev's list for a race: [{no, name, n}] where n is how many tipsters are on it (venue matched as Bob's are)
 function kevFor(r){const b=TIPS.kev[r.date];if(!b)return null;const k=`${r.code}|${fkey(r.venue)}|${r.no}`;if(b[k])return b[k];
   const vs=vwords(r.venue);for(const kk in b){const [c,v,n]=kk.split("|");if(c===r.code&&+n===+r.no&&(v===vs.join("")||vs.some(w=>w.length>2&&v.startsWith(w))))return b[kk]}return null}
@@ -3644,6 +3645,7 @@ document.addEventListener("click",e=>{
 });
 /* ---------- What's new: the update history, plus the suggestions box ---------- */
 const CHANGES=[
+ ["2.63.1","18 Nov","Every tipster keeps a tab",["In Simple betting, Pop, Bob, Gran and Kev always have a tab on a race. If one hasn't tipped it yet, the tab says so instead of disappearing.","Pop and Bob now tip sponsored meetings like Sportsbet Sandown Lakeside. The sponsor's name was stopping their computers finding the race."]],
  ["2.63.0","18 Nov","Radio in Simple betting",["The live race-call radio is back at the top of Simple betting."]],
  ["2.62.0","18 Nov","Open into",["Choose what the app opens into: the game, Nan's Tips or Simple betting. It's at the top of More, and at the bottom of Simple betting.","Your choice is saved to your account, so it follows you to any device you sign in on."]],
  ["2.61.0","18 Nov","Up and down",["Wins and losses now say Up or Down instead of + or −: the tipster leaderboard, Results, My bets, Simple betting, the punters' board and the game."]],
@@ -4123,18 +4125,23 @@ function qDay(){const o={n:0,staked:0,back:0,out:0,wins:0,settled:0};
 function qRaces(){const now=Date.now();return RACES.filter(r=>r.code===QK.code&&(QK.meet==="all"||r.venue===QK.meet)&&Date.parse(r.jump)>now-GRACE).sort((a,b)=>Date.parse(a.jump)-Date.parse(b.jump))}
 function qMeets(){const now=Date.now(),m=new Map();for(const r of RACES){if(r.code!==QK.code)continue;const x=m.get(r.venue)||{venue:r.venue,next:Infinity,n:0};x.n++;const t=Date.parse(r.jump);if(t>now-GRACE&&t<x.next)x.next=t;m.set(r.venue,x)}
   return [...m.values()].sort((a,b)=>a.next-b.next||a.venue.localeCompare(b.venue))}
+// what a tipster's tab says when they haven't tipped the race
+const noTips=w=>({pop:"Pop hasn't picked his tips for this race yet. His computer hasn't rated it.",bob:"Bob hasn't picked his tips for this race yet. Krok hasn't rated it.",gran:"Gran hasn't picked her tips for this race yet. She waits for the bookies to put prices up.",kev:"Kev hasn't picked his tips for this race yet. He hasn't heard anything at the pub. He usually hears closer to the jump.",mob:"The Mob needs at least two tipsters on a race, and this one hasn't got them yet."})[w]||WHO[w]+" hasn't picked tips for this race yet.";
 function qPanel(r){
   const rk=ranked(r);if(!rk)return `<div class="qbody">${raceBody(r)}</div>`; // still loading, or a meeting to load (Nan never spends credits you didn't choose)
   if(r.code==="H")loadForm(r);
-  const ts=tipsters(r),mob=mobOf(r),all=[...ts,...(mob?[mob]:[])],t=all.find(x=>x.who===QK.who)||all[0],f=fieldOf(r)||[],canBet=Date.now()<Date.parse(r.jump);
-  let top=[];try{top=topN(r,t,3)}catch(e){top=[t.pick]}
+  const ts=tipsters(r),mob=mobOf(r),all=[...ts,...(mob?[mob]:[])],f=fieldOf(r)||[],canBet=Date.now()<Date.parse(r.jump);
+  // every tipster keeps a tab, tips or not, so nobody just goes missing from a race
+  const tabs=["nan","pop","bob","gran","kev","mob"].filter(w=>!OFF.has(w)),sel=tabs.includes(QK.who)?QK.who:"nan",t=all.find(x=>x.who===sel)||null;
+  let top=[];if(t)try{top=topN(r,t,3)}catch(e){top=[t.pick]}
   const px=no=>{const u=f.find(x=>x.no===no);return u&&u.est&&u.est<500?div(u.est):"–"};
   return `<div class="qbody">
     <p class="qmeta">${[r.name,r.dist?r.dist+"m":"",r.cls,r.cond||(r.card&&r.card.cond)].filter(Boolean).map(escH).join(" · ")}</p>
-    ${all.length>1?`<div class="qwho" role="group" aria-label="Whose tips">${all.map(x=>`<button data-qwho="${x.who}" aria-pressed="${x.who===t.who}">${WHO[x.who]}</button>`).join("")}</div>`:""}
-    <div class="qtip"><div class="qtip-h">${t.who==="mob"?"The Mob's":WHO[t.who]+"'s"} picks</div>
+    <div class="qwho" role="group" aria-label="Whose tips">${tabs.map(w=>`<button data-qwho="${w}" aria-pressed="${w===sel}"${all.some(x=>x.who===w)?"":' class="none"'}>${WHO[w]}</button>`).join("")}</div>
+    <div class="qtip"><div class="qtip-h">${sel==="mob"?"The Mob's":WHO[sel]+"'s"} picks</div>
+      ${t?"":`<p class="nsays">${escH(noTips(sel))}</p>`}
       ${top.map((p,i)=>`<div class="qpk${i?"":" q1"}">${cloth(p.no,r.code,p.box)}<span class="qpn">${escH(p.name)}<small>${pct(p.p)} chance · ${px(p.no)}</small></span>${canBet?`<button class="betbtn" data-qback="${escH(r.id)}|${p.no}">Back it</button>`:"<span></span>"}</div>`).join("")}
-      ${t.says?`<p class="nsays">${escH(t.says)}</p>`:""}</div>
+      ${t&&t.says?`<p class="nsays">${escH(t.says)}</p>`:""}</div>
     ${canBet?builderHtml(r):`<p class="qmsg">Betting's closed: this race has jumped.</p>`}</div>`}
 function qRow(r,mine){const open=QK.open===r.id,[hm,ap]=timeOf(r.jump).split(" ");
   return `<button class="qrow" data-qopen="${escH(r.id)}" aria-expanded="${open}"><span class="qt">${hm}<small>${ap||""}</small></span>
