@@ -964,7 +964,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.64.0"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.64.1"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -3073,12 +3073,12 @@ for(const k in QUIPS_MORE)QUIPS[k].push(...QUIPS_MORE[k]);
 function renderPlayers(){const el=$("players");if(!el)return;const me=SYNC.name,ps=PB.players;
   const nm=n=>escH(n);
   el.innerHTML=`<h3>Punters' leaderboard</h3>
-    <p class="pl-sub">Ranked by the money in each account, less anything owed to Nan. Everyone starts with $1,000.</p>
+    <p class="pl-sub">Ranked by the money in each account, less anything owed to Nan. Everyone starts with $1,000; new players show once they pick a name.</p>
     ${!me?`<div class="pl-join"><span>${SYNC.code?"Pick a name to get on the board.":"Place a bet to start your account, then pick a name."}</span><button class="ffload" data-gotoname>Pick my name</button></div><p class="pl-sub">Already on the board? <button class="linkbtn" data-gosignin>Sign in</button></p>`:""}
     ${PB.err?`<p class="minus">${PB.err}</p>`:!ps?`<p>Loading…</p>`:!ps.length?`<p>No one's on the board yet. Pick a name and settle a bet to be first.</p>`:(()=>{const mi=me?ps.findIndex(p=>p.name===me):-1;
       return `${mi>=0?`<div class="pl-you"><span>You're <b>${ord(mi+1)}</b> of ${ps.length}</span><b>${money(Math.round(ps[mi].net)).replace(".00","")}</b></div>`:""}
       <div class="pl-list">${(()=>{const Q=boardQuips(ps);return ps.map((p,i)=>{const pc=p.bets?Math.round(p.won/p.bets*100):0;
-        return `<div class="pl-r${i===0?" lead":""}${me&&p.name===me?" me":""}"><span class="pl-k">${i===0?"👑":ord(i+1)}</span><span class="pl-n"><b>${nm(p.name)}</b><small>${pc}% wins · ${p.bets} bet${p.bets===1?"":"s"}${p.owed>0?` · <i>owes Nan ${money(Math.round(p.owed)).replace(".00","")}</i>`:""}</small><em class="pl-q">${escH(Q[i])}</em></span><span class="pl-m">${udH(Math.round(p.net),true)}</span></div>`}).join("")})()}</div>`})()}
+        return `<div class="pl-r${i===0?" lead":""}${me&&p.name===me?" me":""}"><span class="pl-k">${i===0?"👑":ord(i+1)}</span><span class="pl-n"><b>${nm(p.name)}</b><small>${!p.bets?"No bets yet":`${pc}% wins · ${p.bets} bet${p.bets===1?"":"s"}`}${p.owed>0?` · <i>owes Nan ${money(Math.round(p.owed)).replace(".00","")}</i>`:""}</small>${p.bets?`<em class="pl-q">${escH(Q[i])}</em>`:""}</span><span class="pl-m">${udH(Math.round(p.net),true)}</span></div>`}).join("")})()}</div>`})()}
     <p class="calc-out"><small>Updates when bets are placed and results come in. Play money only.</small></p>`}
 async function saveName(){const v=(($("nameIn")||{}).value||"").trim();PB.nameIn=v;
   if(!SYNC.code){PB.msg="Place a bet first to start your account.";return renderBets()}
@@ -3651,6 +3651,7 @@ document.addEventListener("click",e=>{
 });
 /* ---------- What's new: the update history, plus the suggestions box ---------- */
 const CHANGES=[
+ ["2.64.1","19 Nov","Everyone on the punters' board",["Anyone who has picked a name now shows on the punters' board, even before their first bet comes in."]],
  ["2.64.0","18 Nov","Tipsters find every meeting",["Pop, Bob, Gran and Kev now match meetings by the place, whatever each tipping service calls it: sponsors' names, extra words and spacing no longer lose a tipster's tips.","Pop asks his computer for the meeting by its own name for it, from its list of the day's meetings."]],
  ["2.63.1","18 Nov","Every tipster keeps a tab",["In Simple betting, Pop, Bob, Gran and Kev always have a tab on a race. If one hasn't tipped it yet, the tab says so instead of disappearing.","Pop and Bob now tip sponsored meetings like Sportsbet Sandown Lakeside. The sponsor's name was stopping their computers finding the race."]],
  ["2.63.0","18 Nov","Radio in Simple betting",["The live race-call radio is back at the top of Simple betting."]],
