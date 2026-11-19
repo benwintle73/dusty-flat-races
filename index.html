@@ -351,6 +351,21 @@ body.landrace #bigbtn{display:none}
 #acct .big{width:100%;background:var(--tote);color:var(--amber);margin-top:4px}
 #acct .big:disabled{opacity:.55}
 .acct-links{display:flex;justify-content:space-between;gap:8px;margin-top:6px}
+.gb-sub{margin:4px 0 10px;font-size:15px;color:var(--ink2)}
+.gb-msg{margin:6px 0;padding:8px 10px;background:#fff8e6;border-left:4px solid var(--gold,#c8962d);color:var(--ink)}
+.gb-join{display:grid;gap:8px;margin:8px 0;padding:10px;background:#fff8e6;border:1px solid #bda97f;color:var(--ink)}
+.gb-join label,.gb-join span{font-weight:700}
+.gb-in{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px}.gb-in input{min-height:46px;font-size:17px;padding:0 10px;border:2px solid #bda97f;min-width:0;background:#fff;color:var(--ink);border-radius:0}
+.tabs.res3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}.tabs.res3 button{margin:0;padding:0 4px;font-size:15px;letter-spacing:0;text-align:center;justify-content:center;min-height:46px;line-height:1.1}
+.gb-in .big,.gb-join .big{margin:0;min-height:46px;padding:0 18px}
+.gb-you{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:8px 0;padding:8px 10px;background:var(--ink);color:var(--paper);flex-wrap:wrap}
+.gb-you .reset{margin:0;min-height:38px;color:var(--paper);padding:0}
+.gb-list{display:grid;gap:6px;margin:8px 0 12px}
+.gb-r{display:grid;grid-template-columns:38px minmax(0,1fr) auto;gap:10px;align-items:center;background:#fff8e6;border:1px solid #bda97f;color:var(--ink);padding:8px 10px}
+.gb-r.lead{border-color:#c8962d;box-shadow:inset 4px 0 0 #c8962d}.gb-r.me{background:#ffeec2}
+.gb-k{font:700 18px/1 var(--led);text-align:center}.gb-n{min-width:0}.gb-n b{display:block;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gb-n small{display:block;font-size:13px;line-height:1.35;color:var(--ink2)}
+.gb-m{font:700 20px/1 var(--led);white-space:nowrap}
 </style>
 </head>
 <body>
@@ -420,7 +435,7 @@ body.landrace #bigbtn{display:none}
 <script>
 "use strict";
 /* ---------- helpers ---------- */
-const APP_VERSION="2.64.1"; // bump on every release; shown after the title
+const APP_VERSION="2.65.0"; // bump on every release; shown after the title
 const $=id=>document.getElementById(id);
 let RNG=Math.random;
 const mulberry=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
@@ -2499,7 +2514,7 @@ function loadOfficial(date){
   fetch(`${REAL_URL}?results=1${date?"&date="+date:""}`).then(r=>r.json()).then(j=>{if(j.error||!j.meetings)throw 0;OFF.data=j;OFF.date=j.date;if(!j.meetings.some(m=>m.venue===OFF.venue))OFF.venue=(j.meetings.find(m=>m.races.some(r=>r.fin&&r.fin.length))||j.meetings[0]||{}).venue||null})
     .catch(()=>{OFF.err="Official results couldn't load right now. Try again soon."}).finally(()=>{OFF.loading=false;if(resOpen&&resTab==="official")renderCard()});
 }
-const resTabsHtml=()=>`<div class="tabs off-days" role="tablist"><button data-res="tab:mine" aria-pressed="${resTab==="mine"}">My races</button><button data-res="tab:official" aria-pressed="${resTab==="official"}">Official results</button></div>`;
+const resTabsHtml=()=>`<div class="tabs off-days res3" role="tablist"><button data-res="tab:mine" aria-pressed="${resTab==="mine"}">My races</button><button data-res="tab:official" aria-pressed="${resTab==="official"}">Official results</button><button data-res="tab:lb" aria-pressed="${resTab==="lb"}">Leaderboard</button></div>`;
 const posTxt=p=>["1st","2nd","3rd","4th"][p-1]||p+"th";
 function offRaceHtml(r){
   const t=Date.parse(r.t),done=r.fin&&r.fin.length;
@@ -2524,6 +2539,7 @@ function renderOfficial(){
   <button class="reset" data-res="close">Back to the race</button>`;
 }
 function renderResults(){
+  if(resTab==="lb")return renderGBoard();
   if(resTab==="official"&&!resSel)return renderOfficial();
   const c=$("card"),L=RESULTS.list;
   if(resSel){const r=L.find(x=>x.id===resSel);if(r)return renderResultDetail(r);resSel=null}
@@ -2557,7 +2573,10 @@ function renderResultDetail(r){
 $("card").addEventListener("click",e=>{
   const b=e.target.closest("[data-res]");if(!b)return;
   const v=b.dataset.res;
-  if(v.startsWith("tab:")){resTab=v.slice(4);resSel=null;renderCard();return}
+  if(v.startsWith("tab:")){resTab=v.slice(4);resSel=null;if(resTab==="lb")loadGBoard();renderCard();return}
+  if(v==="lbname"){saveGBName();return}
+  if(v==="lbedit"){GB.edit=true;renderCard();const i=$("gbName");if(i)i.focus();return}
+  if(v==="lblogin"){$("acctbtn").click();return}
   if(v.startsWith("day:")){OFF.date=v.slice(4);OFF.data=null;loadOfficial(OFF.date);return}
   if(v.startsWith("meet:")){OFF.venue=v.slice(5);renderCard();return}
   if(v==="offrefresh"){loadOfficial(OFF.date);return}
@@ -2566,6 +2585,37 @@ $("card").addEventListener("click",e=>{
   if(v==="list"){resSel=null;renderCard();$("card").scrollIntoView({block:"start"});return}
   resSel=v;renderCard();$("card").scrollIntoView({block:"start"});
 });
+/* ---------- Leaderboard (v2.65): who has the most money in the game. Logged-in players pick a name; ranked by total money
+   across the four game wallets (Career, Goldfields, Dogs, Harness), each starting at $1,000. Game money only, never Nan's Tips. ---------- */
+const gbUrl=()=>SB_URL+"/functions/v1/otr-gboard"; // SB_URL is declared further down
+const GB={players:null,err:"",busy:false,me:null,meUid:null,msg:"",edit:false,nameIn:""};
+async function loadGBoard(){if(GB.busy)return;GB.busy=true;
+  try{const j=await fetch(gbUrl()+"?board=1").then(r=>r.json());GB.players=j.players||[];GB.err=""}catch(e){GB.err="The leaderboard couldn't load right now. Try again soon."}
+  if(AUTH&&GB.meUid!==AUTH.uid){try{const r=await sbRows(`?user_id=eq.${AUTH.uid}&select=lb_name`);GB.me=(r[0]&&r[0].lb_name)||null;GB.meUid=AUTH.uid}catch(e){}}
+  GB.busy=false;if(resOpen&&resTab==="lb")renderCard()}
+async function saveGBName(){const i=$("gbName"),v=((i&&i.value)||"").trim();GB.nameIn=v;
+  if(!AUTH){GB.msg="Log in first.";return renderCard()}
+  try{if(SYNC.dirty||!SYNC.at)await cloudPush();const t=await token();
+    const j=await fetch(gbUrl()+"?name=1",{method:"POST",headers:{"content-type":"application/json",authorization:"Bearer "+t},body:JSON.stringify({name:v})}).then(r=>r.json());
+    if(j.error){GB.msg=j.error;return renderCard()}
+    GB.me=j.name;GB.meUid=AUTH.uid;GB.edit=false;GB.nameIn="";GB.msg=`You're on the leaderboard as <b>${escH(j.name)}</b>.`;GB.busy=false;loadGBoard()}
+  catch(e){GB.msg="Couldn't reach the server. Try again."}renderCard()}
+function renderGBoard(){const c=$("card"),ps=GB.players,me=AUTH&&GB.meUid===AUTH.uid?GB.me:null;
+  if(!ps&&!GB.busy&&!GB.err)loadGBoard();
+  const ord=n=>n+(["th","st","nd","rd"][(n%100-20)%10]||["th","st","nd","rd"][n%100]||"th");
+  const join=!AUTH?`<div class="gb-join"><span>Log in to get on the leaderboard. Your game money is saved to your account.</span><button class="big place" data-res="lblogin">Log in</button></div>`
+    :(!me||GB.edit)?`<div class="gb-join"><label for="gbName">${me?"Change your leaderboard name":"Pick a name for the leaderboard"}</label><div class="gb-in"><input id="gbName" maxlength="16" autocomplete="nickname" placeholder="3 to 16 letters" value="${escH(GB.nameIn||me||"")}"><button class="big place" data-res="lbname">Save</button></div></div>`:"";
+  const mi=me&&ps?ps.findIndex(p=>p.name===me):-1;
+  c.innerHTML=`<h2>Results</h2>${resTabsHtml()}
+    <p class="gb-sub">Who has the most money in the game. Everyone starts with $1,000 in each of Career, Goldfields, Dogs and Harness. Nan's Tips money doesn't count here.</p>
+    ${GB.msg?`<p class="gb-msg">${GB.msg}</p>`:""}${join}
+    ${mi>=0?`<div class="gb-you"><span>You're <b>${ord(mi+1)}</b> of ${ps.length} as <b>${escH(me)}</b></span><button class="reset" data-res="lbedit">Change name</button></div>`:""}
+    ${GB.err?`<p class="gb-msg">${GB.err}</p>`:!ps?`<p class="gb-sub">Loading the leaderboard…</p>`:!ps.length?`<p class="gb-sub">No one's on the leaderboard yet. Log in and pick a name to be first.</p>`:
+    `<div class="gb-list">${ps.map((p,i)=>`<div class="gb-r${i===0?" lead":""}${p.name===me?" me":""}"><span class="gb-k">${i===0?"👑":ord(i+1)}</span>
+      <span class="gb-n"><b>${escH(p.name)}</b><small>Career ${money(p.career)} (${escH(p.tier)}) · Goldfields ${money(p.gold)} · Dogs ${money(p.dogs)} · Harness ${money(p.harness)}${p.calls?` · ${p.calls} call${p.calls>1?"s":""} to Nan`:""}</small></span>
+      <span class="gb-m">${money(p.total)}</span></div>`).join("")}</div>`}
+    <button class="big place" data-res="tab:lb" ${GB.busy?"disabled":""}>${GB.busy?"Refreshing…":"Refresh"}</button>
+    <button class="reset" data-res="close">Back to the race</button>`}
 function openResults(id){bookOpen=false;resOpen=true;resSel=id||null;renderNav();renderCard();$("card").scrollIntoView({block:"start"})}
 
 /* ---------- race playback ---------- */

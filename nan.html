@@ -964,7 +964,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.64.1"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.65.0"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -3651,6 +3651,7 @@ document.addEventListener("click",e=>{
 });
 /* ---------- What's new: the update history, plus the suggestions box ---------- */
 const CHANGES=[
+ ["2.65.0","19 Nov","Game leaderboard",["Off To The Races has a leaderboard: Results, then Leaderboard. Log in, pick a name, and see who has the most money in the game.","It adds up Career, Goldfields, Dogs and Harness. Nan's Tips money stays separate."]],
  ["2.64.1","19 Nov","Everyone on the punters' board",["Anyone who has picked a name now shows on the punters' board, even before their first bet comes in."]],
  ["2.64.0","18 Nov","Tipsters find every meeting",["Pop, Bob, Gran and Kev now match meetings by the place, whatever each tipping service calls it: sponsors' names, extra words and spacing no longer lose a tipster's tips.","Pop asks his computer for the meeting by its own name for it, from its list of the day's meetings."]],
  ["2.63.1","18 Nov","Every tipster keeps a tab",["In Simple betting, Pop, Bob, Gran and Kev always have a tab on a race. If one hasn't tipped it yet, the tab says so instead of disappearing.","Pop and Bob now tip sponsored meetings like Sportsbet Sandown Lakeside. The sponsor's name was stopping their computers finding the race."]],
