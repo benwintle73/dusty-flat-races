@@ -964,7 +964,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.66.0"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.67.0"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -3651,6 +3651,7 @@ document.addEventListener("click",e=>{
 });
 /* ---------- What's new: the update history, plus the suggestions box ---------- */
 const CHANGES=[
+ ["2.67.0","19 Nov","Dynamic Finance Raceday",["New in the game: the Dynamic Finance Raceday. Nine races with a new card every day, and the Dynamic Finance Cup in race 8.","Every race, horse, jockey and trainer is a money pun, and An Phan rides in every race."]],
  ["2.66.0","19 Nov","One wallet in the game",["Off To The Races now has one $1,000 bank for all the racing: career, Goldfields, Legends Day, dogs, harness, real races and My Book. Run out and Nan lends you $200.","Your old separate banks are added together once, keeping every win and loss.","The Daily $1,000 is gone.","Leaders is its own tab in the game, and everyone logged in is on it automatically."]],
  ["2.65.0","19 Nov","Game leaderboard",["Off To The Races has a leaderboard: Results, then Leaderboard. Log in, pick a name, and see who has the most money in the game.","It adds up Career, Goldfields, Dogs and Harness. Nan's Tips money stays separate."]],
  ["2.64.1","19 Nov","Everyone on the punters' board",["Anyone who has picked a name now shows on the punters' board, even before their first bet comes in."]],
