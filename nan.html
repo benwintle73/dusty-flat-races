@@ -758,7 +758,7 @@ body.qmode{padding-bottom:calc(16px + env(safe-area-inset-bottom))!important}
 .bd-list{display:grid}
 .bd-row{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:10px;align-items:center;width:100%;padding:14px 0;background:none;border:0;border-bottom:1px solid rgba(255,255,255,.22);color:#fff;text-align:left;font:inherit;cursor:pointer}
 .bd-ic{font-size:30px;line-height:1;text-align:center}
-.bd-ic .gh{display:block;width:50px;height:auto;margin:0 -3px}
+.bd-ic .gh{display:block;width:40px;height:auto;margin:0 auto;transform:scaleX(-1)}
 .bd-mid{min-width:0}.bd-t{display:block;font-size:20px;font-weight:700;line-height:1.2;overflow-wrap:anywhere}
 .bd-m{display:block;margin-top:4px;font-size:15px;line-height:1.55;color:rgba(255,255,255,.86)}
 .bd-k{display:inline-block;padding:2px 9px;border-radius:8px;font-size:13px;font-weight:800;letter-spacing:.08em;color:#fff;margin-right:4px;vertical-align:1px}
@@ -986,7 +986,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.69.3"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.69.4"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -2565,7 +2565,7 @@ function bdStatus(p){const o=BD.res[p.id],t=Date.parse(p.jump);
   if(f&&f.pos<=pp)return {t:p.kind==="ew"?`Placed${f.place?" "+bdM(f.place):""}`:`${ord(f.pos)}${f.place?" "+bdM(f.place):""}`,c:"plc",s:1};
   return {t:"Unplaced",c:"off",s:1}}
 const bdM=v=>v==null?"":"$"+(Number(v)%1?Number(v).toFixed(2):Number(v));
-const BD_KIND={win:["WIN","w"],ew:["EACH WAY","e"],tri:["TRIFECTA","t"],rough:["ROUGHIE","r"]},BD_ICON={H:"🏇",N:"🐎",D:`<svg class="gh" viewBox="0 0 100 52" aria-hidden="true"><g fill="#f3ead2" stroke="#f3ead2" stroke-linecap="round" stroke-linejoin="round"> <path d="M30 26 L20 33 L8 38" fill="none" stroke-width="5.2"/><path d="M8 38 L3 40" fill="none" stroke-width="2.6"/> <path d="M34 28 L26 37 L16 44" fill="none" stroke-width="4.6"/><path d="M16 44 L11 46.5" fill="none" stroke-width="2.4"/> <path d="M64 28 L76 33 L88 36" fill="none" stroke-width="4.2"/><path d="M88 36 L94 36.5" fill="none" stroke-width="2.4"/> <path d="M60 29 L70 37 L80 42" fill="none" stroke-width="3.8"/><path d="M80 42 L85 43.5" fill="none" stroke-width="2.2"/> <path d="M24 20 C16 22 9 26 4 31 C3 32 4 33 5 32.5 C10 28 16 24.5 24 23 Z" stroke-width=".6"/> <path stroke-width=".6" d="M22 21 C26 15 33 12.5 41 13.5 C49 14.5 56 16 63 15 C67 14.5 70 14 73 15 C77 16.5 78 21 76 26 C74 30.5 69 33 63 32.5 C58 32 54 28 50 26.5 C46 25.5 42 27 37 29 C31 31 25 29.5 22.5 26 C21.5 24.5 21.5 22.5 22 21 Z"/> <path stroke-width=".6" d="M66 16.5 C70 12 74 8.5 79 6.8 L84 12 C80 14 77.5 17.5 76 22 Z"/> <path stroke-width=".6" d="M77 7.5 C80 4.8 84 4 88 4.8 C92 5.6 95.5 7 98.5 8.4 C99.3 8.9 99 9.9 98 10.1 C94 10.6 90 11 86.5 12.2 C83.5 13.2 80.5 13 78.5 11.5 C77 10.3 76.4 8.8 77 7.5 Z"/> <path stroke-width=".6" d="M80.5 6 C78.5 4.2 76 3.6 73.5 4.4 C75.6 5.2 77.4 6.4 78.6 7.8 Z"/> </g> <circle cx="86.5" cy="7.4" r="1.05" fill="#3a3326"/> <path d="M44 14.2 C49 15 54 15.9 59 15.6 L60.5 27.5 C56 28.5 52 27.2 48.5 26 C46.5 25.4 45 25.6 43.5 26 Z" fill="#d93a32"/> <text x="52" y="24.3" font-family="Arial" font-weight="800" font-size="8" fill="#fff" text-anchor="middle">1</text> </svg>`};
+const BD_KIND={win:["WIN","w"],ew:["EACH WAY","e"],tri:["TRIFECTA","t"],rough:["ROUGHIE","r"]},BD_ICON={H:"🏇",N:"🐎",D:`<svg class="gh" viewBox="0 0 100 52" aria-hidden="true"><g fill="#f3ead2" stroke="#f3ead2" stroke-linecap="round" stroke-linejoin="round"> <path d="M30 26 L20 33 L8 38" fill="none" stroke-width="5.2"/><path d="M8 38 L3 40" fill="none" stroke-width="2.6"/> <path d="M34 28 L26 37 L16 44" fill="none" stroke-width="4.6"/><path d="M16 44 L11 46.5" fill="none" stroke-width="2.4"/> <path d="M64 28 L76 33 L88 36" fill="none" stroke-width="4.2"/><path d="M88 36 L94 36.5" fill="none" stroke-width="2.4"/> <path d="M60 29 L70 37 L80 42" fill="none" stroke-width="3.8"/><path d="M80 42 L85 43.5" fill="none" stroke-width="2.2"/> <path d="M24 20 C16 22 9 26 4 31 C3 32 4 33 5 32.5 C10 28 16 24.5 24 23 Z" stroke-width=".6"/> <path stroke-width=".6" d="M22 21 C26 15 33 12.5 41 13.5 C49 14.5 56 16 63 15 C67 14.5 70 14 73 15 C77 16.5 78 21 76 26 C74 30.5 69 33 63 32.5 C58 32 54 28 50 26.5 C46 25.5 42 27 37 29 C31 31 25 29.5 22.5 26 C21.5 24.5 21.5 22.5 22 21 Z"/> <path stroke-width=".6" d="M66 16.5 C70 12 74 8.5 79 6.8 L84 12 C80 14 77.5 17.5 76 22 Z"/> <path stroke-width=".6" d="M77 7.5 C80 4.8 84 4 88 4.8 C92 5.6 95.5 7 98.5 8.4 C99.3 8.9 99 9.9 98 10.1 C94 10.6 90 11 86.5 12.2 C83.5 13.2 80.5 13 78.5 11.5 C77 10.3 76.4 8.8 77 7.5 Z"/> <path stroke-width=".6" d="M80.5 6 C78.5 4.2 76 3.6 73.5 4.4 C75.6 5.2 77.4 6.4 78.6 7.8 Z"/> </g> <circle cx="86.5" cy="7.4" r="1.05" fill="#3a3326"/> <path d="M44 14.2 C49 15 54 15.9 59 15.6 L60.5 27.5 C56 28.5 52 27.2 48.5 26 C46.5 25.4 45 25.6 43.5 26 Z" fill="#d93a32"/> <text transform="matrix(-1 0 0 1 104 0)" x="52" y="24.3" font-family="Arial" font-weight="800" font-size="8" fill="#fff" text-anchor="middle">1</text> </svg>`};
 function bdRow(p){const s=bdStatus(p),[lab,k]=BD_KIND[p.kind],u=p.sel[0],tm=timeOf(p.jump).replace(" ","").toLowerCase();
   const title=p.kind==="tri"?`${p.sel.map(x=>x.no??"?").join(" · ")} boxed`:`${u.no!=null?u.no+". ":""}${escH(u.name)}`;
   const tail=p.kind==="win"?`${pct(p.p)} win chance`:p.kind==="ew"?(p.price?`${bdM(p.price)} each way`:"each way"):p.kind==="rough"?(p.price?bdM(p.price):""):p.sel.map(x=>escH(x.name)).join(", ");
@@ -3741,6 +3741,7 @@ document.addEventListener("click",e=>{
 });
 /* ---------- What's new: the update history, plus the suggestions box ---------- */
 const CHANGES=[
+ ["2.69.4","22 Nov","Greyhound tidy-up",["The Best Bets greyhound is now the same size as the horse and faces the same way."]],
  ["2.69.3","22 Nov","New greyhound",["A sleeker racing greyhound for the dogs in Best Bets."]],
  ["2.69.1","22 Nov","Greyhound icon",["Best Bets shows a racing greyhound for the dogs instead of a pet dog."]],
  ["2.69.0","22 Nov","Best Bets page",["Best Bets has moved to a page of its own: tap Today's Best Bets at the top of Tips, or Best Bets in More. You can add it to your home screen as its own app.","Flick back through the last week of Best Bets and how they went."]],
