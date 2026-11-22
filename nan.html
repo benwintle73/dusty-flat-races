@@ -747,6 +747,7 @@ body.qmode{padding-bottom:calc(16px + env(safe-area-inset-bottom))!important}
 .mm-home .hm-b button{min-height:44px;padding:0 4px;background:#3b3120;color:var(--paper);border:0;border-radius:6px;font-weight:700;font-size:14px;line-height:1.1;cursor:pointer}
 .mm-home .hm-b button[aria-pressed=true]{background:var(--amber);color:var(--tote)}
 .qhome{margin-top:4px}
+.bd-link{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:0 0 12px;padding:14px 18px;border-radius:22px;text-decoration:none;color:#fff;font-family:"Avenir Next","Nunito",system-ui,sans-serif;font-weight:600;font-size:17px;letter-spacing:.04em;background:linear-gradient(180deg,#8f99a3,#5f5b50);border:2px solid rgba(255,255,255,.22)}.bd-link b{color:#f1e3b6}
 .bd{margin:0 0 14px;padding:20px 22px 18px;border-radius:30px;border:2px solid rgba(255,255,255,.22);color:#fff;
   background:linear-gradient(180deg,rgba(150,158,166,.92) 0%,rgba(122,124,124,.92) 45%,rgba(84,78,66,.95) 100%);box-shadow:0 10px 30px rgba(0,0,0,.35);
   font-family:"Avenir Next","Nunito","Segoe UI",system-ui,-apple-system,sans-serif;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
@@ -789,6 +790,7 @@ body.qmode{padding-bottom:calc(16px + env(safe-area-inset-bottom))!important}
   </nav>
   <div class="moremenu" id="moreMenu" hidden><div class="mm-in" role="menu" aria-label="More">
     <div class="mm-home" id="homePick"></div>
+    <a href="best.html" role="menuitem" class="mm-a"><b>Best Bets</b><small>Today's standout bets, on a page of their own</small></a>
     <button data-view="quick" role="menuitem"><b>Simple betting</b><small>Just your balance, today's races and your bets</small></button>
     <button data-view="record" role="menuitem"><b>Tipsters</b><small>Leaderboard and Nan's record</small></button>
     <button data-view="champ" role="menuitem"><b>Championship</b><small>Family tipping comp v Nan and co.</small></button>
@@ -983,7 +985,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.68.0"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.69.0"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -2615,9 +2617,9 @@ function render(){
     $("hl").innerHTML=mine.length?box(mine[0],`${WHO[w]}'s Best Bet`)+(mine[1]?box(mine[1],`${WHO[w]}'s Next Best`):"")+(val&&val!==mine[0]&&val!==mine[1]?box(val,`${WHO[w]}'s Value Bet`,val.pr):"")
       :`<div class="hl">${w==="mob"?"The Mob":WHO[w]} hasn't tipped any of the races still to run yet.${w==="gran"?" Gran only tips once the bookies have prices up.":w==="kev"?" Kev only tips once the word&rsquo;s gone round, usually closer to the jump.":""}</div>`}
   else if(ST.who==="nan"){const BB=bestBets(RACES).picks,dup=(r,no)=>BB.some(y=>y.x.r.id===r.id&&+y.x.u.no===+no);
-    $("hl").innerHTML=dailyBestHtml()+(best&&dup(best.r,best.rk[0].u.no)?"":bestC)+(rough&&dup(rough.x.r,rough.y.u.no)?"":roughC)}
-  else $("hl").innerHTML=dailyBestHtml();
-  bdTick();
+    $("hl").innerHTML=`<a class="bd-link" href="best.html"><span>☆ Today's Best Bets</span><b>Open ›</b></a>`+(best&&dup(best.r,best.rk[0].u.no)?"":bestC)+(rough&&dup(rough.x.r,rough.y.u.no)?"":roughC)}
+  else $("hl").innerHTML=`<a class="bd-link" href="best.html"><span>☆ Today's Best Bets</span><b>Open ›</b></a>`;
+  if(BD.date)bdTick();else bdLoad(); // Best Bets has its own page (best.html); Nan's Tips still locks them in
   {const nm=$("hlnums"),was=nm.querySelector("details.nums2"),op=was&&was.open;nm.innerHTML=$("hl").innerHTML?NUMS_HTML:"";if(op&&nm.firstChild)nm.firstChild.open=true}
   const waiting=RACES.filter(r=>r.code!=="H"&&!CARDS[r.code+r.slug]&&wanted(r)).length;
   if(waiting&&!$("status").textContent.startsWith("Nan couldn't"))$("status").textContent=`Nan is still reading the form for ${waiting} race${waiting>1?"s":""}…`;
@@ -3738,6 +3740,7 @@ document.addEventListener("click",e=>{
 });
 /* ---------- What's new: the update history, plus the suggestions box ---------- */
 const CHANGES=[
+ ["2.69.0","22 Nov","Best Bets page",["Best Bets has moved to a page of its own: tap Today's Best Bets at the top of Tips, or Best Bets in More. You can add it to your home screen as its own app.","Flick back through the last week of Best Bets and how they went."]],
  ["2.68.0","22 Nov","Best Bets of the day",["New Best Bets panel at the top of Today's tips: the standout bets for the whole day, any number, any bet type (Win, Each way, Trifecta, Roughie).","Each race gets a look about 90 minutes before it jumps; a bet only goes in if it really stands out, and once in it's locked, the same for everyone.","Each bet shows its official result: Won, placed or Unplaced, with the dividend."]],
  ["2.67.0","19 Nov","Dynamic Finance Raceday",["New in the game: the Dynamic Finance Raceday. Nine races with a new card every day, and the Dynamic Finance Cup in race 8.","Every race, horse, jockey and trainer is a money pun, and An Phan rides in every race."]],
  ["2.66.0","19 Nov","One wallet in the game",["Off To The Races now has one $1,000 bank for all the racing: career, Goldfields, Legends Day, dogs, harness, real races and My Book. Run out and Nan lends you $200.","Your old separate banks are added together once, keeping every win and loss.","The Daily $1,000 is gone.","Leaders is its own tab in the game, and everyone logged in is on it automatically."]],

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="manifest" href="best.webmanifest">
+<meta name="theme-color" content="#5d6168">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Best Bets">
+<title>Best Bets · Nan's Tips</title>
+<style>
+/* Best Bets: a page of its own. The bets are picked and locked by Nan's Tips (see dailyBest in nan.html, server otr-best);
+   this page only shows them and marks them from the official results. */
+*{box-sizing:border-box}
+html{margin:0;min-height:100%;background:#4a4335}body{margin:0}
+body{min-height:100vh;color:#fff;font-family:"Avenir Next","Nunito","Segoe UI",system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased;
+  background:linear-gradient(180deg,#8f99a3 0px,#7f868b 500px,#6b6a63 1000px,#4a4335 1500px) #4a4335;
+  padding:calc(18px + env(safe-area-inset-top)) 16px calc(28px + env(safe-area-inset-bottom))}
+.wrap{max-width:560px;margin:0 auto;display:grid;gap:14px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 6px}
+.top a{color:#f6efd8;text-decoration:none;font-weight:600;font-size:16px}
+.ver{font-size:13px;color:rgba(255,255,255,.7)}
+.bd{padding:20px 22px 18px;border-radius:30px;border:2px solid rgba(255,255,255,.22);
+  background:linear-gradient(180deg,rgba(150,158,166,.75) 0%,rgba(122,124,124,.75) 45%,rgba(84,78,66,.85) 100%);box-shadow:0 10px 30px rgba(0,0,0,.3);
+  -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+.bd-h{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.bd-hd{font-weight:600;font-size:17px;letter-spacing:.16em;color:#f1e3b6;display:flex;align-items:center;gap:10px}.bd-star{font-size:20px;letter-spacing:0}
+.bd-ref{width:46px;height:46px;border-radius:50%;border:0;background:rgba(255,255,255,.16);color:#f1e3b6;font-size:24px;font-weight:700;cursor:pointer;line-height:1}
+.bd-ref[disabled]{opacity:.5}
+.days{display:grid;grid-template-columns:46px minmax(0,1fr) 46px;align-items:center;gap:8px;margin:8px 0 10px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,.22)}
+.days button{width:46px;height:40px;border-radius:14px;border:0;background:rgba(255,255,255,.14);color:#f6efd8;font-size:22px;cursor:pointer}
+.days button[disabled]{opacity:.3}
+.bd-sub{margin:0;font-size:16px;font-weight:600;color:#f6efd8;text-align:center}
+.bd-row{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:10px;align-items:center;width:100%;padding:14px 0;border-bottom:1px solid rgba(255,255,255,.22);color:#fff;text-decoration:none}
+.bd-row:last-child{border-bottom:0}
+.bd-ic{font-size:30px;line-height:1;text-align:center}
+.bd-mid{min-width:0}.bd-t{display:block;font-size:20px;font-weight:700;line-height:1.2;overflow-wrap:anywhere}
+.bd-m{display:block;margin-top:4px;font-size:15px;line-height:1.55;color:rgba(255,255,255,.86)}
+.bd-k{display:inline-block;padding:2px 9px;border-radius:8px;font-size:13px;font-weight:800;letter-spacing:.08em;color:#fff;margin-right:4px;vertical-align:1px}
+.bd-k.w{background:#3b82f6}.bd-k.e{background:#8b5cf6}.bd-k.t{background:#14b8a6}.bd-k.r{background:linear-gradient(90deg,#f97316,#ef4444)}
+.bd-s{padding:8px 14px;border-radius:999px;font-size:15px;font-weight:700;white-space:nowrap;background:rgba(70,70,70,.6);color:#fff}
+.bd-s.run{background:rgba(255,255,255,.18)}.bd-s.won{background:#22c55e}.bd-s.plc{background:#fbbf24;color:#3a2a00}
+.bd-empty{margin:4px 0 8px;font-size:15px;line-height:1.5;color:rgba(255,255,255,.88)}
+.bd-foot{margin:14px 0 0;padding-top:12px;border-top:1px solid rgba(255,255,255,.22);font-size:15px;line-height:1.5;color:rgba(255,255,255,.88)}
+.bd-foot a{color:#fff;font-weight:700;text-decoration:none;display:inline-block;margin-top:8px}
+.how{padding:16px 20px;border-radius:24px;background:rgba(0,0,0,.18);font-size:14px;line-height:1.55;color:rgba(255,255,255,.85)}
+.how summary{cursor:pointer;font-weight:700;color:#f1e3b6;letter-spacing:.06em}
+.how p{margin:8px 0 0}
+.note{font-size:13px;text-align:center;color:rgba(255,255,255,.7);margin:0}
+.note a{color:#fff}
+@media (max-width:380px){body{padding-left:10px;padding-right:10px}.bd{padding:18px 16px}.bd-t{font-size:18px}.bd-s{padding:7px 10px;font-size:14px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><a href="nan.html">‹ Nan's Tips</a><span class="ver" id="ver"></span></div>
+  <section class="bd" aria-label="Best Bets">
+    <div class="bd-h"><span class="bd-hd"><span class="bd-star" aria-hidden="true">☆</span>BEST BETS</span><button class="bd-ref" id="ref" aria-label="Refresh">↻</button></div>
+    <div class="days"><button id="prev" aria-label="Previous day">‹</button><p class="bd-sub" id="sub">Daily tips</p><button id="next" aria-label="Next day">›</button></div>
+    <div id="list"><p class="bd-empty">Loading…</p></div>
+    <p class="bd-foot" id="foot"></p>
+  </section>
+  <details class="how"><summary>HOW BEST BETS ARE PICKED</summary>
+    <p>Nan's Tips looks at every race about 90 minutes before it jumps, using all the tipsters and The Mob (everyone's chances blended). A bet only goes in when one really stands out, so some days there are a few and some days plenty. One bet a race, and once it's in it's locked, the same for everyone.</p>
+    <p><b>Win</b>: The Mob's top pick at 40% or better, most of the tipsters agree, at $4.50 or shorter.<br><b>Each way</b>: a strong chance (28%+) at $4 to $15, or a value runner at $4 to $8.<br><b>Roughie</b>: $8 or longer, where the form models rate it well above its price.<br><b>Trifecta</b>: seven or more runners and the top three well clear of the rest, boxed.</p>
+    <p>Results come from the official results. A guide only.</p></details>
+  <p class="note">For fun only. 18+. Play money only, no real bets. If gambling stops being fun, call Gambling Help on <a href="tel:1800858858">1800 858 858</a>.</p>
+</div>
+<script>
+const BEST_VERSION="2.69.0";
+const SB="https://nkkhbtrrytctpfwjenrz.supabase.co/functions/v1",$=id=>document.getElementById(id);
+const today=()=>new Intl.DateTimeFormat("en-CA",{timeZone:"Australia/Sydney"}).format(new Date());
+const addDays=(d,n)=>new Intl.DateTimeFormat("en-CA",{timeZone:"Australia/Sydney"}).format(new Date(Date.parse(d+"T02:00:00Z")+n*864e5));
+const nkey=v=>String(v||"").toLowerCase().replace(/[^a-z0-9]/g,"");
+const escH=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const pct=p=>p>=.995?"99%":p<.01?"<1%":Math.round(p*100)+"%";
+const ord=n=>n+(["th","st","nd","rd"][(n%100-20)%10]||["th","st","nd","rd"][n%100]||"th");
+const bdM=v=>v==null?"":"$"+(Number(v)%1?Number(v).toFixed(2):Number(v));
+const timeOf=iso=>new Date(iso).toLocaleTimeString("en-AU",{hour:"numeric",minute:"2-digit"}).replace(/\s?([ap])\.?m\.?/i,(m,a)=>a.toLowerCase()+"m");
+const VSTOP=new Set(["sportsbet","ladbrokes","tab","tabtouch","bet","picklebet","neds","pointsbet","betr","unibet","palmerbet","bluebet","topsport","playup","betfair","racing","raceway","paceway","racecourse","the","at"]);
+const vwords=v=>String(v||"").toLowerCase().replace(/[^a-z]+/g," ").trim().split(" ").filter(w=>w&&!VSTOP.has(w));
+const sameVenue=(a,b)=>{const x=vwords(a),y=vwords(b);if(!x.length||!y.length)return false;const X=new Set(x),Y=new Set(y);return x.every(w=>Y.has(w))||y.every(w=>X.has(w))||x.join("")===y.join("")};
+const ST={date:today(),picks:[],res:{},busy:false};
+async function getJSON(u){const r=await fetch(u,{cache:"no-store"});const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
+async function load(){if(ST.busy)return;ST.busy=true;$("ref").disabled=true;paint();
+  try{const j=await getJSON(`${SB}/otr-best?date=${ST.date}`);ST.picks=j.picks||[]}catch(e){ST.err=true}
+  paint();await results();ST.busy=false;$("ref").disabled=false;paint()}
+async function results(){const due=ST.picks.filter(p=>Date.now()>Date.parse(p.jump)+3*60e3&&!ST.res[p.id]);
+  for(const c of [...new Set(due.map(p=>p.code))]){try{const j=await getJSON(`${SB}/otr-nan?official=1&code=${c}&date=${ST.date}`);
+    for(const p of due.filter(p=>p.code===c)){const names=new Set(p.sel.map(u=>nkey(u.name)));
+      const ab=(j.races||[]).find(x=>+x.n===+p.no&&/abandon/i.test(x.st||"")&&sameVenue(x.venue,p.venue));if(ab){ST.res[p.id]={aband:true,fin:[]};continue}
+      const m=(j.races||[]).filter(x=>+x.n===+p.no&&(x.fin||[]).length&&sameVenue(x.venue,p.venue)).sort((a,b)=>b.fin.filter(u=>names.has(nkey(u.name))).length-a.fin.filter(u=>names.has(nkey(u.name))).length)[0];
+      if(m)ST.res[p.id]={fin:m.fin,exo:m.exo||{},pp:m.pp,scr:m.scr||[]}}}catch(e){}}}
+function status(p){const o=ST.res[p.id],t=Date.parse(p.jump);
+  if(Date.now()<t)return {t:"To run",c:"run"};
+  if(!o)return {t:Date.now()<t+20*60e3?"Running":"Awaiting result",c:"run"};
+  if(o.aband)return {t:"Abandoned",c:"off"};
+  const gone=u=>(o.scr||[]).some(s=>s.name?nkey(s.name)===nkey(u.name):+s.no===+u.no),at=u=>(o.fin||[]).find(f=>nkey(f.name)===nkey(u.name)),pp=o.pp||3;
+  if(p.kind==="tri"){if(p.sel.some(gone))return {t:"Scratched",c:"off"};const n=p.sel.filter(u=>{const f=at(u);return f&&f.pos<=3}).length,dv=o.exo&&(o.exo.trifecta||o.exo.Trifecta);
+    return n===3?{t:`Won${dv?" "+bdM(dv):""}`,c:"won",w:1}:n?{t:`${n} of 3 placed`,c:"off",s:1}:{t:"Unplaced",c:"off",s:1}}
+  const u=p.sel[0];if(gone(u))return {t:"Scratched",c:"off"};const f=at(u);
+  if(f&&f.pos===1)return {t:`Won${f.win?" "+bdM(f.win):""}`,c:"won",w:1};
+  if(f&&f.pos<=pp)return {t:p.kind==="ew"?`Placed${f.place?" "+bdM(f.place):""}`:`${ord(f.pos)}${f.place?" "+bdM(f.place):""}`,c:"plc",s:1};
+  return {t:"Unplaced",c:"off",s:1}}
+const KIND={win:["WIN","w"],ew:["EACH WAY","e"],tri:["TRIFECTA","t"],rough:["ROUGHIE","r"]},ICON={H:"🏇",N:"🐎",D:"🐕"};
+function row(p){const s=status(p),[lab,k]=KIND[p.kind]||["BET","w"],u=p.sel[0];
+  const title=p.kind==="tri"?`${p.sel.map(x=>x.no??"?").join(" · ")} boxed`:`${u.no!=null?u.no+". ":""}${escH(u.name)}`;
+  const tail=p.kind==="win"?`${pct(p.p)} win chance`:p.kind==="ew"?(p.price?`${bdM(p.price)} each way`:"each way"):p.kind==="rough"?(p.price?bdM(p.price):""):p.sel.map(x=>escH(x.name)).join(", ");
+  return `<a class="bd-row" href="nan.html"><span class="bd-ic" aria-hidden="true">${ICON[p.code]||"🏇"}</span>
+    <span class="bd-mid"><b class="bd-t">${title}</b><span class="bd-m"><span class="bd-k ${k}">${lab}</span> ${timeOf(p.jump)} · ${escH(p.venue)} R${p.no}${tail?" · "+tail:""}</span></span>
+    <span class="bd-s ${s.c}">${s.t}</span></a>`}
+function paint(){const d=ST.date,t=today(),dt=new Date(d+"T12:00:00");
+  $("sub").textContent=`${d===t?"Daily tips":"Tips"} · ${dt.toLocaleDateString("en-AU",{weekday:"long"})} ${dt.getDate()} ${dt.toLocaleDateString("en-AU",{month:"long"})}`;
+  $("next").disabled=d>=t;$("prev").disabled=d<=addDays(t,-6);
+  const ps=ST.picks,ss=ps.map(status),won=ss.filter(s=>s.w).length,done=ss.filter(s=>s.w||s.s).length;
+  $("list").innerHTML=ps.length?ps.map(row).join(""):`<p class="bd-empty">${ST.busy?"Loading…":ST.err?"Best Bets couldn't load. Tap refresh to try again.":d===t?"No standout bets yet today. Each race gets a look about 90 minutes before it jumps, and only the best make it.":"No Best Bets that day."}</p>`;
+  $("foot").innerHTML=`${done?`${won} of ${done} won so far`:ps.length?"None run yet":""}${d===t?`${ps.length||done?" · ":""}more lock in as races get close`:""}<br><a href="nan.html">Open Nan's Tips ›</a>`;
+  $("ver").textContent="v"+BEST_VERSION}
+$("ref").onclick=()=>{ST.res={};load()};
+$("prev").onclick=()=>{ST.date=addDays(ST.date,-1);ST.picks=[];ST.res={};ST.err=false;load()};
+$("next").onclick=()=>{if(ST.date<today()){ST.date=addDays(ST.date,1);ST.picks=[];ST.res={};ST.err=false;load()}};
+setInterval(()=>{if(document.visibilityState==="visible"&&ST.date===today())load()},60e3);
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"){if(ST.date<today()&&!ST.picks.length)ST.date=today();load()}});
+load();
+</script>
+</body>
+</html>
