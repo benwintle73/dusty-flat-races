@@ -747,6 +747,25 @@ body.qmode{padding-bottom:calc(16px + env(safe-area-inset-bottom))!important}
 .mm-home .hm-b button{min-height:44px;padding:0 4px;background:#3b3120;color:var(--paper);border:0;border-radius:6px;font-weight:700;font-size:14px;line-height:1.1;cursor:pointer}
 .mm-home .hm-b button[aria-pressed=true]{background:var(--amber);color:var(--tote)}
 .qhome{margin-top:4px}
+.bd{margin:0 0 14px;padding:20px 22px 18px;border-radius:30px;border:2px solid rgba(255,255,255,.22);color:#fff;
+  background:linear-gradient(180deg,rgba(150,158,166,.92) 0%,rgba(122,124,124,.92) 45%,rgba(84,78,66,.95) 100%);box-shadow:0 10px 30px rgba(0,0,0,.35);
+  font-family:"Avenir Next","Nunito","Segoe UI",system-ui,-apple-system,sans-serif;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+.bd-h{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.bd-hd{font-weight:600;font-size:17px;letter-spacing:.16em;color:#f1e3b6;display:flex;align-items:center;gap:10px}.bd-star{font-size:20px;letter-spacing:0}
+.bd-ref{width:46px;height:46px;border-radius:50%;border:0;background:rgba(255,255,255,.16);color:#f1e3b6;font-size:24px;font-weight:700;cursor:pointer;line-height:1}
+.bd-sub{margin:6px 0 10px;font-size:16px;font-weight:600;color:#f6efd8;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,.22)}
+.bd-list{display:grid}
+.bd-row{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:10px;align-items:center;width:100%;padding:14px 0;background:none;border:0;border-bottom:1px solid rgba(255,255,255,.22);color:#fff;text-align:left;font:inherit;cursor:pointer}
+.bd-ic{font-size:30px;line-height:1;text-align:center}
+.bd-mid{min-width:0}.bd-t{display:block;font-size:20px;font-weight:700;line-height:1.2;overflow-wrap:anywhere}
+.bd-m{display:block;margin-top:4px;font-size:15px;line-height:1.55;color:rgba(255,255,255,.86)}
+.bd-k{display:inline-block;padding:2px 9px;border-radius:8px;font-size:13px;font-weight:800;letter-spacing:.08em;color:#fff;margin-right:4px;vertical-align:1px}
+.bd-k.w{background:#3b82f6}.bd-k.e{background:#8b5cf6}.bd-k.t{background:#14b8a6}.bd-k.r{background:linear-gradient(90deg,#f97316,#ef4444)}
+.bd-s{padding:8px 14px;border-radius:999px;font-size:15px;font-weight:700;white-space:nowrap;background:rgba(80,80,80,.55);color:#fff}
+.bd-s.run{background:rgba(255,255,255,.18)}.bd-s.won{background:#22c55e}.bd-s.plc{background:#fbbf24;color:#3a2a00}.bd-s.off{background:rgba(70,70,70,.6)}
+.bd-empty{margin:4px 0 8px;font-size:15px;color:rgba(255,255,255,.88)}
+.bd-foot{margin:14px 0 0;font-size:15px;color:rgba(255,255,255,.88)}
+@media (max-width:380px){.bd{padding:18px 16px}.bd-t{font-size:18px}.bd-s{padding:7px 10px;font-size:14px}}
 </style>
 </head>
 <body>
@@ -964,7 +983,7 @@ function horseBreak(race){
 
 /* ---------- data ---------- */
 const ST={code:"all",meet:"all",past:false,today:null,who:"all"};
-const NAN_VERSION="2.67.0"; // same as the game's APP_VERSION; bump on every release
+const NAN_VERSION="2.68.0"; // same as the game's APP_VERSION; bump on every release
 let RACES=[],RESULTS={},FOLLOW={D:[],N:[]},ALLOW=null,CREDITS=null;const QUICK={D:null,N:null}; /* QUICK: PuntersEdge quick form, the backup when FormFav's form isn't loaded */const WANT=new Set(); /* WANT: meetings asked for on this visit */const CARDS={},FORM={},BUSY={},LIMIT={}; // LIMIT: meetings cut short by FormFav's daily allowance, asked again after 10 minutes
 function addRace(r){if(!RACES.some(x=>x.id===r.id))RACES.push(r)}
 async function getJSON(u){const r=await fetch(u);const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
@@ -2494,6 +2513,73 @@ function bestBetsHtml(){const B=bestBets(RACES);
   return `<div class="bbx"><h3>Best Bets of the day</h3><p class="bbsub">The strongest picks in races still to run. Tap a card to open its race and put in your Championship tip.${B.noValue?" No clear value selection identified right now.":""}</p>${B.picks.map(bbCard).join("")}</div>`}
 document.addEventListener("click",e=>{const g=e.target.closest("[data-bbgo]");if(g){e.preventDefault();openInTips(g.dataset.bbgo);return}
   const c=e.target.closest("[data-bbopen]");if(!c||e.target.closest("[data-hlbet],details.bbwhy"))return;openInTips(c.dataset.bbopen)});
+/* ---------- Best Bets of the day (v2.68): the standout bets for the whole day, any number, any bet type, locked so everyone
+   sees the same list, and marked with the official result. Each race is checked from about 90 minutes before the jump (when the
+   tipsters' ratings are in); a bet is locked only if it clears the bar below, and once locked it never changes.
+     Win      The Mob's top pick at 40%+, with 60%+ of the independent views having it on top, at $4.50 or shorter.
+     Roughie  A value runner (the models' own chance beats the market by 20%+, see Best Bets above) at $8 or longer.
+     Each way The Mob's top pick at 28%+ at $4 to $15 with half the views agreeing, or a value runner at $4 to $8.
+     Trifecta Seven or more runners, The Mob's top three at 72%+ between them and nothing else above 9%: boxed.
+   One bet a race, in that order. Built on bbRace (Best Bets scoring), so the same tipster rules apply. ---------- */
+const BD_URL=SB+"/otr-best",BD_LEAD=90*60e3;
+const BD={date:null,picks:[],res:{},posted:new Set(),loading:false,resAt:{},at:0};
+function bdPick(r){let xs;try{xs=bbRace(r)}catch(e){return null}if(!xs||!xs.length)return null;
+  const top=xs.find(x=>x.isTop),val=xs.filter(x=>x.value).sort((a,b)=>b.edge-a.edge)[0],why=x=>`The Mob ${pct(x.p)} · ${x.onTop.length} of ${x.groups.length} agree`;
+  const one=(kind,x)=>({id:r.id,code:r.code,venue:r.venue,no:r.no,jump:r.jump,kind,sel:[{no:x.u.no,name:x.u.name}],price:x.mk||null,p:x.p,why:why(x)});
+  if(top&&top.p>=.40&&top.a>=.6&&top.mk&&top.mk<=4.5)return one("win",top);
+  if(val&&val.mk>=8)return one("rough",val);
+  if(top&&top.p>=.28&&top.a>=.5&&top.mk>=4&&top.mk<=15)return one("ew",top);
+  if(val&&val.mk>=4)return one("ew",val);
+  const pn=panelOf(r),rk=ranked(r);if(!pn||!rk)return null;
+  const scr=new Set((r.scr||[]).map(x=>nkey(x.name))),field=rk.map(x=>x.u).filter(u=>!scr.has(nkey(u.name)));if(field.length<7)return null;
+  const o=field.map(u=>({u,c:pn.chance.get(nkey(u.name))||0})).sort((a,b)=>b.c-a.c);
+  if(o[0].c+o[1].c+o[2].c>=.72&&o[3].c<=.09)return {id:r.id,code:r.code,venue:r.venue,no:r.no,jump:r.jump,kind:"tri",sel:o.slice(0,3).map(x=>({no:x.u.no,name:x.u.name})),price:null,p:o[0].c+o[1].c+o[2].c,why:`The Mob's top three, ${pct(o[0].c+o[1].c+o[2].c)} between them`};
+  return null}
+async function bdLoad(force){const d=ST.today||REC_TODAY();if(BD.loading||(!force&&BD.date===d&&Date.now()-BD.at<120e3))return;BD.loading=true;
+  try{const j=await getJSONT(`${BD_URL}?date=${d}`,15e3);if(BD.date!==d){BD.res={};BD.posted=new Set()}BD.date=d;BD.picks=j.picks||[];BD.at=Date.now()}catch(e){}
+  BD.loading=false;bdTick();await bdResults(force);bdPaint()}
+// lock any race in its window that has a standout bet
+async function bdTick(){const d=ST.today||REC_TODAY();if(BD.date!==d)return;const now=Date.now(),have=new Set(BD.picks.map(p=>p.id)),add=[];
+  for(const r of RACES){const t=Date.parse(r.jump);if(t-now>BD_LEAD||t-now<2*60e3||have.has(r.id)||BD.posted.has(r.id))continue;const p=bdPick(r);if(p)add.push(p)}
+  if(!add.length)return;add.forEach(p=>BD.posted.add(p.id));
+  try{const j=await fetch(BD_URL,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({date:d,picks:add})}).then(x=>x.json());if(j.picks){BD.picks=j.picks;BD.at=Date.now();bdPaint()}}catch(e){add.forEach(p=>BD.posted.delete(p.id))}}
+async function bdResults(force){const d=BD.date;if(!d)return;const due=BD.picks.filter(p=>Date.now()>Date.parse(p.jump)+3*60e3&&!(BD.res[p.id]&&(BD.res[p.id].aband||/final|paying|official|closed/i.test(BD.res[p.id].st||""))));
+  const codes=[...new Set(due.map(p=>p.code))].filter(c=>force||!BD.resAt[c]||Date.now()-BD.resAt[c]>150e3);
+  for(const c of codes){BD.resAt[c]=Date.now();try{const j=await getJSON(`${SB}/otr-nan?official=1&code=${c}&date=${d}`);
+    for(const p of due.filter(p=>p.code===c)){const names=new Set(p.sel.map(u=>nkey(u.name)));
+      const ab=(j.races||[]).find(x=>+x.n===+p.no&&/abandon/i.test(x.st||"")&&sameVenue(x.venue,p.venue));if(ab){BD.res[p.id]={aband:true,fin:[]};continue}
+      const m=(j.races||[]).filter(x=>+x.n===+p.no&&(x.fin||[]).length&&sameVenue(x.venue,p.venue)).sort((a,b)=>b.fin.filter(u=>names.has(nkey(u.name))).length-a.fin.filter(u=>names.has(nkey(u.name))).length)[0];
+      if(m)BD.res[p.id]={fin:m.fin,exo:m.exo||{},pp:m.pp,scr:m.scr||[],st:m.st||"final"}}}catch(e){}}}
+function bdStatus(p){const o=BD.res[p.id],t=Date.parse(p.jump);
+  if(Date.now()<t)return {t:"To run",c:"run"};
+  if(!o)return {t:Date.now()<t+20*60e3?"Running":"Awaiting result",c:"run"};
+  if(o.aband)return {t:"Abandoned",c:"off"};
+  const gone=u=>(o.scr||[]).some(s=>s.name?nkey(s.name)===nkey(u.name):+s.no===+u.no),at=u=>(o.fin||[]).find(f=>nkey(f.name)===nkey(u.name)),pp=o.pp||3;
+  if(p.kind==="tri"){if(p.sel.some(gone))return {t:"Scratched",c:"off"};const n=p.sel.filter(u=>{const f=at(u);return f&&f.pos<=3}).length;
+    const dv=o.exo&&(o.exo.trifecta||o.exo.Trifecta);return n===3?{t:`Won${dv?" "+bdM(dv):""}`,c:"won",w:1}:n?{t:`${n} of 3 placed`,c:"off",s:1}:{t:"Unplaced",c:"off",s:1}}
+  const u=p.sel[0];if(gone(u))return {t:"Scratched",c:"off"};const f=at(u);
+  if(f&&f.pos===1)return {t:`Won${f.win?" "+bdM(f.win):""}`,c:"won",w:1};
+  if(f&&f.pos<=pp)return {t:p.kind==="ew"?`Placed${f.place?" "+bdM(f.place):""}`:`${ord(f.pos)}${f.place?" "+bdM(f.place):""}`,c:"plc",s:1};
+  return {t:"Unplaced",c:"off",s:1}}
+const bdM=v=>v==null?"":"$"+(Number(v)%1?Number(v).toFixed(2):Number(v));
+const BD_KIND={win:["WIN","w"],ew:["EACH WAY","e"],tri:["TRIFECTA","t"],rough:["ROUGHIE","r"]},BD_ICON={H:"🏇",N:"🐎",D:"🐕"};
+function bdRow(p){const s=bdStatus(p),[lab,k]=BD_KIND[p.kind],u=p.sel[0],tm=timeOf(p.jump).replace(" ","").toLowerCase();
+  const title=p.kind==="tri"?`${p.sel.map(x=>x.no??"?").join(" · ")} boxed`:`${u.no!=null?u.no+". ":""}${escH(u.name)}`;
+  const tail=p.kind==="win"?`${pct(p.p)} win chance`:p.kind==="ew"?(p.price?`${bdM(p.price)} each way`:"each way"):p.kind==="rough"?(p.price?bdM(p.price):""):p.sel.map(x=>escH(x.name)).join(", ");
+  return `<button class="bd-row" data-bdgo="${escH(p.id)}"><span class="bd-ic" aria-hidden="true">${BD_ICON[p.code]||"🏇"}</span>
+    <span class="bd-mid"><b class="bd-t">${title}</b><span class="bd-m"><span class="bd-k ${k}">${lab}</span> ${tm} · ${escH(p.venue)} R${p.no}${tail?" · "+tail:""}</span></span>
+    <span class="bd-s ${s.c}">${s.t}</span></button>`}
+function dailyBestHtml(){const d=ST.today||REC_TODAY();if(BD.date!==d&&!BD.loading)setTimeout(()=>bdLoad(),0);
+  const ps=BD.date===d?BD.picks:[],ss=ps.map(bdStatus),won=ss.filter(s=>s.w).length,done=ss.filter(s=>s.w||s.s).length;
+  const dt=new Date(d+"T12:00:00"),day=`${dt.toLocaleDateString("en-AU",{weekday:"long"})} ${dt.getDate()} ${dt.toLocaleDateString("en-AU",{month:"long"})}`;
+  return `<section class="bd" aria-label="Best Bets of the day"><div class="bd-h"><span class="bd-hd"><span class="bd-star" aria-hidden="true">☆</span>BEST BETS</span><button class="bd-ref" data-bdref aria-label="Refresh Best Bets">↻</button></div>
+    <p class="bd-sub">Daily tips · ${day}</p>
+    ${ps.length?`<div class="bd-list">${ps.map(bdRow).join("")}</div>`:`<p class="bd-empty">${BD.loading&&!BD.date?"Loading…":"No standout bets yet today. Each race gets a look about 90 minutes before it jumps, and only the best make it."}</p>`}
+    <p class="bd-foot">${done?`${won} of ${done} won so far · `:""}${ps.length?`${ps.length} best bet${ps.length>1?"s":""} today · `:""}more lock in as races get close</p></section>`}
+function bdPaint(){const el=document.querySelector("#hl .bd");if(el)el.outerHTML=dailyBestHtml()}
+document.addEventListener("click",e=>{if(e.target.closest("[data-bdref]")){e.preventDefault();bdLoad(true);return}
+  const g=e.target.closest("[data-bdgo]");if(g){e.preventDefault();if(RACES.some(r=>r.id===g.dataset.bdgo))openInTips(g.dataset.bdgo)}});
+setInterval(()=>{if(document.visibilityState!=="visible")return;bdLoad();bdTick();bdResults().then(bdPaint)},60e3);
 function render(){
   renderFollow();$("multi").innerHTML=multiHtml();if(typeof slipBar==="function")slipBar();
   $("codes").innerHTML=[["all","All"],["H","Horses"],["N","Harness"],["D","Greys"]].map(([k,l])=>`<button data-code="${k}" aria-pressed="${ST.code===k}">${l}</button>`).join("");
@@ -2529,8 +2615,9 @@ function render(){
     $("hl").innerHTML=mine.length?box(mine[0],`${WHO[w]}'s Best Bet`)+(mine[1]?box(mine[1],`${WHO[w]}'s Next Best`):"")+(val&&val!==mine[0]&&val!==mine[1]?box(val,`${WHO[w]}'s Value Bet`,val.pr):"")
       :`<div class="hl">${w==="mob"?"The Mob":WHO[w]} hasn't tipped any of the races still to run yet.${w==="gran"?" Gran only tips once the bookies have prices up.":w==="kev"?" Kev only tips once the word&rsquo;s gone round, usually closer to the jump.":""}</div>`}
   else if(ST.who==="nan"){const BB=bestBets(RACES).picks,dup=(r,no)=>BB.some(y=>y.x.r.id===r.id&&+y.x.u.no===+no);
-    $("hl").innerHTML=bestBetsHtml()+(best&&dup(best.r,best.rk[0].u.no)?"":bestC)+(rough&&dup(rough.x.r,rough.y.u.no)?"":roughC)}
-  else $("hl").innerHTML=bestBetsHtml();
+    $("hl").innerHTML=dailyBestHtml()+(best&&dup(best.r,best.rk[0].u.no)?"":bestC)+(rough&&dup(rough.x.r,rough.y.u.no)?"":roughC)}
+  else $("hl").innerHTML=dailyBestHtml();
+  bdTick();
   {const nm=$("hlnums"),was=nm.querySelector("details.nums2"),op=was&&was.open;nm.innerHTML=$("hl").innerHTML?NUMS_HTML:"";if(op&&nm.firstChild)nm.firstChild.open=true}
   const waiting=RACES.filter(r=>r.code!=="H"&&!CARDS[r.code+r.slug]&&wanted(r)).length;
   if(waiting&&!$("status").textContent.startsWith("Nan couldn't"))$("status").textContent=`Nan is still reading the form for ${waiting} race${waiting>1?"s":""}…`;
@@ -3651,6 +3738,7 @@ document.addEventListener("click",e=>{
 });
 /* ---------- What's new: the update history, plus the suggestions box ---------- */
 const CHANGES=[
+ ["2.68.0","22 Nov","Best Bets of the day",["New Best Bets panel at the top of Today's tips: the standout bets for the whole day, any number, any bet type (Win, Each way, Trifecta, Roughie).","Each race gets a look about 90 minutes before it jumps; a bet only goes in if it really stands out, and once in it's locked, the same for everyone.","Each bet shows its official result: Won, placed or Unplaced, with the dividend."]],
  ["2.67.0","19 Nov","Dynamic Finance Raceday",["New in the game: the Dynamic Finance Raceday. Nine races with a new card every day, and the Dynamic Finance Cup in race 8.","Every race, horse, jockey and trainer is a money pun, and An Phan rides in every race."]],
  ["2.66.0","19 Nov","One wallet in the game",["Off To The Races now has one $1,000 bank for all the racing: career, Goldfields, Legends Day, dogs, harness, real races and My Book. Run out and Nan lends you $200.","Your old separate banks are added together once, keeping every win and loss.","The Daily $1,000 is gone.","Leaders is its own tab in the game, and everyone logged in is on it automatically."]],
  ["2.65.0","19 Nov","Game leaderboard",["Off To The Races has a leaderboard: Results, then Leaderboard. Log in, pick a name, and see who has the most money in the game.","It adds up Career, Goldfields, Dogs and Harness. Nan's Tips money stays separate."]],
