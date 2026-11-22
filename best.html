@@ -34,7 +34,11 @@ body{min-height:100vh;color:#fff;font-family:"Avenir Next","Nunito","Segoe UI",s
 .bd-h{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .bd-hd{font-weight:600;font-size:17px;letter-spacing:.16em;color:#f1e3b6;display:flex;align-items:center;gap:10px}.bd-star{font-size:20px;letter-spacing:0}
 .bd-ref{width:46px;height:46px;border-radius:50%;border:0;background:rgba(255,255,255,.16);color:#f1e3b6;font-size:24px;font-weight:700;cursor:pointer;line-height:1}
-.bd-ref[disabled]{opacity:.5}
+.bd-ref[disabled]{opacity:1}
+.bd-ref.spin{animation:bdspin .8s linear infinite;background:rgba(255,255,255,.28)}
+@keyframes bdspin{to{transform:rotate(360deg)}}
+.upd{display:block;font-size:13px;color:rgba(255,255,255,.7);margin-top:4px}
+@media (prefers-reduced-motion:reduce){.bd-ref.spin{animation:none;opacity:.6}}
 .days{display:grid;grid-template-columns:46px minmax(0,1fr) 46px;align-items:center;gap:8px;margin:8px 0 10px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,.22)}
 .days button{width:46px;height:40px;border-radius:14px;border:0;background:rgba(255,255,255,.14);color:#f6efd8;font-size:22px;cursor:pointer}
 .days button[disabled]{opacity:.3}
@@ -76,7 +80,7 @@ body{min-height:100vh;color:#fff;font-family:"Avenir Next","Nunito","Segoe UI",s
   <p class="note">For fun only. 18+. Play money only, no real bets. If gambling stops being fun, call Gambling Help on <a href="tel:1800858858">1800 858 858</a>.</p>
 </div>
 <script>
-const BEST_VERSION="2.69.4";
+const BEST_VERSION="2.69.5";
 const SB="https://nkkhbtrrytctpfwjenrz.supabase.co/functions/v1",$=id=>document.getElementById(id);
 const today=()=>new Intl.DateTimeFormat("en-CA",{timeZone:"Australia/Sydney"}).format(new Date());
 const addDays=(d,n)=>new Intl.DateTimeFormat("en-CA",{timeZone:"Australia/Sydney"}).format(new Date(Date.parse(d+"T02:00:00Z")+n*864e5));
@@ -91,9 +95,9 @@ const vwords=v=>String(v||"").toLowerCase().replace(/[^a-z]+/g," ").trim().split
 const sameVenue=(a,b)=>{const x=vwords(a),y=vwords(b);if(!x.length||!y.length)return false;const X=new Set(x),Y=new Set(y);return x.every(w=>Y.has(w))||y.every(w=>X.has(w))||x.join("")===y.join("")};
 const ST={date:today(),picks:[],res:{},busy:false};
 async function getJSON(u){const r=await fetch(u,{cache:"no-store"});const j=await r.json();if(!r.ok||j.error)throw new Error(j.error||r.status);return j}
-async function load(){if(ST.busy)return;ST.busy=true;$("ref").disabled=true;paint();
+async function load(){if(ST.busy)return;ST.busy=true;const t0=Date.now();$("ref").disabled=true;$("ref").classList.add("spin");$("ref").setAttribute("aria-label","Refreshing");paint();
   try{const j=await getJSON(`${SB}/otr-best?date=${ST.date}`);ST.picks=j.picks||[]}catch(e){ST.err=true}
-  paint();await results();ST.busy=false;$("ref").disabled=false;paint()}
+  paint();await results();await new Promise(r=>setTimeout(r,Math.max(0,700-(Date.now()-t0))));ST.busy=false;ST.at=Date.now();$("ref").disabled=false;$("ref").classList.remove("spin");$("ref").setAttribute("aria-label","Refresh");paint()}
 async function results(){const due=ST.picks.filter(p=>Date.now()>Date.parse(p.jump)+3*60e3&&!ST.res[p.id]);
   for(const c of [...new Set(due.map(p=>p.code))]){try{const j=await getJSON(`${SB}/otr-nan?official=1&code=${c}&date=${ST.date}`);
     for(const p of due.filter(p=>p.code===c)){const names=new Set(p.sel.map(u=>nkey(u.name)));
@@ -123,7 +127,7 @@ function paint(){const d=ST.date,t=today(),dt=new Date(d+"T12:00:00");
   $("next").disabled=d>=t;$("prev").disabled=d<=addDays(t,-6);
   const ps=ST.picks,ss=ps.map(status),won=ss.filter(s=>s.w).length,done=ss.filter(s=>s.w||s.s).length;
   $("list").innerHTML=ps.length?ps.map(row).join(""):`<p class="bd-empty">${ST.busy?"Loading…":ST.err?"Best Bets couldn't load. Tap refresh to try again.":d===t?"No standout bets yet today. Each race gets a look about 90 minutes before it jumps, and only the best make it.":"No Best Bets that day."}</p>`;
-  $("foot").innerHTML=`${done?`${won} of ${done} won so far`:ps.length?"None run yet":""}${d===t?`${ps.length||done?" · ":""}more lock in as races get close`:""}<br><a href="nan.html">Open Nan's Tips ›</a>`;
+  $("foot").innerHTML=`${done?`${won} of ${done} won so far`:ps.length?"None run yet":""}${d===t?`${ps.length||done?" · ":""}more lock in as races get close`:""}<span class="upd">${ST.busy?"Updating…":ST.at?"Updated "+new Date(ST.at).toLocaleTimeString("en-AU",{hour:"numeric",minute:"2-digit"}).replace(/\s?([ap])\.?m\.?/i,(m,a)=>a.toLowerCase()+"m"):""}</span><a href="nan.html">Open Nan's Tips ›</a>`;
   $("ver").textContent="v"+BEST_VERSION}
 $("ref").onclick=()=>{ST.res={};load()};
 $("prev").onclick=()=>{ST.date=addDays(ST.date,-1);ST.picks=[];ST.res={};ST.err=false;load()};
