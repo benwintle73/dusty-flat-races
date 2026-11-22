@@ -3,6 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<script>/* Never stay on an old saved copy: ask the server which version is current and reload once if this copy is older. */
+(function(){try{var V=function(t){return (t.match(new RegExp("BEST_VERSION"+"=\x22(\\d[0-9.]*)\x22"))||[])[1]};
+function check(){var mine=V(document.documentElement.innerHTML);fetch(location.pathname+"?vc="+Date.now(),{cache:"no-store"}).then(function(r){return r.text()}).then(function(t){var n=V(t);
+  if(n&&mine&&n!==mine&&sessionStorage.getItem("best-rl")!==n){sessionStorage.setItem("best-rl",n);var u=new URL(location.href);u.searchParams.set("v",n);location.replace(u.href)}}).catch(function(){})}
+document.addEventListener("DOMContentLoaded",check);document.addEventListener("visibilitychange",function(){if(document.visibilityState==="visible")check()})}catch(e){}})();</script>
 <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="manifest" href="best.webmanifest">
@@ -71,7 +76,7 @@ body{min-height:100vh;color:#fff;font-family:"Avenir Next","Nunito","Segoe UI",s
   <p class="note">For fun only. 18+. Play money only, no real bets. If gambling stops being fun, call Gambling Help on <a href="tel:1800858858">1800 858 858</a>.</p>
 </div>
 <script>
-const BEST_VERSION="2.69.1";
+const BEST_VERSION="2.69.2";
 const SB="https://nkkhbtrrytctpfwjenrz.supabase.co/functions/v1",$=id=>document.getElementById(id);
 const today=()=>new Intl.DateTimeFormat("en-CA",{timeZone:"Australia/Sydney"}).format(new Date());
 const addDays=(d,n)=>new Intl.DateTimeFormat("en-CA",{timeZone:"Australia/Sydney"}).format(new Date(Date.parse(d+"T02:00:00Z")+n*864e5));
