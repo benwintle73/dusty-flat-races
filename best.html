@@ -56,7 +56,7 @@ body{min-height:100vh;color:#fff;font-family:"Avenir Next","Nunito","Segoe UI",s
 .bd-ic{font-size:30px;line-height:1;text-align:center;color:#f3ead2}
 .bd-ic .gh{display:block;width:40px;height:auto;margin:0 auto;transform:scaleX(-1)}
 .bd-ic .gh.hn{width:40px}
-.bd-mid{min-width:0}.bd-tl{display:flex;align-items:center;gap:10px}.bd-tl+.bd-tl{margin-top:6px}.bd-no{flex:none;min-width:30px;height:30px;padding:0 6px;border-radius:8px;font-size:18px;font-weight:900;display:inline-flex;align-items:center;justify-content:center;box-shadow:inset 0 0 0 1px rgba(0,0,0,.3),inset 0 8px 8px -6px rgba(255,255,255,.45),0 1px 3px rgba(0,0,0,.4)}.bd-t{display:block;font-size:20px;font-weight:700;line-height:1.2;overflow-wrap:anywhere}
+.bd-fin{margin-top:0}.bd-fin>summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:16px 2px;font-size:17px;font-weight:700;color:#f6efd8}.bd-fin>summary::-webkit-details-marker{display:none}.bd-fin>summary>span:first-child::before{content:"▸";display:inline-block;margin-right:10px;transition:transform .2s}.bd-fin[open]>summary>span:first-child::before{transform:rotate(90deg)}.bd-fw{font-size:15px;font-weight:600;color:#bbf7d0}.bd-mid{min-width:0}.bd-tl{display:flex;align-items:center;gap:10px}.bd-tl+.bd-tl{margin-top:6px}.bd-no{flex:none;min-width:30px;height:30px;padding:0 6px;border-radius:8px;font-size:18px;font-weight:900;display:inline-flex;align-items:center;justify-content:center;box-shadow:inset 0 0 0 1px rgba(0,0,0,.3),inset 0 8px 8px -6px rgba(255,255,255,.45),0 1px 3px rgba(0,0,0,.4)}.bd-t{display:block;font-size:20px;font-weight:700;line-height:1.2;overflow-wrap:anywhere}
 .bd-m{display:block;margin-top:4px;font-size:15px;line-height:1.55;color:rgba(255,255,255,.86)}
 .bd-k{display:inline-block;padding:2px 9px;border-radius:8px;font-size:13px;font-weight:800;letter-spacing:.08em;color:#fff;margin-right:4px;vertical-align:1px}
 .bd-k.w{background:#3b82f6}.bd-k.e{background:#8b5cf6}.bd-k.t{background:#14b8a6}.bd-k.r{background:linear-gradient(90deg,#f97316,#ef4444)}
@@ -90,7 +90,7 @@ body{min-height:100vh;color:#fff;font-family:"Avenir Next","Nunito","Segoe UI",s
   <p class="note">For fun only. 18+. Play money only, no real bets. If gambling stops being fun, call Gambling Help on <a href="tel:1800858858">1800 858 858</a>.</p>
 </div>
 <script>
-const BEST_VERSION="2.70.4";
+const BEST_VERSION="2.70.5";
 const SB="https://nkkhbtrrytctpfwjenrz.supabase.co/functions/v1",$=id=>document.getElementById(id);
 const today=()=>new Intl.DateTimeFormat("en-CA",{timeZone:"Australia/Sydney"}).format(new Date());
 const addDays=(d,n)=>new Intl.DateTimeFormat("en-CA",{timeZone:"Australia/Sydney"}).format(new Date(Date.parse(d+"T02:00:00Z")+n*864e5));
@@ -137,17 +137,26 @@ function row(p){const s=status(p),[lab,k]=KIND[p.kind]||["BET","w"],u=p.sel[0];
   return `<a class="bd-row" href="nan.html"><span class="bd-ic" aria-hidden="true">${ICON[p.code]||"🏇"}</span>
     <span class="bd-mid"><b class="bd-t">${title}</b><span class="bd-m"><span class="bd-k ${k}">${lab}</span> ${timeOf(p.jump)} · ${escH(p.venue)} R${p.no}${tail?" · "+tail:""}</span></span>
     <span class="bd-s ${s.c}">${s.t}</span></a>`}
+function resAt(){try{const o=JSON.parse(localStorage.getItem("best-resat")||"{}");return o&&typeof o==="object"?o:{}}catch(e){return {}}}
+function saveResAt(o){try{const keep={},cut=Date.now()-3*864e5;for(const k in o)if(o[k]===1||o[k]>cut)keep[k]=o[k];localStorage.setItem("best-resat",JSON.stringify(keep))}catch(e){}}
 function paint(){const d=ST.date,t=today(),dt=new Date(d+"T12:00:00");
   $("sub").textContent=`${d===t?"Daily tips":"Tips"} · ${dt.toLocaleDateString("en-AU",{weekday:"long"})} ${dt.getDate()} ${dt.toLocaleDateString("en-AU",{month:"long"})}`;
   $("next").disabled=d>=t;$("prev").disabled=d<=addDays(t,-6);
   $("codes").innerHTML=[["H","Horses"],["N","Harness"],["D","Dogs"]].map(([k,l])=>`<button data-code="${k}" aria-pressed="${ST.codes.includes(k)}"><span class="ci">${ICON[k]}</span>${l}</button>`).join("");
   const ps=ST.picks.filter(p=>ST.codes.includes(p.code)),ss=ps.map(status),won=ss.filter(s=>s.w).length,done=ss.filter(s=>s.w||s.s).length;
-  $("list").innerHTML=ps.length?ps.map(row).join(""):`<p class="bd-empty">${ST.busy?"Loading…":ST.err?"Best Bets couldn't load. Tap refresh to try again.":ST.picks.length?"No Best Bets for "+ST.codes.map(c=>({H:"horses",N:"harness",D:"dogs"})[c]).join(" or ")+(d===t?" yet today.":" that day."):d===t?"No standout bets yet today. Each race gets a look about 90 minutes before it jumps, and only the best make it.":"No Best Bets that day."}</p>`;
+  // races with a result go into "Finished" five minutes after the result came in (straight away for older results)
+  const RA=resAt(),now=Date.now(),isDone=(p,s)=>{const o=ST.res[p.id];if(!o||!(s.w||s.s||s.c==="off"))return false;
+    if(!RA[p.id])RA[p.id]=d!==t||now>Date.parse(p.jump)+40*60e3?1:now;return now-RA[p.id]>=5*60e3};
+  const fin=ps.filter((p,i)=>isDone(p,ss[i])),live=ps.filter(p=>!fin.includes(p));saveResAt(RA);
+  const fw=fin.filter(p=>status(p).w).length;
+  $("list").innerHTML=ps.length?(live.length?live.map(row).join(""):`<p class="bd-empty">All of ${d===t?"today's":"that day's"} Best Bets have run.</p>`)+(fin.length?`<details class="bd-fin"${ST.finOpen?" open":""}><summary><span>Finished races · ${fin.length}</span><span class="bd-fw">${fw} won</span></summary>${fin.map(row).join("")}</details>`:""):`<p class="bd-empty">${ST.busy?"Loading…":ST.err?"Best Bets couldn't load. Tap refresh to try again.":ST.picks.length?"No Best Bets for "+ST.codes.map(c=>({H:"horses",N:"harness",D:"dogs"})[c]).join(" or ")+(d===t?" yet today.":" that day."):d===t?"No standout bets yet today. Each race gets a look about 90 minutes before it jumps, and only the best make it.":"No Best Bets that day."}</p>`;
   $("foot").innerHTML=`${done?`${won} of ${done} won so far`:ps.length?"None run yet":""}${d===t?`${ps.length||done?" · ":""}more lock in as races get close`:""}<span class="upd">${ST.date===today()?'<span class="live" aria-hidden="true"></span>':""}${ST.busy?"Updating…":ST.at?"Updated "+new Date(ST.at).toLocaleTimeString("en-AU",{hour:"numeric",minute:"2-digit"}).replace(/\s?([ap])\.?m\.?/i,(m,a)=>a.toLowerCase()+"m"):""}</span><a href="nan.html">Open Nan's Tips ›</a>`;
   $("ver").textContent="v"+BEST_VERSION}
 $("codes").onclick=e=>{const b=e.target.closest("[data-code]");if(!b)return;const k=b.dataset.code,on=ST.codes.includes(k);
   if(on&&ST.codes.length===1)return; // keep at least one on
   ST.codes=on?ST.codes.filter(x=>x!==k):[...ST.codes,k].sort((a,b)=>"HND".indexOf(a)-"HND".indexOf(b));try{localStorage.setItem("best-codes",JSON.stringify(ST.codes))}catch(_){}paint()};
+$("list").addEventListener("toggle",e=>{if(e.target.classList&&e.target.classList.contains("bd-fin"))ST.finOpen=e.target.open},true);
+setInterval(()=>{if(document.visibilityState==="visible")paint()},30e3);
 $("ref").onclick=()=>{ST.res={};load()};
 $("prev").onclick=()=>{ST.date=addDays(ST.date,-1);ST.picks=[];ST.res={};ST.err=false;load()};
 $("next").onclick=()=>{if(ST.date<today()){ST.date=addDays(ST.date,1);ST.picks=[];ST.res={};ST.err=false;load()}};
