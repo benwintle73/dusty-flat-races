@@ -90,7 +90,7 @@ body{min-height:100vh;color:#fff;font-family:"Avenir Next","Nunito","Segoe UI",s
   <p class="note">For fun only. 18+. Play money only, no real bets. If gambling stops being fun, call Gambling Help on <a href="tel:1800858858">1800 858 858</a>.</p>
 </div>
 <script>
-const BEST_VERSION="2.70.6";
+const BEST_VERSION="2.70.7";
 const SB="https://nkkhbtrrytctpfwjenrz.supabase.co/functions/v1",$=id=>document.getElementById(id);
 const today=()=>new Intl.DateTimeFormat("en-CA",{timeZone:"Australia/Sydney"}).format(new Date());
 const addDays=(d,n)=>new Intl.DateTimeFormat("en-CA",{timeZone:"Australia/Sydney"}).format(new Date(Date.parse(d+"T02:00:00Z")+n*864e5));
@@ -146,7 +146,7 @@ function paint(){const d=ST.date,t=today(),dt=new Date(d+"T12:00:00");
   const ps=ST.picks.filter(p=>ST.codes.includes(p.code)),ss=ps.map(status),won=ss.filter(s=>s.w).length,done=ss.filter(s=>s.w||s.s).length;
   // races with a result go into "Finished" five minutes after the result came in (straight away for older results)
   const RA=resAt(),now=Date.now(),isDone=(p,s)=>{const o=ST.res[p.id];if(!o||!(s.w||s.s||s.c==="off"))return false;
-    if(!RA[p.id])RA[p.id]=d!==t||now>Date.parse(p.jump)+40*60e3?1:now;return now-RA[p.id]>=5*60e3};
+    if(!RA[p.id])RA[p.id]=d!==t?1:Math.min(now,Date.parse(p.jump)+15*60e3);return now-RA[p.id]>=5*60e3};
   const fin=ps.filter((p,i)=>isDone(p,ss[i])),live=ps.filter(p=>!fin.includes(p));saveResAt(RA);
   const fw=fin.filter(p=>status(p).w).length;
   $("list").innerHTML=ps.length?(fin.length?`<details class="bd-fin"${ST.finOpen?" open":""}><summary><span>Finished races · ${fin.length}</span><span class="bd-fw">${fw} won</span></summary>${fin.map(row).join("")}</details>`:"")+(live.length?live.map(row).join(""):`<p class="bd-empty">All of ${d===t?"today's":"that day's"} Best Bets have run.</p>`):`<p class="bd-empty">${ST.busy?"Loading…":ST.err?"Best Bets couldn't load. Tap refresh to try again.":ST.picks.length?"No Best Bets for "+ST.codes.map(c=>({H:"horses",N:"harness",D:"dogs"})[c]).join(" or ")+(d===t?" yet today.":" that day."):d===t?"No standout bets yet today. Each race gets a look about 90 minutes before it jumps, and only the best make it.":"No Best Bets that day."}</p>`;
